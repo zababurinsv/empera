@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Network</title>
+    <link rel="shortcut icon" href="/HTML/PIC/network.png" type="image/png">
+
+    <link rel="stylesheet" type="text/css" href="../HTML/CSS/buttons.css">
+    <!--<link rel="stylesheet" type="text/css" href="../HTML/CSS/style.css">-->
+</head>
+
+<script>
+    window.RUN_CLIENT=1;
+    window.RUN_SERVER=0;
+    if(typeof global === 'object')
+    {
+        global.RUN_CLIENT=1;
+        global.RUN_SERVER=0;
+    }
+</script>
+
+<script type="text/javascript" src="/HTML/JS/coinlib.js"></script>
+<script type="text/javascript" src="../HTML/JS/client.js"></script>
+
+<script>
+    var MaxChildCount=7;//MAX_CONNECT_CHILD
+    var SaveIdArr=["idMaxNodesCount"];
+    var NodesArr=[];
+    var CurNode;
+
+    function SetStatus(Str)
+    {
+        var id = $("idStatus");
+        id.innerHTML=Str;
+    }
+
+    var WasSetName;
+    var WasSetProperty;
+    var WasSetInfo;
+    function SetInfo(Name,StrProperty,StrInfo)
+    {
+        var id;
+        if(WasSetName!==Name)
+        {
+            WasSetName=Name;
+            id = $("idNodeName");
+            id.innerHTML="<B>"+Name+"</B>";
+        }
+
+        if(WasSetProperty!==StrProperty)
+        {
+            WasSetProperty=StrProperty;
+            id = $("idNodeProperty");
+            id.value=StrProperty;
+        }
+
+        if(WasSetInfo!==StrProperty)
+        {
+            WasSetInfo=StrProperty;
+            id = $("idNodeLog");
+            id.value=StrInfo;
+        }
+
+    }
+
+
+    function UpdateData()
+    {
+        var CountBlock=ParseNum($("idCountBlock").value);
+
+        GetData("/GetHotArray",{CountBlock:CountBlock}, function (Data)
+        {
+            if(Data && Data.result)
+            {
+                SetHotTable(Data.ArrTree);
+            }
+        });
+    }
+
+    function SetHotTable(ArrTree)
+    {
+        var htmlTable=$("grid_hot");
+        if(!htmlTable.ItemsMap)
+        {
+            htmlTable.RowCounts=0;
+            htmlTable.ItemsMap=[];
+        }
+        var map=htmlTable.ItemsMap;
+
+        var MaxNode=ParseNum($("idMaxNodesCount").value);
+
+        //Hot
+        htmlTable.RowCounts=Math.max(htmlTable.RowCounts,ArrTree.length);
+        for(var Level=0;Level<htmlTable.RowCounts;Level++)
+        {
+            var arr=ArrTree[Level];
+            if(!arr)
+                arr=[];
+
+            var row=map[Level];
+            if(!row)
+            {
+                htmlTable.RowCount++;
+                row=htmlTable.insertRow(-1);
+                map[Level]=row;
+
+                for(var n=0;n<MaxChildCount+3;n++)
+                {
+                    row.insertCell(n);
+                }
+                row.MaxRows=2;
+            }
+            row.cells[0].innerText=1+Level;
+            var StrConnect="";
+            var StrActive="";
+
+
+            var CountNodesA=0;
+            var CountNodesC=0;
+            var length=Math.max(MaxChildCount,arr.length)
+            length=Math.min(length,MaxNode);
+            for(var n=0;n<length;n++)
+            {
+                var Node=undefined;
+                var Str="";
+                var Name="";
+                if(n<arr.length)
+                {
+                    Node=arr[n];
+
+
+                    NodesArr[Node.id]=Node;
+                    if(Node.Name)
+                        Name=Node.Name;
+                    else
+                        Name=Node.addrStr.substr(0,6);
+                    Str+=Name;
+
+                    Str+="="+Node.BlockProcessCount+" ping:"+Node.DeltaTime+" ";
+                    if(Node.Name)
+                        strClass="mnode";
+                    else
+                        strClass="node";
+
+                    Str='<INPUT type="button" id="N'+Node.id+'" class="'+strClass+'" onclick="ViewInfo('+Node.id+',1)" value="'+Str+'">';
+
+                    if(Node.Hot)
+                        Str+="<BR>";
+
+
+                    if(!Node.Active)
+                        Str+='<INPUT type="button" class="connect" onclick="AddConnect('+Node.id+')" value="Con...">';
+                    else
+                    if(Node.Active)
+                    {
+                        Str+="<DIV style='float: right'>"
+                        if(!Node.Hot)
+                            Str+='<INPUT type="button" class="edit" onclick="AddHot('+Node.id+')" value="Add"><BR>';
+                        if(!Node.Name)
+                            Str+='<INPUT type="button" class="edit" onclick="AddBan('+Node.id+')" value="Ban">';
+                        Str+="</DIV>"
+                    }
+                    if(Node.Hot)
+                        Str+='<INPUT type="button" class="edit" onclick="DeleteNode('+Node.id+')" value="Del">';
+                    Str+="<BR>";
+                }
+
+                if(n<MaxChildCount)
+                {
+                    var cell=row.cells[n+1];
+                    if(Node && Node.Hot)
+                    {
+                        var id=$("S"+Node.id);
+                        if(!id || cell.NodeID!==Node.id)
+                        {
+                            var Stat="<DIV id='S"+Node.id+"'></DIV>";
+                            cell.innerHTML=Stat+Str;
+                            cell.NodeID=Node.id;
+                            id=$("S"+Node.id);
+                        }
+                        var StrTransfer,StrDelta,StrGetTiming;
+                        if(Node.TransferCount>1000)
+                        {
+                            StrTransfer="<B>"+Node.TransferCount+"</B>";
+                        }
+                        else
+                        {
+                            StrTransfer=Node.TransferCount;
+                        }
+                        StrDelta=Node.DeltaTime;
+//                        if(Node.DeltaTime<100)
+//                        {
+//                            StrDelta="<B style='color:#1727ff'>"+Node.DeltaTime+"</B>";
+//                        }
+//                        else
+//                        {
+//                            StrDelta=Node.DeltaTime;
+//                        }
+                        if(Node.GetTiming>2)
+                            StrGetTiming="<B style='color:red'>"+Node.GetTiming+"</B>";
+                        else
+                        if(Node.GetTiming>1)
+                            StrGetTiming="<B style='color:#df7a59'>"+Node.GetTiming+"</B>";
+                        else
+                            StrGetTiming="<B style='color:#1727ff'>"+Node.GetTiming+"</B>";
+
+                        var Str=
+                            "Transfer:"+StrTransfer+"<BR>"+
+                            "Process:"+Node.BlockProcessCount+"<BR>"+
+                            "Time:"+StrGetTiming+"<BR>"+
+                            "Delta:"+StrDelta;
+
+                        id.innerHTML=Str;
+                    }
+                    else
+                    {
+                        cell.innerHTML="";
+                    }
+                }
+
+                if(Node && !Node.Active)
+                {
+                    CountNodesC++;
+                    StrConnect+=Str;
+                }
+                if(Node && !Node.Hot && Node.Active)
+                {
+                    CountNodesA++;
+                    StrActive+=Str;
+                }
+            }
+
+            row.MaxRows=Math.max(row.MaxRows,CountNodesA,CountNodesC);
+            for(var i=CountNodesC;i<row.MaxRows;i++)
+            {
+                StrConnect+="<DIV class='node'></DIV>"
+            }
+
+            if(row.StrActive!==StrActive)
+            {
+                var cell=row.cells[MaxChildCount+1];
+                row.StrActive=StrActive;
+                cell.innerHTML=StrActive;
+            }
+
+
+            if(row.StrConnect!==StrConnect)
+            {
+                var cell=row.cells[MaxChildCount+2];
+                row.StrConnect=StrConnect;
+                cell.innerHTML=StrConnect;
+            }
+
+
+
+
+        }
+
+        ViewInfo(CurNode);
+      }
+
+
+
+    function ViewInfo(Index,bSet)
+    {
+        if(Index!==undefined)
+        {
+            if(bSet)
+                CurNode=Index;
+
+            var Node=NodesArr[Index];
+            if(Node)
+            {
+                var Name;
+                if(Node.Name)
+                    Name=Node.Name;
+                else
+                    Name=Node.addrStr.substr(0,6);
+
+                var Info=Node.Info;
+                Node.Info=undefined;
+                var Str=JSON.stringify(Node,"",2);
+                Node.Info=Info;
+
+                SetInfo(Name,Str,Info);
+                //SetInfo(escapeHtml(Name+"\n"+Str+"\n"+Node.Info));
+            }
+            else
+                SetInfo("Not found","","");
+        }
+    }
+
+    function AddConnect(Index)
+    {
+        var Node=NodesArr[Index];
+        if(Node)
+        {
+            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; Node.NextConnectDelta=1000; Node.CreateConnect();"OK"';
+            RunCode(Code);
+        }
+    }
+
+    function AddBan(Index)
+    {
+        var Node=NodesArr[Index];
+        if(Node)
+        {
+            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; SERVER.AddToBan(Node,"=BAN=");"OK"';
+            RunCode(Code);
+        }
+    }
+    function AddHot(Index)
+    {
+        var Node=NodesArr[Index];
+        if(Node)
+        {
+            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; SERVER.StartAddLevelConnect(Node);"OK"';
+            RunCode(Code);
+        }
+    }
+    function DeleteNode(Index)
+    {
+        var Node=NodesArr[Index];
+        if(Node)
+        {
+            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; SERVER.StartDisconnectHot(Node,"=DEL=",1);"OK"';
+            RunCode(Code);
+        }
+    }
+    function RunCode(Code)
+    {
+        GetData("SendDirectCode",{Code:Code}, function (Data)
+        {
+            if(Data)
+            {
+                SetStatus(Data.text);
+            }
+        });
+    }
+
+    function CheckCtrlEnter(e,F)
+    {
+//        SaveValues();
+//
+//        if(e.ctrlKey && e.keyCode===13)
+//        {
+//            SendToServer();
+//        }
+//
+//        if(e.keyCode===27)
+//        {
+//            window.close();
+//        }
+    }
+
+
+    function CheckDevelop()
+    {
+        GetData("GetWalletInfo",{},function (Data)
+        {
+            if(Data && Data.result)
+            {
+                if(!Data.IsDevelopAccount)
+                {
+                }
+            }
+        });
+    }
+
+    window.onload=function()
+    {
+        UpdateData();
+        setInterval(UpdateData,1000);
+        //setTimeout(CheckDevelop,500);
+
+        window.onkeydown = CheckCtrlEnter;
+
+        LoadValues();
+        SetStatus("");
+        document.body.className="univers "+localStorage["idSelStyle"];
+    }
+
+    function LoadValues()
+    {
+        if(LoadValuesByArr(SaveIdArr))
+        {
+            if(!$("idMaxNodesCount").value)
+                $("idMaxNodesCount").value=10;
+        }
+    }
+    function SaveValues()
+    {
+        SaveValuesByArr(SaveIdArr);
+    }
+
+
+
+
+</script>
+
+
+
+<style type="text/css">
+    table
+    {
+        border-collapse: collapse;
+        width:100%;
+        font-size: small;
+    }
+    .hot_nodes th, .hot_nodes td
+    {
+        border: 1px solid #264378;
+        padding: 4px;
+    }
+    .hot_nodes td
+    {
+        width: 100px;
+        text-align: left;
+        padding: 1px;
+    }
+
+    .hot_nodes td:nth-child(1)
+    {
+        width: 20px;
+        text-align: center;
+    }
+
+
+    .hot_nodes td:nth-child(9)
+    {
+        width: 140px;
+    }
+    .hot_nodes td:nth-child(10)
+    {
+        width: 160px;
+    }
+
+    .mnode
+    {
+        width: 100px;
+        font-weight: 700;
+        font-size: 9pt;
+        height: 40px;
+        white-space: pre-line;
+    }
+    .node
+    {
+        width: 100px;
+        font-size: 9pt;
+        height: 40px;
+        white-space: pre-line;
+    }
+    .edit
+    {
+        width: 35px;
+        font-size: 9pt;
+    }
+    .connect
+    {
+        width: 60px;
+        font-size: 9pt;
+    }
+    #idNodeBlock
+    {
+        position: fixed;
+        top: 10px;
+        left: 1200px;
+        width: 650px;
+        height: 920px;
+        font-size: 11pt;
+    }
+    #idNodeName
+    {
+        height: 20px;
+        width: 100%;
+        text-align: center;
+    }
+    #idNodeProperty
+    {
+        height: 280px;
+        width: 100%;
+    }
+    #idNodeLog
+    {
+        height: 600px;
+        width: 100%;
+    }
+
+</style>
+
+
+<body>
+
+<DIV align='center'>
+    <B>NETWORK</B><BR>
+    Max nodes on level: <INPUT type="number" id="idMaxNodesCount" style="width:80px" value="10" onchange="SaveValues()" onkeyup="SaveValues()">
+    <INPUT type="number" id="idCountBlock" style="width:80px" value="4">
+
+    <DIV id="idStatus" style="height: 20px;"></DIV><BR>
+
+    <DIV align='left' style="width: 1190px;height: 870px; float: left">
+
+        <table id="grid_hot" class="hot_nodes">
+            <tr>
+                <th>L</th>
+                <th class="mnode">Node1</th>
+                <th class="mnode">Node2</th>
+                <th class="mnode">Node3</th>
+                <th class="mnode">Node4</th>
+                <th class="mnode">Node5</th>
+                <th class="mnode">Node6</th>
+                <th class="mnode">Node7</th>
+                <th>Connected</th>
+                <th>Not connected</th>
+            </tr>
+        </table>
+
+
+    </DIV>
+    <DIV id="idNodeBlock" style="float: left; border: 0px solid #bfc1c0; text-align: left">
+            <DIV id="idNodeName"></DIV>
+            <textarea rows="5" cols="250"  id="idNodeProperty" style="width: 99%;">
+            </textarea>
+            <textarea rows="5" cols="250"  id="idNodeLog" style="width: 99%;">
+            </textarea>
+    </DIV>
+</DIV>
+
+</body>
+</html>
