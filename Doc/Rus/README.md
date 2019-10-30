@@ -38,7 +38,7 @@ https://gitlab.com/terafoundation/terarun/raw/master/Bin/Full/tera_full_setup.ex
 3. Далее выполните команды (для этого запустите программу cmd или PowerShell):
 ```
 cd ..\..\..\
-git clone https://gitlab.com/terafoundation/tera.git wallet
+git clone https://gitlab.com/terafoundation/tera2.git wallet
 npm install --global --production windows-build-tools
 npm install -g node-gyp
 cd wallet/Source
@@ -86,7 +86,7 @@ curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
 yum  install -y nodejs
 yum install gcc gcc-c++
 npm install pm2 -g
-git clone https://gitlab.com/terafoundation/tera.git wallet
+git clone https://gitlab.com/terafoundation/tera2.git wallet
 cd wallet/Source
 npm install
 node set httpport:8080 password:<секретное слово без пробела>
@@ -107,7 +107,7 @@ apt-get install -y git
 apt-get install -y nodejs
 apt-get install -y npm
 npm install pm2 -g
-git clone https://gitlab.com/terafoundation/tera.git wallet
+git clone https://gitlab.com/terafoundation/tera2.git wallet
 apt install build-essential
 apt group install "Development Tools"
 cd wallet/Source
