@@ -227,6 +227,10 @@ function SendCallMethod(ToNum,MethodName,Params,FromNum,FromSmartNum,bStatic)
     }
     catch(e)
     {
+        Data.Type = 0;
+        Data.Account = 0;
+        Data.Params = undefined;
+        Data.MethodName = undefined;
         SendMessageError("" + e);
     }
 }
