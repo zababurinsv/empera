@@ -1082,7 +1082,7 @@ function OpenHistoryPage(Num)
 {
     if(!UseInnerPage() || isOS())
     {
-        OpenWindow("./history.html#" + Num);
+        OpenWindow("./history.html#" + Num, 'history', 800, 800);
         return ;
     }
     SetVisibleFrame("idHistoryPage", 1);

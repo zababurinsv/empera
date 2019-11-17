@@ -318,11 +318,61 @@ function InitEval()
     Object.freeze($Math);
     FreezeObjectChilds($JSON);
     Object.freeze($JSON);
-    FreezeObjectChilds(Number.prototype);
-    FreezeObjectChilds(String.prototype);
-    FreezeObjectChilds(Boolean.prototype);
     FreezeObjectChilds(Array.prototype);
     FreezeObjectChilds(Object.prototype);
+    FreezeObjectChilds(String.prototype);
+    FreezeObjectChilds(Number.prototype);
+    FreezeObjectChilds(Boolean.prototype);
+    var Obj = function ()
+    {
+    };
+    Object.freeze(Obj.bind);
+    Object.freeze(Obj.apply);
+    Object.freeze(Obj.call);
+    Object.freeze(Obj.toString);
+    Object.freeze(Obj.constructor);
+}
+var StartFreeze = 1;
+function ClearContext()
+{
+    var bFirst = StartFreeze;
+    ClearPrototype([], bFirst);
+    ClearPrototype({}, bFirst);
+    ClearPrototype("", bFirst);
+    ClearPrototype(1, bFirst);
+    ClearPrototype(true, bFirst);
+    ClearPrototype(Function, bFirst);
+    StartFreeze = 0;
+}
+var SysProtoMap = {};
+function SaveProto(Obj)
+{
+    var Prefix = typeof Obj;
+    for(var key in Obj.__proto__)
+    {
+        SysProtoMap[Prefix + key] = Obj.__proto__[key];
+    }
+}
+function ClearPrototype(Obj,bFirst)
+{
+    if(bFirst)
+    {
+        SaveProto(Obj);
+    }
+    var Prefix = typeof Obj;
+    for(var key in Obj.__proto__)
+    {
+        var Sys = SysProtoMap[Prefix + key];
+        if(Sys)
+            Obj.__proto__[key] = Sys;
+        else
+            delete Obj.__proto__[key];
+    }
+    if(bFirst)
+    {
+        FreezeObjectChilds(Obj);
+        Object.freeze(Obj);
+    }
 }
 function FreezeObjectChilds(Value)
 {
@@ -727,6 +777,14 @@ function CHKL(Str)
     if(typeof Str === "string" && Str.length > MAX_LENGTH_STRING)
         throw new Error("Invalid string length:" + Str.length);
     return Str;
+}
+function CHK404(Name)
+{
+    if(Name === "__proto__" || Name === "prototype")
+    {
+        throw new Error("Not allow Identifier '" + Name + "'");
+    }
+    return Name;
 }
 function GetParsing(Str)
 {

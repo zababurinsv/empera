@@ -865,7 +865,7 @@ HostingCaller.GetHistoryTransactions = function (Params)
 HostingCaller.GetSupply = function (Params)
 {
     if(HTTPS_HOSTING_DOMAIN === "terafoundation.org")
-        return "" + (1000000000 - 385 * 1000000);
+        return "" + (1000000000 - 384 * 1000000);
     var Data = DApps.Accounts.ReadState(0);
     if(!Data)
         return "";

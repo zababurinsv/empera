@@ -45,8 +45,11 @@ module.exports = function ()
         this.AddToStream = this.AddToStreamAddTab;
     };
     this.AllowedWords = {true:1, false:1, undefined:1, Infinity:1, NaN:1, null:1, context:5, this:5, arguments:5, };
-    this.KeyWords = {break:1, return:1, case:1, do:1, if:1, switch:1, var:1, throw:1, while:1, default:1, for:1, try:1, continue:1,
+    var mapKeys = {break:1, return:1, case:1, do:1, if:1, switch:1, var:1, throw:1, while:1, default:1, for:1, try:1, continue:1,
         with:1, function:3, void:3, new:3, delete:3, typeof:3, finally:5, catch:5, else:5, instanceof:4, in:4, };
+    this.KeyWords = Object.assign(Object.create(null), mapKeys);
+    this.KeyWords["__proto__"] = 100;
+    this.KeyWords["prototype"] = 100;
     this.ProcessWords = {break:"break", return:"return", case:"case", do:"do", if:"if", switch:"switch", var:"var", throw:"throw",
         with:"with", while:"while", default:"default", for:"for", try:"try", continue:"continue", function:"function", void:"void",
         new:"new", delete:"delete", typeof:"typeof", finally:"finally", catch:"catch", else:"else", };
@@ -491,6 +494,10 @@ module.exports = function ()
                 if(this.value == "in" || this.value == "of" || this.value == "instanceof")
                 {
                     return this.value;
+                }
+                if(this.KeyWords[this.value] === 100)
+                {
+                    this.Error("Not allow Identifier '" + this.value + "'");
                 }
                 return this.enIndenifier;
             case "N":
@@ -1007,7 +1014,10 @@ module.exports = function ()
                     bWasExpr = true;
                     break;
                 case "[":
-                    this.ParseDefArray();
+                    if(bCanDot)
+                        this.ParseProperty();
+                    else
+                        this.ParseDefArray();
                     bCanLeftSide = true;
                     bCanDot = true;
                     bWasExpr = true;
@@ -1369,6 +1379,12 @@ module.exports = function ()
         this.AddToStream("[");
         this.ParseExpressionWithComma("]", true);
         this.AddToStream("]");
+    };
+    this.ParseProperty = function ()
+    {
+        this.AddToStream("[CHK404(");
+        this.ParseExpressionWithComma("]", true);
+        this.AddToStream(")]");
     };
     this.ParseDefObject = function ()
     {

@@ -1,4 +1,5 @@
 
+const crypto = require('crypto');
 
 global.HTTP_PORT_NUMBER=Math.trunc(10000*Math.random())+50000;
 if(!global.DATA_PATH || global.DATA_PATH==="")
@@ -28,16 +29,21 @@ setTimeout(function ()
 {
     //global.WEB_LOG=1;
 
-    var Path="";
+    var Path;
+    global.NW_TOKEN=GetHexFromArr(crypto.randomBytes(32));
     if(global.HTTP_SERVER_START_OK)
     {
-        Path='http://localhost:'+global.HTTP_PORT_NUMBER;
+        //Path='http://localhost:'+global.HTTP_PORT_NUMBER+'/HTML/wallet.html';
+        Path='http://localhost:'+global.HTTP_PORT_NUMBER+'/HTML/'+global.NW_TOKEN;
     }
     else
     {
+        Path='/HTML/wallet.html';
         ToLog("ERR HTTP-SERVER NOT STARTING");
     }
-    nw.Window.open(Path+'/HTML/wallet.html',
+
+
+    nw.Window.open(Path,
         {
             width: 840,
             height: 1000,
@@ -45,6 +51,14 @@ setTimeout(function ()
         }, function(win)
         {
             //win.showDevTools();
+
+            //http://test.ru:58409/HTML/wallet.html
+
+            //Path+'/HTML/wallet.html'
+            //var Path2=Path+'/HTML/wallet.html';
+            //win.eval(null,'document.cookie = "NW_TOKEN='+global.NW_TOKEN+';path=/"');
+            //win.eval(null,'window.location="'+Path2+'"');
+            //window.location="http://localhost:58409/HTML/wallet.html"
 
             // Create a tray icon
             let Visible=1;

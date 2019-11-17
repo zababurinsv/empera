@@ -43,6 +43,11 @@ CacheMap["marked.js"] = 1000000;
 CacheMap["highlight.js"] = 1000000;
 CacheMap["highlight-html.js"] = 1000000;
 CacheMap["highlight-js.js"] = 1000000;
+var AllowArr = ["text/javascript", "application/javascript", "application/json", "application/octet-stream", "application/font-woff",
+"text/css", "audio/wav", "audio/mpeg", "image/vnd.microsoft.icon", "image/jpeg", "image/png", "image/gif", "text/plain", "text/csv"];
+var AllowMap = {};
+for(var i = 0; i < AllowArr.length; i++)
+    AllowMap[AllowArr[i]] = 1;
 if(!global.WebApi2)
     global.WebApi2 = {};
 global.HTTPCaller = {};
@@ -283,10 +288,11 @@ function SendToResponceFile(response,Block,TrNum)
     if(Body && Body[0] === global.TYPE_TRANSACTION_FILE)
     {
         var TR = DApps.File.GetObjectTransaction(Body);
-        if(TR.ContentType.toLowerCase().indexOf("html") >= 0)
-            response.writeHead(200, {'Content-Type':"text/plain", "X-Content-Type-Options":"nosniff"});
-        else
+        var StrType = TR.ContentType.toLowerCase();
+        if(AllowMap[StrType] || (StrType === "image/svg+xml" && Block.BlockNum < global.UPDATE_CODE_2))
             response.writeHead(200, {'Content-Type':TR.ContentType, "X-Content-Type-Options":"nosniff"});
+        else
+            response.writeHead(200, {'Content-Type':"text/plain", "X-Content-Type-Options":"nosniff"});
         response.end(TR.Data);
     }
     else
@@ -1494,7 +1500,7 @@ function SendWebFile(response,name,StrCookie,bParsing,Long)
         Path = "./" + name;
     else
         Path = name;
-    if(!fs.existsSync(Path))
+    if(!fs.existsSync(Path) || !fs.lstatSync(Path).isFile())
     {
         if(!global.DEV_MODE || type === "ico")
         {
@@ -1502,8 +1508,7 @@ function SendWebFile(response,name,StrCookie,bParsing,Long)
             response.end();
             return ;
         }
-        var data = "Not found: " + name;
-        response.end(data);
+        response.end("Not found: " + name);
         return ;
     }
     var StrContentType = ContenTypeMap[type];
@@ -1777,6 +1782,15 @@ if(global.HTTP_PORT_NUMBER)
     {
         ClientTokenMap = {};
     }, 24 * 3600 * 1000);
+    var MaxTimeEmptyAccess = 600;
+    var CountPswdPls = 0;
+    var TimeStartServer = Date.now();
+    var LocalClientTokenMap = LoadParams(GetDataPath("local-tokens.lst"), {});
+    var PasswordHash = GetHexFromArr(sha3(global.HTTP_PORT_PASSWORD));
+    if(LocalClientTokenMap.PasswordHash !== PasswordHash)
+    {
+        LocalClientTokenMap = {};
+    }
     var port = global.HTTP_PORT_NUMBER;
     var HTTPServer = http.createServer(function (request,response)
     {
@@ -1787,10 +1801,35 @@ if(global.HTTP_PORT_NUMBER)
         var remoteAddress = request.socket.remoteAddress.replace(/^.*:/, '');
         if(remoteAddress === "1")
             remoteAddress = "127.0.0.1";
+        var fromURL = url.parse(request.url);
+        var Path = querystring.unescape(fromURL.path);
+        if(!ClientIPMap[remoteAddress])
+        {
+            ClientIPMap[remoteAddress] = 1;
+            ToLog("TRY CONNECT TO HTTP ACCESS FROM: " + remoteAddress, 0);
+            ToLog("Path: " + Path, 0);
+        }
+        var Password = global.HTTP_PORT_PASSWORD;
         var CheckPassword;
-        if(!global.HTTP_PORT_PASSWORD && remoteAddress.indexOf("127.0.0.1") < 0)
-            return ;
-        if(global.HTTP_IP_CONNECT && remoteAddress.indexOf("127.0.0.1") < 0 && global.HTTP_IP_CONNECT.indexOf(remoteAddress) < 0)
+        if(!Password)
+        {
+            if(remoteAddress !== "127.0.0.1")
+                return ;
+            if(!global.NWMODE)
+            {
+                var Delta = Date.now() - TimeStartServer;
+                if(Delta > MaxTimeEmptyAccess * 1000)
+                    Password = GetHexFromArr(crypto.randomBytes(16));
+                else
+                    if(Delta > (MaxTimeEmptyAccess - 10) * 1000)
+                    {
+                        CountPswdPls++;
+                        if(CountPswdPls <= 5)
+                            ToLog("PLEASE, SET PASSWORD FOR ACCCES TO FULL NODE");
+                    }
+            }
+        }
+        if(global.HTTP_IP_CONNECT && remoteAddress !== "127.0.0.1" && global.HTTP_IP_CONNECT.indexOf(remoteAddress) < 0)
             return ;
         CheckPassword = 1;
         SetSafeResponce(response);
@@ -1800,31 +1839,53 @@ if(global.HTTP_PORT_NUMBER)
             response.end("");
             return ;
         }
-        var fromURL = url.parse(request.url);
-        var Path = querystring.unescape(fromURL.path);
         if(global.NWMODE)
         {
             Path = Path.replace("HTML/HTML", "HTML");
+            if("/HTML/" + global.NW_TOKEN === Path)
+            {
+                if(!Password)
+                {
+                    SendWebFile(response, "/HTML/wallet.html", "NW_TOKEN=" + global.NW_TOKEN + ";path=/");
+                    return ;
+                }
+                else
+                {
+                    Path = "/HTML/wallet.html";
+                }
+            }
+            if(!Password)
+            {
+                var cookies = parseCookies(request.headers.cookie);
+                var cookies_token = cookies["NW_TOKEN"];
+                if(cookies_token === global.NW_TOKEN)
+                {
+                    CheckPassword = 0;
+                }
+                else
+                {
+                    return ;
+                }
+            }
         }
-        if(!ClientIPMap[remoteAddress])
+        if(CheckPassword && Password)
         {
-            ClientIPMap[remoteAddress] = 1;
-            ToLog("TRY CONNECT TO HTTP ACCESS FROM: " + remoteAddress, 0);
-            ToLog("Path: " + Path, 0);
-        }
-        if(CheckPassword && global.HTTP_PORT_PASSWORD)
-        {
+            var TokenMap;
+            if(remoteAddress === "127.0.0.1")
+                TokenMap = LocalClientTokenMap;
+            else
+                TokenMap = ClientTokenMap;
             var StrPort = "";
             if(global.HTTP_PORT_NUMBER !== 80)
                 StrPort = global.HTTP_PORT_NUMBER;
             var cookies = parseCookies(request.headers.cookie);
             var cookies_token = cookies["token" + StrPort];
             var cookies_hash = cookies["hash" + StrPort];
-            if(cookies_token && cookies_hash && ClientTokenMap[cookies_token] === 0)
+            if(cookies_token && cookies_hash && TokenMap[cookies_token] === 0)
             {
                 if(cookies_hash.substr(0, 4) !== "0000")
                 {
-                    SendWebFile(response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/");
+                    SendPasswordFile(Path, response, StrPort, cookies_token);
                     return ;
                 }
                 var nonce = 0;
@@ -1835,22 +1896,27 @@ if(global.HTTP_PORT_NUMBER)
                     if(!nonce)
                         nonce = 0;
                 }
-                var hash = ClientHex(cookies_token + "-" + global.HTTP_PORT_PASSWORD, nonce);
+                var hash = ClientHex(cookies_token + "-" + Password, nonce);
                 if(hash === cookies_hash)
                 {
-                    ClientTokenMap[cookies_token] = 1;
+                    TokenMap[cookies_token] = 1;
+                    if(TokenMap === LocalClientTokenMap)
+                    {
+                        LocalClientTokenMap.PasswordHash = GetHexFromArr(sha3(Password));
+                        SaveParams(GetDataPath("local-tokens.lst"), LocalClientTokenMap);
+                    }
                 }
                 else
                 {
-                    SendWebFile(response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/");
+                    SendPasswordFile(Path, response, StrPort, cookies_token);
                     return ;
                 }
             }
-            if(!cookies_token || !ClientTokenMap[cookies_token])
+            if(!cookies_token || !TokenMap[cookies_token])
             {
                 var StrToken = GetHexFromArr(crypto.randomBytes(16));
-                ClientTokenMap[StrToken] = 0;
-                SendWebFile(response, "./HTML/password.html", "token" + StrPort + "=" + StrToken + ";path=/");
+                TokenMap[StrToken] = 0;
+                SendPasswordFile(Path, response, StrPort, StrToken);
                 return ;
             }
         }
@@ -1906,6 +1972,18 @@ if(global.HTTP_PORT_NUMBER)
         ToError("H##3");
         ToError(err);
     });
+}
+function SendPasswordFile(Path,response,StrPort,cookies_token)
+{
+    if(!Path || Path === "/" || Path.substr(Path.length - 4, 4) === "html")
+    {
+        SendWebFile(response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/");
+    }
+    else
+    {
+        response.writeHead(404, {'Content-Type':'text/html'});
+        response.end("");
+    }
 }
 if(global.ELECTRON)
 {

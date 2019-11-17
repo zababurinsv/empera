@@ -204,7 +204,8 @@ else
                         catch(e)
                         {
                             console.log("Error parsing: " + e);
-                            console.log(serv.responseText);
+                            if(serv.responseText)
+                                console.log(serv.responseText.substr(0, 200));
                             console.log(STACK);
                         }
                         Func(Data, serv.responseText);
@@ -1057,11 +1058,15 @@ function RetHistoryAccount(Item,Name)
     if(Num < 1)
         return "" + Num;
     var Str;
-    if(UseInnerPage())
+    if(UseInnerPage() || window.NWMODE)
         Str = "<a class='olink' target='_blank' onclick='OpenHistoryPage(" + Num + ")'>" + Num + "</a>";
     else
         Str = "<a class='olink' target='_blank' href='./history.html#" + Num + "'>" + Num + "</a>";
     return Str;
+}
+function OpenHistoryPage(Num)
+{
+    OpenWindow("./history.html#" + Num, 'history', 800, 800);
 }
 function RetBaseAccount(Item)
 {
@@ -1072,10 +1077,14 @@ function RetBaseAccount(Item)
 }
 function ViewTransaction(BlockNum)
 {
-    if(UseInnerPage())
+    if(UseInnerPage() || window.NWMODE)
         OpenBlockViewerPage(BlockNum);
     else
         window.Open('./blockviewer.html#' + BlockNum, 'viewer', 800, 800);
+}
+function OpenBlockViewerPage(BlockNum)
+{
+    window.Open('./blockviewer.html#' + BlockNum, 'viewer', 800, 800);
 }
 function formatDate(now)
 {
