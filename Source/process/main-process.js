@@ -684,7 +684,12 @@ function RunServer()
         }
     }
     KeyPair.setPrivateKey(Buffer.from(ServerPrivKey));
-    new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, false);
+    var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, false);
+    if(global.TEST_JINN)
+    {
+        var JinnLib = require("../jinn/init");
+        var Engine = JinnLib.Create(Worker);
+    }
     DoStartFindList();
 }
 function DoStartFindList()

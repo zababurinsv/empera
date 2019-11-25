@@ -1050,14 +1050,14 @@ module.exports = class CDB extends require("../code")
         {
             Tr.num = BlockNum
             var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-            for(var i = 0; i < global.TR_TICKET_HASH_LENGTH; i++)
+            for(var i = 0; i < global.TX_TICKET_HASH_LENGTH; i++)
                 FullHashTicket[i] = Tr.HashTicket[i]
-            WriteUintToArrOnPos(FullHashTicket, Tr.num, global.TR_TICKET_HASH_LENGTH)
+            WriteUintToArrOnPos(FullHashTicket, Tr.num, global.TX_TICKET_HASH_LENGTH)
             Tr.HashPow = sha3(FullHashTicket)
             Tr.power = GetPowPower(Tr.HashPow)
             Tr.TimePow = Tr.power
             if(SetTxID)
-                Tr.TxID = GetHexFromArr(FullHashTicket.slice(0, TR_TICKET_HASH_LENGTH + 6))
+                Tr.TxID = GetHexFromArr(FullHashTicket.slice(0, TX_TICKET_HASH_LENGTH + 6))
         }
     }
     CheckCreateTransactionObject(Tr, SetTxID)
@@ -1071,7 +1071,7 @@ module.exports = class CDB extends require("../code")
                 Tr.HASH = sha3(Body)
             else
                 Tr.HASH = shaarr(Body)
-            Tr.HashTicket = Tr.HASH.slice(0, global.TR_TICKET_HASH_LENGTH)
+            Tr.HashTicket = Tr.HASH.slice(0, global.TX_TICKET_HASH_LENGTH)
             this.CheckCreateTicketObject(Tr, Tr.num, SetTxID)
         }
     }

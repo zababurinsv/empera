@@ -32,7 +32,7 @@ WebApi2.CreateAccount = function (Params,response)
         var Confirm = ParseNum(Params.Confirm);
         SendTransaction(Body, TR, Confirm, function (result,text)
         {
-            var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TR_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
+            var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
                 Meta:Params.Meta, };
             if(typeof Params.F === "function")
                 Params.F(Result);
@@ -114,7 +114,7 @@ WebApi2.Send = function (Params,response,A,bJsonRet)
     Body = Body.slice(0, Body.len + 12);
     SendTransaction(Body, TR, Confirm, function (result,text)
     {
-        var TxID = GetHexFromArr(TR._TxID.slice(0, TR_TICKET_HASH_LENGTH + 6));
+        var TxID = GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6));
         var Result = {result:result, text:text, TxID:TxID, BlockNum:TR._BlockNum, Meta:Params.Meta, };
         if(typeof Params.F === "function")
             Params.F(Result);
@@ -261,7 +261,7 @@ WebApi2.SendRawTransaction = function (Params,response)
         Body = Body.slice(0, Body.len + 12);
         SendTransaction(Body, TR, Params.Wait, function (result,text)
         {
-            var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TR_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
+            var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
                 Meta:Params.Meta, };
             var Str = JSON.stringify(Result);
             response.end(Str);

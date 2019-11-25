@@ -10,7 +10,6 @@
 
 require("./constant.js");
 var fs = require('fs');
-require("./log-strict.js");
 var file_name_info = GetDataPath("info.log");
 var file_name_infoPrev = GetDataPath("info-prev.log");
 CheckSizeLogFile(file_name_info, file_name_infoPrev);
@@ -485,4 +484,30 @@ global.GetStrTime = function (now)
     Str = Str + ":" + now.getSeconds().toStringZ(2);
     Str = Str + "." + now.getMilliseconds().toStringZ(3);
     return Str;
+}
+function CheckSizeLogFile(FILE_NAME_LOG,FILE_NAME_LOG_PREV)
+{
+    setInterval(function ()
+    {
+        fs.stat(FILE_NAME_LOG, function (err,stat)
+        {
+            if(err)
+                return ;
+            if(stat.size > MAX_SIZE_LOG)
+            {
+                fs.stat(FILE_NAME_LOG_PREV, function (err2,stat2)
+                {
+                    if(!err2)
+                        fs.unlinkSync(FILE_NAME_LOG_PREV);
+                    fs.rename(FILE_NAME_LOG, FILE_NAME_LOG_PREV, function (err3)
+                    {
+                        if(err3)
+                            ToLog("**************** ERROR on rename file: " + FILE_NAME_LOG);
+                        else
+                            ToLog("truncate file " + FILE_NAME_LOG + " ok");
+                    });
+                });
+            }
+        });
+    }, 60 * 1000);
 }

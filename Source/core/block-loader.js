@@ -74,7 +74,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             this.TruncateBlockDB(CurNum)
             this.BlockNumDB = CurNum
         }
-        if(this.BlockNumDB < BLOCK_PROCESSING_LENGTH2)
+        if(this.BlockNumDB < BLOCK_GENESIS_COUNT)
             this.CreateGenesisBlocks()
         GenerateStartedBlocks()
         if(fs.existsSync(GetCodePath("EXPERIMENTAL/_run.js")))
@@ -86,7 +86,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     CreateGenesisBlocks()
     {
         var PrevArr = [];
-        for(var n = 0; n < BLOCK_PROCESSING_LENGTH2; n++)
+        for(var n = 0; n < BLOCK_GENESIS_COUNT; n++)
         {
             var Block = this.GenesisBlockHeaderDB(n);
             PrevArr[n] = Block
@@ -559,6 +559,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             if(!Context.WasLoadNum)
             {
                 ToLog("Not found: " + Context.BlockNum + " from node:" + NodeName(Info.Node), 2)
+                this.AddCheckErrCount(Info.Node, 10)
                 Context.BlockNum = Math.floor(Context.BlockNum - Context.DeltaBlockNum)
                 Context.DeltaBlockNum = Context.DeltaBlockNum * 1.2
                 if(Context.BlockNum < BLOCK_PROCESSING_LENGTH2)
@@ -1496,8 +1497,9 @@ global.LoadBlockFromNetwork = function (Params,F)
                     }
                     ToLog("Got BlockFromNetwork:" + Params.BlockNum + " from " + NodeName(Info.Node), 2);
                     var ResError;
-                    if(!Block.arrContent || Block.arrContent.length === 0)
+                    if(!Block.arrContent || (Block.arrContent.length === 0 && !IsZeroArr(Block.TreeHash)))
                     {
+                        ToLog("ERR BLOCK:\n" + JSON.stringify(Block), 2);
                         ResError = 1;
                     }
                     else
@@ -1533,7 +1535,7 @@ function GenerateStartedBlocks()
     }
     if(SERVER.BlockNumDB < GetCurrentBlockNumByTime())
     {
-        if(SERVER.BlockNumDB < BLOCK_PROCESSING_LENGTH2)
+        if(SERVER.BlockNumDB < BLOCK_GENESIS_COUNT)
             SERVER.CreateGenesisBlocks();
         if(CREATE_ON_START)
         {

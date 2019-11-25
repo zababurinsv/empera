@@ -225,7 +225,7 @@ function GetTxID(BlockNum,Body)
 {
     var Nonce = ReadUintFromArr(Body, Body.length - 6);
     var Arr2 = CreateTxID(Body, BlockNum, Nonce);
-    return Arr2.slice(0, TR_TICKET_HASH_LENGTH + 6);
+    return Arr2.slice(0, TX_TICKET_HASH_LENGTH + 6);
 }
 global.CreateTxID = CreateTxID;
 function CreateTxID(body,BlockNum,Nonce)
@@ -234,8 +234,8 @@ function CreateTxID(body,BlockNum,Nonce)
     body.writeUIntLE(Nonce, body.length - 6, 6);
     var HASH = sha3(body);
     var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    for(var i = 0; i < TR_TICKET_HASH_LENGTH; i++)
+    for(var i = 0; i < TX_TICKET_HASH_LENGTH; i++)
         FullHashTicket[i] = HASH[i];
-    WriteUintToArrOnPos(FullHashTicket, BlockNum, TR_TICKET_HASH_LENGTH);
+    WriteUintToArrOnPos(FullHashTicket, BlockNum, TX_TICKET_HASH_LENGTH);
     return FullHashTicket;
 }

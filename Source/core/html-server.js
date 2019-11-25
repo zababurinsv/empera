@@ -2174,7 +2174,7 @@ function GetTransactionByID(Params)
     if(typeof Params.TxID === "string")
     {
         var Arr = GetArrFromHex(Params.TxID);
-        BlockNum = ReadUintFromArr(Arr, TR_TICKET_HASH_LENGTH);
+        BlockNum = ReadUintFromArr(Arr, TX_TICKET_HASH_LENGTH);
         var Block = SERVER.ReadBlockDB(BlockNum);
         if(Block && Block.arrContent)
         {

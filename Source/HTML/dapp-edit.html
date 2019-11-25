@@ -857,6 +857,11 @@
             editCode.setValue(Smart.Code);
             editHTML.setValue(Smart.HTML);
 
+
+            editCode.getSession().setUndoManager(new ace.UndoManager());
+            editHTML.getSession().setUndoManager(new ace.UndoManager());
+
+
             editCode.WasReload=1;
             editHTML.WasReload=1;
 

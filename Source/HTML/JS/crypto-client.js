@@ -76,7 +76,7 @@ function CreateNoncePOWExtern(arr0,BlockNum,count,startnone)
     }
     return maxnonce;
 }
-window.TR_TICKET_HASH_LENGTH = 10;
+window.TX_TICKET_HASH_LENGTH = 10;
 function CreateHashBody(body,Num,Nonce)
 {
     var length = body.length - 12;
@@ -95,9 +95,9 @@ function CreateHashBody(body,Num,Nonce)
     body[length + 5] = 0;
     var HASH = sha3(body);
     var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    for(var i = 0; i < TR_TICKET_HASH_LENGTH; i++)
+    for(var i = 0; i < TX_TICKET_HASH_LENGTH; i++)
         FullHashTicket[i] = HASH[i];
-    WriteUintToArrOnPos(FullHashTicket, Num, TR_TICKET_HASH_LENGTH);
+    WriteUintToArrOnPos(FullHashTicket, Num, TX_TICKET_HASH_LENGTH);
     return sha3(FullHashTicket);
 }
 window.DELTA_POWER_POW_TR = 0;

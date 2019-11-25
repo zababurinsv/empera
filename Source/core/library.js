@@ -275,6 +275,17 @@ global.CompareItemTimePow = function (a,b)
     else
         return CompareArr(a.HashPow, b.HashPow);
 }
+global.GetArrFromMap = function (Map)
+{
+    if(!Map)
+        return [];
+    var Arr = [];
+    for(var key in Map)
+    {
+        Arr.push(Map[key]);
+    }
+    return Arr;
+}
 global.LOAD_CONST = function ()
 {
     var Count = 0;
