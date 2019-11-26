@@ -687,7 +687,7 @@ function RunServer()
     var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, false);
     if(global.TEST_JINN)
     {
-        var JinnLib = require("../jinn/init");
+        var JinnLib = require("../jinn/tera-environment");
         var Engine = JinnLib.Create(Worker);
     }
     DoStartFindList();

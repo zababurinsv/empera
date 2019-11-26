@@ -733,7 +733,7 @@ module.exports = class CDB extends require("../code")
         Block.Info = ""
         Block.BlockNum = Num
         Block.SeqHash = this.GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
-        if(Block.BlockNum >= BLOCK_PROCESSING_LENGTH2)
+        if(Block.BlockNum >= BLOCK_GENESIS_COUNT)
         {
             CalcHashBlockFromSeqAddr(Block)
         }

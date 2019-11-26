@@ -317,6 +317,10 @@ function CompareArrL(a,b)
     }
     return 0;
 }
+function IsEqArr(a,b)
+{
+    return (CompareArr(a, b) === 0) ? 1 : 0;
+}
 function GetSeqHash(BlockNum,PrevHash,TreeHash)
 {
     var arr = [GetArrFromValue(BlockNum), PrevHash, TreeHash];
@@ -442,6 +446,7 @@ if(typeof global === "object")
     global.ParseNum = ParseNum;
     global.CompareArr = CompareArr;
     global.CompareArrL = CompareArrL;
+    global.IsEqArr = IsEqArr;
     global.shaarr2 = shaarr2;
     global.sha3arr2 = sha3arr2;
     global.arr2 = arr2;
