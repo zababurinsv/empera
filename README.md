@@ -169,6 +169,19 @@ pm2 start run-test.js
 
 
 
+## Note
+After starting the node a file (DATA/const.lst) is created in which the default settings are set:
+```
+  "REST_START_COUNT": 10000,
+  "LOAD_TO_BEGIN": 2,
+```
+The above parameters allow you to quickly start a full node from scratch, but does not allow you to see the history of events that were before the launch of the full node.
+If you want to have all the information, for example you are an exchange or to create any public services, for example a public block viewer, you need to download the blockchain completely. To do this, set the parameters to 0:
+```
+  "REST_START_COUNT": 0,
+  "LOAD_TO_BEGIN": 0,
+```
+And re-create the database: by deleting the DATA/DB directory or through interface Explorer -> Utilities -> Clear DataBase
 
 
 
