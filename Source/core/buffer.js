@@ -565,7 +565,7 @@ function GetBufferFromObject(data,format,size,WorkStruct,bNotSlice)
 }
 function GetFormatFromObject(Obj)
 {
-    var Str;
+    var Str = "{";
     var Type = typeof Obj;
     LType:
     switch(Type)

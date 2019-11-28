@@ -37,7 +37,7 @@ window.onload = function ()
     InitAccountsCard();
     DoLangScript();
     InitWalletKeyName();
-    if(Storage.getItem("NETWORK") || IsLocalClient())
+    if(IsLocalClient())
     {
         OnLoad();
     }
@@ -48,6 +48,8 @@ window.onload = function ()
             if(Data && Data.result)
             {
                 Storage.setItem("NETWORK", Data.NETWORK);
+                console.log("Default network: " + Data.NETWORK);
+                SetServerList(Data.NETWORK);
                 OnLoad();
             }
         });
@@ -56,7 +58,7 @@ window.onload = function ()
     if(HasPassword)
     {
         NotModalClose = 1;
-        openModal('password-modal-enter');
+        OpenPasswordForm();
     }
     else
     {
@@ -71,6 +73,12 @@ window.onload = function ()
             if(IsVisibleBlock("overlay"))
                 closeModal();
         }
+        else
+            if(e.keyCode === 13)
+            {
+                if(glConfirmF)
+                    OnConfirmOK();
+            }
     };
     $("idAccountsList").addEventListener("click", MyToggleList);
     if(window.addEventListener)
@@ -87,16 +95,15 @@ window.onload = function ()
         AddFrame("BlockViewerPage", "./blockviewer.html");
     }
 }
+function SetServerList(Name)
+{
+    NETWORK_NAME = Name;
+    FillSelect("idCurNetwork", [{value:NETWORK_NAME, text:Name}]);
+    $("idCurNetwork").value = NETWORK_NAME;
+    Storage.setItem("NETWORK", NETWORK_NAME);
+}
 function OnLoad()
 {
-    if(window.location.protocol === "https:")
-    {
-        NETWORK_NAME = "TERA-MAIN";
-        FillSelect("idCurNetwork", [{value:NETWORK_NAME, text:"TERA MAIN"}]);
-        $("idCurNetwork").value = NETWORK_NAME;
-        Storage.setItem("NETWORK", NETWORK_NAME);
-    }
-    else
     {
         if(Storage.getItem("NETWORK"))
         {
@@ -735,6 +742,7 @@ function closeModal()
 {
     if(NotModalClose)
         return ;
+    glConfirmF = undefined;
     glWasModal = 0;
     var modals = document.querySelectorAll(".modal");
     var overlay = document.querySelector("#overlay");
@@ -873,13 +881,19 @@ function SetNewPassword()
     SetUsePassword(Str1);
 }
 var MultipleMode = 0;
-function MyOpenWallet(bCheck)
+function MyOpenWallet(bNoCheck)
+{
+    var Result = MyOpenWalletInner(bNoCheck);
+    if(!Result)
+        OpenPasswordForm();
+}
+function MyOpenWalletInner(bNoCheck)
 {
     var Str = $("Password").value.trim();
     if(!Str)
     {
         SetError("Type password, pls");
-        return ;
+        return 0;
     }
     $("Password").value = "";
     if(Str.substr(0, 11) === "--subwallet")
@@ -896,7 +910,7 @@ function MyOpenWallet(bCheck)
             SetStatus("Set subwallet mode");
         }
         SetUsePassword(1);
-        return ;
+        return 1;
     }
     if(Str === "--reset")
     {
@@ -905,13 +919,19 @@ function MyOpenWallet(bCheck)
         SetUsePassword(0);
         NotModalClose = 0;
         closeModal();
-        return ;
+        return 1;
     }
     SetWalletPassword(Str);
     OpenWalletKey();
     SetStatus("");
     var PrivKey = GetArrFromHex(GetPrivKey());
-    if(bCheck)
+    if(bNoCheck)
+    {
+        MultipleMode = 1;
+        SetVisibleBlock("idKeyEdit", 0);
+        SetVisibleBlock("idLoad2", 0);
+    }
+    else
     {
         var WasPubKey = Storage.getItem("WALLET_PUB_KEY_MAIN");
         var TestPubKey = GetHexFromArr(SignLib.publicKeyCreate(PrivKey, 1));
@@ -919,18 +939,12 @@ function MyOpenWallet(bCheck)
         {
             SetWalletPassword("");
             SetError("Wrong password");
-            return ;
+            return 0;
         }
         SetStatus("Password ok");
         MultipleMode = 0;
         SetVisibleBlock("idKeyEdit", 1);
         SetVisibleBlock("idLoad2", 1);
-    }
-    else
-    {
-        MultipleMode = 1;
-        SetVisibleBlock("idKeyEdit", 0);
-        SetVisibleBlock("idLoad2", 0);
     }
     NotModalClose = 0;
     closeModal();
@@ -943,12 +957,19 @@ function MyOpenWallet(bCheck)
         Storage.setItem(WALLET_KEY_LOGIN, "");
     }, 10);
     Storage.setItem(WALLET_KEY_EXIT, "");
+    return 1;
 }
 function SetUsePassword(bUse)
 {
     document.documentElement.style.setProperty('--fill--password', bUse ? 'red' : 'white');
     SetVisibleBlock("idWalletExit", !!bUse);
     SetVisibleBlock("idEntrance", Storage.getItem("USESUBWALLET") === "1");
+}
+function OpenPasswordForm()
+{
+    openModal('password-modal-enter');
+    glConfirmF = MyOpenWallet;
+    $("Password").focus();
 }
 function DoExitWallet()
 {
@@ -958,7 +979,7 @@ function DoExitWallet()
     $("Password").value = "";
     SetWalletPassword("");
     OpenWalletKey();
-    openModal('password-modal-enter');
+    OpenPasswordForm();
     Storage.setItem(WALLET_KEY_EXIT, Date.now());
 }
 var StrDappCardTemplate;

@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-window.CLIENT_VERSION = 15;
+window.CLIENT_VERSION = 16;
 function $(id)
 {
     return document.getElementById(id);
@@ -530,7 +530,7 @@ function ReadUint32FromArr(arr,len)
         len = arr.len;
         arr.len += 4;
     }
-    var value = (arr[len + 3] << 23) * 2 + (arr[len + 3] << 16) + (arr[len + 1] << 8) + arr[len];
+    var value = (arr[len + 3] << 23) * 2 + (arr[len + 2] << 16) + (arr[len + 1] << 8) + arr[len];
     return value;
 }
 function ReadArr(arr,length)
@@ -2158,8 +2158,11 @@ function OnConfirmOK()
 {
     closeModal();
     if(glConfirmF)
-        glConfirmF();
-    glConfirmF = undefined;
+    {
+        var F = glConfirmF;
+        glConfirmF = undefined;
+        F();
+    }
 }
 function SetTempDisabled(Id,TimeSec)
 {

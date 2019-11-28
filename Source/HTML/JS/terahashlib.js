@@ -319,6 +319,8 @@ function CompareArrL(a,b)
 }
 function IsEqArr(a,b)
 {
+    if(a.length !== b.length)
+        return 0;
     return (CompareArr(a, b) === 0) ? 1 : 0;
 }
 function GetSeqHash(BlockNum,PrevHash,TreeHash)
