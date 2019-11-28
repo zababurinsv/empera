@@ -50,6 +50,10 @@ module.exports = function ()
     this.KeyWords = Object.assign(Object.create(null), mapKeys);
     this.KeyWords["__proto__"] = 100;
     this.KeyWords["prototype"] = 100;
+    this.KeyWords["constructor"] = 100;
+    this.KeyWords["__count__"] = 100;
+    this.KeyWords["__noSuchMethod__"] = 100;
+    this.KeyWords["__parent__"] = 100;
     this.ProcessWords = {break:"break", return:"return", case:"case", do:"do", if:"if", switch:"switch", var:"var", throw:"throw",
         with:"with", while:"while", default:"default", for:"for", try:"try", continue:"continue", function:"function", void:"void",
         new:"new", delete:"delete", typeof:"typeof", finally:"finally", catch:"catch", else:"else", };

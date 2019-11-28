@@ -10,6 +10,47 @@
 
 "use strict";
 var LOC_ADD_NAME = "$";
+const MAX_LENGTH_STRING = 5000;
+const $Math = {};
+const $JSON = {};
+var ListF = {};
+ListF.$Math = $Math;
+ListF.$JSON = $JSON;
+var TickCounter = 0;
+global.SetTickCounter = function (Value)
+{
+    TickCounter = Value;
+}
+function DO(Count)
+{
+    TickCounter -= Count;
+    if(TickCounter < 0)
+        throw new Error("Stop the execution code. The limit of ticks is over.");
+}
+var Map404 = Object.assign(Object.create(null), {});
+Map404["prototype"] = 100;
+Map404["constructor"] = 100;
+Map404["__proto__"] = 100;
+Map404["__count__"] = 100;
+Map404["__noSuchMethod__"] = 100;
+Map404["__parent__"] = 100;
+function CHK404(Name)
+{
+    if(Map404[Name])
+    {
+        throw new Error("Not allow Identifier '" + Name + "'");
+    }
+    return Name;
+}
+function CHKL(Str)
+{
+    if(typeof Str === "string" && Str.length > MAX_LENGTH_STRING)
+        throw new Error("Invalid string length:" + Str.length);
+    return Str;
+}
+ListF.DO = DO;
+ListF.CHK404 = CHK404;
+ListF.CHKL = CHKL;
 function GET_ACCOUNT(Obj)
 {
     let Data = Obj;
@@ -283,32 +324,6 @@ function InitEval()
         DO(1);
         return 0;
     };
-    Object.freeze($SetValue);
-    Object.freeze($Send);
-    Object.freeze($Move);
-    Object.freeze($Event);
-    Object.freeze($ReadAccount);
-    Object.freeze($ReadState);
-    Object.freeze($WriteState);
-    Object.freeze($GetMaxAccount);
-    Object.freeze($ADD);
-    Object.freeze($SUB);
-    Object.freeze($ISZERO);
-    Object.freeze($FLOAT_FROM_COIN);
-    Object.freeze($COIN_FROM_FLOAT);
-    Object.freeze($COIN_FROM_STRING);
-    Object.freeze($GetHexFromArr);
-    Object.freeze($GetArrFromHex);
-    Object.freeze($sha);
-    Object.freeze($ReadSmart);
-    Object.freeze($isFinite);
-    Object.freeze($isNaN);
-    Object.freeze($parseFloat);
-    Object.freeze($parseInt);
-    Object.freeze($parseUint);
-    Object.freeze($String);
-    Object.freeze($Number);
-    Object.freeze($Boolean);
     var arr = Object.getOwnPropertyNames(JSON);
     for(var name of arr)
     {
@@ -331,47 +346,9 @@ function InitEval()
     Object.freeze(Obj.call);
     Object.freeze(Obj.toString);
     Object.freeze(Obj.constructor);
-}
-var StartFreeze = 1;
-function ClearContext()
-{
-    var bFirst = StartFreeze;
-    ClearPrototype([], bFirst);
-    ClearPrototype({}, bFirst);
-    ClearPrototype("", bFirst);
-    ClearPrototype(1, bFirst);
-    ClearPrototype(true, bFirst);
-    ClearPrototype(Function, bFirst);
-    StartFreeze = 0;
-}
-var SysProtoMap = {};
-function SaveProto(Obj)
-{
-    var Prefix = typeof Obj;
-    for(var key in Obj.__proto__)
+    for(var key in ListF)
     {
-        SysProtoMap[Prefix + key] = Obj.__proto__[key];
-    }
-}
-function ClearPrototype(Obj,bFirst)
-{
-    if(bFirst)
-    {
-        SaveProto(Obj);
-    }
-    var Prefix = typeof Obj;
-    for(var key in Obj.__proto__)
-    {
-        var Sys = SysProtoMap[Prefix + key];
-        if(Sys)
-            Obj.__proto__[key] = Sys;
-        else
-            delete Obj.__proto__[key];
-    }
-    if(bFirst)
-    {
-        FreezeObjectChilds(Obj);
-        Object.freeze(Obj);
+        Object.freeze(ListF[key]);
     }
 }
 function FreezeObjectChilds(Value)
@@ -463,16 +440,7 @@ function ChangePrototype()
             return this.substr(0, this.length);
     };
 }
-const MAX_LENGTH_STRING = 5000;
-const $Math = {};
-const $JSON = {};
-function DO(Count)
-{
-    global.TickCounter -= Count;
-    if(global.TickCounter < 0)
-        throw new Error("Stop the execution code. The limit of ticks is over.");
-}
-function $SetValue(ID,CoinSum)
+ListF.$SetValue = function (ID,CoinSum)
 {
     DO(3000);
     ID = ParseNum(ID);
@@ -507,7 +475,7 @@ function $SetValue(ID,CoinSum)
     DApps.Accounts.WriteStateTR(ToData, RunContext.TrNum);
     return true;
 }
-function $Send(ToID,CoinSum,Description)
+ListF.$Send = function (ToID,CoinSum,Description)
 {
     DO(3000);
     ToID = ParseNum(ToID);
@@ -534,7 +502,7 @@ function $Send(ToID,CoinSum,Description)
     DApps.Accounts.SendMoneyTR(RunContext.Block, RunContext.Account.Num, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum,
     Description, Description, 1, 1);
 }
-function $Move(FromID,ToID,CoinSum,Description)
+ListF.$Move = function (FromID,ToID,CoinSum,Description)
 {
     DO(3000);
     FromID = ParseNum(FromID);
@@ -575,7 +543,7 @@ function $Move(FromID,ToID,CoinSum,Description)
     DApps.Accounts.SendMoneyTR(RunContext.Block, FromID, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum, Description, Description,
     1, 1);
 }
-function $Event(Description)
+ListF.$Event = function (Description)
 {
     DO(50);
     DApps.Accounts.DBChanges.TREvent.push({Description:Description, Smart:RunContext.Smart.Num, Account:RunContext.Account.Num,
@@ -587,7 +555,7 @@ function $Event(Description)
         ToLogClient(Description, global.CurTrItem, false);
     }
 }
-function $ReadAccount(ID)
+ListF.$ReadAccount = function (ID)
 {
     DO(900);
     ID = ParseNum(ID);
@@ -596,7 +564,7 @@ function $ReadAccount(ID)
         throw "Error read account Num: " + ID;
     return GET_ACCOUNT(Account);
 }
-function $ReadSmart(ID)
+ListF.$ReadSmart = function (ID)
 {
     if(RunContext.BlockNum < global.UPDATE_CODE_2)
     {
@@ -609,7 +577,7 @@ function $ReadSmart(ID)
         throw "Error smart ID: " + ID;
     return GET_SMART(Smart);
 }
-function $ReadState(ID)
+ListF.$ReadState = function (ID)
 {
     DO(900);
     ID = ParseNum(ID);
@@ -639,7 +607,7 @@ function $ReadState(ID)
         Data.Num = ID;
     return Data;
 }
-function $WriteState(Obj,ID)
+ListF.$WriteState = function (Obj,ID)
 {
     DO(3000);
     if(ID === undefined)
@@ -656,22 +624,22 @@ function $WriteState(Obj,ID)
     Account.Value.Data = BufLib.GetBufferFromObject(Obj, Smart.StateFormat, 80, Smart.WorkStruct, 1);
     DApps.Accounts.WriteStateTR(Account, RunContext.TrNum);
 }
-function $GetMaxAccount()
+ListF.$GetMaxAccount = function ()
 {
     DO(20);
     return DApps.Accounts.DBChanges.TRMaxAccount;
 }
-function $ADD(Coin,Value2)
+ListF.$ADD = function (Coin,Value2)
 {
     DO(5);
     return ADD(Coin, Value2);
 }
-function $SUB(Coin,Value2)
+ListF.$SUB = function (Coin,Value2)
 {
     DO(5);
     return SUB(Coin, Value2);
 }
-function $ISZERO(Coin)
+ListF.$ISZERO = function (Coin)
 {
     DO(5);
     if(Coin.SumCOIN === 0 && Coin.SumCENT === 0)
@@ -679,22 +647,22 @@ function $ISZERO(Coin)
     else
         return false;
 }
-function $FLOAT_FROM_COIN(Coin)
+ListF.$FLOAT_FROM_COIN = function (Coin)
 {
     DO(5);
     return FLOAT_FROM_COIN(Coin);
 }
-function $COIN_FROM_FLOAT(Sum)
+ListF.$COIN_FROM_FLOAT = function (Sum)
 {
     DO(20);
     return COIN_FROM_FLOAT(Sum);
 }
-function $COIN_FROM_STRING(Sum)
+ListF.$COIN_FROM_STRING = function (Sum)
 {
     DO(20);
     return COIN_FROM_STRING(Sum);
 }
-function $require(SmartNum)
+ListF.$require = function (SmartNum)
 {
     DO(2000);
     SmartNum = ParseNum(SmartNum);
@@ -707,32 +675,32 @@ function $require(SmartNum)
     EvalContext.funclist.SetContext(RunContext.context);
     return EvalContext.publist;
 }
-function $GetHexFromArr(Arr)
+ListF.$GetHexFromArr = function (Arr)
 {
     DO(20);
     return GetHexFromArr(Arr);
 }
-function $GetArrFromHex(Str)
+ListF.$GetArrFromHex = function (Str)
 {
     DO(20);
     return GetArrFromHex(Str);
 }
-function $sha(Str)
+ListF.$sha = function (Str)
 {
     DO(1000);
     return shaarr(Str);
 }
-function $isFinite(a)
+ListF.$isFinite = function (a)
 {
     DO(5);
     return isFinite(a);
 }
-function $isNaN(a)
+ListF.$isNaN = function (a)
 {
     DO(5);
     return isNaN(a);
 }
-function $parseFloat(a)
+ListF.$parseFloat = function (a)
 {
     DO(10);
     var Num = parseFloat(a);
@@ -742,7 +710,7 @@ function $parseFloat(a)
         Num = 0;
     return Num;
 }
-function $parseInt(a)
+ListF.$parseInt = function (a)
 {
     DO(10);
     var Num = parseInt(a);
@@ -752,39 +720,25 @@ function $parseInt(a)
         Num = 0;
     return Num;
 }
-function $parseUint(a)
+ListF.$parseUint = function (a)
 {
     DO(10);
     return ParseNum(a);
 }
-function $String(a)
+ListF.$String = function (a)
 {
     DO(5);
     return String(a);
 }
-function $Number(a)
+ListF.$Number = function (a)
 {
     DO(5);
     return Number(a);
 }
-function $Boolean(a)
+ListF.$Boolean = function (a)
 {
     DO(5);
     return Boolean(a);
-}
-function CHKL(Str)
-{
-    if(typeof Str === "string" && Str.length > MAX_LENGTH_STRING)
-        throw new Error("Invalid string length:" + Str.length);
-    return Str;
-}
-function CHK404(Name)
-{
-    if(Name === "__proto__" || Name === "prototype")
-    {
-        throw new Error("Not allow Identifier '" + Name + "'");
-    }
-    return Name;
 }
 function GetParsing(Str)
 {
@@ -817,18 +771,25 @@ function GetSmartEvalContext(Smart)
 function CreateSmartEvalContext(Code)
 {
     var CodeLex = GetParsing(Code);
-    var publist = {};
-    var funclist = {};
-    eval(CodeLex);
-    var EvalContext = {publist:publist, funclist:funclist};
-    for(var key in funclist)
+    var EvalContext = {};
+    for(var key in ListF)
     {
-        Object.freeze(funclist[key]);
+        Object.defineProperty(EvalContext, key, {writable:false, value:ListF[key]});
     }
-    Object.freeze(funclist);
-    Object.freeze(publist);
+    RunSmartEvalContext(CodeLex, EvalContext);
+    for(var key in EvalContext.funclist)
+    {
+        Object.freeze(EvalContext.funclist[key]);
+    }
+    for(var key in EvalContext)
+    {
+        Object.freeze(EvalContext[key]);
+    }
+    Object.freeze(EvalContext.funclist);
+    Object.freeze(EvalContext.publist);
     return EvalContext;
 }
+global.CreateSmartEvalContext = CreateSmartEvalContext;
 var RunContext = undefined;
 global.RunSmartMethod = RunSmartMethod;
 function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,MethodName,Params,bPublic,SmartCode)
@@ -907,7 +868,7 @@ function RunStaticSmartMethod(AccountNum,MethodName,Params)
 {
     DApps.Accounts.BeginBlock();
     DApps.Accounts.BeginTransaction();
-    global.TickCounter = 100000;
+    SetTickCounter(100000);
     var Account = DApps.Accounts.ReadStateTR(AccountNum);
     if(!Account)
     {

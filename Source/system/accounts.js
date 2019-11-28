@@ -1239,7 +1239,7 @@ class AccountApp extends require("./dapp")
     }
     BeginTransaction()
     {
-        global.TickCounter = 35000
+        SetTickCounter(35000)
         this.DBChanges.TRMap = {}
         this.DBChanges.TRMaxAccount = this.DBChanges.BlockMaxAccount
         this.DBChanges.RollBackTransaction = 0
@@ -1306,7 +1306,7 @@ class AccountApp extends require("./dapp")
                 process.send({cmd:"DappEvent", Data:Data})
             }
         }
-        global.TickCounter = 0
+        SetTickCounter(0)
         this.DBChanges = undefined
         this.CalcHash(Block, DBChanges.BlockMaxAccount)
         var StateTX = this.DBStateTX.Read(0);
@@ -1336,7 +1336,7 @@ class AccountApp extends require("./dapp")
         {
             DBChanges.BlockEvent.push(DBChanges.TREvent[i])
         }
-        global.TickCounter = 0
+        SetTickCounter(0)
         return true;
     }
     OnWriteNewAccountTR(Data, BlockNum, TrNum)

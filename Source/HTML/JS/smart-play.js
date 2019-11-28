@@ -84,6 +84,7 @@ function RunFrame(Code,Parent,bRecreate)
     CreateFrame(Code, Parent);
     if(bRecreate)
     {
+        global.SetTickCounter(35000);
         try
         {
             var PayContext = {FromID:SMART.Owner, ToID:0, Description:"Smart create", Value:{SumCOIN:GetPrice(SMART), SumCENT:0}};
@@ -213,6 +214,10 @@ function DoTranslate(Data)
 function SendCallMethod(ToNum,MethodName,Params,FromNum,FromSmartNum,bStatic)
 {
     SetStatus("");
+    if(bStatic)
+        global.SetTickCounter(100000);
+    else
+        global.SetTickCounter(35000);
     var StrCode = GetSmartCode();
     var Account = GetVMAccount(ToNum);
     var PayContext = {FromID:ParseNum(FromNum), ToID:Account.Num, Description:"", Value:{SumCOIN:0, SumCENT:0}};
@@ -386,7 +391,7 @@ function CoinSumHelper(CoinSum)
     }
     return CoinSum;
 }
-function $SetValue(ID,CoinSum)
+const SetValue = function (ID,CoinSum)
 {
     DO(3000);
     if(!RunContext.Smart.TokenGenerate)
@@ -438,43 +443,43 @@ function MoveCoin(FromID,ToID,CoinSum,Description)
         RunPublicMethod("OnGet", VM_VALUE.CurrentBlock, ToData, Context);
     }
 }
-function $Send(ToID,CoinSum,Description)
+const $Send = function (ToID,CoinSum,Description)
 {
     DO(3000);
     MoveCoin(RunContext.Account.Num, ToID, CoinSum, Description);
 }
-function $Move(FromID,ToID,CoinSum,Description)
+const $Move = function (FromID,ToID,CoinSum,Description)
 {
     DO(3000);
     MoveCoin(FromID, ToID, CoinSum, Description);
 }
-function $Event(Description)
+const $Event = function (Description)
 {
     DO(50);
     var Data = {cmd:"OnEvent", Description:Description, Smart:RunContext.Smart.Num, Account:RunContext.Account.Num, BlockNum:RunContext.BlockNum,
         TrNum:RunContext.TrNum};
     SendMessage(Data);
 }
-function $ReadAccount(ID)
+const $ReadAccount = function (ID)
 {
     DO(900);
     var AccObj = GetVMAccount(ID);
     return GET_ACCOUNT(AccObj);
 }
-function $ReadSmart(ID)
+const $ReadSmart = function (ID)
 {
     DO(900);
     var SmartObj = GetVMSmart(ID);
     return GET_SMART(SmartObj);
 }
-function $ReadState(ID)
+const $ReadState = function (ID)
 {
     DO(900);
     var AccObj = GetVMAccount(ID);
     ToLogDebug("ReadState: " + ID + "\n" + JSON.stringify(AccObj.SmartState));
     return AccObj.SmartState;
 }
-function $WriteState(SmartState,ID)
+const $WriteState = function (SmartState,ID)
 {
     DO(3000);
     if(!ID)
@@ -483,13 +488,13 @@ function $WriteState(SmartState,ID)
     var AccObj = GetVMAccount(ID);
     AccObj.SmartState = SmartState;
 }
-function $GetMaxAccount()
+const $GetMaxAccount = function ()
 {
     DO(20);
     return VM_ACCOUNTS.length - 1;
 }
 var EvalContextMap = {};
-function $require(SmartNum)
+const $require = function (SmartNum)
 {
     DO(2000);
     var EvalContext = EvalContextMap[SmartNum];
@@ -518,3 +523,12 @@ function SendMessageError(Str)
     Data.Error = 1;
     SendMessage(Data);
 }
+function RunSmartEvalContext(CodeLex,EvalContext)
+{
+    var publist = {};
+    var funclist = {};
+    EvalContext.publist = publist;
+    EvalContext.funclist = funclist;
+    eval(CodeLex);
+}
+ListF = {};

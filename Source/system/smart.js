@@ -11,7 +11,7 @@
 "use strict";
 require("../HTML/JS/lexer.js");
 require("../HTML/JS/smart-vm.js");
-global.TickCounter = 0;
+require("../core/library.js");
 const DBRow = require("../core/db/db-row");
 const TYPE_TRANSACTION_SMART_CREATE = 130;
 global.TYPE_TRANSACTION_SMART_RUN = 135;
@@ -602,3 +602,13 @@ DApps["Smart"] = App;
 DAppByType[TYPE_TRANSACTION_SMART_CREATE] = App;
 DAppByType[TYPE_TRANSACTION_SMART_RUN] = App;
 DAppByType[TYPE_TRANSACTION_SMART_CHANGE] = App;
+const VM = require('vm');
+global.RunSmartEvalContext = function (CodeLex,EvalContext)
+{
+    var publist = {};
+    var funclist = {};
+    EvalContext.publist = publist;
+    EvalContext.funclist = funclist;
+    VM.createContext(EvalContext);
+    VM.runInContext(CodeLex, EvalContext);
+}

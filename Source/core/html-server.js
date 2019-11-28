@@ -381,7 +381,7 @@ HTTPCaller.DappStaticCall = function (Params,response)
     return null;
     DApps.Accounts.BeginBlock();
     DApps.Accounts.BeginTransaction();
-    global.TickCounter = 100000;
+    SetTickCounter(100000);
     var Account = DApps.Accounts.ReadStateTR(ParseNum(Params.Account));
     if(!Account)
     {
