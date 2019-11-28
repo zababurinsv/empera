@@ -32,6 +32,7 @@ Attention:
 * If you do not specify the http password, you can only access from the local address 127.0.0.1:8080 and only within 10 minutes after the launch of the node
 * For remote access to the node only from the specified computer (white IP) set the HTTP_IP_CONNECT constant (for example: "HTTP_IP_CONNECT": "122.22.33.11")
 * When installing, pay attention to the **secp256k1** cryptographic library. There should be no errors when compiling it (with command: npm install)
+* If you have the auto-update constant enabled ("USE_AUTO_UPDATE": 1), the update is performed automatically. If off, then you need to load it manually and restart the node (see section below).
 
 
 
