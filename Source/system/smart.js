@@ -11,7 +11,6 @@
 "use strict";
 require("../HTML/JS/lexer.js");
 require("../HTML/JS/smart-vm.js");
-require("../core/library.js");
 const DBRow = require("../core/db/db-row");
 const TYPE_TRANSACTION_SMART_CREATE = 130;
 global.TYPE_TRANSACTION_SMART_RUN = 135;

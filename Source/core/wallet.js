@@ -263,9 +263,17 @@ class CApp
     {
         if(!this.KeyPair.WasInit)
             return "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-        var PrivKey = this.GetPrivateKey(this.AccountMap[TR.FromID]);
-        var Arr = DApps.Accounts.GetSignTransferTx(TR, PrivKey);
-        return GetHexFromArr(Arr);
+        try
+        {
+            var PrivKey = this.GetPrivateKey(this.AccountMap[TR.FromID]);
+            var Arr = DApps.Accounts.GetSignTransferTx(TR, PrivKey);
+            return GetHexFromArr(Arr);
+        }
+        catch(e)
+        {
+            ToLog(e)
+            return "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+        }
     }
 };
 global.WALLET = new CApp;

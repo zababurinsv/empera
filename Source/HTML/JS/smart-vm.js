@@ -772,11 +772,11 @@ function CreateSmartEvalContext(Code)
 {
     var CodeLex = GetParsing(Code);
     var EvalContext = {};
+    RunSmartEvalContext(CodeLex, EvalContext);
     for(var key in ListF)
     {
         Object.defineProperty(EvalContext, key, {writable:false, value:ListF[key]});
     }
-    RunSmartEvalContext(CodeLex, EvalContext);
     for(var key in EvalContext.funclist)
     {
         Object.freeze(EvalContext.funclist[key]);
