@@ -8,7 +8,8 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-LexerJS = global.LexerJS;
+"use strict";
+var LexerJS = global.LexerJS;
 var MaxAccCreate = 102;
 var VM_VALUE = {CurBlockNum:1000, MaxDappsID:1, };
 var VM_VLOCKS = [];
@@ -494,7 +495,7 @@ const $GetMaxAccount = function ()
     return VM_ACCOUNTS.length - 1;
 }
 var EvalContextMap = {};
-const $require = function (SmartNum)
+window.$require = function (SmartNum)
 {
     DO(2000);
     var EvalContext = EvalContextMap[SmartNum];
@@ -523,6 +524,99 @@ function SendMessageError(Str)
     Data.Error = 1;
     SendMessage(Data);
 }
+function ChangePrototype()
+{
+    var Array_prototype_concat = Array.prototype.concat;
+    var Array_prototype_toString = Array.prototype.toString;
+    Array.prototype.concat = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: concat";
+        else
+            return Array_prototype_concat.apply(this, arguments);
+    };
+    Array.prototype.toString = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: toString";
+        else
+            return Array_prototype_toString.apply(this, arguments);
+    };
+    var Function_prototype_toString = Function.prototype.toString;
+    Function.prototype.toString = function ()
+    {
+        if(RunContext)
+            return "";
+        else
+            return Function_prototype_toString.apply(this, arguments);
+    };
+    Function.prototype.toLocaleString = function ()
+    {
+        return this.toString();
+    };
+    Array.prototype.toLocaleString = Array.prototype.toString;
+    Number.prototype.toLocaleString = function ()
+    {
+        return this.toString();
+    };
+    String.prototype.toLocaleLowerCase = String.prototype.toLowerCase;
+    String.prototype.toLocaleUpperCase = String.prototype.toUpperCase;
+    var String_prototype_localeCompare = String.prototype.localeCompare;
+    String.prototype.localeCompare = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: localeCompare";
+        else
+            return String_prototype_localeCompare.apply(this, arguments);
+    };
+    var String_prototype_match = String.prototype.match;
+    String.prototype.match = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: match";
+        else
+            return String_prototype_match.apply(this, arguments);
+    };
+    var String_prototype_repeat = String.prototype.repeat;
+    String.prototype.repeat = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: repeat";
+        else
+            return String_prototype_repeat.apply(this, arguments);
+    };
+    var String_prototype_search = String.prototype.search;
+    String.prototype.search = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: search";
+        else
+            return String_prototype_search.apply(this, arguments);
+    };
+    var String_prototype_padStart = String.prototype.padStart;
+    String.prototype.padStart = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: padStart";
+        else
+            return String_prototype_padStart.apply(this, arguments);
+    };
+    var String_prototype_padEnd = String.prototype.padEnd;
+    String.prototype.padEnd = function ()
+    {
+        if(RunContext)
+            throw "Error Access denied: padEnd";
+        else
+            return String_prototype_padEnd.apply(this, arguments);
+    };
+    String.prototype.right = function (count)
+    {
+        if(this.length > count)
+            return this.substr(this.length - count, count);
+        else
+            return this.substr(0, this.length);
+    };
+}
 function RunSmartEvalContext(CodeLex,EvalContext)
 {
     var publist = {};
@@ -531,4 +625,17 @@ function RunSmartEvalContext(CodeLex,EvalContext)
     EvalContext.funclist = funclist;
     eval(CodeLex);
 }
+function SetFreezeListF()
+{
+    for(var key in ListF)
+    {
+        if(key.substr(0, 1) != "$")
+            continue;
+        var Value = window[key];
+        Object.freeze(Value);
+        Object.defineProperty(window, key, {writable:false, value:Value});
+    }
+}
+SetFreezeListF();
 ListF = {};
+ChangePrototype();

@@ -126,6 +126,7 @@ if(window.nw)
 }
 else
 {
+    global = window;
     window.Open = function (path,iconname,width,height)
     {
         if(!window.NWMODE)

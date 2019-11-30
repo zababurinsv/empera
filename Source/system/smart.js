@@ -602,12 +602,16 @@ DAppByType[TYPE_TRANSACTION_SMART_CREATE] = App;
 DAppByType[TYPE_TRANSACTION_SMART_RUN] = App;
 DAppByType[TYPE_TRANSACTION_SMART_CHANGE] = App;
 const VM = require('vm');
-global.RunSmartEvalContext = function (CodeLex,EvalContext)
+global.RunSmartEvalContext = RunSmartEvalContext;
+function RunSmartEvalContext(CodeLex,EvalContext,InnerRun)
 {
     var publist = {};
     var funclist = {};
     EvalContext.publist = publist;
     EvalContext.funclist = funclist;
-    VM.createContext(EvalContext);
-    VM.runInContext(CodeLex, EvalContext);
+    VM.createContext(EvalContext, {codeGeneration:{strings:false, wasm:false}});
+    var RunCode = CodeLex;
+    if(InnerRun)
+        RunCode += "\n" + InnerRun + "\nInnerChangeObjects()";
+    VM.runInContext(RunCode, EvalContext);
 }

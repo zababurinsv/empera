@@ -324,11 +324,14 @@ function InitEval()
         DO(1);
         return 0;
     };
-    var arr = Object.getOwnPropertyNames(JSON);
-    for(var name of arr)
+    $JSON.stringify = function (Obj)
     {
-        $JSON[name] = JSON[name];
-    }
+        return JSON.stringify(Obj);
+    };
+    $JSON.parse = function (Str)
+    {
+        return JSON.parse(Str);
+    };
     FreezeObjectChilds($Math);
     Object.freeze($Math);
     FreezeObjectChilds($JSON);
@@ -349,6 +352,7 @@ function InitEval()
     for(var key in ListF)
     {
         Object.freeze(ListF[key]);
+        FreezeObjectChilds(ListF[key]);
     }
 }
 function FreezeObjectChilds(Value)
@@ -359,87 +363,55 @@ function FreezeObjectChilds(Value)
         Object.freeze(Value[name]);
     }
 }
-function ChangePrototype()
+function InnerChangeObjects()
 {
-    var Array_prototype_concat = Array.prototype.concat;
-    var Array_prototype_toString = Array.prototype.toString;
-    Array.prototype.concat = function ()
+    Function.prototype.toString = function ()
     {
-        if(RunContext)
-            throw "Error Access denied: concat";
-        else
-            return Array_prototype_concat.apply(this, arguments);
+        return "";
     };
-    Array.prototype.toString = function ()
-    {
-        if(RunContext)
-            throw "Error Access denied: toString";
-        else
-            return Array_prototype_toString.apply(this, arguments);
-    };
-    Array.prototype.toLocaleString = Array.prototype.toString;
+    Function.prototype.toLocaleString = Function.prototype.toString;
+    Array.prototype.concat = undefined;
+    Array.prototype.toString = undefined;
+    Array.prototype.toLocaleString = undefined;
     Number.prototype.toLocaleString = function ()
     {
         return this.toString();
     };
     String.prototype.toLocaleLowerCase = String.prototype.toLowerCase;
     String.prototype.toLocaleUpperCase = String.prototype.toUpperCase;
-    var String_prototype_localeCompare = String.prototype.localeCompare;
-    String.prototype.localeCompare = function ()
-    {
-        if(RunContext)
-            throw "Error Access denied: localeCompare";
-        else
-            return String_prototype_localeCompare.apply(this, arguments);
-    };
-    var String_prototype_match = String.prototype.match;
-    String.prototype.match = function ()
-    {
-        if(RunContext)
-            throw "Error Access denied: match";
-        else
-            return String_prototype_match.apply(this, arguments);
-    };
-    var String_prototype_repeat = String.prototype.repeat;
-    String.prototype.repeat = function ()
-    {
-        if(RunContext)
-            throw "Error Access denied: repeat";
-        else
-            return String_prototype_repeat.apply(this, arguments);
-    };
-    var String_prototype_search = String.prototype.search;
-    String.prototype.search = function ()
-    {
-        if(RunContext)
-            throw "Error Access denied: search";
-        else
-            return String_prototype_search.apply(this, arguments);
-    };
-    var String_prototype_padStart = String.prototype.padStart;
-    String.prototype.padStart = function ()
-    {
-        if(RunContext)
-            throw "Error Access denied: padStart";
-        else
-            return String_prototype_padStart.apply(this, arguments);
-    };
-    var String_prototype_padEnd = String.prototype.padEnd;
-    String.prototype.padEnd = function ()
-    {
-        if(RunContext)
-            throw "Error Access denied: padEnd";
-        else
-            return String_prototype_padEnd.apply(this, arguments);
-    };
+    String.prototype.localeCompare = undefined;
+    String.prototype.match = undefined;
+    String.prototype.repeat = undefined;
+    String.prototype.search = undefined;
+    String.prototype.padStart = undefined;
+    String.prototype.padEnd = undefined;
     String.prototype.right = function (count)
     {
-        if(this.length > count)
-            return this.substr(this.length - count, count);
-        else
-            return this.substr(0, this.length);
+        return this.substr(this.length - count, count);
+    };
+    FreezeObjectChilds(Array.prototype);
+    FreezeObjectChilds(Object.prototype);
+    FreezeObjectChilds(String.prototype);
+    FreezeObjectChilds(Number.prototype);
+    FreezeObjectChilds(Boolean.prototype);
+    var Obj = function ()
+    {
+    };
+    Object.freeze(Obj.bind);
+    Object.freeze(Obj.apply);
+    Object.freeze(Obj.call);
+    Object.freeze(Obj.toString);
+    Object.freeze(Obj.constructor);
+    function FreezeObjectChilds(Value)
+    {
+        var arr = Object.getOwnPropertyNames(Value);
+        for(var name of arr)
+        {
+            Object.freeze(Value[name]);
+        }
     };
 }
+global.CodeInnerChangeObjects = InnerChangeObjects.toString();
 ListF.$SetValue = function (ID,CoinSum)
 {
     DO(3000);
@@ -772,9 +744,10 @@ function CreateSmartEvalContext(Code)
 {
     var CodeLex = GetParsing(Code);
     var EvalContext = {};
-    RunSmartEvalContext(CodeLex, EvalContext);
+    RunSmartEvalContext(CodeLex, EvalContext, global.CodeInnerChangeObjects);
     for(var key in ListF)
     {
+        Object.freeze(ListF[key]);
         Object.defineProperty(EvalContext, key, {writable:false, value:ListF[key]});
     }
     for(var key in EvalContext.funclist)
@@ -791,6 +764,11 @@ function CreateSmartEvalContext(Code)
 }
 global.CreateSmartEvalContext = CreateSmartEvalContext;
 var RunContext = undefined;
+function SetRunContext(Set)
+{
+    RunContext = Set;
+}
+global.SetRunContext = SetRunContext;
 global.RunSmartMethod = RunSmartMethod;
 function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,MethodName,Params,bPublic,SmartCode)
 {
@@ -902,5 +880,4 @@ function StaticGetSmart(Num)
     var Smart = DApps.Smart.ReadSmart(Num);
     return GET_SMART(Smart);
 }
-ChangePrototype();
 InitEval();
