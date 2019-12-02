@@ -354,7 +354,7 @@ function DoCommandNew(request,response,Type,Path,Params)
         var Ret;
         try
         {
-            Ret = F(Params, response, ArrPath);
+            Ret = F(Params, response, ArrPath, request);
         }
         catch(e)
         {
@@ -417,7 +417,7 @@ function DoCommandNew(request,response,Type,Path,Params)
                         if(ArrPath[i].indexOf("..") ===  - 1 && ArrPath[i].indexOf("\\") ===  - 1)
                             Name += "/" + ArrPath[i];
                     Name = PrefixPath + Name;
-                    SendWebFile(response, Name, "", 0, 1000);
+                    SendWebFile(request, response, Name, "", 0, 1000);
                     return ;
                 }
                 else
@@ -476,7 +476,7 @@ function DoCommandNew(request,response,Type,Path,Params)
                         Name = PrefixPath + "/" + Name;
                         break;
                 }
-                SendWebFile(response, Name, "", 1, LongTime);
+                SendWebFile(request, response, Name, "", 1, LongTime);
                 break;
             }
     }

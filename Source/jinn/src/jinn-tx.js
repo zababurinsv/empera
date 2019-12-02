@@ -1,0 +1,214 @@
+/*
+ * @project: TERA
+ * @version: Development (beta)
+ * @license: MIT (not for evil)
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * Web: https://terafoundation.org
+ * Twitter: https://twitter.com/terafoundation
+ * Telegram:  https://t.me/terafoundation
+*/
+
+global.JINN_MODULES.push({Init:Init});
+var glTxNum = 0;
+function Init(Engine)
+{
+    Engine.ListTx = {};
+    Engine.AddCurrentProcessingTx = function (BlockNum,TxArr)
+    {
+        if(BlockNum < JINN_CONST.START_ADD_TX)
+            return ;
+        var BlockListTx = Engine.ListTx[BlockNum];
+        if(!BlockListTx)
+        {
+            BlockListTx = {};
+            Engine.ListTx[BlockNum] = BlockListTx;
+        }
+        for(var t = 0; t < TxArr.length; t++)
+        {
+            var Tx = TxArr[t];
+            if(!Engine.IsValidateTx(Tx, "AddCurrentProcessingTx", BlockNum))
+                continue;
+            BlockListTx[Tx.KEY] = Tx;
+        }
+    };
+    Engine.SendTx = function (BlockNum)
+    {
+        var ArrAll = Engine.GetTopTxArray(Engine.ListTx[BlockNum]);
+        var MapTT = Engine.ListTicket[BlockNum];
+        if(!MapTT)
+            MapTT = {};
+        Engine.SetTopTxArray(MapTT);
+        for(var i = 0; i < Engine.LevelArr.length; i++)
+        {
+            var Child = Engine.LevelArr[i];
+            if(!Child || Child.Del || !Child.Hot || Child.HotStart)
+                continue;
+            Child.SetLastCache(BlockNum);
+            var ChildMap = Child.GetCacheByBlockNum(BlockNum);
+            var Arr = [];
+            for(var t = 0; t < ArrAll.length; t++)
+            {
+                var Tx = ArrAll[t];
+                if(!Engine.IsValidateTx(Tx, "SendTx", BlockNum))
+                    continue;
+                if(global.glUseTicket)
+                {
+                    var TT = MapTT[Tx.KEY];
+                    if(!TT || !TT.Top)
+                        continue;
+                    var TicketValue = ChildMap.ReceiveTicketMap[Tx.KEY];
+                    if(TicketValue === global.OLD_TICKET)
+                        continue;
+                }
+                if(!Engine.FindInCache(Child, BlockNum, Tx))
+                {
+                    Engine.AddTxToSendCache(Child, BlockNum, Tx);
+                    Arr.push({Index:Tx.Index, body:Tx.body});
+                    JINN_STAT.TxSend++;
+                }
+            }
+            if(!Arr.length)
+                continue;
+            Engine.Send("TRANSFERTX", Child, {Cache:Child.CahcheVersion, BlockNum:BlockNum, TxArr:Arr});
+        }
+    };
+    Engine.TRANSFERTX_SEND = {Cache:"uint", BlockNum:"uint", TxArr:[{Index:"uint16", body:"tr"}]};
+    Engine.TRANSFERTX = function (Child,Data)
+    {
+        var TxArr = Data.TxArr;
+        var BlockNum = Data.BlockNum;
+        if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TX))
+        {
+            Engine.ToError(Child, "TRANSFERTX : CanProcessBlock Error BlockNum=" + BlockNum);
+            return ;
+        }
+        Engine.CheckHotConnection(Child);
+        if(!Child || Child.Del || !Child.Hot || Child.HotStart)
+            return ;
+        Child.CheckCache(Data.Cache, BlockNum);
+        Engine.CheckSizeTXArray(TxArr);
+        var TxArr2 = [];
+        for(var t = 0; t < TxArr.length; t++)
+        {
+            var Value = TxArr[t];
+            var Tx = Engine.GetTx(Value.body);
+            Tx.Index = Value.Index;
+            if(!Engine.IsValidateTx(Tx, "TRANSFERTX", BlockNum))
+                continue;
+            if(global.JINN_WARNING >= 5 && global.glUseTicket && BlockNum > JINN_CONST.START_CHECK_BLOCKNUM)
+            {
+                var Map = Engine.ListTx[BlockNum];
+                if(Map && Map[Tx.KEY])
+                {
+                    Engine.ToLog("<-" + Child.ID + ". B=" + BlockNum + " Bad TICKET CHACHE - WAS Tx=" + Tx.name);
+                }
+            }
+            Engine.AddTxToReceiveCache(Child, BlockNum, Tx, 1);
+            TxArr2.push(Tx);
+        }
+        Engine.AddCurrentProcessingTx(BlockNum, TxArr2);
+        Engine.SendTx(BlockNum);
+    };
+    Engine.SendTestMap = {};
+    Engine.SendTest = function (Value)
+    {
+        if(Engine.SendTestMap[Value])
+            return ;
+        Engine.SendTestMap[Value] = 1;
+        for(var i = 0; i < Engine.LevelArr.length; i++)
+        {
+            var Child = Engine.LevelArr[i];
+            if(!Child || Child.Del)
+                continue;
+            Engine.Send("TESTMESSAGE", Child, {Value:Value});
+        }
+    };
+    Engine.TESTMESSAGE = function (Child,Data)
+    {
+        Engine.TestValue = Data.Value;
+        Engine.SendTest(Data.Value);
+        Engine.CheckHotConnection(Child);
+    };
+    Engine.FindInCache = function (Child,BlockNum,Tx)
+    {
+        if(!Child.TxMap)
+            Child.TxMap = {};
+        if(Child.TxMap[Tx.KEY] === undefined)
+            return 0;
+        else
+            return 1;
+    };
+    Engine.AddTxToSendCache = function (Child,BlockNum,Tx)
+    {
+        if(!Child.TxMap)
+            Child.TxMap = {};
+        Child.TxMap[Tx.KEY] = 1;
+        return 0;
+    };
+    Engine.AddTxToReceiveCache = function (Child,BlockNum,Tx,bCheck)
+    {
+        if(!Child.TxMap)
+            Child.TxMap = {};
+        Child.TxMap[Tx.KEY] = 1;
+        return 0;
+    };
+    Engine.CreateTx = function (Params)
+    {
+        glTxNum++;
+        var rnd = glTxNum;
+        var body = [0];
+        WriteUintToArr(body, Engine.ID);
+        WriteUintToArr(body, rnd);
+        for(var i = 0; i < 100; i++)
+            body[body.length] = random(255);
+        var nonce = 0;
+        WriteUintToArr(body, Params.BlockNum);
+        WriteUintToArr(body, nonce);
+        var Tx = Engine.GetTx(body);
+        return Tx;
+    };
+    Engine.GetTx = function (body,HASH)
+    {
+        var Tx = {};
+        Tx.IsTx = 1;
+        Tx.num = ReadUintFromArr(body, body.length - 12);
+        if(HASH)
+            Tx.HASH = HASH;
+        else
+            Tx.HASH = sha3(body);
+        Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
+        Tx.KEY = GetHexFromArr(Tx.HashTicket);
+        Tx.body = body;
+        Engine.FillTicket(Tx);
+        Tx.name = Tx.KEY.substr(0, 6) + "-" + Tx.TimePow;
+        Tx.Size = body.length;
+        return Tx;
+    };
+}
+function CheckTx(StrCheckName,Tx,BlockNum,bLog)
+{
+    if(!Tx || !Tx.KEY || Tx.TimePow === undefined || Tx.num !== BlockNum)
+    {
+        if(global.JINN_WARNING >= 2)
+        {
+            var Str = StrCheckName + " B=" + BlockNum + " TX=" + JSON.stringify(Tx);
+            ToLog(Str);
+            if(!bLog)
+                throw Str;
+        }
+        return 0;
+    }
+    return 1;
+}
+var MapTT = {};
+function CheckTicketKey(Tx)
+{
+    if(!global.JINN_WARNING)
+        return ;
+    if(MapTT[Tx.KEY])
+    {
+        ToLog("ERROR KEY TICKET:\nNEW:" + JSON.stringify(Tx) + "\nWAS:" + JSON.stringify(MapTT[Tx.KEY]));
+    }
+    MapTT[Tx.KEY] = Tx;
+}
+global.CheckTx = CheckTx;

@@ -1,0 +1,103 @@
+/*
+ * @project: TERA
+ * @version: Development (beta)
+ * @license: MIT (not for evil)
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * Web: https://terafoundation.org
+ * Twitter: https://twitter.com/terafoundation
+ * Telegram:  https://t.me/terafoundation
+*/
+
+global.JINN_MODULES.push({Init:Init, DoNode:DoNode});
+function DoNode(Engine)
+{
+    if(Engine.TickNum % 20 === 0)
+    {
+        Engine.MemClear();
+        if(!Engine.CanMemClear())
+            return ;
+        if(Engine.TickNum % 100 === 0)
+        {
+            for(var i = 0; i < Engine.LevelArr.length; i++)
+            {
+                var Child = Engine.LevelArr[i];
+                if(Child)
+                {
+                    if(Engine.TickNum % 200 === 0)
+                        if(Engine.CanHistoryClear())
+                            Child.CahcheVersion++;
+                    Child.InvalidateOldChildCache();
+                    Child.InvalidateOldBlockNumCache();
+                }
+            }
+        }
+    }
+}
+function Init(Engine)
+{
+    Engine.CanMemClear = function ()
+    {
+        var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var LastBlockNumDB = Engine.GetMaxNumBlockDB();
+        if(LastBlockNum - LastBlockNumDB >= JINN_CONST.STEP_CLEAR_MEM)
+            return 0;
+        else
+            return 1;
+    };
+    Engine.CanHistoryClear = function ()
+    {
+        var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var LastBlockNumDB = Engine.GetMaxNumBlockDB();
+        for(var n = LastBlockNum - 10; n <= LastBlockNum; n++)
+        {
+            var Store = Engine.BlockStore[n];
+            if(!Store)
+                return 0;
+            for(var i = 0; i < Store.LiderArr.length / 2; i++)
+            {
+                var Item = Store.LiderArr[i];
+                if(Item.LoadNum || Item.LoadTreeNum)
+                    return 0;
+            }
+        }
+        return 1;
+    };
+    Engine.MemClear = function ()
+    {
+        var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        for(var key in Engine.ListTx)
+        {
+            var BlockNum =  + key;
+            if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
+                continue;
+            delete Engine.ListTx[key];
+        }
+        if(Engine.ListTicket)
+            for(var key in Engine.ListTicket)
+            {
+                var BlockNum =  + key;
+                if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
+                    continue;
+                delete Engine.ListTicket[key];
+            }
+        for(var key in Engine.BlockStore)
+        {
+            var Store = Engine.BlockStore[key];
+            if(LastBlockNum - Store.BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
+                continue;
+            delete Engine.BlockStore[key];
+        }
+        if(!Engine.CanMemClear())
+            return ;
+        if(!Engine.CanHistoryClear())
+            return ;
+        for(var key in Engine.LoadingArr)
+        {
+            var BlockNum =  + key;
+            if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
+                continue;
+            var BlockArr = Engine.LoadingArr[key];
+            delete Engine.LoadingArr[key];
+        }
+    };
+}

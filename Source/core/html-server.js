@@ -15,6 +15,7 @@ const crypto = require('crypto');
 const os = require('os');
 var BlockTree = new STreeBuffer(300 * 1000, CompareItemHashSimple, "number");
 const http = require('http'), net = require('net'), url = require('url'), fs = require('fs'), querystring = require('querystring');
+const zlib = require('zlib');
 var ContenTypeMap = {};
 ContenTypeMap["js"] = "application/javascript";
 ContenTypeMap["css"] = "text/css";
@@ -51,7 +52,7 @@ for(var i = 0; i < AllowArr.length; i++)
 if(!global.WebApi2)
     global.WebApi2 = {};
 global.HTTPCaller = {};
-function DoCommand(response,Type,Path,params,remoteAddress)
+function DoCommand(request,response,Type,Path,params,remoteAddress)
 {
     var Caller = HTTPCaller;
     var Method = params[0];
@@ -102,7 +103,7 @@ function DoCommand(response,Type,Path,params,remoteAddress)
     switch(method)
     {
         case "":
-            SendWebFile(response, "./HTML/wallet.html");
+            SendWebFile(request, response, "./HTML/wallet.html");
             break;
         case "file":
             SendBlockFile(response, params[1], params[2]);
@@ -175,7 +176,7 @@ function DoCommand(response,Type,Path,params,remoteAddress)
                         path = "./HTML/" + path;
                         break;
                 }
-                SendWebFile(response, path, "", 0, LongTime);
+                SendWebFile(request, response, path, "", 0, LongTime);
                 break;
             }
     }
@@ -1490,7 +1491,7 @@ function AddMapList(arrLoadedBlocks,type,MapMapLoaded,MainChains)
     }
 }
 var MapFileHTML5 = {};
-function SendWebFile(response,name,StrCookie,bParsing,Long)
+function SendWebFile(request,response,name,StrCookie,bParsing,Long)
 {
     var type = name.substr(name.length - 4, 4);
     var index1 = type.indexOf(".");
@@ -1544,41 +1545,74 @@ function SendWebFile(response,name,StrCookie,bParsing,Long)
     {
         Headers['Cache-Control'] = "max-age=" + Long;
     }
-    response.writeHead(200, Headers);
+    let acceptEncoding = request.headers['accept-encoding'];
+    if(!acceptEncoding)
+    {
+        acceptEncoding = '';
+    }
     if(bParsing && StrContentType === "text/html")
     {
+        response.writeHead(200, Headers);
         var data = GetFileHTMLWithParsing(Path);
-        response.end(data);
+        {
+            response.end(data);
+        }
         return ;
     }
-    else
-        if("image/jpeg,image/vnd.microsoft.icon,image/svg+xml,image/png,application/javascript,text/css,text/html".indexOf(StrContentType) >  - 1)
-        {
-            var data = GetFileSimpleBin(Path);
-            response.end(data);
-            return ;
-        }
     const stream = fs.createReadStream(Path);
-    setTimeout(function ()
+    if(/\bdeflate\b/.test(acceptEncoding))
     {
-        stream.close();
-        stream.push(null);
-        stream.read(0);
-    }, 100000);
-    stream.pipe(response);
-}
-function GetFileHTMLWithParsing(Path)
-{
-    var data = global.SendHTMLMap[Path];
-    if(!data)
-    {
-        global.SendHTMLMap[Path] = "-recursion-";
-        data = String(fs.readFileSync(Path));
-        data = ParseTag(data, "File", 0);
-        data = ParseTag(data, "Edit", 1);
-        global.SendHTMLMap[Path] = data;
+        Headers['Content-Encoding'] = 'deflate';
+        response.writeHead(200, Headers);
+        stream.pipe(zlib.createDeflate()).pipe(response);
     }
-    return data;
+    else
+        if(/\bgzip\b/.test(acceptEncoding))
+        {
+            Headers['Content-Encoding'] = 'gzip';
+            response.writeHead(200, Headers);
+            stream.pipe(zlib.createGzip()).pipe(response);
+        }
+        else
+            if(/\bbr\b/.test(acceptEncoding))
+            {
+                Headers['Content-Encoding'] = 'br';
+                response.writeHead(200, Headers);
+                stream.pipe(zlib.createBrotliCompress()).pipe(response);
+            }
+            else
+            {
+                response.writeHead(200, Headers);
+                setTimeout(function ()
+                {
+                    ToLog("KILL stream file: " + Path);
+                    stream.close();
+                    stream.push(null);
+                    stream.read(0);
+                }, 30 * 60 * 1000);
+                stream.pipe(response);
+            }
+}
+function GetFileHTMLWithParsing(Path,bZip)
+{
+    if(bZip)
+    {
+        var data = GetFileHTMLWithParsing(Path, 0);
+        return data;
+    }
+    else
+    {
+        var data = global.SendHTMLMap[Path];
+        if(!data)
+        {
+            global.SendHTMLMap[Path] = "-recursion-";
+            data = String(fs.readFileSync(Path));
+            data = ParseTag(data, "File", 0);
+            data = ParseTag(data, "Edit", 1);
+            global.SendHTMLMap[Path] = data;
+        }
+        return data;
+    }
 }
 var glEditNum = 0;
 function ParseTag(Str,TagName,bEdit)
@@ -1846,7 +1880,7 @@ if(global.HTTP_PORT_NUMBER)
             {
                 if(!Password)
                 {
-                    SendWebFile(response, "/HTML/wallet.html", "NW_TOKEN=" + global.NW_TOKEN + ";path=/");
+                    SendWebFile(request, response, "/HTML/wallet.html", "NW_TOKEN=" + global.NW_TOKEN + ";path=/");
                     return ;
                 }
                 else
@@ -1885,7 +1919,7 @@ if(global.HTTP_PORT_NUMBER)
             {
                 if(cookies_hash.substr(0, 4) !== "0000")
                 {
-                    SendPasswordFile(Path, response, StrPort, cookies_token);
+                    SendPasswordFile(request, response, Path, StrPort, cookies_token);
                     return ;
                 }
                 var nonce = 0;
@@ -1903,12 +1937,15 @@ if(global.HTTP_PORT_NUMBER)
                     if(TokenMap === LocalClientTokenMap)
                     {
                         LocalClientTokenMap.PasswordHash = GetHexFromArr(sha3(Password));
+                        for(var key in LocalClientTokenMap)
+                            if(!LocalClientTokenMap[key])
+                                delete LocalClientTokenMap[key];
                         SaveParams(GetDataPath("local-tokens.lst"), LocalClientTokenMap);
                     }
                 }
                 else
                 {
-                    SendPasswordFile(Path, response, StrPort, cookies_token);
+                    SendPasswordFile(request, response, Path, StrPort, cookies_token);
                     return ;
                 }
             }
@@ -1916,7 +1953,7 @@ if(global.HTTP_PORT_NUMBER)
             {
                 var StrToken = GetHexFromArr(crypto.randomBytes(16));
                 TokenMap[StrToken] = 0;
-                SendPasswordFile(Path, response, StrPort, StrToken);
+                SendPasswordFile(request, response, Path, StrPort, StrToken);
                 return ;
             }
         }
@@ -1953,14 +1990,14 @@ if(global.HTTP_PORT_NUMBER)
                     Response.end("Error data parsing");
                 }
                 if(Params[0] === "HTML")
-                    DoCommand(response, Type, Path, [Params[1], Data], remoteAddress);
+                    DoCommand(request, response, Type, Path, [Params[1], Data], remoteAddress);
                 else
-                    DoCommand(response, Type, Path, [Params[0], Data], remoteAddress);
+                    DoCommand(request, response, Type, Path, [Params[0], Data], remoteAddress);
             });
         }
         else
         {
-            DoCommand(response, Type, Path, params, remoteAddress);
+            DoCommand(request, response, Type, Path, params, remoteAddress);
         }
     }).listen(port, LISTEN_IP, function ()
     {
@@ -1973,11 +2010,11 @@ if(global.HTTP_PORT_NUMBER)
         ToError(err);
     });
 }
-function SendPasswordFile(Path,response,StrPort,cookies_token)
+function SendPasswordFile(request,response,Path,StrPort,cookies_token)
 {
     if(!Path || Path === "/" || Path.substr(Path.length - 4, 4) === "html")
     {
-        SendWebFile(response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/");
+        SendWebFile(request, response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/");
     }
     else
     {

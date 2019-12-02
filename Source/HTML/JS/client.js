@@ -304,25 +304,29 @@ function GetArrFromHex(Str)
     }
     return array;
 }
+var HexStr = "0123456789ABCDEF";
 function GetHexFromArr(arr)
 {
     if(!(arr instanceof Array) && arr.data)
         arr = arr.data;
     var Str = "";
-    for(var i = 0; arr && i < arr.length; i++)
+    if(arr)
     {
-        if(!arr[i])
-            Str += "00";
-        else
+        for(var i = 0; i < arr.length; i++)
         {
-            var Val = arr[i] & 255;
-            var A = Val.toString(16);
-            if(A.length === 1)
-                A = "0" + A;
-            Str = Str + A;
+            if(!arr[i])
+                Str += "00";
+            else
+            {
+                var Val = arr[i] & 255;
+                var Index1 = (Val >> 4) % 16;
+                var Index2 = (Val) % 16;
+                Str += HexStr.substr(Index1, 1);
+                Str += HexStr.substr(Index2, 1);
+            }
         }
     }
-    return Str.toUpperCase();
+    return Str;
 }
 function GetStrFromAddr(arr)
 {

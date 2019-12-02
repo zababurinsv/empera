@@ -1022,6 +1022,11 @@ function GetArrFromStr(Str,Len)
     }
     return arr.slice(0, Len);
 }
+function GetRandomBytes(Count)
+{
+    return crypto.randomBytes(Count);
+}
+global.GetRandomBytes = GetRandomBytes;
 global.CalcHash3FromArray = CalcHash3FromArray;
 global.CalcHashFromArray = CalcHashFromArray;
 global.CalcMerklFromArray = CalcMerklFromArray;
