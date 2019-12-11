@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, DoNode:DoNode});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
 function DoNode(Engine)
 {
     if(Engine.Del)
@@ -44,7 +44,7 @@ function DoNode(Engine)
     Engine.StartSendLiderArr(CurBlockNum - JINN_CONST.STEP_MAXHASH);
     Engine.StartSendLiderArr(CurBlockNum - JINN_CONST.STEP_MAXHASH + 1);
 }
-function Init(Engine)
+function InitClass(Engine)
 {
     Engine.TickNum = 0;
 }

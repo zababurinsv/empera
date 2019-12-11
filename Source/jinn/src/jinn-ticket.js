@@ -8,32 +8,37 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init});
+global.JINN_MODULES.push({InitClass:InitClass});
 global.glUseTicket = 1;
 global.FRESH_TIKET = "FRESH";
 global.OLD_TICKET = "OLD";
-function Init(Engine)
+function InitClass(Engine)
 {
-    Engine.ListTicket = {};
+    Engine.ListTreeTicket = {};
+    Engine.GetTreeTicket = function (BlockNum)
+    {
+        var Tree = Engine.ListTreeTicket[BlockNum];
+        if(!Tree)
+        {
+            Tree = new RBTree(FSortTx);
+            Engine.ListTreeTicket[BlockNum] = Tree;
+        }
+        return Tree;
+    };
     Engine.InitTicket = function (BlockNum)
     {
-        var MapCurTicket = Engine.ListTicket[BlockNum];
-        if(!MapCurTicket)
-        {
-            MapCurTicket = {};
-            Engine.ListTicket[BlockNum] = MapCurTicket;
-        }
-        var ArrTx = GetArrFromMap(Engine.ListTx[BlockNum]);
+        var Tree = Engine.GetTreeTicket(BlockNum);
+        var ArrTx = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
         for(var i = 0; i < ArrTx.length; i++)
         {
             var Tx = ArrTx[i];
             CheckTx("InitTicket", Tx, BlockNum, 1);
-            MapCurTicket[Tx.KEY] = Tx;
+            Engine.AddTxToTree(Tree, Tx);
         }
     };
     Engine.SendTicket = function (BlockNum)
     {
-        var ArrAll = Engine.GetTopTxArray(Engine.ListTicket[BlockNum]);
+        var ArrAll = Engine.GetTopTxArrayFromTree(Engine.ListTreeTicket[BlockNum]);
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
@@ -64,35 +69,30 @@ function Init(Engine)
         var BlockNum = Data.BlockNum;
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TICKET))
         {
-            Engine.ToError(Child, "TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum);
+            Engine.ToError(Child, "TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum, 3);
             return ;
         }
         Engine.CheckHotConnection(Child);
         if(!Child || Child.Del || !Child.Hot || Child.HotStart)
             return ;
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
-        var MapCurTicket = Engine.ListTicket[BlockNum];
-        if(!MapCurTicket)
-        {
-            MapCurTicket = {};
-            Engine.ListTicket[BlockNum] = MapCurTicket;
-        }
-        Engine.CheckSizeTXArray(TxArr);
+        var Tree = Engine.GetTreeTicket(BlockNum);
+        Engine.CheckSizeTXArray(Child, TxArr);
         for(var t = 0; t < TxArr.length; t++)
         {
             var HashTicket = TxArr[t];
             var Key = GetHexFromArr(HashTicket);
             if(ChildMap.ReceiveTicketMap[Key] !== undefined)
                 continue;
-            if(MapCurTicket[Key])
+            var Tt = Engine.GetTicket(HashTicket, Key, BlockNum);
+            if(Tree.find(Tt))
             {
                 ChildMap.ReceiveTicketMap[Key] = OLD_TICKET;
             }
             else
             {
                 ChildMap.ReceiveTicketMap[Key] = FRESH_TIKET;
-                MapCurTicket[Key] = Engine.GetTicket(HashTicket, Key, BlockNum);
-                Engine.ToDebug("GET TICKET: " + Key + " from " + Child.ID);
+                Engine.AddTxToTree(Tree, Tt);
             }
         }
         Engine.SendTicket(BlockNum);

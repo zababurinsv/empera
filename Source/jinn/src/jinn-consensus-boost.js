@@ -8,9 +8,10 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, InitAfter:InitAfter});
+global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
 var BROADCAST_SHORT_PERIOD = 1000;
-function Init(Engine)
+global.glUseBHCache = 1;
+function InitClass(Engine)
 {
     Engine.GetHeaderArrForChild = function (BlockNum,Status,Child)
     {
@@ -19,9 +20,9 @@ function Init(Engine)
         var BlockHeader = Engine.GetHeaderForChild({LoadNum:Status.LoadN, LoadHash:Status.LoadH});
         if(BlockHeader)
         {
-            var CacheHeaderMap = Child.GetCache("CacheHeaderMap");
+            var CacheHeaderMap = Child.GetCache("CacheHeaderMap", BlockNum);
             var StrHash = GetHexFromArr(BlockHeader.Hash);
-            if(!CacheHeaderMap[StrHash])
+            if(!glUseBHCache || !CacheHeaderMap[StrHash])
             {
                 ArrRet.push(BlockHeader);
                 Size += BlockHeader.Size;
@@ -33,7 +34,7 @@ function Init(Engine)
                 if(!BlockHeader || BlockHeader.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
                     break;
                 StrHash = GetHexFromArr(BlockHeader.Hash);
-                if(CacheHeaderMap[StrHash])
+                if(glUseBHCache && CacheHeaderMap[StrHash])
                     continue;
                 CacheHeaderMap[StrHash] = 1;
                 ArrRet.push(BlockHeader);
@@ -54,13 +55,13 @@ function Init(Engine)
         if(BlockBody)
         {
             var StartBlockNum = BlockBody.BlockNum;
-            var CacheBodyMap = Child.GetCache("CacheBodyMap");
+            var CacheBodyMap = Child.GetCache("CacheBodyMap", BlockNum);
             var StrHash = GetHexFromArr(BlockBody.TreeHash);
-            if(BlockBody.TxData && !CacheBodyMap[StrHash])
+            if(!glUseBHCache || BlockBody.TxData && !CacheBodyMap[StrHash])
             {
                 SizeRet = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, SizeRet);
+                CacheBodyMap[StrHash] = 1;
             }
-            CacheBodyMap[StrHash] = 1;
             for(var n = 1; n < Status.CountItem; n++)
             {
                 BlockBody = Engine.GetBodyByHash(StartBlockNum - n, BlockBody.PrevHash);
@@ -71,7 +72,7 @@ function Init(Engine)
                     continue;
                 }
                 StrHash = GetHexFromArr(BlockBody.TreeHash);
-                if(!CacheBodyMap[StrHash])
+                if(!glUseBHCache || !CacheBodyMap[StrHash])
                 {
                     SizeRet = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, SizeRet);
                     CacheBodyMap[StrHash] = 1;
@@ -104,7 +105,7 @@ function Init(Engine)
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
-            if(Block && IsEqArr(Block.Hash, Hash))
+            if(Block && Block.TxData && IsEqArr(Block.Hash, Hash))
             {
                 return Engine.GetBlockBody(Block);
             }
@@ -130,9 +131,7 @@ function InitAfter(Engine)
     };
     Engine.GetMaxArrForSend = function (Child,BlockNum,bNextSend)
     {
-        if(!Child.SendMaxHashTree)
-            Child.SendMaxHashTree = new RBTree(FMaxTreeCompare);
-        var MaxTree = Child.SendMaxHashTree;
+        var MaxTree = Child.GetCache("SendMaxTree", BlockNum, FMaxTreeCompare);
         var Store = Engine.GetStoreAtNum(BlockNum);
         var Arr = [];
         for(var n = 0; n < Store.LiderArr.length; n++)
@@ -206,7 +205,7 @@ function InitAfter(Engine)
             var Store = Engine.GetStoreAtNum(BlockNum);
             if(!Store)
                 return ;
-            var bWas = 1;
+            var bWas = 0;
             if(Data.Mode === 1)
                 for(var n = 0; n < Data.Arr1.length; n++)
                 {
@@ -239,7 +238,8 @@ function InitAfter(Engine)
                     Child.ToDebug("WAS RETURN BY ANOTHER CHILD");
                     return ;
                 }
-                Context.WasReturn = Child;
+                if(bWas)
+                    Context.WasReturn = Child;
                 var BlockNum2 = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_MAXHASH;
                 Engine.SendMaxHashToOneNode(BlockNum2, Child, Context, IterationNum - 1, 1);
             }

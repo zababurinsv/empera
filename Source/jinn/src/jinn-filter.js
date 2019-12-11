@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init});
-function Init(Engine)
+global.JINN_MODULES.push({InitClass:InitClass});
+function InitClass(Engine)
 {
 }

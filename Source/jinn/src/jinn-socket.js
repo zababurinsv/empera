@@ -9,23 +9,25 @@
 */
 
 const net = require("net");
-global.JINN_MODULES.push({Init:Init, InitAfter:InitAfter});
-function Init(Engine)
+global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
+function InitClass(Engine)
 {
     Engine.BAN_IP = {};
+    Engine.NodeByHashTree = new RBTree(function (a,b)
+    {
+        return CompareArr(a.NodeHash, b.NodeHash);
+    });
     Engine.CreateServer = function ()
     {
         Engine.Server = net.createServer(function (Socket)
         {
             if(Engine.WasBanIP({address:Socket.remoteAddress}))
             {
-                Socket.ConnectID = "new";
                 Engine.CloseSocket(Socket, "WAS BAN", true);
                 return ;
             }
-            var Child = Engine.GetChildByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
+            var Child = Engine.RetChildByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
             Engine.SetEventsProcessing(Socket, Child, "Client");
-            Child.ToLog("Connect from " + Child.ip + ":" + Child.port);
         });
         Engine.Server.on('close', function ()
         {
@@ -50,7 +52,7 @@ function Init(Engine)
         if(!Engine.port || typeof Engine.port !== "number")
             throw "Error port number = " + Engine.port;
         var LISTEN_IP = "0.0.0.0";
-        Engine.ToLog("Prepare to run TCP server on " + LISTEN_IP + ":" + Engine.port);
+        Engine.ToDebug("Prepare to run TCP server on " + LISTEN_IP + ":" + Engine.port);
         Engine.Server.listen(Engine.port, LISTEN_IP, function ()
         {
             var AddObj = Engine.Server.address();
@@ -66,12 +68,16 @@ function Init(Engine)
             {
                 return ;
             }
-            if(!SOCKET.Child)
+            if(SOCKET.Child)
             {
-            }
-            else
-            {
-                Engine.ReceiveFromNetwork(SOCKET.Child, data);
+                if(GetSocketStatus(SOCKET) === 100)
+                {
+                    Engine.ReceiveFromNetwork(Child, data);
+                }
+                else
+                {
+                    Child.ToLog("CONNECT : Error GetSocketStatus");
+                }
             }
         });
         SOCKET.on('close', function (err)
@@ -80,7 +86,7 @@ function Init(Engine)
         });
         SOCKET.on('error', function (err)
         {
-            CloseSocket(SOCKET, "ERRORS");
+            Engine.CloseSocket(SOCKET, "ERRORS");
         });
         SOCKET.on('end', function ()
         {
@@ -122,9 +128,11 @@ function Init(Engine)
     {
         if(Socket.Child)
             throw "Error LinkSocketToChild was Linked";
+        Child.Del = 0;
         Child.ConnectType = ConnectType;
         Socket.Child = Child;
         Child.Socket = Socket;
+        Child.DirectIP = (ConnectType === "Server");
         SetSocketStatus(Socket, 100);
     };
     Engine.DeleteConnectNext = function (Child)
@@ -136,8 +144,50 @@ function Init(Engine)
 function InitAfter(Engine)
 {
     Engine.CreateServer();
+    Engine.CreateConnectionToChild = function (Child,F)
+    {
+        if(Child.Del)
+        {
+            F(0);
+            return ;
+        }
+        var State = GetSocketStatus(Child.Socket);
+        if(State === 100)
+        {
+            F(1);
+        }
+        else
+        {
+            if(State === 0)
+            {
+                Child.ToDebug("Connect to " + Child.ip + ":" + Child.port);
+                if(Child.port > 30000)
+                {
+                    ToLog("Error port");
+                    Child.Del = 1;
+                    F(0);
+                    return ;
+                }
+                Child.Socket = net.createConnection(Child.port, Child.ip, function ()
+                {
+                    if(Child.Socket)
+                    {
+                        Engine.SetEventsProcessing(Child.Socket, Child, "Server");
+                    }
+                    F(!!Child.Socket);
+                });
+                SetSocketStatus(Child.Socket, 1);
+            }
+            else
+            {
+                F(0);
+            }
+        }
+    };
     Engine.SENDTONETWORK = function (Child,Data)
     {
+        if(Child.Del)
+            return ;
         var State = GetSocketStatus(Child.Socket);
         if(State === 100)
         {
@@ -145,36 +195,6 @@ function InitAfter(Engine)
         }
         else
         {
-            if(State === 0)
-            {
-                Child.ToLog("Connect to " + Child.ip + ":" + Child.port);
-                Child.BufArrToSendAfterConnect = [Data];
-                Child.Socket = net.createConnection(Child.port, Child.ip, function ()
-                {
-                    if(Child.Socket)
-                    {
-                        Engine.SetEventsProcessing(Child.Socket, Child, "Server");
-                        Child.DirectIP = 1;
-                        for(var i = 0; i < Child.BufArrToSendAfterConnect.length; i++)
-                        {
-                            var CurData = Child.BufArrToSendAfterConnect[i];
-                            Child.Socket.write(Buffer.from(CurData));
-                        }
-                        Child.BufArrToSendAfterConnect.length = 0;
-                        delete Child.BufArrToSendAfterConnect;
-                    }
-                });
-                SetSocketStatus(Child.Socket, 1);
-            }
-            else
-                if(typeof Child.BufArrToSendAfterConnect === "object")
-                {
-                    Child.BufArrToSendAfterConnect.push(Data);
-                }
-                else
-                {
-                    Child.ToLog("Skipp data: " + Buffer.from(Data).toString().substr(0, 100));
-                }
         }
     };
 }
@@ -197,7 +217,9 @@ function GetSocketStatus(Socket)
             var Delta = Date.now() - Socket.TimeStatus;
             if(Delta > JINN_CONST.MAX_WAIT_PERIOD_FOR_STATUS)
             {
-                CloseSocket(Socket, "MAX_WAIT_PERIOD_FOR_STATUS = " + Socket.SocketStatus + " time = " + Delta);
+                if(Socket)
+                    CloseSocket(Socket, "MAX_WAIT_PERIOD_FOR_STATUS = " + Socket.SocketStatus + " time = " + Delta);
+                return 0;
             }
         }
         return Socket.SocketStatus;
@@ -207,3 +229,4 @@ function GetSocketStatus(Socket)
         return 0;
     }
 }
+global.GetSocketStatus = GetSocketStatus;

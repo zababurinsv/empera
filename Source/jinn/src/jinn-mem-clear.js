@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, DoNode:DoNode});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
 function DoNode(Engine)
 {
     if(Engine.TickNum % 20 === 0)
@@ -33,7 +33,7 @@ function DoNode(Engine)
         }
     }
 }
-function Init(Engine)
+function InitClass(Engine)
 {
     Engine.CanMemClear = function ()
     {
@@ -65,20 +65,25 @@ function Init(Engine)
     Engine.MemClear = function ()
     {
         var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
-        for(var key in Engine.ListTx)
+        for(var key in Engine.ListTreeTx)
         {
             var BlockNum =  + key;
             if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
                 continue;
-            delete Engine.ListTx[key];
+            var Value = Engine.ListTreeTx[key];
+            Value.clear();
+            delete Engine.ListTreeTx[key];
         }
-        if(Engine.ListTicket)
-            for(var key in Engine.ListTicket)
+        Engine.ListTreeTicket;
+        if(Engine.ListTreeTicket)
+            for(var key in Engine.ListTreeTicket)
             {
                 var BlockNum =  + key;
                 if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
                     continue;
-                delete Engine.ListTicket[key];
+                var Value = Engine.ListTreeTicket[key];
+                Value.clear();
+                delete Engine.ListTreeTicket[key];
             }
         for(var key in Engine.BlockStore)
         {

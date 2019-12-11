@@ -8,18 +8,17 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, DoNode:DoNode, Name:"Connect"});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Connect"});
 var COUNT_CONNECT_LOOP = 5;
 var MAX_DENY_HOT_CONNECTION = 20 * 1000;
 var MAX_HOT_CONNECTION_DELAY = 2 * 1000;
 var MAX_MAXHASH_CONNECTION_DELAY = 3 * 1000;
-const NODE_ADDR_FORMAT = {ip:"str30", port:"uint16"};
 function DoNode(Engine)
 {
     if(Engine.TickNum % 3 === 0)
         Engine.DoConnect();
 }
-function Init(Engine)
+function InitClass(Engine)
 {
     Engine.ActiveConnect = 0;
     Engine.WasSendToGenesis = 0;
@@ -120,36 +119,43 @@ function Init(Engine)
             }
         }
     };
-    Engine.SendConnectReq = function (ToNode)
-    {
-        if(!Engine.CanConnect(ToNode))
-            return ;
-        var Data = {};
-        if(Engine.DirectIP && Engine.ip)
-            Data = {ip:Engine.ip, port:Engine.port};
-        Engine.Send("CONNECT", ToNode, Data, function (Child,Data)
-        {
-            if(!Data.result)
-                return ;
-            if(!Engine.CanConnect(Child))
-                return ;
-            Engine.AddConnect(Child);
-        });
-    };
-    Engine.CONNECT_SEND = NODE_ADDR_FORMAT;
-    Engine.CONNECT_RET = {result:"byte"};
-    Engine.CONNECT = function (Child,Data)
+    Engine.SendConnectReq = function (Child)
     {
         if(!Engine.CanConnect(Child))
+            return ;
+        var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, NodeHash:Engine.PubAddr, RndAddr:Engine.RndAddr};
+        Engine.Send("CONNECT", Child, Data, Engine.OnConnectReturn);
+    };
+    Engine.OnConnectReturn = function (Child,Data)
+    {
+        if(!Data.result || !Engine.CanConnect(Child))
+        {
+            Engine.DeleteConnect(Child);
+            return ;
+        }
+        Child.NodeHash = Data.NodeHash;
+        Child.RndAddr = Data.RndAddr;
+        Engine.AddConnect(Child);
+    };
+    Engine.CONNECT_SEND = {ip:"str30", port:"uint16", Protocol:"str20", Shard:"str5", NodeHash:"hash", RndAddr:"uint"};
+    Engine.CONNECT_RET = {result:"byte", NodeHash:"hash", RndAddr:"uint"};
+    Engine.CONNECT = function (Child,Data)
+    {
+        if(Data.Protocol !== JINN_CONST.PROTOCOL_NAME || !Engine.CanConnect(Child))
+        {
+            Engine.DeleteConnect(Child);
             return {result:0};
+        }
         if(Data.ip && Data.port)
         {
             Child.ip = Data.ip;
             Child.port = Data.port;
-            Child.DirectIP = 1;
         }
+        Child.DirectIP = 1;
+        Child.NodeHash = Data.NodeHash;
+        Child.RndAddr = Data.RndAddr;
         Engine.AddConnect(Child);
-        return {result:1};
+        return {result:1, NodeHash:Engine.PubAddr, RndAddr:Engine.RndAddr};
     };
     Engine.StartDisconnect = function (Child,bSend)
     {
@@ -192,9 +198,10 @@ function Init(Engine)
             Engine.ActiveConnect--;
             Child.SendReqAlive = 0;
             Engine.DisconnectHot(Child, 0);
-            if(Engine.DeleteConnectNext)
-                Engine.DeleteConnectNext(Child);
         }
+        if(Engine.DeleteConnectNext)
+            Engine.DeleteConnectNext(Child);
+        Engine.ResetChild(Child);
     };
     Engine.RemoveConnection = function (FromAddr)
     {
@@ -202,7 +209,6 @@ function Init(Engine)
             throw "Error type FromAddr=" + FromAddr;
         var Child = Engine.RetChild(FromAddr);
         Engine.DeleteConnect(Child);
-        Child.Del = 1;
     };
     Engine.SendGetNodesReq = function (ToNode)
     {
@@ -211,20 +217,23 @@ function Init(Engine)
             for(var i = 0; i < Data.Arr.length; i++)
             {
                 var Item = Data.Arr[i];
-                var Child = Engine.GetChildByIPPort(Item.ip, Item.port);
-                Child.DirectIP = 1;
+                if(Item.ip && Item.port)
+                {
+                    var Child = Engine.RetChildByIPPort(Item.ip, Item.port);
+                    Child.DirectIP = 1;
+                }
             }
         });
     };
     Engine.GETNODES_SEND = "";
-    Engine.GETNODES_RET = {Arr:[NODE_ADDR_FORMAT]};
+    Engine.GETNODES_RET = {Arr:[{ip:"str30", port:"uint16"}]};
     Engine.GETNODES = function (Child,Data)
     {
         var Arr = [];
         for(var i = 0; i < Engine.NodeArray.length; i++)
         {
             var Item = Engine.NodeArray[i];
-            if(Item.DirectIP && Child !== Item && !Item.Del && !Child.SendAddrMap[Item.IDStr])
+            if(Item.ip && Item.port && Item.DirectIP && Child !== Item && !Item.Del && !Child.SendAddrMap[Item.IDStr])
             {
                 Child.SendAddrMap[Item.IDStr] = 1;
                 Arr.push({ip:Item.ip, port:Item.port});
@@ -291,6 +300,8 @@ function Init(Engine)
     };
     Engine.SetNodeLink = function (Child,bSend)
     {
+        if(!Child.Active)
+            return 0;
         if(Engine.ROOT_NODE)
             return 0;
         if(Child.DenyHotStart && (Date.now() - Child.DenyHotStart < MAX_DENY_HOT_CONNECTION))

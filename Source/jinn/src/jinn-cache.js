@@ -8,10 +8,10 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, InitAfter:InitAfter});
+global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
 global.glUseBlockCache = 1;
 global.glUsePackMaxHash = 1;
-function Init(Engine)
+function InitClass(Engine)
 {
     Engine.ProcessBlockOnSend = function (Child,Block)
     {
@@ -23,7 +23,7 @@ function Init(Engine)
         Block.TTTransfer = [];
         var TxReceive = [];
         var TxSend = [];
-        var MapTX = Engine.ListTx[BlockNum];
+        var TreeTX = Engine.ListTreeTx[BlockNum];
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var DeltaTime = Date.now() - Child.CreateCacheTime;
         for(var i = 0; i < Block.TxData.length; i++)
@@ -40,7 +40,7 @@ function Init(Engine)
                     TxReceive.push(TxIndexReceive);
                 else
                 {
-                    if(global.glUseTicket && DeltaTime >= 5 * 1000 && DeltaBlockNum <= JINN_CONST.STEP_LAST && MapTX && MapTX[Tx.KEY] && (ChildMap.ReceiveTicketMap[Tx.KEY] || ChildMap.SendTicketMap[Tx.KEY]))
+                    if(global.glUseTicket && DeltaTime >= 5 * 1000 && DeltaBlockNum <= JINN_CONST.STEP_LAST && TreeTX && TreeTX.find(Tx) && (ChildMap.ReceiveTicketMap[Tx.KEY] || ChildMap.SendTicketMap[Tx.KEY]))
                     {
                         Block.TTTransfer.push(Tx.HashTicket);
                     }
@@ -84,15 +84,18 @@ function Init(Engine)
         if(Block.TTTransfer.length)
         {
             var ChildMap = Child.GetCacheByBlockNum(BlockNum);
-            var MapTX = Engine.ListTx[BlockNum];
-            if(!MapTX)
-                MapTX = {};
+            var TreeTX = Engine.ListTreeTx[BlockNum];
+            var Tx;
             for(var i = 0; i < Block.TTTransfer.length; i++)
             {
                 var HashTicket = Block.TTTransfer[i];
                 var KeyTicket = GetHexFromArr(HashTicket);
-                var Tx = MapTX[KeyTicket];
-                if(!CheckTx("" + Engine.ID + ". #2 ProcessBlockOnReceive", Tx, BlockNum, 1))
+                var Tt = Engine.GetTicket(HashTicket, KeyTicket, BlockNum);
+                if(TreeTX)
+                    Tx = TreeTX.find(Tt);
+                else
+                    Tx = undefined;
+                if(!Tx || !CheckTx("" + Engine.ID + ". #2 ProcessBlockOnReceive", Tx, BlockNum, 1))
                 {
                     if(global.JINN_WARNING >= 2)
                         Engine.ToLog("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Key=" + KeyTicket + " . DO INCREMENT, TT: " + ChildMap.ReceiveTicketMap[KeyTicket] + "/" + ChildMap.SendTicketMap[KeyTicket]);
@@ -108,7 +111,7 @@ function Init(Engine)
         {
             var Index = TxReceive[i];
             var Tx = Child.SendTxArr[Index];
-            if(!CheckTx("" + Engine.ID + ". #3 ProcessBlockOnReceive", Tx, BlockNum, 1))
+            if(!Tx || !CheckTx("" + Engine.ID + ". #3 ProcessBlockOnReceive", Tx, BlockNum, 1))
             {
                 if(global.JINN_WARNING >= 2)
                     Engine.ToLog("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT");
@@ -121,7 +124,7 @@ function Init(Engine)
         {
             var Index = TxSend[i];
             var Tx = Child.ReceiveTxArr[Index];
-            if(!CheckTx("" + Engine.ID + ". #4 ProcessBlockOnReceive", Tx, BlockNum, 1))
+            if(!Tx || !CheckTx("" + Engine.ID + ". #4 ProcessBlockOnReceive", Tx, BlockNum, 1))
             {
                 if(global.JINN_WARNING >= 2)
                     Engine.ToLog("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT");
@@ -134,7 +137,6 @@ function Init(Engine)
         delete Block.TxTransfer;
         delete Block.TxReceive;
         delete Block.TxSend;
-        Block.TxData.sort(Engine.FSortTx);
         return 1;
     };
     Engine.GetUnpackedArray = function (Arr)
@@ -239,13 +241,17 @@ function Init(Engine)
         Child.CacheAll = {};
         Child.CacheBlockNumAll = {};
         Child.CahcheVersion = 0;
-        Child.GetCache = function (Name)
+        Child.GetCache = function (Name,BlockNum,FTreeSort)
         {
-            var Map = Child.CurrentCacheMap[Name];
+            var ChildCache = Child.GetCacheByBlockNum((BlockNum / 1) >>> 0);
+            var Map = ChildCache[Name];
             if(!Map)
             {
-                Map = {};
-                Child.CurrentCacheMap[Name] = Map;
+                if(FTreeSort)
+                    Map = new RBTree(FTreeSort);
+                else
+                    Map = {};
+                ChildCache[Name] = Map;
             }
             return Map;
         };

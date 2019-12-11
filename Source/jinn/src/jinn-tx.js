@@ -8,36 +8,33 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init});
+global.JINN_MODULES.push({InitClass:InitClass});
 var glTxNum = 0;
-function Init(Engine)
+function InitClass(Engine)
 {
-    Engine.ListTx = {};
+    Engine.ListTreeTx = {};
     Engine.AddCurrentProcessingTx = function (BlockNum,TxArr)
     {
         if(BlockNum < JINN_CONST.START_ADD_TX)
             return ;
-        var BlockListTx = Engine.ListTx[BlockNum];
-        if(!BlockListTx)
+        var Tree = Engine.ListTreeTx[BlockNum];
+        if(!Tree)
         {
-            BlockListTx = {};
-            Engine.ListTx[BlockNum] = BlockListTx;
+            Tree = new RBTree(FSortTx);
+            Engine.ListTreeTx[BlockNum] = Tree;
         }
         for(var t = 0; t < TxArr.length; t++)
         {
             var Tx = TxArr[t];
             if(!Engine.IsValidateTx(Tx, "AddCurrentProcessingTx", BlockNum))
                 continue;
-            BlockListTx[Tx.KEY] = Tx;
+            Engine.AddTxToTree(Tree, Tx);
         }
     };
     Engine.SendTx = function (BlockNum)
     {
-        var ArrAll = Engine.GetTopTxArray(Engine.ListTx[BlockNum]);
-        var MapTT = Engine.ListTicket[BlockNum];
-        if(!MapTT)
-            MapTT = {};
-        Engine.SetTopTxArray(MapTT);
+        var ArrAll = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
+        var TreeTT = Engine.GetTreeTicket(BlockNum);
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
@@ -54,8 +51,10 @@ function Init(Engine)
                 if(global.glUseTicket)
                 {
                     var TT = MapTT[Tx.KEY];
-                    if(!TT || !TT.Top)
+                    if(!TreeTT.find(Tx))
+                    {
                         continue;
+                    }
                     var TicketValue = ChildMap.ReceiveTicketMap[Tx.KEY];
                     if(TicketValue === global.OLD_TICKET)
                         continue;
@@ -79,14 +78,14 @@ function Init(Engine)
         var BlockNum = Data.BlockNum;
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TX))
         {
-            Engine.ToError(Child, "TRANSFERTX : CanProcessBlock Error BlockNum=" + BlockNum);
+            Engine.ToError(Child, "TRANSFERTX : CanProcessBlock Error BlockNum=" + BlockNum, 3);
             return ;
         }
         Engine.CheckHotConnection(Child);
         if(!Child || Child.Del || !Child.Hot || Child.HotStart)
             return ;
         Child.CheckCache(Data.Cache, BlockNum);
-        Engine.CheckSizeTXArray(TxArr);
+        Engine.CheckSizeTXArray(Child, TxArr);
         var TxArr2 = [];
         for(var t = 0; t < TxArr.length; t++)
         {
@@ -97,8 +96,8 @@ function Init(Engine)
                 continue;
             if(global.JINN_WARNING >= 5 && global.glUseTicket && BlockNum > JINN_CONST.START_CHECK_BLOCKNUM)
             {
-                var Map = Engine.ListTx[BlockNum];
-                if(Map && Map[Tx.KEY])
+                var Tree = Engine.ListTreeTx[BlockNum];
+                if(Tree && Tree.find(Tx))
                 {
                     Engine.ToLog("<-" + Child.ID + ". B=" + BlockNum + " Bad TICKET CHACHE - WAS Tx=" + Tx.name);
                 }
@@ -167,7 +166,7 @@ function Init(Engine)
         var Tx = Engine.GetTx(body);
         return Tx;
     };
-    Engine.GetTx = function (body,HASH)
+    Engine.GetTx = function (body,HASH,HashPow)
     {
         var Tx = {};
         Tx.IsTx = 1;
@@ -179,9 +178,16 @@ function Init(Engine)
         Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
         Tx.KEY = GetHexFromArr(Tx.HashTicket);
         Tx.body = body;
-        Engine.FillTicket(Tx);
+        if(HashPow)
+        {
+            Tx.HashPow = HashPow;
+            Tx.TimePow = Engine.GetPowPower(HashPow);
+        }
+        else
+        {
+            Engine.FillTicket(Tx);
+        }
         Tx.name = Tx.KEY.substr(0, 6) + "-" + Tx.TimePow;
-        Tx.Size = body.length;
         return Tx;
     };
 }

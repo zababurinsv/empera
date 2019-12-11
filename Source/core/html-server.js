@@ -78,14 +78,17 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
             response.end();
             return ;
         }
-        response.writeHead(200, {'Content-Type':'text/plain'});
+        var Headers = {'Content-Type':'text/plain'};
         var Ret = F(params[1], response);
         if(Ret === null)
+        {
+            response.writeHead(200, Headers);
             return ;
+        }
         try
         {
             var Str = JSON.stringify(Ret);
-            response.end(Str);
+            SendGZipData(request, response, Headers, Str);
         }
         catch(e)
         {
@@ -106,10 +109,10 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
             SendWebFile(request, response, "./HTML/wallet.html");
             break;
         case "file":
-            SendBlockFile(response, params[1], params[2]);
+            SendBlockFile(request, response, params[1], params[2]);
             break;
         case "DappTemplateFile":
-            DappTemplateFile(response, params[1]);
+            DappTemplateFile(request, response, params[1]);
             break;
         case "smart":
             DappSmartCodeFile(response, params[1]);
@@ -182,7 +185,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
     }
 }
 global.DappTemplateFile = DappTemplateFile;
-function DappTemplateFile(response,StrNum)
+function DappTemplateFile(request,response,StrNum)
 {
     var Num = parseInt(StrNum);
     if(Num && Num <= DApps.Smart.GetMaxNum())
@@ -190,11 +193,11 @@ function DappTemplateFile(response,StrNum)
         var Data = DApps.Smart.ReadSmart(Num);
         if(Data)
         {
-            response.writeHead(200, {'Content-Type':'text/html', "X-Frame-Options":"sameorigin"});
+            var Headers = {'Content-Type':'text/html', "X-Frame-Options":"sameorigin"};
             var Str = fs.readFileSync("HTML/dapp-frame.html", {encoding:"utf8"});
             Str = Str.replace(/#template-number#/g, Num);
             Str = Str.replace(/.\/tera.ico/g, "/file/" + Data.IconBlockNum + "/" + Data.IconTrNum);
-            response.end(Str);
+            SendGZipData(request, response, Headers, Str);
             return ;
         }
     }
@@ -250,7 +253,7 @@ HTTPCaller.DappSmartHTMLFile = function (Params)
     return {result:0};
 }
 global.SendBlockFile = SendBlockFile;
-function SendBlockFile(response,BlockNum,TrNum)
+function SendBlockFile(request,response,BlockNum,TrNum)
 {
     BlockNum = parseInt(BlockNum);
     TrNum = parseInt(TrNum);
@@ -259,7 +262,7 @@ function SendBlockFile(response,BlockNum,TrNum)
         var Block = SERVER.ReadBlockDB(BlockNum);
         if(Block && Block.arrContent)
         {
-            SendToResponceFile(response, Block, TrNum);
+            SendToResponceFile(request, response, Block, TrNum);
             return ;
         }
         else
@@ -273,7 +276,7 @@ function SendBlockFile(response,BlockNum,TrNum)
                     }
                     else
                     {
-                        SendToResponceFile(response, Block, TrNum);
+                        SendToResponceFile(request, response, Block, TrNum);
                     }
                 });
                 return ;
@@ -281,7 +284,7 @@ function SendBlockFile(response,BlockNum,TrNum)
     }
     SendToResponce404(response);
 }
-function SendToResponceFile(response,Block,TrNum)
+function SendToResponceFile(request,response,Block,TrNum)
 {
     var Body = Block.arrContent[TrNum];
     if(Body && Body.data)
@@ -290,11 +293,12 @@ function SendToResponceFile(response,Block,TrNum)
     {
         var TR = DApps.File.GetObjectTransaction(Body);
         var StrType = TR.ContentType.toLowerCase();
-        if(AllowMap[StrType] || (StrType === "image/svg+xml" && Block.BlockNum < global.UPDATE_CODE_2))
-            response.writeHead(200, {'Content-Type':TR.ContentType, "X-Content-Type-Options":"nosniff"});
+        var Headers = {"X-Content-Type-Options":"nosniff"};
+        if(AllowMap[StrType] || (Block.BlockNum < global.UPDATE_CODE_2 && StrType === "image/svg+xml"))
+            Headers['Content-Type'] = TR.ContentType;
         else
-            response.writeHead(200, {'Content-Type':"text/plain", "X-Content-Type-Options":"nosniff"});
-        response.end(TR.Data);
+            Headers['Content-Type'] = "text/plain";
+        SendGZipData(request, response, Headers, TR.Data);
     }
     else
     {
@@ -1545,33 +1549,38 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
     {
         Headers['Cache-Control'] = "max-age=" + Long;
     }
+    if(bParsing && StrContentType === "text/html")
+    {
+        var data = GetFileHTMLWithParsing(Path);
+        SendGZipData(request, response, Headers, data);
+        return ;
+    }
+    else
+        if("image/jpeg,image/vnd.microsoft.icon,image/svg+xml,image/png,application/javascript,text/css,text/html".indexOf(StrContentType) >  - 1)
+        {
+            response.writeHead(200, Headers);
+            var data = GetFileSimpleBin(Path);
+            SendGZipData(request, response, Headers, data);
+            return ;
+        }
+    const stream = fs.createReadStream(Path);
     let acceptEncoding = request.headers['accept-encoding'];
-    if(!acceptEncoding)
+    if(!global.HTTP_USE_ZIP || !acceptEncoding)
     {
         acceptEncoding = '';
     }
-    if(bParsing && StrContentType === "text/html")
-    {
-        response.writeHead(200, Headers);
-        var data = GetFileHTMLWithParsing(Path);
-        {
-            response.end(data);
-        }
-        return ;
-    }
-    const stream = fs.createReadStream(Path);
     if(/\bdeflate\b/.test(acceptEncoding))
     {
         Headers['Content-Encoding'] = 'deflate';
         response.writeHead(200, Headers);
-        stream.pipe(zlib.createDeflate()).pipe(response);
+        stream.pipe(zlib.createDeflate({level:zlib.constants.Z_BEST_SPEED})).pipe(response);
     }
     else
         if(/\bgzip\b/.test(acceptEncoding))
         {
             Headers['Content-Encoding'] = 'gzip';
             response.writeHead(200, Headers);
-            stream.pipe(zlib.createGzip()).pipe(response);
+            stream.pipe(zlib.createGzip({level:zlib.constants.Z_BEST_SPEED})).pipe(response);
         }
         else
             if(/\bbr\b/.test(acceptEncoding))
@@ -1592,6 +1601,32 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
                 }, 30 * 60 * 1000);
                 stream.pipe(response);
             }
+}
+function SendGZipData(request,response,Headers,data)
+{
+    let acceptEncoding = request.headers['accept-encoding'];
+    if(!global.HTTP_USE_ZIP || !acceptEncoding)
+    {
+        acceptEncoding = '';
+    }
+    if(/\bgzip\b/.test(acceptEncoding))
+    {
+        Headers['Content-Encoding'] = 'gzip';
+        response.writeHead(200, Headers);
+        var gzip = zlib.createGzip({level:zlib.constants.Z_BEST_SPEED});
+        gzip.pipe(response);
+        gzip.on('error', function (err)
+        {
+            ToLog(err);
+        });
+        gzip.write(data);
+        gzip.end();
+    }
+    else
+    {
+        response.writeHead(200, Headers);
+        response.end(data);
+    }
 }
 function GetFileHTMLWithParsing(Path,bZip)
 {

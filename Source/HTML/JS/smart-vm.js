@@ -147,122 +147,167 @@ function GET_SMART(Obj)
         }, };
     return GET_PROP;
 }
-function InitEval()
+function InitMathObject()
 {
-    $Math.abs = function ()
+    $Math.abs = function (x)
     {
         DO(6);
-        return Math.abs.apply(Math, arguments);
+        return Math.abs(x);
     };
-    $Math.acos = function ()
+    $Math.acos = function (x)
     {
         DO(16);
-        return Math.acos.apply(Math, arguments);
+        return Math.acos(x);
     };
-    $Math.acosh = function ()
+    $Math.acosh = function (x)
     {
         DO(9);
-        return Math.acosh.apply(Math, arguments);
+        return Math.acosh(x);
     };
-    $Math.asin = function ()
+    $Math.asin = function (x)
     {
         DO(19);
-        return Math.asin.apply(Math, arguments);
+        return Math.asin(x);
     };
-    $Math.asinh = function ()
+    $Math.asinh = function (x)
     {
         DO(32);
-        return Math.asinh.apply(Math, arguments);
+        return Math.asinh(x);
     };
-    $Math.atan = function ()
+    $Math.atan = function (x)
     {
         DO(13);
-        return Math.atan.apply(Math, arguments);
+        return Math.atan(x);
     };
-    $Math.atanh = function ()
+    $Math.atanh = function (x)
     {
         DO(30);
-        return Math.atanh.apply(Math, arguments);
+        return Math.atanh(x);
     };
-    $Math.atan2 = function ()
+    $Math.atan2 = function (x)
     {
         DO(15);
-        return Math.atan2.apply(Math, arguments);
+        return Math.atan2(x);
     };
-    $Math.ceil = function ()
+    $Math.ceil = function (x)
     {
         DO(6);
-        return Math.ceil.apply(Math, arguments);
+        return Math.ceil(x);
     };
-    $Math.cbrt = function ()
+    $Math.cbrt = function (x)
     {
         DO(22);
-        return Math.cbrt.apply(Math, arguments);
+        return Math.cbrt(x);
     };
-    $Math.expm1 = function ()
+    $Math.expm1 = function (x)
     {
         DO(18);
-        return Math.expm1.apply(Math, arguments);
+        return Math.expm1(x);
     };
-    $Math.clz32 = function ()
+    $Math.clz32 = function (x)
     {
         DO(5);
-        return Math.clz32.apply(Math, arguments);
+        return Math.clz32(x);
     };
-    $Math.cos = function ()
+    $Math.cos = function (x)
     {
         DO(12);
-        return Math.cos.apply(Math, arguments);
+        return Math.cos(x);
     };
-    $Math.cosh = function ()
+    $Math.cosh = function (x)
     {
         DO(20);
-        return Math.cosh.apply(Math, arguments);
+        return Math.cosh(x);
     };
-    $Math.exp = function ()
+    $Math.exp = function (x)
     {
         DO(16);
-        return Math.exp.apply(Math, arguments);
+        return Math.exp(x);
     };
-    $Math.floor = function ()
+    $Math.floor = function (x)
     {
         DO(7);
-        return Math.floor.apply(Math, arguments);
+        return Math.floor(x);
     };
-    $Math.fround = function ()
+    $Math.fround = function (x)
     {
         DO(6);
-        return Math.fround.apply(Math, arguments);
+        return Math.fround(x);
+    };
+    $Math.log = function (x)
+    {
+        DO(10);
+        return Math.log(x);
+    };
+    $Math.log1p = function (x)
+    {
+        DO(23);
+        return Math.log1p(x);
+    };
+    $Math.log2 = function (x)
+    {
+        DO(19);
+        return Math.log2(x);
+    };
+    $Math.log10 = function (x)
+    {
+        DO(16);
+        return Math.log10(x);
+    };
+    $Math.round = function (x)
+    {
+        DO(7);
+        return Math.round(x);
+    };
+    $Math.sign = function (x)
+    {
+        DO(5);
+        return Math.sign(x);
+    };
+    $Math.sin = function (x)
+    {
+        DO(10);
+        return Math.sin(x);
+    };
+    $Math.sinh = function (x)
+    {
+        DO(24);
+        return Math.sinh(x);
+    };
+    $Math.sqrt = function (x)
+    {
+        DO(6);
+        return Math.sqrt(x);
+    };
+    $Math.tan = function (x)
+    {
+        DO(13);
+        return Math.tan(x);
+    };
+    $Math.tanh = function (x)
+    {
+        DO(24);
+        return Math.tanh(x);
+    };
+    $Math.trunc = function (x)
+    {
+        DO(6);
+        return Math.trunc(x);
+    };
+    $Math.pow = function (x,y)
+    {
+        DO(40);
+        return Math.pow(x, y);
+    };
+    $Math.imul = function (x,y)
+    {
+        DO(3);
+        return Math.imul(x, y);
     };
     $Math.hypot = function ()
     {
         DO(56);
         return Math.hypot.apply(Math, arguments);
-    };
-    $Math.imul = function ()
-    {
-        DO(3);
-        return Math.imul.apply(Math, arguments);
-    };
-    $Math.log = function ()
-    {
-        DO(10);
-        return Math.log.apply(Math, arguments);
-    };
-    $Math.log1p = function ()
-    {
-        DO(23);
-        return Math.log1p.apply(Math, arguments);
-    };
-    $Math.log2 = function ()
-    {
-        DO(19);
-        return Math.log2.apply(Math, arguments);
-    };
-    $Math.log10 = function ()
-    {
-        DO(16);
-        return Math.log10.apply(Math, arguments);
     };
     $Math.max = function ()
     {
@@ -274,68 +319,34 @@ function InitEval()
         DO(6);
         return Math.min.apply(Math, arguments);
     };
-    $Math.pow = function ()
-    {
-        DO(40);
-        return Math.pow.apply(Math, arguments);
-    };
-    $Math.round = function ()
-    {
-        DO(7);
-        return Math.round.apply(Math, arguments);
-    };
-    $Math.sign = function ()
-    {
-        DO(5);
-        return Math.sign.apply(Math, arguments);
-    };
-    $Math.sin = function ()
-    {
-        DO(10);
-        return Math.sin.apply(Math, arguments);
-    };
-    $Math.sinh = function ()
-    {
-        DO(24);
-        return Math.sinh.apply(Math, arguments);
-    };
-    $Math.sqrt = function ()
-    {
-        DO(6);
-        return Math.sqrt.apply(Math, arguments);
-    };
-    $Math.tan = function ()
-    {
-        DO(13);
-        return Math.tan.apply(Math, arguments);
-    };
-    $Math.tanh = function ()
-    {
-        DO(24);
-        return Math.tanh.apply(Math, arguments);
-    };
-    $Math.trunc = function ()
-    {
-        DO(6);
-        return Math.trunc.apply(Math, arguments);
-    };
     $Math.random = function ()
     {
         DO(1);
         return 0;
     };
+    FreezeObjectChilds($Math);
+    Object.freeze($Math);
+}
+function InitJSONObject()
+{
     $JSON.stringify = function (Obj)
     {
-        return JSON.stringify(Obj);
+        var Str = JSON.stringify(Obj);
+        if(Str.length > MAX_LENGTH_STRING)
+            return "";
+        return Str;
     };
     $JSON.parse = function (Str)
     {
         return JSON.parse(Str);
     };
-    FreezeObjectChilds($Math);
-    Object.freeze($Math);
     FreezeObjectChilds($JSON);
     Object.freeze($JSON);
+}
+function InitEval()
+{
+    InitMathObject();
+    InitJSONObject();
     FreezeObjectChilds(Array.prototype);
     FreezeObjectChilds(Object.prototype);
     FreezeObjectChilds(String.prototype);
@@ -365,49 +376,78 @@ function FreezeObjectChilds(Value)
 }
 function InnerChangeObjects()
 {
-    Function.prototype.toString = function ()
+    ClearPrototype(Function.prototype, {"call":1, "apply":1, "bind":1, "name":1});
+    ClearPrototype(Array.prototype, {"push":1, "pop":1, "shift":1, "unshift":1, "sort":1, "splice":1, "slice":1, "indexOf":1, "join":1,
+        "some":1, "length":1});
+    ClearPrototype(Object.prototype, {});
+    ClearPrototype(String.prototype, {"length":1, "indexOf":1, "substr":1, "toLowerCase":1, "toUpperCase":1, "charAt":1, "charCodeAt":1,
+        "replace":1, "split":1, "trim":1});
+    ClearPrototype(Number.prototype, {"toFixed":1, "toPrecision":1});
+    ClearPrototype(Boolean.prototype, {});
+    InitStringObject(String.prototype);
+    function InitStringObject(Proto)
     {
-        return "";
+        let indexOf = Proto.indexOf;
+        String.prototype.indexOf = function (x,y)
+        {
+            return indexOf.call(this, x, y);
+        };
+        let substr = Proto.substr;
+        String.prototype.substr = function (x,y)
+        {
+            return substr.call(this, x, y);
+        };
+        let toLowerCase = Proto.toLowerCase;
+        String.prototype.toLowerCase = function ()
+        {
+            return toLowerCase.call(this);
+        };
+        let toUpperCase = Proto.toUpperCase;
+        String.prototype.toUpperCase = function ()
+        {
+            return toUpperCase.call(this);
+        };
+        let charAt = Proto.charAt;
+        String.prototype.charAt = function (x)
+        {
+            return charAt.call(this, x);
+        };
+        let charCodeAt = Proto.charCodeAt;
+        String.prototype.charCodeAt = function (x)
+        {
+            return charCodeAt.call(this, x);
+        };
+        let replace = Proto.replace;
+        String.prototype.replace = function (x,y)
+        {
+            return replace.call(this, x, y);
+        };
+        let split = Proto.split;
+        String.prototype.split = function (x,y)
+        {
+            return split.call(this, x, y);
+        };
+        let trim = Proto.trim;
+        String.prototype.trim = function ()
+        {
+            return trim.call(this);
+        };
     };
-    Function.prototype.toLocaleString = Function.prototype.toString;
-    Array.prototype.concat = undefined;
-    Array.prototype.toString = undefined;
-    Array.prototype.toLocaleString = undefined;
-    Number.prototype.toLocaleString = function ()
+    function ClearPrototype(Obj,NMap)
     {
-        return this.toString();
-    };
-    String.prototype.toLocaleLowerCase = String.prototype.toLowerCase;
-    String.prototype.toLocaleUpperCase = String.prototype.toUpperCase;
-    String.prototype.localeCompare = undefined;
-    String.prototype.match = undefined;
-    String.prototype.repeat = undefined;
-    String.prototype.search = undefined;
-    String.prototype.padStart = undefined;
-    String.prototype.padEnd = undefined;
-    String.prototype.right = function (count)
-    {
-        return this.substr(this.length - count, count);
-    };
-    FreezeObjectChilds(Array.prototype);
-    FreezeObjectChilds(Object.prototype);
-    FreezeObjectChilds(String.prototype);
-    FreezeObjectChilds(Number.prototype);
-    FreezeObjectChilds(Boolean.prototype);
-    var Obj = function ()
-    {
-    };
-    Object.freeze(Obj.bind);
-    Object.freeze(Obj.apply);
-    Object.freeze(Obj.call);
-    Object.freeze(Obj.toString);
-    Object.freeze(Obj.constructor);
-    function FreezeObjectChilds(Value)
-    {
-        var arr = Object.getOwnPropertyNames(Value);
+        var arr = Object.getOwnPropertyNames(Obj);
         for(var name of arr)
         {
-            Object.freeze(Value[name]);
+            if(!NMap[name])
+                delete Obj[name];
+        }
+        Obj.constructor = undefined;
+        Obj.toString = undefined;
+        Obj.toLocaleString = undefined;
+        arr = Object.getOwnPropertyNames(Obj);
+        for(var name of arr)
+        {
+            Object.freeze(Obj[name]);
         }
     };
 }

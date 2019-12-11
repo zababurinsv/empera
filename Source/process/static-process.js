@@ -221,7 +221,7 @@ function GETREST(msg)
         if(CompareArr(Data.AccHash, Tree.Root) !== 0)
         {
             ToLog("Get bad rest acc hash: " + BlockNumRest + " = " + GetHexFromArr(Data.AccHash).substr(0, 8) + "/" + GetHexFromArr(Tree.Root).substr(0,
-            8), 2);
+            8), 3);
             ArrRest = [];
             nResult = 0;
         }

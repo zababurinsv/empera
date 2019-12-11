@@ -8,8 +8,8 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, Name:"Log"});
-function Init(Engine)
+global.JINN_MODULES.push({InitClass:InitClass, Name:"Log"});
+function InitClass(Engine)
 {
     Engine.ToLog = function (Str)
     {
@@ -47,10 +47,10 @@ function Init(Engine)
                 return ;
         Engine.ToLog(Str);
     };
-    Engine.ToError = function (Child,Str)
+    Engine.ToError = function (Child,Str,WarningLevel)
     {
         Child.ErrCount++;
-        Engine.ToLog("<-" + Child.ID + " ********ERROR: " + Str);
+        Engine.ToWarning("<-->" + Child.ID + " ********ERROR: " + Str, WarningLevel);
     };
 }
 if(!global.ToLogTrace)

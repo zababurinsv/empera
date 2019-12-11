@@ -14,15 +14,16 @@ require("./model/model-network.js");
 require("./model/model-node.js");
 require("./model/model-environment.js");
 var PrevCurBlockNum = 0;
-global.DEBUG_ID = 0;
+global.JINN_WARNING = 2;
+global.DEBUG_ID = undefined;
 JINN_CONST.START_ADD_TX = 20;
-var MaxNode = 10;
+var MaxNode = 6;
 JINN_CONST.MAX_TRANSACTION_COUNT = 0;
-global.CREATE_TX_PER_NODE = Math.floor(0.99 + JINN_CONST.MAX_TRANSACTION_COUNT / MaxNode);
+global.CREATE_TX_PER_NODE = Math.floor(0.999 + JINN_CONST.MAX_TRANSACTION_COUNT / MaxNode);
+JINN_CONST.MAX_LEADER_COUNT = 4;
 global.glUseZip = 1;
 global.glUseTicket = 1;
 global.glUseBlockCache = 1;
-JINN_CONST.MAX_LEADER_COUNT = 4;
 JINN_CONST.MAX_DELTA_PROCESSING = 1;
 JINN_CONST.MAX_PACKET_LENGTH = 260 * 1024;
 JINN_CONST.MAX_LEVEL_CONNECTION = 15;
@@ -31,19 +32,19 @@ JINN_CONST.TX_TICKET_HASH_LENGTH = 10;
 JINN_CONST.MAX_BLOCK_SIZE = 420 * 1000;
 var MODEL = CreateModel(MaxNode);
 ToLog("MaxNodeCount=" + MODEL.MaxNodeCount);
-setInterval(MainWorkLoop, 100);
+setInterval(MainWorkLoop, 50);
 function MainWorkLoop()
 {
     MODEL.DoRun();
     var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
     if(CurBlockNum !== PrevCurBlockNum && MODEL.NodeCount)
     {
-        var Count = MODEL.CalcMaxConsensusHash(1);
+        var Stat = MODEL.CalcNodesStat(1);
         var StrErr = "";
-        if(Count !== MODEL.NodeCount)
+        if(Stat.Consensus !== MODEL.NodeCount)
             StrErr = "  <------ NO CONSENSUS";
-        var Traffic = (JINN_STAT.AllTraffic / 1024 / MODEL.NodeCount).toFixed(1);
-        var Str = "" + CurBlockNum + ". Consensus OK:" + Count + "/" + MODEL.NodeCount + " Traffic:" + Traffic + " Kb" + " Tx:" + Math.floor(JINN_STAT.TxSend / MODEL.NodeCount) + " Tt:" + Math.floor(JINN_STAT.TTSend / MODEL.NodeCount) + " Head:" + Math.floor(JINN_STAT.HeaderSend / MODEL.NodeCount) + " Body:" + Math.floor(JINN_STAT.BodySend / MODEL.NodeCount) + " BodyTx:" + Math.floor(JINN_STAT.BodyTxSend / MODEL.NodeCount);
+        var Str = "" + CurBlockNum + ". Consensus OK:" + Stat.Consensus + "/" + MODEL.NodeCount + " " + MODEL.GetInfoString();
+        Str = Str.replace(/[\n]/g, " ");
         ToLog(Str + StrErr);
         JINN_STAT.Clear();
         PrevCurBlockNum = CurBlockNum;

@@ -98,6 +98,17 @@ class SmartApp extends require("./dapp")
         if(!bReadOnly)
             this.Start()
     }
+    SaveAllToFile()
+    {
+        var Str = "";
+        for(var i = 8; i <= this.GetMaxNum(); i++)
+        {
+            var Smart = this.ReadSmart(i);
+            Str += "//############################## " + i + "." + Smart.Name + "\r\n\r\n\r\n"
+            Str += Smart.Code + "\r\n\r\n\r\n"
+        }
+        SaveToFile(GetDataPath("smart-all.txt"), Str)
+    }
     Start()
     {
         if(this.GetMaxNum() + 1 >= 7)

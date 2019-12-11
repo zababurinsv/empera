@@ -385,10 +385,10 @@ function DoCommandNew(request,response,Type,Path,Params)
     switch(Method)
     {
         case "file":
-            SendBlockFile(response, ArrPath[1], ArrPath[2]);
+            SendBlockFile(request, response, ArrPath[1], ArrPath[2]);
             break;
         case "DappTemplateFile":
-            DappTemplateFile(response, ArrPath[1]);
+            DappTemplateFile(request, response, ArrPath[1]);
             break;
         case "smart":
             DappSmartCodeFile(response, ArrPath[1]);
@@ -865,7 +865,7 @@ HostingCaller.GetHistoryTransactions = function (Params)
 HostingCaller.GetSupply = function (Params)
 {
     if(HTTPS_HOSTING_DOMAIN === "terafoundation.org")
-        return "" + (1000000000 - 384 * 1000000);
+        return "" + (1000000000 - 380 * 1000000);
     var Data = DApps.Accounts.ReadState(0);
     if(!Data)
         return "";

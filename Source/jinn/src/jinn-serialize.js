@@ -8,8 +8,8 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, Name:"Serilize"});
-function Init(Engine)
+global.JINN_MODULES.push({InitClass:InitClass, Name:"Serilize"});
+function InitClass(Engine)
 {
     Engine.SendFormatMap = {};
     Engine.GetBufferFromData = function (Method,Data,bSend)
@@ -17,7 +17,7 @@ function Init(Engine)
         var format = Engine.GetF(Method, bSend);
         if(format.struct === "")
             return undefined;
-        var Buf = BufLib2.GetBufferFromObject(Data, format.struct, 0, format.wrk);
+        var Buf = SerializeLib.GetBufferFromObject(Data, format.struct, format.wrk);
         return Buf;
     };
     Engine.GetDataFromBuffer = function (Method,Buf,bSend)
@@ -27,7 +27,7 @@ function Init(Engine)
             return undefined;
         try
         {
-            var Data = BufLib2.GetObjectFromBuffer(Buf, format.struct, format.wrk);
+            var Data = SerializeLib.GetObjectFromBuffer(Buf, format.struct, format.wrk);
             return Data;
         }
         catch(e)
@@ -50,7 +50,7 @@ function Init(Engine)
             if(Str !== undefined)
             {
                 if(typeof Str === "object")
-                    Str = BufLib2.GetFormatFromObject(Str);
+                    Str = SerializeLib.GetFormatFromObject(Str);
                 format = {struct:Str, wrk:{}};
             }
             else

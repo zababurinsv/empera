@@ -8,8 +8,8 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, InitAfter:InitAfter});
-function Init(Engine)
+global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
+function InitClass(Engine)
 {
     Engine.DoBlockMining = function (CurBlockNum)
     {
@@ -29,11 +29,11 @@ function Init(Engine)
                 var BlockDB = Engine.GetLastBlockDB();
                 if(!BlockDB)
                     throw "Error DoBlockMining:GetLastBlockDB";
-                var TxArr = Engine.GetTopTxArray(Engine.ListTx[BlockNum], 1);
+                var TxArr = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
                 Block = Engine.GetNewBlock(BlockNum, TxArr, BlockDB);
                 if(!Block)
                 {
-                    ToLog("Cannt create block=" + BlockNum);
+                    Engine.ToLog("Cannt create block=" + BlockNum);
                     return ;
                 }
             }
@@ -44,10 +44,29 @@ function Init(Engine)
                 var DeltaNum = CurBlockNum - Block.BlockNum;
                 if(DeltaNum > JINN_CONST.DELTA_BLOCKS_FOR_LOAD_ONLY)
                 {
-                    Engine.ToLog3("Old block  BlockNum=" + BlockNum);
+                    Engine.ToLog5("Old block  BlockNum=" + BlockNum);
+                    Engine.CreateBlockInMemory(CurBlockNum);
                     break;
                 }
             }
+        }
+    };
+    Engine.CreateBlockInMemory = function (BlockNum)
+    {
+        if(Engine.GetBlockHeaderDB(BlockNum))
+            return ;
+        var TxArr = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
+        var Block = Engine.GetNewBlock(BlockNum, TxArr, {Hash:ZERO_ARR_32}, 1);
+        if(!Block)
+        {
+            Engine.ToLog("Cannt create block=" + BlockNum);
+            return ;
+        }
+        var ArrBlock = Engine.GetLoadingArrayByNum(BlockNum);
+        if(ArrBlock.length === 0)
+        {
+            Engine.ToDebug("Add new mem block: " + BlockNum);
+            ArrBlock.push(Block);
         }
     };
     Engine.GetGenesisBlock = function (Num)
@@ -71,7 +90,7 @@ function Init(Engine)
         Block.Description = "Genesis";
         return Block;
     };
-    Engine.GetNewBlock = function (BlockNum,TxArr,PrevBlock)
+    Engine.GetNewBlock = function (BlockNum,TxArr,PrevBlock,bInMemory)
     {
         var Block = {};
         Block.BlockNum = BlockNum;
@@ -82,8 +101,11 @@ function Init(Engine)
         for(var i = 2; i < 32; i++)
             Block.AddrHash[i] = i;
         Engine.CalcBlockHash(Block);
-        Block.SumPow = Block.Power + PrevBlock.SumPow;
-        Block.PrevBlock = PrevBlock;
+        if(!bInMemory)
+        {
+            Block.SumPow = Block.Power + PrevBlock.SumPow;
+            Block.PrevBlock = PrevBlock;
+        }
         return Block;
     };
     Engine.GetBlockHeader = function (Block)
@@ -96,8 +118,10 @@ function Init(Engine)
     {
         var Data = {BlockNum:Block.BlockNum, TreeHash:Block.TreeHash, TxData:Block.TxData, PrevHash:Block.PrevHash, };
         var Size = 10;
-        for(var i = 0; i < Data.TxData; i++)
-            Size += Data.TxData[i].Size;
+        for(var i = 0; i < Data.TxData.length; i++)
+        {
+            Size += Data.TxData[i].body.length;
+        }
         Data.Size = Size;
         return Data;
     };
@@ -115,7 +139,6 @@ function Init(Engine)
         if(!TxArr0 || !TxArr0.length)
             return ZERO_ARR_32;
         var TxArr = TxArr0;
-        TxArr.sort(Engine.FSortTx);
         var Buf = [];
         for(var n = 0; n < TxArr.length; n++)
         {

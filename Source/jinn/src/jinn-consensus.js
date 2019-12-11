@@ -8,8 +8,8 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init});
-function Init(Engine)
+global.JINN_MODULES.push({InitClass:InitClass});
+function InitClass(Engine)
 {
     Engine.BlockStore = {};
     Engine.LoadingArr = {};
@@ -139,18 +139,23 @@ function Init(Engine)
         }
         return undefined;
     };
+    Engine.GetLoadingArrayByNum = function (BlockNum)
+    {
+        var ArrBlock = Engine.LoadingArr[BlockNum];
+        if(!ArrBlock)
+        {
+            ArrBlock = [];
+            Engine.LoadingArr[BlockNum] = ArrBlock;
+        }
+        return ArrBlock;
+    };
     Engine.AddBlockHeader = function (Child,Block,Store)
     {
         if(IsZeroArr(Block.TreeHash))
             Block.TxData = [];
         Engine.CalcBlockHash(Block);
         Child.ToDebug("Receive Header Block:" + Block.BlockNum);
-        var ArrBlock = Engine.LoadingArr[Block.BlockNum];
-        if(!ArrBlock)
-        {
-            ArrBlock = [];
-            Engine.LoadingArr[Block.BlockNum] = ArrBlock;
-        }
+        var ArrBlock = Engine.GetLoadingArrayByNum(Block.BlockNum);
         var WasBlock = 0;
         for(var i = 0; i < ArrBlock.length; i++)
         {
@@ -205,7 +210,6 @@ function Init(Engine)
             if(NodeStatus.LoadNum === Block.BlockNum && IsEqArr(NodeStatus.LoadHash, Block.Hash))
             {
                 Child.ToDebug("Header status:" + n + " processing:" + NodeStatus.LoadNum);
-                bWas = 1;
                 if(!NodeStatus.BlockSeed)
                 {
                     NodeStatus.BlockSeed = Block;
@@ -216,12 +220,18 @@ function Init(Engine)
                     if(NodeStatus.BlockSeed.BlockNum < Block.BlockNum)
                         ToLog("Err BlockSeed.BlockNum=" + NodeStatus.BlockSeed.BlockNum + "   Block.BlockNum=" + Block.BlockNum);
                 }
-                var HeadBlock = GetFirstHeadBlock(NodeStatus.BlockSeed);
+                var HeadBlock = Engine.GetFirstHeadBlock(NodeStatus.BlockSeed);
                 if(HeadBlock)
                     Child.ToDebug("AddBlockHeader: HeadBlock=" + HeadBlock.BlockNum + " Hash=" + HeadBlock.Hash + " PrevHash=" + HeadBlock.PrevHash);
                 NodeStatus.LoadNum = HeadBlock.BlockNum - 1;
                 NodeStatus.LoadHash = HeadBlock.PrevHash;
                 NodeStatus.LoadHead = HeadBlock;
+                if(!bWas)
+                {
+                    Engine.Header1 = NodeStatus.LoadNum;
+                    Engine.Header2 = NodeStatus.BlockSeed.BlockNum;
+                }
+                bWas = 1;
                 if(global.JINN_WARNING >= 5)
                 {
                     var ArrBlock2 = Engine.LoadingArr[NodeStatus.LoadNum];
@@ -234,7 +244,7 @@ function Init(Engine)
                         }
                     }
                 }
-                var BlockDB = Engine.GetBlockDB(HeadBlock.BlockNum);
+                var BlockDB = Engine.GetBlockHeaderDB(HeadBlock.BlockNum);
                 if(BlockDB)
                     Child.ToDebug("BlockDB=" + BlockDB.BlockNum + " Hash=" + BlockDB.Hash);
                 if(BlockDB && IsEqArr(BlockDB.Hash, HeadBlock.Hash))
@@ -276,6 +286,7 @@ function Init(Engine)
         }
         if(!bWas)
             return ;
+        var bWasInfo = 0;
         for(var n = 0; n < Store.LiderArr.length; n++)
         {
             var NodeStatus = Store.LiderArr[n];
@@ -291,6 +302,12 @@ function Init(Engine)
                     NodeStatus.LoadTreeNum = BodyForLoad.BlockNum;
                     NodeStatus.LoadTreeHash = BodyForLoad.TreeHash;
                     NodeStatus.LoadHead = BodyForLoad;
+                    if(!bWasInfo)
+                    {
+                        Engine.Block1 = BodyForLoad.BlockNum;
+                        Engine.Block2 = NodeStatus.BlockSeed.BlockNum;
+                    }
+                    bWasInfo = 1;
                 }
                 else
                 {
@@ -303,43 +320,52 @@ function Init(Engine)
     };
     Engine.DoEventDB = function (Store)
     {
+        Engine.ToDebug("Engine.DoEventDB");
+        var bWasInfo = 0;
         for(var n = 0; n < Store.LiderArr.length; n++)
         {
             var NodeStatus = Store.LiderArr[n];
-            if(!NodeStatus.BlockSeed || NodeStatus.LoadNum || NodeStatus.LoadTreeNum)
+            var BlockSeed = NodeStatus.BlockSeed;
+            if(!BlockSeed || NodeStatus.LoadNum || NodeStatus.LoadTreeNum)
                 continue;
-            var BodyForLoad = Engine.GetFirstEmptyBodyBlock(NodeStatus.BlockSeed);
+            var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockSeed);
             if(BodyForLoad)
             {
                 Engine.ToDebug("Was find body for load " + BodyForLoad.BlockNum);
                 NodeStatus.LoadTreeNum = BodyForLoad.BlockNum;
                 NodeStatus.LoadTreeHash = BodyForLoad.TreeHash;
                 NodeStatus.LoadHead = BodyForLoad;
+                if(!bWasInfo)
+                {
+                    Engine.Block1 = BodyForLoad.BlockNum;
+                    Engine.Block2 = BlockSeed.BlockNum;
+                }
                 continue;
             }
-            var LastBlockDB = Engine.GetBlockDB(Store.BlockNum);
+            var LastBlockDB = Engine.GetBlockHeaderDB(BlockSeed.BlockNum);
             if(LastBlockDB && IsEqArr(LastBlockDB.Hash, NodeStatus.Hash))
             {
+                Engine.ToDebug("WAS SAVE TO DB LastBlockDB AT BLOCK: " + BlockSeed.BlockNum);
                 break;
             }
-            var HeadBlock = GetFirstHeadBlock(NodeStatus.BlockSeed);
-            if(HeadBlock)
-                Engine.ToDebug("DoEventDB: HeadBlock=" + HeadBlock.BlockNum + " Hash=" + HeadBlock.Hash);
-            var BlockDB = Engine.GetBlockDB(HeadBlock.BlockNum);
+            var HeadBlock = Engine.GetFirstHeadBlock(BlockSeed);
+            var BlockDB = Engine.GetBlockHeaderDB(HeadBlock.BlockNum);
             if(!BlockDB)
                 continue;
-            if(!FillSumPow(BlockDB, NodeStatus.BlockSeed))
+            if(!FillSumPow(BlockDB, BlockSeed))
                 continue;
-            if(LastBlockDB && NodeStatus.BlockSeed.SumPow <= LastBlockDB.SumPow)
+            if(!BlockSeed.SumPow)
+                continue;
+            if(LastBlockDB && BlockSeed.SumPow <= LastBlockDB.SumPow)
             {
-                Engine.ToDebug("Error POW " + NodeStatus.SumPow + "/" + LastBlockDB.SumPow + "  BlockNum=" + Store.BlockNum);
+                Engine.ToDebug("Error POW " + BlockSeed.SumPow + "/" + LastBlockDB.SumPow + "  BlockNum=" + BlockSeed.BlockNum);
                 continue;
             }
             Engine.ToDebug("BlockDB=" + BlockDB.BlockNum + " Hash=" + BlockDB.Hash);
             if(BlockDB && IsEqArr(BlockDB.Hash, HeadBlock.Hash))
             {
-                Engine.ToDebug("SaveChainToDB " + HeadBlock.BlockNum + "-" + NodeStatus.BlockSeed.BlockNum + " POW:" + NodeStatus.BlockSeed.SumPow);
-                Engine.SaveChainToDB(NodeStatus.BlockSeed, HeadBlock);
+                Engine.ToDebug("SaveChainToDB " + HeadBlock.BlockNum + "-" + BlockSeed.BlockNum + " POW:" + BlockSeed.SumPow);
+                Engine.SaveChainToDB(BlockSeed, HeadBlock);
                 break;
             }
         }
@@ -426,9 +452,38 @@ function Init(Engine)
         }
         return Ret;
     };
+    Engine.GetFirstEmptyBodyBlock0 = function (SeedBlock)
+    {
+        var Block = SeedBlock;
+        if(Block && !Block.TxData)
+            return Block;
+        while(Block && Block.PrevBlock)
+        {
+            if(Engine.IsValideDBSave(Block))
+                break;
+            Block = Block.PrevBlock;
+            if(!Block.TxData)
+            {
+                return Block;
+            }
+        }
+        return undefined;
+    };
+    Engine.GetFirstHeadBlock = function (SeedBlock)
+    {
+        var Block = SeedBlock;
+        while(Block && Block.PrevBlock)
+        {
+            if(Engine.IsValideDBSave(Block))
+                break;
+            Block = Block.PrevBlock;
+        }
+        SeedBlock.FirstHeadBlock = Block;
+        return Block;
+    };
     Engine.GetFirstEmptyBodyBlock = function (SeedBlock)
     {
-        var BodyForLoad = GetFirstEmptyBodyBlock0(SeedBlock);
+        var BodyForLoad = Engine.GetFirstEmptyBodyBlock0(SeedBlock);
         if(!BodyForLoad)
             return BodyForLoad;
         var ArrBlock = Engine.GetBlockArrFromNum(BodyForLoad.BlockNum);
@@ -482,35 +537,6 @@ function FillSumPow(BlockDB,BlockSeed)
     if(TotalSum !== StopBlock.SumPow)
         throw "Error fill FillSumPow";
     return 1;
-}
-function GetFirstHeadBlock(SeedBlock)
-{
-    var Block = SeedBlock;
-    while(Block && Block.PrevBlock)
-    {
-        Block = Block.PrevBlock;
-        if(Block.FirstHeadBlock)
-        {
-            Block = Block.FirstHeadBlock;
-        }
-    }
-    SeedBlock.FirstHeadBlock = Block;
-    return Block;
-}
-function GetFirstEmptyBodyBlock0(SeedBlock)
-{
-    var Block = SeedBlock;
-    if(Block && !Block.TxData)
-        return Block;
-    while(Block && Block.PrevBlock)
-    {
-        Block = Block.PrevBlock;
-        if(!Block.TxData)
-        {
-            return Block;
-        }
-    }
-    return undefined;
 }
 function CanProcessBlock(Engine,BlockNum,Step)
 {

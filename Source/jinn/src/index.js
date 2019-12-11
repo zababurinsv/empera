@@ -12,7 +12,7 @@ if(!global.sha3)
     require("../extlib/sha3.js");
 if(!global.RBTree)
     require("../extlib/RBTree.js");
-require("./buffer2.js");
+require("./serialize.js");
 require("./jinn-setup.js");
 require("./jinn-log.js");
 require("./jinn-timing.js");
@@ -27,7 +27,10 @@ require("./jinn-consensus-boost.js");
 require("./jinn-cache.js");
 require("./jinn-mem-clear.js");
 require("./jinn-db.js");
+require("./jinn-db-cache.js");
 require("./jinn-net.js");
 require("./jinn-serialize.js");
 require("./jinn-zip.js");
 require("./jinn-filter.js");
+require("./jinn-socket.js");
+require("./jinn-handshake.js");

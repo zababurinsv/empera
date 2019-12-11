@@ -8,20 +8,26 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init, Name:"Net"});
+global.JINN_MODULES.push({InitClass:InitClass, Name:"Net"});
 const NetFormat = {Method:"str", Call:"byte", RetContext:"uint", Data:"data"};
 const NetFormatWrk = {};
 var TEMP_ARR4 = [0, 0, 0, 0];
-function Init(Engine)
+function InitClass(Engine)
 {
+    Engine.Traffic = 0;
     Engine.Send = function (Method,Child,DataObj,F)
     {
+        if(Child.Del)
+            return ;
         Engine.PrepareOnSend(Method, Child, DataObj, 1, F);
     };
     Engine.SendToNetwork = function (Child,Data)
     {
+        if(Child.Del)
+            return ;
         Engine.SENDTONETWORK(Child, Data);
         Engine.AddTrafic(Data.length);
+        Engine.LogBufTransfer(Child, Data, "->");
     };
     Engine.ReceiveFromNetwork = function (Child,Data)
     {
@@ -53,6 +59,8 @@ function Init(Engine)
     };
     Engine.PrepareOnReceive = function (Child,Chunk)
     {
+        if(Child.Del)
+            return ;
         for(var i = 0; i < Chunk.length; i++)
             Child.ReceiveDataArr.push(Chunk[i]);
         Engine.TweakOneMethod(Child);
@@ -83,6 +91,8 @@ function Init(Engine)
     };
     Engine.CallMethodOnReceive = function (Child,Chunk)
     {
+        if(Child.Del)
+            return ;
         Engine.LogTransfer(Child, Chunk, "<-");
         var Obj = Engine.GetObjectFromRAW(Chunk);
         if(Obj.Error)
@@ -135,35 +145,35 @@ function Init(Engine)
     {
         var Data = Engine.GetBufferFromData(Method, DataObj, bCall);
         var Obj = {Cache:Child.CurrentCache, Method:Method, Call:bCall, RetContext:RetContext, Data:Data};
-        return BufLib2.GetBufferFromObject(Obj, NetFormat, 0, NetFormatWrk);
+        return SerializeLib.GetBufferFromObject(Obj, NetFormat, NetFormatWrk);
     };
     Engine.GetObjectFromRAW = function (BufData)
     {
-        var Obj = BufLib2.GetObjectFromBuffer(BufData, NetFormat, NetFormatWrk);
+        var Obj = SerializeLib.GetObjectFromBuffer(BufData, NetFormat, NetFormatWrk);
         if(Obj.Data && !Obj.Data.length)
             Obj.Data = undefined;
         Obj.Data = Engine.GetDataFromBuffer(Obj.Method, Obj.Data, Obj.Call);
         return Obj;
     };
+    Engine.LogBufTransfer = function (Child,Data,StrDirect)
+    {
+        if(0 && global.DEBUG_ID && Data)
+        {
+            Engine.ToDebug(StrDirect + Child.ID + " " + GetHexFromArr(Data) + " - " + Data.length + "/" + Engine.Traffic);
+        }
+    };
     Engine.LogTransfer = function (Child,Data,StrDirect)
     {
-        if(global.DEBUG_ID)
+        if(global.DEBUG_ID && Data)
         {
-            var StrData = "";
-            if(Data)
-            {
-                Engine.ToDebug(StrDirect + Child.ID + " " + GetHexFromArr(Data) + " - " + Data.length + "/" + Engine.Traffic);
-                var Obj = Engine.GetObjectFromRAW(Data);
-                StrData = " DATA:" + JSON.stringify(Obj);
-                Engine.ToDebug(StrDirect + Child.ID + " " + (Obj.Call ? "" : "RET ") + Obj.Method + StrData);
-            }
+            var Obj = Engine.GetObjectFromRAW(Data);
+            var StrData = " DATA:" + JSON.stringify(Obj);
+            Engine.ToDebug(StrDirect + Child.ID + " " + (Obj.Call ? "" : "RET ") + Obj.Method + StrData);
         }
     };
     Engine.PrevTraficBlockNum = 0;
     Engine.AddTrafic = function (Count)
     {
-        if(!Engine.Traffic)
-            Engine.Traffic = 0;
         Engine.Traffic += Count;
         JINN_STAT.AllTraffic += Count;
         var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();

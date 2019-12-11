@@ -134,7 +134,7 @@ function GetAccountText(Item,Num,bGetSum)
         if(IsPublicAddr(Num))
             return Num;
         else
-            return "<Error addres>";
+            return "<Error address>";
     }
 }
 function OnEditIdTo()

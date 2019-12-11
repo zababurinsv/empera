@@ -14,6 +14,7 @@ global.DEBUG_ID = 1;
 module.exports.Create = Create;
 JINN_CONST.CONSENSUS_PERIOD_TIME = CONSENSUS_PERIOD_TIME;
 JINN_CONST.START_CHECK_BLOCKNUM = 50;
+JINN_CONST.SHARD_NAME = "TERA";
 JINN_CONST.MAX_PACKET_LENGTH = global.MAX_PACKET_LENGTH;
 JINN_CONST.BLOCK_GENESIS_COUNT = BLOCK_GENESIS_COUNT;
 JINN_CONST.START_BLOCK_NUM = JINN_CONST.BLOCK_GENESIS_COUNT + 4;
@@ -29,6 +30,7 @@ function Create(Node)
     Engine.ID = 1;
     Engine.IDArr = Node.addrArr;
     Engine.IDStr = Node.addrStr;
+    Engine.PubAddr = Node.addrArr;
     global.CreateNodeEngine(Engine);
     Engine.GetTx = function (body)
     {
@@ -45,7 +47,6 @@ function Create(Node)
         Engine.FillTicket(Tx);
         Tx.TxID = GetHexFromArr(FullHashTicket.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH + 6));
         Tx.name = Tx.KEY.substr(0, 6) + "-" + Tx.TimePow;
-        Tx.Size = body.length;
         return Tx;
     };
     Engine.CalcTreeHash = CalcTreeHashFromArrBody;

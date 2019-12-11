@@ -30,10 +30,10 @@ function SavePrivateKey()
             return ;
         }
     if(Select.value === "private" && PrivKeyStr !== Str)
-        SetStatus("Changed privat key");
+        SetStatus("Private key changed");
     else
         if(Select.value === "public" && PubKeyStr !== Str)
-            SetStatus("Changed public key");
+            SetStatus("Public key changed");
     GetData("SetWalletKey", Str, function (Data)
     {
         if(Data && Data.result === 1)

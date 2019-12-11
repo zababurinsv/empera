@@ -8,12 +8,12 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init});
+global.JINN_MODULES.push({InitClass:InitClass});
 'use strict';
 const zlib = require('zlib');
 const Writable = require('stream').Writable;
 global.glUseZip = 1;
-function Init(Engine)
+function InitClass(Engine)
 {
     Engine.PrepareOnSendZip = function (Child,Data)
     {
@@ -27,6 +27,10 @@ function Init(Engine)
                     Engine.SendToNetwork(Child, chunk);
                 }});
             Child.EncodeZip.pipe(Child.WriterZip);
+            Child.EncodeZip.on('error', function (err)
+            {
+                Child.ToError("EncodeZip: " + err);
+            });
         }
         Child.EncodeZip.write(Buffer.from(Data));
     };
@@ -41,6 +45,10 @@ function Init(Engine)
                     Engine.PrepareOnReceive(Child, chunk);
                 }});
             Child.DecodeZip.pipe(Child.WriterUnZip);
+            Child.DecodeZip.on('error', function (err)
+            {
+                Child.ToError("DecodeZip: " + err);
+            });
         }
         Child.DecodeZip.write(Chunk);
     };

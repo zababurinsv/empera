@@ -8,62 +8,65 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({Init:Init});
-function Init(Engine)
+global.JINN_MODULES.push({InitClass:InitClass});
+function InitClass(Engine)
 {
+    Engine.GetTopTxArrayFromTree = function (Tree)
+    {
+        if(!Tree)
+            return [];
+        var BufLength = 0;
+        var arr = [];
+        var it = Tree.iterator(), Item;
+        while((Item = it.next()) !== null)
+        {
+            arr.push(Item);
+            if(Item.body)
+            {
+                BufLength += Item.body.length;
+                if(BufLength > JINN_CONST.MAX_BLOCK_SIZE)
+                    break;
+            }
+        }
+        return arr;
+    };
+    Engine.AddTxToTree = function (Tree,Tx)
+    {
+        var Tx0 = Tree.find(Tx);
+        if(Tx0)
+        {
+            return 3;
+        }
+        else
+        {
+            Tree.insert(Tx);
+            if(Tree.size > JINN_CONST.MAX_TRANSACTION_COUNT)
+            {
+                var maxitem = Tree.max();
+                Tree.remove(maxitem);
+                if(CompareArr(maxitem.HashPow, Tx.HashPow) === 0)
+                    return 0;
+            }
+            return 1;
+        }
+    };
+    Engine.CheckSizeTXArray = function (Child,TxArr)
+    {
+        if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
+        {
+            Child.ToError("Error Tx Arr length = " + TxArr.length);
+            TxArr.length = JINN_CONST.MAX_TRANSACTION_COUNT;
+        }
+    };
     Engine.IsValidateTx = function (Tx,StrCheckName,BlockNum)
     {
         return CheckTx(StrCheckName, Tx, BlockNum, 1);
     };
-    Engine.FSortTx = function (a,b)
-    {
-        if(a.TimePow !== b.TimePow)
-            return b.TimePow - a.TimePow;
-        if(a.KEY === b.KEY)
-            return 0;
-        if(a.KEY < b.KEY)
-            return  - 1;
-        else
-            return 1;
-    };
-    Engine.SetTopTxArray = function (MapTx)
-    {
-        if(!MapTx)
-            return ;
-        var TxArr = GetArrFromMap(MapTx);
-        if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
-            TxArr.sort(Engine.FSortTx);
-        for(var i = 0; i < TxArr.length; i++)
-        {
-            if(i < JINN_CONST.MAX_TRANSACTION_COUNT)
-                TxArr[i].Top = 1;
-            else
-                TxArr[i].Top = 0;
-        }
-    };
-    Engine.GetTopTxArray = function (MapTx,bSortAlways)
-    {
-        if(!MapTx)
-            return [];
-        var TxArr = GetArrFromMap(MapTx);
-        if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
-        {
-            TxArr.sort(Engine.FSortTx);
-            TxArr.length = JINN_CONST.MAX_TRANSACTION_COUNT;
-        }
-        else
-            if(bSortAlways)
-            {
-                TxArr.sort(Engine.FSortTx);
-            }
-        return TxArr;
-    };
-    Engine.CheckSizeTXArray = function (TxArr)
-    {
-        if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
-        {
-            Engine.ToLog("Error Tx Arr length = " + TxArr.length);
-            TxArr.length = JINN_CONST.MAX_TRANSACTION_COUNT;
-        }
-    };
 }
+function FSortTx(a,b)
+{
+    if(a.TimePow !== b.TimePow)
+        return b.TimePow - a.TimePow;
+    return CompareArr(a.HashPow, b.HashPow);
+}
+global.FSortTx = FSortTx;
