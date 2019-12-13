@@ -58,7 +58,7 @@ WebApi2.CreateAccount = function (Params,response)
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
 var MapSendID = {};
-WebApi2.Send = function (Params,response,A,bJsonRet)
+WebApi2.Send = function (Params,response,A,request,bJsonRet)
 {
     if(typeof Params !== "object")
         return {result:0};
