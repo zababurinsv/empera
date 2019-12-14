@@ -9,10 +9,12 @@
 */
 
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Connect"});
-var COUNT_CONNECT_LOOP = 5;
-var MAX_DENY_HOT_CONNECTION = 20 * 1000;
+var COUNT_CONNECT_LOOP = 3;
+var MAX_DENY_HOT_CONNECTION = 7 * 1000;
 var MAX_HOT_CONNECTION_DELAY = 2 * 1000;
-var MAX_MAXHASH_CONNECTION_DELAY = 3 * 1000;
+var START_TRANSFER_TIMEOUT = 3 * 1000;
+var MAX_TRANSFER_TIMEOUT = 2 * 1000;
+const D_NODE_ID =  - 5;
 function DoNode(Engine)
 {
     if(Engine.TickNum % 3 === 0)
@@ -24,6 +26,7 @@ function InitClass(Engine)
     Engine.WasSendToGenesis = 0;
     Engine.IndexChildLoop = 0;
     Engine.LevelArr = [];
+    Engine.WorkConnect = 0;
     Engine.DoConnect = function ()
     {
         if(Engine.ROOT_NODE)
@@ -36,34 +39,65 @@ function InitClass(Engine)
         }
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
-            var Item = Engine.LevelArr[i];
-            if(!Item)
+            var Child = Engine.LevelArr[i];
+            if(!Child)
                 continue;
-            if(!Item.Active || Item.Del)
-                Engine.DenyHotConnection(Item);
+            if(!Engine.InHotStart(Child) && (!Child.Active || Child.Disconnect || Child.Del))
+            {
+                Engine.ID === D_NODE_ID && Child.ToLog("1# DenyHotConnection");
+                Engine.DenyHotConnection(Child);
+            }
             else
-                if(Item.HotStart && (Date.now() - Item.HotStart > MAX_HOT_CONNECTION_DELAY))
-                    Engine.DenyHotConnection(Item);
+                if(Child.HotStart && !Engine.InHotStart(Child))
+                {
+                    Engine.ID === D_NODE_ID && Child.ToLog("2# DenyHotConnection");
+                    Engine.DenyHotConnection(Child);
+                }
                 else
-                    if(Item.Hot && (Date.now() - Item.LastTransferLider > MAX_MAXHASH_CONNECTION_DELAY))
-                        Engine.DenyHotConnection(Item);
+                    if((Date.now() - Child.SendTransferLider > START_TRANSFER_TIMEOUT) && (Date.now() - Child.LastTransferLider > MAX_TRANSFER_TIMEOUT))
+                    {
+                        Engine.ID === D_NODE_ID && Child.ToLog("3# DenyHotConnection");
+                        Engine.DenyHotConnection(Child);
+                    }
         }
-        for(var i = 0; i < Engine.NodeArray.length; i++)
+        Engine.WorkConnect++;
+        for(var i = 0; i < COUNT_CONNECT_LOOP; i++)
         {
-            var Item = Engine.NodeArray[i];
-            if(Item.Del || Item.Self)
+            var Child = Engine.GetTopTreeScore();
+            if(Child.WorkConnect === Engine.WorkConnect)
+                break;
+            Child.WorkConnect = Engine.WorkConnect;
+            Engine.TreeScoreDown(Child);
+            if(!Child || Child.Self || Child.Del)
                 continue;
-            if(!Item.Hot && !Item.HotStart)
-                Engine.SetNodeLink(Item, 1);
+            if(!Child.Hot && !Engine.InHotStart(Child) && !Engine.InHotDeny(Child) && Child.ID !== 0)
+            {
+                Engine.SetNodeLink(Child, 1);
+                Engine.ID === D_NODE_ID && Child.ToLog("SetNodeLink ");
+            }
+            else
+                if(Child.Active && !Child.Hot && !Engine.InHotStart(Child) && Child.ID !== 0)
+                {
+                    Engine.StartDisconnect(Child, 1);
+                    Engine.ID === D_NODE_ID && Child.ToLog("StartDisconnect");
+                }
+                else
+                    if(Child.Active || Child.ID === 0)
+                    {
+                        Engine.SendGetNodesReq(Child);
+                    }
         }
+        Engine.DoStatConnect();
+    };
+    Engine.DoStatConnect = function ()
+    {
         var CountDel = 0;
         var CountActive = 0;
         var CountAll = 0;
         var CountHot = 0;
         for(var i = 0; i < Engine.NodeArray.length; i++)
         {
-            Engine.IndexChildLoop++;
-            var Item = Engine.NodeArray[Engine.IndexChildLoop % Engine.NodeArray.length];
+            var Item = Engine.NodeArray[i];
             if(Item.Del)
                 CountDel++;
             if(Item.Self || Item.Del)
@@ -74,55 +108,18 @@ function InitClass(Engine)
         }
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
-            if(Engine.LevelArr[i] && Engine.LevelArr[i].Hot)
+            var Child = Engine.LevelArr[i];
+            if(Child && Child.Hot)
                 CountHot++;
         }
         if(CountActive !== Engine.ActiveConnect)
             Engine.ToLog("CountActive/Engine.ActiveConnect" + CountActive + "/" + Engine.ActiveConnect);
-        var MaxCountLoop = COUNT_CONNECT_LOOP;
-        for(var i = 0; i < Engine.NodeArray.length; i++)
-        {
-            Engine.IndexChildLoop++;
-            var Item = Engine.NodeArray[Engine.IndexChildLoop % Engine.NodeArray.length];
-            if(Item.Self || Item.Del)
-                continue;
-            var Was = 0;
-            if(Item.Active)
-            {
-                if(CountActive > JINN_CONST.MAX_ACTIVE_COUNT)
-                {
-                    if(!Item.Hot && !Item.HotStart && !Engine.ROOT_NODE)
-                    {
-                        Engine.StartDisconnect(Item, 1);
-                        Was = 1;
-                    }
-                }
-                else
-                {
-                    Engine.SendGetNodesReq(Item);
-                    Was = 1;
-                }
-            }
-            else
-            {
-                if(CountActive <= 2 * JINN_CONST.MAX_ACTIVE_COUNT / 3)
-                {
-                    Engine.SendConnectReq(Item);
-                    Was = 1;
-                }
-            }
-            if(Was)
-            {
-                MaxCountLoop--;
-                if(MaxCountLoop <= 0)
-                    break;
-            }
-        }
     };
     Engine.SendConnectReq = function (Child)
     {
         if(!Engine.CanConnect(Child))
             return ;
+        Child.Disconnect = 0;
         var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, NodeHash:Engine.PubAddr, RndAddr:Engine.RndAddr};
         Engine.Send("CONNECT", Child, Data, Engine.OnConnectReturn);
     };
@@ -136,6 +133,8 @@ function InitClass(Engine)
         Child.NodeHash = Data.NodeHash;
         Child.RndAddr = Data.RndAddr;
         Engine.AddConnect(Child);
+        if(Engine.InHotStart(Child))
+            Engine.SetNodeLink(Child, 1);
     };
     Engine.CONNECT_SEND = {ip:"str30", port:"uint16", Protocol:"str20", Shard:"str5", NodeHash:"hash", RndAddr:"uint"};
     Engine.CONNECT_RET = {result:"byte", NodeHash:"hash", RndAddr:"uint"};
@@ -176,22 +175,25 @@ function InitClass(Engine)
     {
         if(Engine.ROOT_NODE)
             return 1;
-        if(Engine.ActiveConnect >= JINN_CONST.MAX_ACTIVE_COUNT)
-            return 0;
-        else
+        if(Engine.InHotStart(Child))
             return 1;
+        return 1;
     };
     Engine.AddConnect = function (Child)
     {
+        Child.WasAddConnect = 1;
         if(!Child.Active)
         {
             Child.Active = 1;
-            Child.Del = 0;
+            Child.Disconnect = 0;
             Engine.ActiveConnect++;
+            Engine.TreeScoreNew(Child);
         }
     };
     Engine.DeleteConnect = function (Child)
     {
+        if(Engine.InHotStart(Child))
+            Engine.DenyHotConnection(Child);
         if(Child.Active)
         {
             Child.Active = 0;
@@ -245,16 +247,20 @@ function InitClass(Engine)
     };
     Engine.DisconnectHot = function (Child,bSend)
     {
+        if(bSend && Child.Hot)
+            Engine.Send("DISCONNECTHOT", Child, {});
+        var bWas = 0;
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             if(Engine.LevelArr[i] === Child)
             {
+                bWas = 1;
                 Engine.LevelArr[i] = null;
             }
         }
-        if(bSend && Child.Hot)
-            Engine.Send("DISCONNECTHOT", Child, {});
-        Child.Hot = 0;
+        Engine.ID === D_NODE_ID && Child.ToLog("*DisconnectHot* ");
+        if(!bWas)
+            return ;
     };
     Engine.DISCONNECTHOT_SEND = "";
     Engine.DISCONNECTHOT = function (Child,Data)
@@ -263,14 +269,12 @@ function InitClass(Engine)
     };
     Engine.SetHotConnection = function (Child,bAlways)
     {
-        Child.Hot = 1;
         Child.HotStart = 0;
         Child.DenyHotStart = 0;
         var Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr);
         var ChildWas = Engine.LevelArr[Level];
         if(ChildWas && ChildWas !== Child && ChildWas.Hot)
         {
-            Child.Hot = 0;
             if(!bAlways)
                 return 0;
             ToLog("Error SetHotConnection");
@@ -280,31 +284,35 @@ function InitClass(Engine)
     };
     Engine.DenyHotConnection = function (Child)
     {
-        Child.Hot = 0;
         Child.HotStart = 0;
         Child.DenyHotStart = Date.now();
+        Engine.TreeScoreDown(Child);
         Engine.DisconnectHot(Child, 0);
     };
     Engine.CheckHotConnection = function (Child)
     {
-        var Arr = Engine.LevelArr;
-        for(var i = 0; i < Arr.length; i++)
-        {
-            var Child2 = Arr[i];
-            if(Child2 && Child2.IDStr === Child.IDStr)
-            {
-                return 1;
-            }
-        }
-        Engine.SetHotConnection(Child, 0);
+        if(!Child.Hot)
+            Engine.DenyHotConnection(Child);
+    };
+    Engine.InHotStart = function (Child)
+    {
+        if(Child.HotStart && Date.now() - Child.HotStart <= MAX_HOT_CONNECTION_DELAY)
+            return 1;
+        else
+            return 0;
+    };
+    Engine.InHotDeny = function (Child)
+    {
+        if(Child.DenyHotStart && Date.now() - Child.DenyHotStart <= random(MAX_DENY_HOT_CONNECTION))
+            return 1;
+        else
+            return 0;
     };
     Engine.SetNodeLink = function (Child,bSend)
     {
-        if(!Child.Active)
-            return 0;
         if(Engine.ROOT_NODE)
             return 0;
-        if(Child.DenyHotStart && (Date.now() - Child.DenyHotStart < MAX_DENY_HOT_CONNECTION))
+        if(Engine.InHotDeny(Child))
         {
             return 0;
         }
@@ -312,27 +320,36 @@ function InitClass(Engine)
         if(Level >= JINN_CONST.MAX_LEVEL_CONNECTION)
             return 0;
         var ChildWas = Engine.LevelArr[Level];
-        if(ChildWas && ChildWas !== Child)
+        if(ChildWas && ChildWas !== Child && !Engine.InHotStart(ChildWas))
         {
             return 0;
         }
         Engine.LevelArr[Level] = Child;
         if(bSend)
         {
+            if(!Child.WasStartHot1)
+                Child.WasStartHot1 = 0;
+            Child.WasStartHot1++;
             Child.HotStart = Date.now();
             if(!Child.Active)
             {
                 Engine.SendConnectReq(Child);
+                return 1;
             }
+            if(!Child.WasStartHot2)
+                Child.WasStartHot2 = 0;
+            Child.WasStartHot2++;
             Engine.Send("ADDLEVELCONNECT", Child, {}, function (Child,Data)
             {
                 var result2 = Data.result;
                 if(result2)
                 {
                     result2 = Engine.SetHotConnection(Child);
+                    Engine.ID === D_NODE_ID && Child.ToLog("SetHotConnection: Level=" + Level + " result:" + result2);
                 }
                 if(!result2)
                 {
+                    Engine.ID === D_NODE_ID && Child.ToLog("DenyHotConnection: Level=" + Level);
                     Engine.DenyHotConnection(Child);
                 }
             });
@@ -356,7 +373,12 @@ function InitClass(Engine)
         }
         return {result:Ret};
     };
-    Engine.AddrLevelArr = function (arr1,arr2)
+    Engine.CheckChildLevel = function (Child)
+    {
+        if(Child.Level === undefined)
+            Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr);
+    };
+    Engine.AddrLevelArr0 = function (arr1,arr2)
     {
         var Level = 0;
         for(var i = arr1.length - 1; i >= 0; i--)
@@ -372,6 +394,28 @@ function InitClass(Engine)
                 Level++;
             }
         }
+        return Level;
+    };
+    Engine.LevelOfDensity = function (arr1,arr2,P)
+    {
+        var Level = 0;
+        for(var i = 0; i < 32; i++)
+        {
+            var n = arr1.length - i - 1;
+            var M = P[i];
+            if(!M)
+                M = 2;
+            var a1 = arr1[n] % M;
+            var a2 = arr2[n] % M;
+            if(a1 !== a2)
+                return Level + (M + a1 - a2 - 1) % (M - 1);
+            Level += (M - 1);
+        }
+        return Level;
+    };
+    Engine.AddrLevelArr = function (arr1,arr2)
+    {
+        var Level = Engine.LevelOfDensity(arr1, arr2, [4, 3, 2]);
         return Level;
     };
 }

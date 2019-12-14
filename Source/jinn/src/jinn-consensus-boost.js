@@ -122,10 +122,10 @@ function InitAfter(Engine)
         var Context = {WasReturn:0};
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
-            var Item = Engine.LevelArr[i];
-            if(Item && Item.Active && Item.Hot)
+            var Child = Engine.LevelArr[i];
+            if(Child && Child.Active && Child.Hot)
             {
-                Engine.SendMaxHashToOneNode(BlockNum, Item, Context, 30);
+                Engine.SendMaxHashToOneNode(BlockNum, Child, Context, 30);
             }
         }
     };
@@ -191,12 +191,13 @@ function InitAfter(Engine)
         var Arr = Engine.GetMaxArrForSend(Child, BlockNum, bNext);
         if(!Arr.length)
         {
-            Child.ToDebug("NO MAXHASH I:" + IterationNum);
             return ;
         }
         Engine.ProcessMaxHashOnSend(Child, BlockNum, Arr);
         if(bNext)
             Engine.ToDebug("NEXT SEND " + BlockNum + " TO " + Child.ID + " I:" + IterationNum);
+        if(!Child.SendTransferLider)
+            Child.SendTransferLider = Date.now();
         Engine.Send("MAXHASH", Child, {Cache:Child.CurrentCache, BlockNum:BlockNum, Arr:Arr}, function (Child,Data)
         {
             if(!Data)
@@ -257,7 +258,7 @@ function InitAfter(Engine)
             return ;
         Child.LastTransferLider = Date.now();
         Engine.CheckHotConnection(Child);
-        if(!Child || Child.Del || !Child.Hot || Child.HotStart)
+        if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
             return ;
         if(Data.Arr.length > JINN_CONST.MAX_LEADER_COUNT)
             Data.Arr.length = JINN_CONST.MAX_LEADER_COUNT;

@@ -13,7 +13,8 @@ function InitClass(Engine)
 {
     Engine.ToLog = function (Str)
     {
-        ToLog("" + Engine.ID + "." + Str);
+        var Time = Date.now() % 10000;
+        ToLog("" + Time + ": " + Engine.ID + "." + Str);
     };
     Engine.ToLog1 = function (Str)
     {

@@ -128,7 +128,7 @@ function InitClass(Engine)
     {
         if(Socket.Child)
             throw "Error LinkSocketToChild was Linked";
-        Child.Del = 0;
+        Child.Disconnect = 0;
         Child.ConnectType = ConnectType;
         Socket.Child = Child;
         Child.Socket = Socket;
@@ -146,7 +146,7 @@ function InitAfter(Engine)
     Engine.CreateServer();
     Engine.CreateConnectionToChild = function (Child,F)
     {
-        if(Child.Del)
+        if(Child.Disconnect)
         {
             F(0);
             return ;
@@ -164,7 +164,7 @@ function InitAfter(Engine)
                 if(Child.port > 30000)
                 {
                     ToLog("Error port");
-                    Child.Del = 1;
+                    Child.Disconnect = 1;
                     F(0);
                     return ;
                 }
@@ -186,7 +186,7 @@ function InitAfter(Engine)
     };
     Engine.SENDTONETWORK = function (Child,Data)
     {
-        if(Child.Del)
+        if(Child.Disconnect)
             return ;
         var State = GetSocketStatus(Child.Socket);
         if(State === 100)

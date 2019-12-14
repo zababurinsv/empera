@@ -18,7 +18,7 @@ global.JINN_WARNING = 2;
 global.DEBUG_ID = undefined;
 JINN_CONST.START_ADD_TX = 20;
 var MaxNode = 6;
-JINN_CONST.MAX_TRANSACTION_COUNT = 0;
+JINN_CONST.MAX_TRANSACTION_COUNT = 1;
 global.CREATE_TX_PER_NODE = Math.floor(0.999 + JINN_CONST.MAX_TRANSACTION_COUNT / MaxNode);
 JINN_CONST.MAX_LEADER_COUNT = 4;
 global.glUseZip = 1;
@@ -32,7 +32,7 @@ JINN_CONST.TX_TICKET_HASH_LENGTH = 10;
 JINN_CONST.MAX_BLOCK_SIZE = 420 * 1000;
 var MODEL = CreateModel(MaxNode);
 ToLog("MaxNodeCount=" + MODEL.MaxNodeCount);
-setInterval(MainWorkLoop, 50);
+setInterval(MainWorkLoop, 100);
 function MainWorkLoop()
 {
     MODEL.DoRun();

@@ -17,13 +17,13 @@ function InitClass(Engine)
     Engine.Traffic = 0;
     Engine.Send = function (Method,Child,DataObj,F)
     {
-        if(Child.Del)
+        if(Child.Disconnect)
             return ;
         Engine.PrepareOnSend(Method, Child, DataObj, 1, F);
     };
     Engine.SendToNetwork = function (Child,Data)
     {
-        if(Child.Del)
+        if(Child.Disconnect)
             return ;
         Engine.SENDTONETWORK(Child, Data);
         Engine.AddTrafic(Data.length);
@@ -59,7 +59,7 @@ function InitClass(Engine)
     };
     Engine.PrepareOnReceive = function (Child,Chunk)
     {
-        if(Child.Del)
+        if(Child.Disconnect)
             return ;
         for(var i = 0; i < Chunk.length; i++)
             Child.ReceiveDataArr.push(Chunk[i]);
@@ -91,7 +91,7 @@ function InitClass(Engine)
     };
     Engine.CallMethodOnReceive = function (Child,Chunk)
     {
-        if(Child.Del)
+        if(Child.Disconnect)
             return ;
         Engine.LogTransfer(Child, Chunk, "<-");
         var Obj = Engine.GetObjectFromRAW(Chunk);

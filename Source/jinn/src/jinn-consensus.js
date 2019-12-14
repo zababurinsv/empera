@@ -28,11 +28,13 @@ function InitClass(Engine)
         }
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
-            var Item = Engine.LevelArr[i];
-            if(Item && Item.Active && Item.Hot)
+            var Child = Engine.LevelArr[i];
+            if(Child && Child.Active && Child.Hot)
             {
-                Item.SetLastCache(BlockNum);
-                Engine.Send("MAXHASH", Item, {Cache:Item.CurrentCache, BlockNum:BlockNum, Arr:Arr}, function (Child,Data)
+                if(!Child.SendTransferLider)
+                    Child.SendTransferLider = Date.now();
+                Child.SetLastCache(BlockNum);
+                Engine.Send("MAXHASH", Child, {Cache:Child.CurrentCache, BlockNum:BlockNum, Arr:Arr}, function (Child,Data)
                 {
                     if(!Data)
                         return ;
@@ -59,7 +61,7 @@ function InitClass(Engine)
             return ;
         Child.LastTransferLider = Date.now();
         Engine.CheckHotConnection(Child);
-        if(!Child || Child.Del || !Child.Hot || Child.HotStart)
+        if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
             return ;
         Child.CheckCache(Data.Cache, BlockNum);
         var Count = 0;

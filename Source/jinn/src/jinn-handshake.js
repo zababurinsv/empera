@@ -40,6 +40,7 @@ function InitAfter(Engine)
     {
         if(!Engine.CanConnect(Child))
             return ;
+        Child.Disconnect = 0;
         Engine.CreateConnectionToChild(Child, function (Result)
         {
             if(!Result)
