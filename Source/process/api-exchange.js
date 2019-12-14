@@ -219,7 +219,7 @@ WebApi2.CreateRawTransaction = function (Params)
 {
     if(typeof Params === "object")
     {
-        var Ret = WebApi2.Send(Params, undefined, undefined, 1);
+        var Ret = WebApi2.Send(Params, undefined, undefined, undefined, 1);
         TxArrToHex(Ret.Tx);
         Ret.Meta = Params.Meta;
         return Ret;
