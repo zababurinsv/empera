@@ -20,6 +20,7 @@ require("./jinn-tx.js");
 require("./jinn-ticket.js");
 require("./jinn-tx-control.js");
 require("./jinn-child.js");
+require("./jinn-connect-addr.js");
 require("./jinn-connect-score.js");
 require("./jinn-connect.js");
 require("./jinn-block.js");

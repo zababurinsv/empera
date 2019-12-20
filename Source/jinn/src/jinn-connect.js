@@ -214,36 +214,38 @@ function InitClass(Engine)
     };
     Engine.SendGetNodesReq = function (ToNode)
     {
-        Engine.Send("GETNODES", ToNode, {}, function (Child,Data)
+        if(!ToNode.Iterator)
+            ToNode.Iterator = {Level:0, Arr:[]};
+        Engine.Send("GETNODES", ToNode, {Iterator:ToNode.Iterator}, function (Child,Data)
         {
+            ToNode.Iterator = Data.Iterator;
             for(var i = 0; i < Data.Arr.length; i++)
             {
                 var Item = Data.Arr[i];
                 if(Item.ip && Item.port)
                 {
+                    Engine.AddNodeAddr(Item);
                     var Child = Engine.RetChildByIPPort(Item.ip, Item.port);
                     Child.DirectIP = 1;
                 }
             }
         });
     };
-    Engine.GETNODES_SEND = "";
-    Engine.GETNODES_RET = {Arr:[{ip:"str30", port:"uint16"}]};
+    Engine.GETNODES_SEND = {Iterator:{Level:"byte", Arr:["uint16"]}};
+    Engine.GETNODES_RET = {Iterator:{Level:"byte", Arr:["uint16"]}, Arr:[{ip:"str30", port:"uint16"}]};
     Engine.GETNODES = function (Child,Data)
     {
+        Engine.AddNodeAddr({ip:Child.ip, port:Child.port});
         var Arr = [];
-        for(var i = 0; i < Engine.NodeArray.length; i++)
+        for(var i = 0; i < JINN_CONST.MAX_RET_NODE_LIST; i++)
         {
-            var Item = Engine.NodeArray[i];
-            if(Item.ip && Item.port && Item.DirectIP && Child !== Item && !Item.Del && !Child.SendAddrMap[Item.IDStr])
+            var Item = Engine.GetNextNodeAddr(Data.Iterator, 0);
+            if(Item)
             {
-                Child.SendAddrMap[Item.IDStr] = 1;
-                Arr.push({ip:Item.ip, port:Item.port});
-                if(Arr.length >= JINN_CONST.MAX_RET_NODE_LIST)
-                    break;
+                Arr.push(Item);
             }
         }
-        return {Arr:Arr};
+        return {Arr:Arr, Iterator:Data.Iterator};
     };
     Engine.DisconnectHot = function (Child,bSend)
     {
@@ -271,15 +273,14 @@ function InitClass(Engine)
     {
         Child.HotStart = 0;
         Child.DenyHotStart = 0;
-        var Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr);
-        var ChildWas = Engine.LevelArr[Level];
+        var ChildWas = Engine.LevelArr[Child.Level];
         if(ChildWas && ChildWas !== Child && ChildWas.Hot)
         {
             if(!bAlways)
                 return 0;
             ToLog("Error SetHotConnection");
         }
-        Engine.LevelArr[Level] = Child;
+        Engine.LevelArr[Child.Level] = Child;
         return 1;
     };
     Engine.DenyHotConnection = function (Child)
@@ -316,15 +317,14 @@ function InitClass(Engine)
         {
             return 0;
         }
-        var Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr);
-        if(Level >= JINN_CONST.MAX_LEVEL_CONNECTION)
+        if(Child.Level >= JINN_CONST.MAX_LEVEL_CONNECTION)
             return 0;
-        var ChildWas = Engine.LevelArr[Level];
+        var ChildWas = Engine.LevelArr[Child.Level];
         if(ChildWas && ChildWas !== Child && !Engine.InHotStart(ChildWas))
         {
             return 0;
         }
-        Engine.LevelArr[Level] = Child;
+        Engine.LevelArr[Child.Level] = Child;
         if(bSend)
         {
             if(!Child.WasStartHot1)
@@ -345,11 +345,11 @@ function InitClass(Engine)
                 if(result2)
                 {
                     result2 = Engine.SetHotConnection(Child);
-                    Engine.ID === D_NODE_ID && Child.ToLog("SetHotConnection: Level=" + Level + " result:" + result2);
+                    Engine.ID === D_NODE_ID && Child.ToLog("SetHotConnection: Level=" + Child.Level + " result:" + result2);
                 }
                 if(!result2)
                 {
-                    Engine.ID === D_NODE_ID && Child.ToLog("DenyHotConnection: Level=" + Level);
+                    Engine.ID === D_NODE_ID && Child.ToLog("DenyHotConnection: Level=" + Child.Level);
                     Engine.DenyHotConnection(Child);
                 }
             });
@@ -372,11 +372,6 @@ function InitClass(Engine)
             Engine.DenyHotConnection(Child);
         }
         return {result:Ret};
-    };
-    Engine.CheckChildLevel = function (Child)
-    {
-        if(Child.Level === undefined)
-            Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr);
     };
     Engine.AddrLevelArr0 = function (arr1,arr2)
     {
@@ -415,7 +410,7 @@ function InitClass(Engine)
     };
     Engine.AddrLevelArr = function (arr1,arr2)
     {
-        var Level = Engine.LevelOfDensity(arr1, arr2, [4, 3, 2]);
+        var Level = Engine.AddrLevelArr0(arr1, arr2);
         return Level;
     };
 }

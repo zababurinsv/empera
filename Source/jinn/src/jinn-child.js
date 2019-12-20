@@ -92,6 +92,7 @@ function InitClass(Engine)
         Child.SendAddrMap = {};
         Child.ReceiveDataArr = [];
         Child.ID = port % 1000;
+        Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr);
         Child._Active = 0;
         Object.defineProperty(Child, "Active", {set:function (x)
             {
@@ -102,7 +103,6 @@ function InitClass(Engine)
             }});
         Object.defineProperty(Child, "Hot", {get:function ()
             {
-                Engine.CheckChildLevel(this);
                 var ChildWas = Engine.LevelArr[this.Level];
                 if(ChildWas && ChildWas === this && !Engine.InHotStart(this))
                 {

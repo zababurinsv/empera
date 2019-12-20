@@ -11,13 +11,7 @@
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Score"});
 function InitClass(Engine)
 {
-    Engine.TreeConnectProcess = new RBTree(function (a,b)
-    {
-        if(a.Score !== b.Score)
-            return a.Score - b.Score;
-        else
-            return CompareArr(a.IDArr, b.IDArr);
-    });
+    Engine.TreeConnectProcess = new RBTree(FNodeScoreAddr);
     Engine.TreeScoreNew = function (Child)
     {
         Engine.TreeScoreSet(Child, 0);

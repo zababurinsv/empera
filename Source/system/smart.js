@@ -539,7 +539,7 @@ class SmartApp extends require("./dapp")
     }
     AddCurrencyTokenDescription(Smart)
     {
-        if(!Smart.Num)
+        if(!Smart || !Smart.Num)
             return ;
         if(!this.MapTokenDescription)
             this.MapTokenDescription = {}
