@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 function InitClass(Engine)
 {
@@ -61,7 +62,7 @@ function InitClass(Engine)
             return ;
         Child.LastTransferLider = Date.now();
         Engine.CheckHotConnection(Child);
-        if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.Hot || Child.HotStart)
             return ;
         Child.CheckCache(Data.Cache, BlockNum);
         var Count = 0;

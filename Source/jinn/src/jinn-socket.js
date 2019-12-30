@@ -8,15 +8,12 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 const net = require("net");
 global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
 function InitClass(Engine)
 {
     Engine.BAN_IP = {};
-    Engine.NodeByHashTree = new RBTree(function (a,b)
-    {
-        return CompareArr(a.NodeHash, b.NodeHash);
-    });
     Engine.CreateServer = function ()
     {
         Engine.Server = net.createServer(function (Socket)
@@ -26,8 +23,11 @@ function InitClass(Engine)
                 Engine.CloseSocket(Socket, "WAS BAN", true);
                 return ;
             }
-            var Child = Engine.RetChildByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
-            Engine.SetEventsProcessing(Socket, Child, "Client");
+            var Child = Engine.RetNewConnectByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
+            if(Child)
+                Engine.SetEventsProcessing(Socket, Child, "Client");
+            else
+                Engine.CloseSocket(Socket, "Error child");
         });
         Engine.Server.on('close', function ()
         {
@@ -106,6 +106,7 @@ function InitClass(Engine)
         if(Child)
         {
             Child.Socket = undefined;
+            Engine.OnCloseSocket(Child);
         }
         Socket.WasClose = 1;
         SetSocketStatus(Socket, 0);
@@ -128,14 +129,13 @@ function InitClass(Engine)
     {
         if(Socket.Child)
             throw "Error LinkSocketToChild was Linked";
-        Child.Disconnect = 0;
         Child.ConnectType = ConnectType;
         Socket.Child = Child;
         Child.Socket = Socket;
         Child.DirectIP = (ConnectType === "Server");
         SetSocketStatus(Socket, 100);
     };
-    Engine.DeleteConnectNext = function (Child)
+    Engine.OnDeleteConnectNext = function (Child)
     {
         if(Child.Socket)
             Engine.CloseSocket(Child.Socket);
@@ -146,11 +146,6 @@ function InitAfter(Engine)
     Engine.CreateServer();
     Engine.CreateConnectionToChild = function (Child,F)
     {
-        if(Child.Disconnect)
-        {
-            F(0);
-            return ;
-        }
         var State = GetSocketStatus(Child.Socket);
         if(State === 100)
         {
@@ -164,7 +159,6 @@ function InitAfter(Engine)
                 if(Child.port > 30000)
                 {
                     ToLog("Error port");
-                    Child.Disconnect = 1;
                     F(0);
                     return ;
                 }
@@ -186,8 +180,6 @@ function InitAfter(Engine)
     };
     Engine.SENDTONETWORK = function (Child,Data)
     {
-        if(Child.Disconnect)
-            return ;
         var State = GetSocketStatus(Child.Socket);
         if(State === 100)
         {
@@ -217,8 +209,6 @@ function GetSocketStatus(Socket)
             var Delta = Date.now() - Socket.TimeStatus;
             if(Delta > JINN_CONST.MAX_WAIT_PERIOD_FOR_STATUS)
             {
-                if(Socket)
-                    CloseSocket(Socket, "MAX_WAIT_PERIOD_FOR_STATUS = " + Socket.SocketStatus + " time = " + Delta);
                 return 0;
             }
         }

@@ -8,13 +8,18 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Log"});
 function InitClass(Engine)
 {
     Engine.ToLog = function (Str)
     {
         var Time = Date.now() % 10000;
-        ToLog("" + Time + ": " + Engine.ID + "." + Str);
+        var ID = GetNodeID(Engine);
+        if(Str.substr(0, 1) === "<")
+            ToLog("" + Time + ": " + ID + Str);
+        else
+            ToLog("" + Time + ": " + ID + "." + Str);
     };
     Engine.ToLog1 = function (Str)
     {
@@ -51,11 +56,24 @@ function InitClass(Engine)
     Engine.ToError = function (Child,Str,WarningLevel)
     {
         Child.ErrCount++;
-        Engine.ToWarning("<-->" + Child.ID + " ********ERROR: " + Str, WarningLevel);
+        if(WarningLevel === "t")
+            ToLogTrace("" + Engine.ID + "<-->" + Child.ID + " ********ERROR: " + Str, WarningLevel);
+        else
+            if(global.JINN_WARNING >= WarningLevel || Engine.ID === global.DEBUG_ID)
+            {
+                var ID = GetNodeID(Child);
+                Engine.ToWarning("<-->" + ID + " ********ERROR: " + Str, WarningLevel);
+            }
     };
 }
 if(!global.ToLogTrace)
     global.ToLogTrace = function (Str)
     {
-        ToLog("" + Str + ":" + new Error().stack);
+        var Err = new Error();
+        ToLog("" + Str + ":" + Err.stack);
     };
+global.GetNodeID = function (Node)
+{
+    var ID = Node.ID;
+    return ID;
+}

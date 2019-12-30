@@ -331,6 +331,7 @@ function InitJSONObject()
 {
     $JSON.stringify = function (Obj)
     {
+        DO(1000);
         var Str = JSON.stringify(Obj);
         if(Str.length > MAX_LENGTH_STRING)
             return "";
@@ -338,6 +339,7 @@ function InitJSONObject()
     };
     $JSON.parse = function (Str)
     {
+        DO(1000);
         return JSON.parse(Str);
     };
     FreezeObjectChilds($JSON);

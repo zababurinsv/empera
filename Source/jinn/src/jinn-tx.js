@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 var glTxNum = 0;
 function InitClass(Engine)
@@ -38,7 +39,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
+            if(!Child || !Child.Hot || Child.HotStart)
                 continue;
             Child.SetLastCache(BlockNum);
             var ChildMap = Child.GetCacheByBlockNum(BlockNum);
@@ -82,7 +83,7 @@ function InitClass(Engine)
             return ;
         }
         Engine.CheckHotConnection(Child);
-        if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.Hot || Child.HotStart)
             return ;
         Child.CheckCache(Data.Cache, BlockNum);
         Engine.CheckSizeTXArray(Child, TxArr);
@@ -117,7 +118,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(!Child || Child.Disconnect)
+            if(!Child)
                 continue;
             Engine.Send("TESTMESSAGE", Child, {Value:Value});
         }

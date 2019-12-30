@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 if(typeof global !== "object")
     global = window;
 global.ZERO_ARR_32 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -39,6 +40,8 @@ JINN_CONST.SHARD_NAME = "TEST";
 JINN_CONST.MAX_ACTIVE_COUNT = 30;
 JINN_CONST.MAX_RET_NODE_LIST = 100;
 JINN_CONST.MAX_LEVEL_CONNECTION = 20;
+JINN_CONST.MAX_LEVEL_NODES = 1000;
+JINN_CONST.MAX_DELTA_BLOCKNUM_POW = 600;
 JINN_CONST.MAX_PACKET_LENGTH = 256 * 1024;
 JINN_CONST.MAX_WAIT_PERIOD_FOR_STATUS = 10 * 1000;
 JINN_CONST.MAX_LEADER_COUNT = 4;

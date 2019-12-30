@@ -8,11 +8,14 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
 function DoNode(Engine)
 {
     if(Engine.Del)
         return ;
+    if(Engine.ROOT_NODE)
+        return 0;
     Engine.TickNum++;
     var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
     if(Engine.LastCurBlockNum !== CurBlockNum)

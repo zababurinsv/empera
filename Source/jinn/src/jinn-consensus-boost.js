@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
 var BROADCAST_SHORT_PERIOD = 1000;
 global.glUseBHCache = 1;
@@ -258,7 +259,7 @@ function InitAfter(Engine)
             return ;
         Child.LastTransferLider = Date.now();
         Engine.CheckHotConnection(Child);
-        if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.Hot || Child.HotStart)
             return ;
         if(Data.Arr.length > JINN_CONST.MAX_LEADER_COUNT)
             Data.Arr.length = JINN_CONST.MAX_LEADER_COUNT;

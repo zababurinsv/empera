@@ -1254,12 +1254,12 @@ MapCurrencyIcon[0] = "./PIC/T.svg";
 MapCurrencyIcon[16] = "./PIC/B.svg";
 function InitMapCurrency()
 {
-    if(window.NETWORK_NAME === "TERA-TEST3")
+    if(window.NETWORK_NAME === "TERA-TEST4")
     {
         MapCurrency = {};
         MapCurrency[0] = "TERA";
-        MapCurrency[31] = "BTC";
-        MapCurrency[59] = "USD";
+        MapCurrency[9] = "BTC";
+        MapCurrency[10] = "USD";
     }
     if(!bWasCodeSys)
         for(var key in MapCurrency)

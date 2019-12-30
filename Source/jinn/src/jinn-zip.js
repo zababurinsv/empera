@@ -8,8 +8,8 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.JINN_MODULES.push({InitClass:InitClass});
 'use strict';
+global.JINN_MODULES.push({InitClass:InitClass});
 const zlib = require('zlib');
 const Writable = require('stream').Writable;
 global.glUseZip = 1;
@@ -31,25 +31,29 @@ function InitClass(Engine)
             {
                 Child.ToError("EncodeZip: " + err);
             });
+            Child.WriterZip.WorkNum = Child.WorkNum;
         }
         Child.EncodeZip.write(Buffer.from(Data));
     };
     Engine.PrepareOnReceiveZip = function (Child,Chunk)
     {
-        if(!Child.DecodeZip)
+        let DecodeZip = Child.DecodeZip;
+        if(!DecodeZip)
         {
-            Child.DecodeZip = zlib.createGunzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_LENGTH});
+            DecodeZip = zlib.createGunzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_LENGTH});
             Child.WriterUnZip = new Writable({objectMode:true, write:function (chunk,encoding,callback)
                 {
                     callback(0);
                     Engine.PrepareOnReceive(Child, chunk);
                 }});
-            Child.DecodeZip.pipe(Child.WriterUnZip);
-            Child.DecodeZip.on('error', function (err)
+            DecodeZip.pipe(Child.WriterUnZip);
+            DecodeZip.on('error', function (err)
             {
-                Child.ToError("DecodeZip: " + err);
+                Child.ToError("DecodeZip packet=" + Child.ReceivePacketCount + " work=" + Child.WriterUnZip.WorkNum + "/" + Child.WorkNum + " " + err);
             });
+            Child.WriterUnZip.WorkNum = Child.WorkNum;
+            Child.DecodeZip = DecodeZip;
         }
-        Child.DecodeZip.write(Chunk);
+        DecodeZip.write(Chunk);
     };
 }

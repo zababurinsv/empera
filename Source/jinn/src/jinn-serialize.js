@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Serilize"});
 function InitClass(Engine)
 {
@@ -55,7 +56,8 @@ function InitClass(Engine)
             }
             else
             {
-                throw "NOT FOUND FORMAT FOR METHOD: " + name;
+                ToLog("NOT FOUND FORMAT FOR METHOD: " + name);
+                return {struct:""};
             }
             Engine.SendFormatMap[name] = format;
         }

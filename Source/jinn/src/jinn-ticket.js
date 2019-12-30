@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 global.glUseTicket = 1;
 global.FRESH_TIKET = "FRESH";
@@ -42,7 +43,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
+            if(!Child || !Child.Hot || Child.HotStart)
                 continue;
             var ChildMap = Child.GetCacheByBlockNum(BlockNum);
             var Arr = [];
@@ -73,7 +74,7 @@ function InitClass(Engine)
             return ;
         }
         Engine.CheckHotConnection(Child);
-        if(!Child || Child.Disconnect || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.Hot || Child.HotStart)
             return ;
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var Tree = Engine.GetTreeTicket(BlockNum);

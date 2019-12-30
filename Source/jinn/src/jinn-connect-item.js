@@ -22,6 +22,16 @@ function InitClass(Engine)
         var IDArr = Engine.CalcIDArr(ip, port);
         return Engine.NewConnect(IDArr, ip, port);
     };
+    Engine.RetNewConnectByAddr = function (AddrItem)
+    {
+        var Item = Engine.NewConnect(AddrItem.IDArr, AddrItem.ip, AddrItem.port);
+        if(Item)
+        {
+            Item.AddrItem = AddrItem;
+            Engine.LinkHotItem(Item);
+        }
+        return Item;
+    };
     Engine.CalcIDArr = function (ip,port)
     {
         var HostName = String(ip) + ":" + port;
@@ -39,32 +49,37 @@ function InitClass(Engine)
         var IDStr = GetHexFromArr(IDArr);
         var Child = {IDStr:IDStr, IDArr:IDArr};
         Engine.ConnectArray.push(Child);
-        Engine.ToLog("NewConnect " + ip + ":" + port + "  arr=" + Engine.ConnectArray.length);
-        Engine.InitChild(Child, ip, port);
+        Engine.SetIPPort(Child, ip, port);
+        Engine.InitChild(Child);
         return Child;
     };
-    Engine.InitChild = function (Child,ip,port)
+    Engine.SetIPPort = function (Child,ip,port)
+    {
+        Child.IDArr = Engine.CalcIDArr(ip, port);
+        Child.IDStr = GetHexFromArr(Child.IDArr);
+        Child.ip = ip;
+        Child.port = port;
+        Child.ID = port % 1000;
+        Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
+        if(ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)
+            Child.ROOT_NODE = 1;
+        if(ip === Engine.ip && port === Engine.port)
+            Child.Self = 1;
+    };
+    Engine.InitChild = function (Child)
     {
         glChildWorkNum++;
         Child.WorkNum = glChildWorkNum;
-        Child.ip = ip;
-        Child.port = port;
         Child.LastTransferLider = 0;
         Child.ErrCount = 0;
         Child.IDContextNum = 0;
         Child.ContextCallMap = {};
         Child.SendAddrMap = {};
-        Child.ID = port % 1000;
-        Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
         Child.SendPacketCount = 0;
         Child.ReceivePacketCount = 0;
         Child.ReceiveDataArr = [];
         Child.Node = Engine;
         Child.ConnectStart = Date.now();
-        if(ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)
-            Child.ROOT_NODE = 1;
-        if(ip === Engine.ip && port === Engine.port)
-            Child.Self = 1;
         Object.defineProperty(Child, "Open", {get:function ()
             {
                 return !!this.LinkChild;
@@ -111,7 +126,5 @@ function InitClass(Engine)
                 break;
             }
         }
-        if(Child.NodeHash)
-            Engine.NodeByHashTree.remove(Child);
     };
 }

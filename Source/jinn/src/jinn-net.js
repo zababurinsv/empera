@@ -8,23 +8,23 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Net"});
+global.NET_DEBUG = 1;
+var TEMP_PACKET_ARR = [0, 0, 0, 0];
+if(global.NET_DEBUG)
+    TEMP_PACKET_ARR = [0, 0, 0, 0, 0, 0, 0, 0];
 const NetFormat = {Method:"str", Call:"byte", RetContext:"uint", Data:"data"};
 const NetFormatWrk = {};
-var TEMP_ARR4 = [0, 0, 0, 0];
 function InitClass(Engine)
 {
     Engine.Traffic = 0;
     Engine.Send = function (Method,Child,DataObj,F)
     {
-        if(Child.Disconnect)
-            return ;
         Engine.PrepareOnSend(Method, Child, DataObj, 1, F);
     };
     Engine.SendToNetwork = function (Child,Data)
     {
-        if(Child.Disconnect)
-            return ;
         Engine.SENDTONETWORK(Child, Data);
         Engine.AddTrafic(Data.length);
         Engine.LogBufTransfer(Child, Data, "->");
@@ -45,13 +45,22 @@ function InitClass(Engine)
             {
                 Child.IDContextNum++;
                 RetContext = Child.IDContextNum;
-                Child.ContextCallMap[RetContext] = F;
+                Child.ContextCallMap[RetContext] = {Method:Method, F:F};
             }
         }
         var DataBuf = Engine.GetRAWFromObject(Child, Method, bCall, RetContext, DataObj);
         Engine.LogTransfer(Child, DataBuf, "->");
-        WriteUint32AtPos(TEMP_ARR4, 4 + DataBuf.length, 0);
-        var DataBuf2 = TEMP_ARR4.concat(DataBuf);
+        if(global.NET_DEBUG)
+        {
+            WriteUint32AtPos(TEMP_PACKET_ARR, Child.SendPacketCount, 0);
+            WriteUint32AtPos(TEMP_PACKET_ARR, 8 + DataBuf.length, 4);
+        }
+        else
+        {
+            WriteUint32AtPos(TEMP_PACKET_ARR, 4 + DataBuf.length, 0);
+        }
+        Child.SendPacketCount++;
+        var DataBuf2 = TEMP_PACKET_ARR.concat(DataBuf);
         if(Engine.PrepareOnSendZip && global.glUseZip)
             Engine.PrepareOnSendZip(Child, DataBuf2);
         else
@@ -59,8 +68,6 @@ function InitClass(Engine)
     };
     Engine.PrepareOnReceive = function (Child,Chunk)
     {
-        if(Child.Disconnect)
-            return ;
         for(var i = 0; i < Chunk.length; i++)
             Child.ReceiveDataArr.push(Chunk[i]);
         Engine.TweakOneMethod(Child);
@@ -70,54 +77,67 @@ function InitClass(Engine)
         var Arr = Child.ReceiveDataArr;
         if(Arr.length < 5)
             return ;
-        var Length = ReadUint32FromArr(Arr, 0);
+        var Length;
+        var Pos;
+        if(global.NET_DEBUG)
+        {
+            var PacketNum = ReadUint32FromArr(Arr, 0);
+            if(PacketNum !== Child.ReceivePacketCount)
+                Engine.ToError(Child, "Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, "t");
+            Child.ReceivePacketCount++;
+            Length = ReadUint32FromArr(Arr, 4);
+            Pos = 8;
+        }
+        else
+        {
+            Length = ReadUint32FromArr(Arr, 0);
+            Pos = 4;
+        }
         if(Length > JINN_CONST.MAX_PACKET_LENGTH)
         {
-            Engine.ToError(Child, "Bad packet size");
+            Engine.ToError(Child, "Bad packet size = " + Length, 0);
             return ;
         }
         if(Arr.length === Length)
         {
-            Engine.CallMethodOnReceive(Child, Arr.slice(4));
+            Engine.CallMethodOnReceive(Child, Arr.slice(Pos));
             Arr.length = 0;
         }
         else
             if(Length && Arr.length > Length)
             {
-                Engine.CallMethodOnReceive(Child, Arr.slice(4, Length));
+                Engine.CallMethodOnReceive(Child, Arr.slice(Pos, Length));
                 Child.ReceiveDataArr = Arr.slice(Length);
                 Engine.TweakOneMethod(Child);
             }
     };
     Engine.CallMethodOnReceive = function (Child,Chunk)
     {
-        if(Child.Disconnect)
-            return ;
         Engine.LogTransfer(Child, Chunk, "<-");
         var Obj = Engine.GetObjectFromRAW(Chunk);
         if(Obj.Error)
         {
-            Engine.ToError(Child, "Bad receive data");
+            Engine.ToError(Child, "Bad receive data", 0);
             return ;
         }
         if(!Obj.Call)
         {
             var Key = Obj.RetContext;
-            var F = Child.ContextCallMap[Key];
-            if(!F)
+            var Cont = Child.ContextCallMap[Key];
+            if(!Cont || Cont.Method !== Obj.Method)
             {
-                Engine.ToError(Child, "Bad context key=" + Key);
+                Engine.ToError(Child, "Bad context " + Obj.Method + " key=" + Key, 0);
                 return ;
             }
             delete Child.ContextCallMap[Key];
-            F(Child, Obj.Data);
+            Cont.F(Child, Obj.Data);
         }
         else
         {
             var F = Engine[Obj.Method];
             if(typeof F !== "function")
             {
-                Engine.ToError(Child, "Not fount method " + Obj.Method);
+                Engine.ToError(Child, "Not fount method " + Obj.Method, 0);
                 return ;
             }
             var RetObj = F(Child, Obj.Data);
@@ -168,7 +188,8 @@ function InitClass(Engine)
         {
             var Obj = Engine.GetObjectFromRAW(Data);
             var StrData = " DATA:" + JSON.stringify(Obj);
-            Engine.ToDebug(StrDirect + Child.ID + " " + (Obj.Call ? "" : "RET ") + Obj.Method + StrData);
+            var ID = GetNodeID(Child);
+            Engine.ToDebug(StrDirect + ID + " " + (Obj.Call ? "" : "RET ") + Obj.Method + StrData);
         }
     };
     Engine.PrevTraficBlockNum = 0;
@@ -182,5 +203,15 @@ function InitClass(Engine)
             Engine.PrevTraficBlockNum = BlockNum;
             Engine.Traffic = 0;
         }
+    };
+    Engine.OnOpenSocket = function (Child,LinkChild)
+    {
+        Child.LinkChild = LinkChild;
+    };
+    Engine.OnCloseSocket = function (Child)
+    {
+        Child.Close = 1;
+        delete Child.LinkChild;
+        Engine.OnDeleteConnect(Child);
     };
 }

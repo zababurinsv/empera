@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 const DB_BLOCK_FORMAT = {BlockNum:"uint", PrevHash:"hash", TreeHash:"hash", AddrHash:"hash", SumHash:"hash", SumPow:"uint",
     TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}], };

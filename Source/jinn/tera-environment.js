@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 require("./src");
 global.JINN_WARNING = 1;
 global.DEBUG_ID = 1;
@@ -30,7 +31,6 @@ function Create(Node)
     Engine.ID = 1;
     Engine.IDArr = Node.addrArr;
     Engine.IDStr = Node.addrStr;
-    Engine.PubAddr = Node.addrArr;
     global.CreateNodeEngine(Engine);
     Engine.GetTx = function (body)
     {

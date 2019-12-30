@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 global.SerializeLib = {};
 var exports = global.SerializeLib;
 exports.Write = Write;

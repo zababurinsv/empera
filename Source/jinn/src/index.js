@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 if(!global.sha3)
     require("../extlib/sha3.js");
 if(!global.RBTree)
@@ -16,13 +17,14 @@ require("./serialize.js");
 require("./jinn-setup.js");
 require("./jinn-log.js");
 require("./jinn-timing.js");
+require("./jinn-connect.js");
+require("./jinn-connect-item.js");
+require("./jinn-connect-handshake.js");
+require("./jinn-level-addr.js");
+require("./jinn-level-hot.js");
 require("./jinn-tx.js");
 require("./jinn-ticket.js");
 require("./jinn-tx-control.js");
-require("./jinn-child.js");
-require("./jinn-connect-addr.js");
-require("./jinn-connect-score.js");
-require("./jinn-connect.js");
 require("./jinn-block.js");
 require("./jinn-consensus.js");
 require("./jinn-consensus-boost.js");
@@ -32,5 +34,4 @@ require("./jinn-db.js");
 require("./jinn-db-cache.js");
 require("./jinn-net.js");
 require("./jinn-serialize.js");
-require("./jinn-zip.js");
 require("./jinn-filter.js");

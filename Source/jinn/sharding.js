@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 function GetVoteArr()
 {
     var Arr = [];

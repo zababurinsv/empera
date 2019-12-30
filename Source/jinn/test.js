@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+'use strict';
 require("./src");
 require("./model/model-lib.js");
 require("./model/model-network.js");
@@ -16,8 +17,9 @@ require("./model/model-environment.js");
 var PrevCurBlockNum = 0;
 global.JINN_WARNING = 2;
 global.DEBUG_ID = undefined;
+global.DEBUG_ID = "HOT2";
 JINN_CONST.START_ADD_TX = 20;
-var MaxNode = 14;
+var MaxNode = 2;
 JINN_CONST.MAX_TRANSACTION_COUNT = 1;
 global.CREATE_TX_PER_NODE = Math.floor(0.999 + JINN_CONST.MAX_TRANSACTION_COUNT / MaxNode);
 JINN_CONST.MAX_LEADER_COUNT = 4;
