@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -497,10 +497,14 @@ function CalcTreeHashFromArrBody(BlockNum,arrContent)
         for(var i = 0; i < arrContent.length; i++)
         {
             var HASH;
-            if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
-                HASH = sha3(arrContent[i]);
+            var Item = arrContent[i];
+            if(Item.HASH)
+                HASH = Item.HASH;
             else
-                HASH = shaarr(arrContent[i]);
+                if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
+                    HASH = sha3(Item);
+                else
+                    HASH = shaarr(Item);
             arrHASH.push(HASH);
         }
         var Tree = CalcMerklFromArray(BlockNum, arrHASH);
@@ -874,7 +878,7 @@ function WriteNumToArr0(body,Num)
     body[2] ^= (Num >>> 16) & 0xFF;
     body[3] ^= (Num >>> 24) & 0xFF;
 }
-function ClientHex(Str,nonce)
+function CalcClientHash(Str,nonce)
 {
     var arr = [0, 0, 0, 0];
     for(var i = 0; i < Str.length; i++)
@@ -883,7 +887,7 @@ function ClientHex(Str,nonce)
     Mesh(arr, 60);
     return GetHexFromArr(arr) + "-" + nonce;
 }
-global.ClientHex = ClientHex;
+global.CalcClientHash = CalcClientHash;
 var GlobalCryptID = 0;
 var DeltaTimeCryptID = new Date(2018, 1, 1) - 0;
 function Encrypt(Arr,Arr2,ArrSecret)

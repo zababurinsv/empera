@@ -228,6 +228,7 @@ And re-create the database: by deleting the DATA/DB directory or through interfa
 * [API](https://gitlab.com/terafoundation/tera/blob/master/Doc/Eng/API.md)
 * [API-2 for Exchanges](https://gitlab.com/terafoundation/tera/blob/master/Doc/Eng/API2.md)
 * [CONSTANTS](https://gitlab.com/terafoundation/tera/blob/master/Doc/Eng/CONSTANTS.MD)
+* [Relationship between command-line parameters and constants](https://gitlab.com/terafoundation/tera/blob/master/Doc/Eng/COMMANDS.MD)
 
 ## Blockchain:
 * [WEB-Wallet](https://terawallet.org)

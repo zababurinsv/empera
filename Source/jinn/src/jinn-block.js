@@ -1,19 +1,32 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ * Working with blocks, creating a new block, determining the Genesis of the block
+ *
+ * The formula for calculating hashes:
+ *
+ *  LinkHash | -----------> DataHash | ---------------->    Hash
+ *     +     |                  +    |
+ *  TreeHash |              MinerHash|
+ *
+ * i.e.:
+ * LinkHash + TreeHash              = DataHash
+ * DataHash + MinerHash             = Hash
+ **/
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
+global.JINN_MODULES.push({InitClass:InitClass});
 function InitClass(Engine)
 {
     Engine.DoBlockMining = function (CurBlockNum)
     {
+        if(!Engine.GenesisArr)
+            Engine.CreateGenesisArray();
         var Count = 0;
         while(1)
         {
@@ -38,9 +51,11 @@ function InitClass(Engine)
                     return ;
                 }
             }
-            Engine.SaveToDB(Block);
+            var Result = Engine.SaveToDB(Block, 0, 1);
+            if(!Result)
+                break;
             Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
-            if(Count >= 2)
+            if(Count >= JINN_CONST.DELTA_BLOCKS_FOR_CREATE)
             {
                 var DeltaNum = CurBlockNum - Block.BlockNum;
                 if(DeltaNum > JINN_CONST.DELTA_BLOCKS_FOR_LOAD_ONLY)
@@ -67,57 +82,72 @@ function InitClass(Engine)
         if(ArrBlock.length === 0)
         {
             Engine.ToDebug("Add new mem block: " + BlockNum);
+            Block.Comment = "Mem block";
             ArrBlock.push(Block);
         }
     };
     Engine.GetGenesisBlock = function (Num)
     {
+        if(Num >= JINN_CONST.BLOCK_GENESIS_COUNT)
+            throw "Error GenesisBlock Num = " + Num;
+        var Block = Engine.GenesisArr[Num];
+        if(Block)
+            return Block;
         var PrevBlock;
         if(!Num)
             PrevBlock = {Hash:ZERO_ARR_32, SumPow:0};
         else
             PrevBlock = Engine.GenesisArr[Num - 1];
-        var Block = {};
+        Block = {};
         Block.Genesis = 1;
         Block.BlockNum = Num;
         Block.TxData = [];
         Block.TreeHash = ZERO_ARR_32;
-        Block.PrevHash = PrevBlock.Hash;
-        Block.AddrHash = ZERO_ARR_32;
+        Block.LinkHash = Engine.GetLinkHashDB(Block);
+        Block.MinerHash = ZERO_ARR_32;
         Engine.CalcBlockHash(Block);
+        Block.PrevBlockHash = PrevBlock.Hash;
         Block.SumPow = Block.Power + PrevBlock.SumPow;
-        if(Num > 0)
-            Block.PrevBlock = PrevBlock;
         Block.Description = "Genesis";
         return Block;
+    };
+    Engine.GetLinkHashDB = function (Block)
+    {
+        if(Block.BlockNum < 1)
+            return ZERO_ARR_32;
+        var PrevBlock = Engine.GetBlockHeaderDB(Block.BlockNum - 1);
+        if(PrevBlock)
+            return PrevBlock.Hash;
+        else
+            return ZERO_ARR_32;
     };
     Engine.GetNewBlock = function (BlockNum,TxArr,PrevBlock,bInMemory)
     {
         var Block = {};
         Block.BlockNum = BlockNum;
-        Block.PrevHash = PrevBlock.Hash;
+        Block.LinkHash = Engine.GetLinkHashDB(Block);
         Block.TxData = TxArr;
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
-        Block.AddrHash = [Engine.ID % 256, Engine.ID >>> 8];
+        Block.MinerHash = [Engine.ID % 256, Engine.ID >>> 8];
         for(var i = 2; i < 32; i++)
-            Block.AddrHash[i] = i;
+            Block.MinerHash[i] = i;
         Engine.CalcBlockHash(Block);
+        Block.PrevBlockHash = PrevBlock.Hash;
         if(!bInMemory)
         {
-            Block.SumPow = Block.Power + PrevBlock.SumPow;
             Block.PrevBlock = PrevBlock;
         }
         return Block;
     };
     Engine.GetBlockHeader = function (Block)
     {
-        var Data = {BlockNum:Block.BlockNum, PrevHash:Block.PrevHash, TreeHash:Block.TreeHash, AddrHash:Block.AddrHash, SeqHash:Block.SeqHash,
-            Hash:Block.Hash, Size:3 * 32 + 10, };
+        var Data = {BlockNum:Block.BlockNum, LinkHash:Block.LinkHash, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash, DataHash:Block.DataHash,
+            Hash:Block.Hash, PrevBlockHash:Block.PrevBlockHash, Size:3 * 32 + 10, };
         return Data;
     };
     Engine.GetBlockBody = function (Block)
     {
-        var Data = {BlockNum:Block.BlockNum, TreeHash:Block.TreeHash, TxData:Block.TxData, PrevHash:Block.PrevHash, };
+        var Data = {BlockNum:Block.BlockNum, TreeHash:Block.TreeHash, PrevBlockHash:Block.PrevBlockHash, TxData:Block.TxData, };
         var Size = 10;
         for(var i = 0; i < Data.TxData.length; i++)
         {
@@ -135,11 +165,10 @@ function InitClass(Engine)
             Engine.GenesisArr[Num] = Block;
         }
     };
-    Engine.CalcTreeHash = function (BlockNum,TxArr0)
+    Engine.CalcTreeHash = function (BlockNum,TxArr)
     {
-        if(!TxArr0 || !TxArr0.length)
+        if(!TxArr || !TxArr.length)
             return ZERO_ARR_32;
-        var TxArr = TxArr0;
         var Buf = [];
         for(var n = 0; n < TxArr.length; n++)
         {
@@ -156,8 +185,8 @@ function InitClass(Engine)
     };
     Engine.CalcBlockHash = function (Block)
     {
-        Block.SeqHash = sha3(Block.PrevHash.concat(Block.TreeHash));
-        Block.Hash = sha3(Block.SeqHash.concat(Block.AddrHash));
+        Block.DataHash = sha3(Block.LinkHash.concat(Block.TreeHash));
+        Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash));
         Block.Power = Engine.GetPowPower(Block.Hash);
     };
     Engine.GetPowPower = function (arrhash)
@@ -180,10 +209,6 @@ function InitClass(Engine)
         }
         return SumBit;
     };
-}
-function InitAfter(Engine)
-{
-    Engine.CreateGenesisArray();
 }
 var glBlockTest = {};
 function CheckBlockGlobal(Engine,Block)

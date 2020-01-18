@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -45,7 +45,8 @@ CacheMap["highlight.js"] = 1000000;
 CacheMap["highlight-html.js"] = 1000000;
 CacheMap["highlight-js.js"] = 1000000;
 var AllowArr = ["text/javascript", "application/javascript", "application/json", "application/octet-stream", "application/font-woff",
-"text/css", "audio/wav", "audio/mpeg", "image/vnd.microsoft.icon", "image/jpeg", "image/png", "image/gif", "text/plain", "text/csv"];
+"text/css", "audio/wav", "audio/mpeg", "image/vnd.microsoft.icon", "image/jpeg", "image/png", "image/gif", "text/plain", "text/csv",
+"image/x-icon"];
 var AllowMap = {};
 for(var i = 0; i < AllowArr.length; i++)
     AllowMap[AllowArr[i]] = 1;
@@ -1594,7 +1595,6 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
                 response.writeHead(200, Headers);
                 setTimeout(function ()
                 {
-                    ToLog("KILL stream file: " + Path);
                     stream.close();
                     stream.push(null);
                     stream.read(0);
@@ -1844,22 +1844,18 @@ function SetSafeResponce(response)
 }
 if(global.HTTP_PORT_NUMBER)
 {
+    var ClientTokenHashMap = {};
     var ClientTokenMap = {};
     var ClientIPMap = {};
     var ClientIPMap2 = {};
     setInterval(function ()
     {
         ClientTokenMap = {};
+        ClientTokenHashMap = {};
     }, 24 * 3600 * 1000);
     var MaxTimeEmptyAccess = 600;
     var CountPswdPls = 0;
     var TimeStartServer = Date.now();
-    var LocalClientTokenMap = LoadParams(GetDataPath("local-tokens.lst"), {});
-    var PasswordHash = GetHexFromArr(sha3(global.HTTP_PORT_PASSWORD));
-    if(LocalClientTokenMap.PasswordHash !== PasswordHash)
-    {
-        LocalClientTokenMap = {};
-    }
     var port = global.HTTP_PORT_NUMBER;
     var HTTPServer = http.createServer(function (request,response)
     {
@@ -1940,10 +1936,7 @@ if(global.HTTP_PORT_NUMBER)
         if(CheckPassword && Password)
         {
             var TokenMap;
-            if(remoteAddress === "127.0.0.1")
-                TokenMap = LocalClientTokenMap;
-            else
-                TokenMap = ClientTokenMap;
+            TokenMap = ClientTokenMap;
             var StrPort = "";
             if(global.HTTP_PORT_NUMBER !== 80)
                 StrPort = global.HTTP_PORT_NUMBER;
@@ -1952,31 +1945,10 @@ if(global.HTTP_PORT_NUMBER)
             var cookies_hash = cookies["hash" + StrPort];
             if(cookies_token && cookies_hash && TokenMap[cookies_token] === 0)
             {
-                if(cookies_hash.substr(0, 4) !== "0000")
-                {
-                    SendPasswordFile(request, response, Path, StrPort, cookies_token);
-                    return ;
-                }
-                var nonce = 0;
-                var index = cookies_hash.indexOf("-");
-                if(index > 0)
-                {
-                    nonce = parseInt(cookies_hash.substr(index + 1));
-                    if(!nonce)
-                        nonce = 0;
-                }
-                var hash = ClientHex(cookies_token + "-" + Password, nonce);
-                if(hash === cookies_hash)
+                var hash = GetCookieHash(cookies_token, cookies_hash, Password);
+                if(hash && hash === cookies_hash)
                 {
                     TokenMap[cookies_token] = 1;
-                    if(TokenMap === LocalClientTokenMap)
-                    {
-                        LocalClientTokenMap.PasswordHash = GetHexFromArr(sha3(Password));
-                        for(var key in LocalClientTokenMap)
-                            if(!LocalClientTokenMap[key])
-                                delete LocalClientTokenMap[key];
-                        SaveParams(GetDataPath("local-tokens.lst"), LocalClientTokenMap);
-                    }
                 }
                 else
                 {
@@ -1990,6 +1962,26 @@ if(global.HTTP_PORT_NUMBER)
                 TokenMap[StrToken] = 0;
                 SendPasswordFile(request, response, Path, StrPort, StrToken);
                 return ;
+            }
+            if(request.method === "POST")
+            {
+                var TokenHash = request.headers.tokenhash;
+                if(!TokenHash || !ClientTokenHashMap[TokenHash])
+                {
+                    var hash2 = GetCookieHash(cookies_token, TokenHash, Password + "-api");
+                    if(hash2 && hash2 === TokenHash)
+                    {
+                        ClientTokenHashMap[TokenHash] = 1;
+                    }
+                    else
+                    {
+                        if(TokenHash)
+                            ToLog("Invalid API token: " + request.method + "   path: " + Path + "  token:" + TokenHash + "/" + hash2);
+                        response.writeHead(203, {'Content-Type':'text/html'});
+                        response.end("Invalid API token");
+                        return ;
+                    }
+                }
             }
         }
         if(!ClientIPMap2[remoteAddress])
@@ -2053,7 +2045,7 @@ function SendPasswordFile(request,response,Path,StrPort,cookies_token)
     }
     else
     {
-        response.writeHead(404, {'Content-Type':'text/html'});
+        response.writeHead(203, {'Content-Type':'text/html'});
         response.end("");
     }
 }
@@ -2281,5 +2273,22 @@ function GetTransactionFromBody(Params,Block,TrNum,Body)
         return TR;
     }
     return {result:0, BlockNum:Block.BlockNum, Meta:Params ? Params.Meta : undefined};
+}
+function GetCookieHash(cookies_token,cookies_hash,Password)
+{
+    if(!cookies_hash || cookies_hash.substr(0, 4) !== "0000")
+    {
+        return undefined;
+    }
+    var nonce = 0;
+    var index = cookies_hash.indexOf("-");
+    if(index > 0)
+    {
+        nonce = parseInt(cookies_hash.substr(index + 1));
+        if(!nonce)
+            nonce = 0;
+    }
+    var hash = CalcClientHash(cookies_token + "-" + Password, nonce);
+    return hash;
 }
 require("../process/api-exchange.js");

@@ -1734,7 +1734,7 @@
                     var Item=MapAccounts[$("idAccount").value];
                     if(Item)
                     {
-                        $("idSumSend").value=ToFixed(FLOAT_FROM_COIN(Item.Value),Item.Currency);
+                        $("idSumSend").value=FLOAT_FROM_COIN(Item.Value);//ToFixed(FLOAT_FROM_COIN(Item.Value));//,Item.Currency); - all (9 digital) precision
                     }
                 }
             </script>

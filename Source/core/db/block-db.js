@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -222,6 +222,8 @@ module.exports = class CDB extends require("../code")
             ToLogTrace("ERROR WRITE TrCount BLOCK:" + Block.BlockNum)
             throw "ERROR WRITE";
         }
+        if(Block.LinkHash)
+            Block.PrevHash = Block.LinkHash
         var Ret = this.WriteBodyDB(Block);
         if(Ret)
         {

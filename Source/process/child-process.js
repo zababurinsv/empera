@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -29,7 +29,8 @@ if(process.send)
     }, 1000);
     global.ToLogClient = function (Str,StrKey,bFinal)
     {
-        process.send({cmd:"ToLogClient", Str:"" + Str, StrKey:StrKey, bFinal:bFinal});
+        if(typeof Str === "string")
+            process.send({cmd:"ToLogClient", Str:"" + Str, StrKey:StrKey, bFinal:bFinal});
     };
 }
 function CheckAlive()

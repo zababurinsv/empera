@@ -1,13 +1,17 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Handshake
+ * Getting the main characteristics of the node with which the connection occurs
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 function InitClass(Engine)
@@ -37,7 +41,6 @@ function InitClass(Engine)
                 var Res = Engine.AddNodeAddr(AddrItem);
                 if(!Res)
                 {
-                    Engine.ToLog("Error HANDSHAKE #1");
                     return {result:0};
                 }
             }
@@ -49,7 +52,7 @@ function InitClass(Engine)
         }
         Engine.SetIPPort(Child, Data.ip, Data.port);
         Engine.LinkHotItem(Child);
-        Engine.AddConnect(Child);
+        Engine.OnAddConnect(Child);
         return {result:1};
     };
     Engine.OnHandShakeReturn = function (Child,Data)
@@ -59,7 +62,7 @@ function InitClass(Engine)
             Engine.OnDeleteConnect(Child);
             return ;
         }
-        Engine.AddConnect(Child);
+        Engine.OnAddConnect(Child);
         if(Engine.InHotStart(Child))
             Engine.TryHotConnection(Child, 1);
     };

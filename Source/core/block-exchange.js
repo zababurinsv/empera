@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -47,7 +47,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         this.SendBlockID = 0
         this.RelayMode = false
         this.TreeSendPacket = new RBTree(CompareItemHash)
-        if(!global.ADDRLIST_MODE && !this.VirtualMode)
+        if(!global.ADDRLIST_MODE && (!this.VirtualMode || global.TEST_JINN))
         {
             this.idBlockChainTimer = setInterval(this.StartBlockChain.bind(this), CONSENSUS_PERIOD_TIME - 5)
             setInterval(this.DoTransfer.bind(this), CONSENSUS_CHECK_TIME)
@@ -812,7 +812,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
     {
         if(!Block.TreeHash)
             Block.TreeHash = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        var PrevHash = this.GetPrevHash(Block);
+        var PrevHash = this.GetLinkHash(Block);
         if(!PrevHash)
         {
             AddInfoBlock(Block, "-err prev hash-")
@@ -904,7 +904,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 ToLog("#5 WatchdogSaved: Error SeqHash on Num=" + BlockNum)
                 return ;
             }
-            var PrevHash = this.GetPrevHash(Block);
+            var PrevHash = this.GetLinkHash(Block);
             if(!PrevHash)
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
@@ -918,7 +918,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 ToLog("#7 WatchdogSaved: Error SeqHash on Num=" + BlockNum)
                 return ;
             }
-            PrevHash = this.GetPrevHashDB(BlockDB)
+            PrevHash = this.GetLinkHashDB(BlockDB)
             SeqHash = this.GetSeqHash(BlockDB.BlockNum, PrevHash, BlockDB.TreeHash)
             if(CompareArr(SeqHash, BlockDB.SeqHash) !== 0)
             {
@@ -1041,7 +1041,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     continue;
             }
             {
-                var PrevHash = this.GetPrevHash(Block);
+                var PrevHash = this.GetLinkHash(Block);
                 if(!PrevHash)
                 {
                     Block.HasErr = 1

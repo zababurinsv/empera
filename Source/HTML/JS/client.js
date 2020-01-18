@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -166,12 +166,14 @@ else
         {
             StrPost = JSON.stringify(ObjPost);
             serv.open("POST", Method, true);
+            CheckTokenHash(serv);
         }
         else
         {
             if(!Func)
             {
                 serv.open("GET", Method, 0);
+                CheckTokenHash(serv);
                 serv.send();
                 if(serv.status != 200)
                 {
@@ -213,14 +215,25 @@ else
                     }
                 }
                 else
-                {
-                    if(Func)
-                        Func(undefined, undefined);
-                }
+                    if(serv.status == 203)
+                    {
+                        window.location = "/password.html";
+                    }
+                    else
+                    {
+                        if(Func)
+                            Func(undefined, undefined);
+                    }
             }
         };
         serv.send(StrPost);
     };
+}
+function CheckTokenHash(serv)
+{
+    var TokenHash = sessionStorage["TOKEN-HASH"];
+    if(TokenHash)
+        serv.setRequestHeader("tokenhash", TokenHash);
 }
 function IsIPAddres(Str)
 {

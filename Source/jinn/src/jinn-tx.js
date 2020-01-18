@@ -1,13 +1,16 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Distribution of new transactions between nodes (taking into account the cache of received and sent transactions)
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 var glTxNum = 0;
@@ -39,7 +42,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(!Child || !Child.Hot || Child.HotStart)
+            if(!Child || !Child.IsHot() || Child.HotStart)
                 continue;
             Child.SetLastCache(BlockNum);
             var ChildMap = Child.GetCacheByBlockNum(BlockNum);
@@ -83,7 +86,7 @@ function InitClass(Engine)
             return ;
         }
         Engine.CheckHotConnection(Child);
-        if(!Child || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.IsHot() || Child.HotStart)
             return ;
         Child.CheckCache(Data.Cache, BlockNum);
         Engine.CheckSizeTXArray(Child, TxArr);

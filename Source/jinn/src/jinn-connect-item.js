@@ -1,13 +1,17 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Nodes that the current user communicates with
+ * Initializing values
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Child"});
 var glChildWorkNum = 0;
@@ -19,7 +23,7 @@ function InitClass(Engine)
             throw "RetNewConnectByIPPort : Error port number = " + port;
         if(ip === Engine.ip && port === Engine.port)
             return undefined;
-        var IDArr = Engine.CalcIDArr(ip, port);
+        var IDArr = CalcIDArr(ip, port);
         return Engine.NewConnect(IDArr, ip, port);
     };
     Engine.RetNewConnectByAddr = function (AddrItem)
@@ -31,12 +35,6 @@ function InitClass(Engine)
             Engine.LinkHotItem(Item);
         }
         return Item;
-    };
-    Engine.CalcIDArr = function (ip,port)
-    {
-        var HostName = String(ip) + ":" + port;
-        var IDArr = sha3(HostName);
-        return IDArr;
     };
     Engine.NewConnect = function (IDArr,ip,port)
     {
@@ -55,13 +53,13 @@ function InitClass(Engine)
     };
     Engine.SetIPPort = function (Child,ip,port)
     {
-        Child.IDArr = Engine.CalcIDArr(ip, port);
+        Child.IDArr = CalcIDArr(ip, port);
         Child.IDStr = GetHexFromArr(Child.IDArr);
         Child.ip = ip;
         Child.port = port;
         Child.ID = port % 1000;
         Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
-        if(ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)
+        if(JINN_EXTERN.NodeRoot && ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)
             Child.ROOT_NODE = 1;
         if(ip === Engine.ip && port === Engine.port)
             Child.Self = 1;
@@ -80,23 +78,19 @@ function InitClass(Engine)
         Child.ReceiveDataArr = [];
         Child.Node = Engine;
         Child.ConnectStart = Date.now();
-        Object.defineProperty(Child, "Open", {get:function ()
+        Child.IsOpen = function ()
+        {
+            return (Engine.GetSocketStatus(Child) === 100);
+        };
+        Child.IsHot = function ()
+        {
+            var ChildWas = Engine.LevelArr[this.Level];
+            if(ChildWas && ChildWas === this && !Engine.InHotStart(this))
             {
-                return !!this.LinkChild;
-            }});
-        Object.defineProperty(Child, "Active", {get:function ()
-            {
-                return !!this.LinkChild;
-            }});
-        Object.defineProperty(Child, "Hot", {get:function ()
-            {
-                var ChildWas = Engine.LevelArr[this.Level];
-                if(ChildWas && ChildWas === this && !Engine.InHotStart(this))
-                {
-                    return 1;
-                }
-                return 0;
-            }});
+                return 1;
+            }
+            return 0;
+        };
         if(Engine.InitChildNext)
             Engine.InitChildNext(Child);
         Child.ToError = function (Str)

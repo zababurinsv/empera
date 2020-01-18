@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -10,6 +10,19 @@
 
 var fs = require('fs');
 const os = require('os');
+var AddTrMap = {};
+AddTrMap[ - 6] = "Inner node error";
+AddTrMap[ - 5] = "Bad block num";
+AddTrMap[ - 4] = "Bad type transaction";
+AddTrMap[ - 3] = "Bad time";
+AddTrMap[ - 2] = "Bad PoW";
+AddTrMap[ - 1] = "Bad length";
+AddTrMap[0] = "Not add";
+AddTrMap[1] = "OK";
+AddTrMap[2] = "Update OK";
+AddTrMap[3] = "Was send";
+AddTrMap[4] = "Added to timer";
+global.AddTrMap = AddTrMap;
 require("./constant.js");
 if(global.USE_PARAM_JS)
 {
@@ -449,19 +462,6 @@ function GetCountMiningCPU()
     }
 }
 global.GetCountMiningCPU = GetCountMiningCPU;
-var AddTrMap = {};
-AddTrMap[ - 6] = "Inner node error";
-AddTrMap[ - 5] = "Bad block num";
-AddTrMap[ - 4] = "Bad type transaction";
-AddTrMap[ - 3] = "Bad time";
-AddTrMap[ - 2] = "Bad PoW";
-AddTrMap[ - 1] = "Bad length";
-AddTrMap[0] = "Not add";
-AddTrMap[1] = "OK";
-AddTrMap[2] = "Update OK";
-AddTrMap[3] = "Was send";
-AddTrMap[4] = "Added to timer";
-global.AddTrMap = AddTrMap;
 function GrayConnect()
 {
     if(global.NET_WORK_MODE && !NET_WORK_MODE.UseDirectIP)

@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -94,7 +94,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         return PrevArr;
     }
-    GetPrevHash(Block)
+    GetLinkHash(Block)
     {
         var startPrev = Block.BlockNum - BLOCK_PROCESSING_LENGTH2;
         var Sum = 0;
@@ -115,7 +115,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var PrevHash = CalcHashFromArray(arr, true);
         return PrevHash;
     }
-    GetPrevHashDB(Block)
+    GetLinkHashDB(Block)
     {
         var startPrev = Block.BlockNum - BLOCK_PROCESSING_LENGTH2;
         var arr = [];
@@ -877,7 +877,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             Block.BlockDown = undefined
             if(Block.BlockNum > this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2)
             {
-                var PrevHash = this.GetPrevHashDB(Block);
+                var PrevHash = this.GetLinkHashDB(Block);
                 if(CompareArr(PrevHash, Block.PrevHash) !== 0)
                 {
                     if(global.WATCHDOG_DEV)
@@ -1258,12 +1258,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 ToError(Str)
             return false;
         }
-        var PrevHash = this.GetPrevHashDB(Block);
+        var PrevHash = this.GetLinkHashDB(Block);
         var testSeqHash = this.GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
         var TestValue = GetHashFromSeqAddr(testSeqHash, Block.AddrHash, Block.BlockNum, PrevHash);
         if(CompareArr(TestValue.Hash, Block.Hash) !== 0)
         {
-            var Str = StrError + " #2 ERROR HASH - block num: " + Block.BlockNum;
+            var Str = StrError + " #2 ERROR HASH - block num: " + Block.BlockNum + "  " + GetHexFromArr(Block.Hash) + "/" + GetHexFromArr(TestValue.Hash);
             if(global.WATCHDOG_DEV)
                 ToErrorTrace(Str)
             else

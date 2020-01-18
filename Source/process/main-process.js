@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -684,11 +684,15 @@ function RunServer()
         }
     }
     KeyPair.setPrivateKey(Buffer.from(ServerPrivKey));
-    var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, false);
+    var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, global.TEST_JINN);
     if(global.TEST_JINN)
     {
-        var JinnLib = require("../jinn/tera-environment");
+        var JinnLib = require("../jinn/tera");
         var Engine = JinnLib.Create(Worker);
+        setTimeout(function ()
+        {
+            Worker.CheckStartedBlocks();
+        }, 1000);
     }
     DoStartFindList();
 }

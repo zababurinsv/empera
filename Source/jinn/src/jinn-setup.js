@@ -1,13 +1,16 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Starting point of the launch. Setting default constants.
+ *
+**/
 'use strict';
 if(typeof global !== "object")
     global = window;
@@ -16,7 +19,7 @@ global.JINN_MODULES = [];
 global.JINN_WARNING = 3;
 global.DEBUG_ID = 0;
 global.JINN_STAT = {AllTraffic:0, TxSend:0, TTSend:0, HeaderSend:0, BodySend:0, BodyTxSend:0, SaveDB:0, LoadDB:0, LoadHDB:0,
-    CheckSave:0};
+    CheckSave:0, FindHeadCount:0, FindHeadCount0:0};
 JINN_STAT.Clear = function ()
 {
     for(var key in JINN_STAT)
@@ -35,13 +38,13 @@ JINN_CONST.MAX_BLOCK_SIZE = 130 * 1024;
 JINN_CONST.BLOCK_GENESIS_COUNT = 16;
 JINN_CONST.START_BLOCK_NUM = JINN_CONST.BLOCK_GENESIS_COUNT + 4;
 JINN_CONST.DELTA_BLOCKS_FOR_LOAD_ONLY = JINN_CONST.START_BLOCK_NUM + 10;
+JINN_CONST.DELTA_BLOCKS_FOR_CREATE = 10;
 JINN_CONST.PROTOCOL_NAME = "TERA_PROTOCOL 2.0";
 JINN_CONST.SHARD_NAME = "TEST";
 JINN_CONST.MAX_ACTIVE_COUNT = 30;
 JINN_CONST.MAX_RET_NODE_LIST = 100;
 JINN_CONST.MAX_LEVEL_CONNECTION = 20;
-JINN_CONST.MAX_LEVEL_NODES = 1000;
-JINN_CONST.MAX_DELTA_BLOCKNUM_POW = 600;
+JINN_CONST.MAX_LEVEL_NODES = 30;
 JINN_CONST.MAX_PACKET_LENGTH = 256 * 1024;
 JINN_CONST.MAX_WAIT_PERIOD_FOR_STATUS = 10 * 1000;
 JINN_CONST.MAX_LEADER_COUNT = 4;
@@ -85,6 +88,22 @@ function NextRunEngine(NetNodeArr)
         var module = global.JINN_MODULES[i];
         if(module.DoRun)
             module.DoRun();
+        if(module.DoNodeFirst)
+        {
+            if(NetNodeArr.ID)
+                module.DoNodeFirst(NetNodeArr);
+            else
+                for(var n = 0; n < NetNodeArr.length; n++)
+                {
+                    var Node = NetNodeArr[n];
+                    if(!Node.Del)
+                        module.DoNodeFirst(Node);
+                }
+        }
+    }
+    for(var i = 0; i < global.JINN_MODULES.length; i++)
+    {
+        var module = global.JINN_MODULES[i];
         if(module.DoNode)
         {
             if(NetNodeArr.ID)

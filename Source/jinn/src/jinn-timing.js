@@ -1,13 +1,16 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Asynchronous startup of the processing unit according to the timings
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
 function DoNode(Engine)
@@ -15,28 +18,16 @@ function DoNode(Engine)
     if(Engine.Del)
         return ;
     if(Engine.ROOT_NODE)
-        return 0;
+        return ;
     Engine.TickNum++;
     var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
     if(Engine.LastCurBlockNum !== CurBlockNum)
     {
         Engine.LastCurBlockNum = CurBlockNum;
-        if(global.CREATE_TX_PER_NODE < 0)
-        {
-            if(random(100) <=  - global.CREATE_TX_PER_NODE)
-                Engine.AddCurrentProcessingTx(CurBlockNum, [Engine.CreateTx({BlockNum:CurBlockNum})]);
-        }
-        else
-            if(global.CREATE_TX_PER_NODE > 0)
-            {
-                for(var i = 0; i < global.CREATE_TX_PER_NODE; i++)
-                    Engine.AddCurrentProcessingTx(CurBlockNum, [Engine.CreateTx({BlockNum:CurBlockNum})]);
-            }
         if(Engine.SendTicket && global.glUseTicket)
         {
-            Engine.InitTicket(CurBlockNum);
+            Engine.InitTicket(CurBlockNum - JINN_CONST.STEP_TICKET);
         }
-        Engine.SendTx(CurBlockNum - JINN_CONST.STEP_TX);
         Engine.DoBlockMining(CurBlockNum - JINN_CONST.STEP_MINING);
     }
     Engine.SendTicket(CurBlockNum - JINN_CONST.STEP_TICKET - 1);

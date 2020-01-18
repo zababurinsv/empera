@@ -1,25 +1,31 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Logs for debugging
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Log"});
 function InitClass(Engine)
 {
+    Engine.ErrorCount = 0;
     Engine.ToLog = function (Str)
     {
-        var Time = Date.now() % 10000;
+        var Time;
+        Time = "";
         var ID = GetNodeID(Engine);
-        if(Str.substr(0, 1) === "<")
-            ToLog("" + Time + ": " + ID + Str);
+        var Type = Str.substr(0, 2);
+        if(Type === "<-" || Type === "->")
+            ToLog("" + Time + ID + Str);
         else
-            ToLog("" + Time + ": " + ID + "." + Str);
+            ToLog("" + Time + ID + "." + Str);
     };
     Engine.ToLog1 = function (Str)
     {
@@ -55,6 +61,7 @@ function InitClass(Engine)
     };
     Engine.ToError = function (Child,Str,WarningLevel)
     {
+        Engine.ErrorCount++;
         Child.ErrCount++;
         if(WarningLevel === "t")
             ToLogTrace("" + Engine.ID + "<-->" + Child.ID + " ********ERROR: " + Str, WarningLevel);

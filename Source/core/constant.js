@@ -2,19 +2,20 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1372;
+global.UPDATE_CODE_VERSION_NUM = 1375;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 global.FORK_MODE = 0;
 global.NETWORK = "TERA-MAIN";
 global.START_NETWORK_DATE = 1530446400000;
 global.CONSENSUS_PERIOD_TIME = 1000;
+/*Fork init values*/
 try
 {
     require("../../fork-run.js");
@@ -155,7 +156,11 @@ global.PRICE_DAO = function (BlockNum)
 }
 if(global.LOCAL_RUN)
 {
-    var Num = Date.now() - 300 * 1000;
+    var Num = Date.now();
+    if(global.TEST_JINN)
+        Num = Num - 2 * 1000;
+    else
+        Num = Num - 300 * 1000;
     global.START_NETWORK_DATE = Math.trunc(Num / 1000) * 1000;
 }
 global.NEW_SIGN_TIME = 25500000;
@@ -175,6 +180,8 @@ if(global.LOCAL_RUN || global.FORK_MODE)
     global.START_MINING = 60;
     global.REF_PERIOD_END = 0;
     global.REF_PERIOD_MINING = 10;
+    if(global.TEST_JINN)
+        global.START_MINING = 30;
     global.TEST_TRANSACTION_GENERATE = 0;
     global.MIN_POWER_POW_ACC_CREATE = 8;
     global.NEW_ACCOUNT_INCREMENT = 1;
@@ -358,6 +365,9 @@ function InitParamsArg()
                                                 break;
                                             case "API_V2":
                                                 global.USE_HARD_API_V2 = 1;
+                                                break;
+                                            case "JINNRUN":
+                                                global.TEST_JINN = 1;
                                                 break;
                                         }
                                     }

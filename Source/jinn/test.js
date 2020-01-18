@@ -1,25 +1,22 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
 'use strict';
 require("./src");
 require("./model/model-lib.js");
-require("./model/model-network.js");
 require("./model/model-node.js");
+require("./model/model-network.js");
 require("./model/model-environment.js");
 var PrevCurBlockNum = 0;
 global.JINN_WARNING = 2;
 global.DEBUG_ID = undefined;
-global.DEBUG_ID = "HOT2";
 JINN_CONST.START_ADD_TX = 20;
-var MaxNode = 2;
+var MaxNode = 8;
 JINN_CONST.MAX_TRANSACTION_COUNT = 1;
 global.CREATE_TX_PER_NODE = Math.floor(0.999 + JINN_CONST.MAX_TRANSACTION_COUNT / MaxNode);
 JINN_CONST.MAX_LEADER_COUNT = 4;

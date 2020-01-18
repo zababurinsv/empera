@@ -1,16 +1,20 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Organization of data transmission/reception to the network
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Net"});
 global.NET_DEBUG = 1;
+const NET_STRING_MODE = 0;
 var TEMP_PACKET_ARR = [0, 0, 0, 0];
 if(global.NET_DEBUG)
     TEMP_PACKET_ARR = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -19,6 +23,9 @@ const NetFormatWrk = {};
 function InitClass(Engine)
 {
     Engine.Traffic = 0;
+    Engine.SendTraffic = 0;
+    Engine.ReceiveTraffic = 0;
+    Engine.ReceivePacket = 0;
     Engine.Send = function (Method,Child,DataObj,F)
     {
         Engine.PrepareOnSend(Method, Child, DataObj, 1, F);
@@ -27,10 +34,12 @@ function InitClass(Engine)
     {
         Engine.SENDTONETWORK(Child, Data);
         Engine.AddTrafic(Data.length);
+        Engine.SendTraffic += Data.length;
         Engine.LogBufTransfer(Child, Data, "->");
     };
     Engine.ReceiveFromNetwork = function (Child,Data)
     {
+        Engine.ReceiveTraffic += Data.length;
         if(Engine.PrepareOnReceiveZip && global.glUseZip)
             Engine.PrepareOnReceiveZip(Child, Data);
         else
@@ -81,12 +90,19 @@ function InitClass(Engine)
         var Pos;
         if(global.NET_DEBUG)
         {
+            if(Arr.length < 8)
+            {
+                return ;
+            }
             var PacketNum = ReadUint32FromArr(Arr, 0);
-            if(PacketNum !== Child.ReceivePacketCount)
-                Engine.ToError(Child, "Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, "t");
-            Child.ReceivePacketCount++;
             Length = ReadUint32FromArr(Arr, 4);
+            if(PacketNum !== Child.ReceivePacketCount)
+            {
+                Engine.ToError(Child, "Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, 0);
+                Child.ReceivePacketCount = PacketNum;
+            }
             Pos = 8;
+            Child.ReceivePacketCount++;
         }
         else
         {
@@ -110,9 +126,15 @@ function InitClass(Engine)
                 Child.ReceiveDataArr = Arr.slice(Length);
                 Engine.TweakOneMethod(Child);
             }
+            else
+                if(global.NET_DEBUG)
+                {
+                    Child.ReceivePacketCount--;
+                }
     };
     Engine.CallMethodOnReceive = function (Child,Chunk)
     {
+        Engine.ReceivePacket++;
         Engine.LogTransfer(Child, Chunk, "<-");
         var Obj = Engine.GetObjectFromRAW(Chunk);
         if(Obj.Error)
@@ -163,12 +185,22 @@ function InitClass(Engine)
     };
     Engine.GetRAWFromObject = function (Child,Method,bCall,RetContext,DataObj)
     {
+        if(NET_STRING_MODE)
+        {
+            var Obj = {Cache:Child.CurrentCache, Method:Method, Call:bCall, RetContext:RetContext, Data:DataObj};
+            return Engine.GetRAWFromJSON(JSON.stringify(Obj));
+        }
         var Data = Engine.GetBufferFromData(Method, DataObj, bCall);
         var Obj = {Cache:Child.CurrentCache, Method:Method, Call:bCall, RetContext:RetContext, Data:Data};
         return SerializeLib.GetBufferFromObject(Obj, NetFormat, NetFormatWrk);
     };
     Engine.GetObjectFromRAW = function (BufData)
     {
+        if(NET_STRING_MODE)
+        {
+            var Str = Engine.GetJSONFromRAW(BufData);
+            return JSON.parse(Str);
+        }
         var Obj = SerializeLib.GetObjectFromBuffer(BufData, NetFormat, NetFormatWrk);
         if(Obj.Data && !Obj.Data.length)
             Obj.Data = undefined;
@@ -203,15 +235,5 @@ function InitClass(Engine)
             Engine.PrevTraficBlockNum = BlockNum;
             Engine.Traffic = 0;
         }
-    };
-    Engine.OnOpenSocket = function (Child,LinkChild)
-    {
-        Child.LinkChild = LinkChild;
-    };
-    Engine.OnCloseSocket = function (Child)
-    {
-        Child.Close = 1;
-        delete Child.LinkChild;
-        Engine.OnDeleteConnect(Child);
     };
 }

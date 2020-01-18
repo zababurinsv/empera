@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -865,7 +865,7 @@ HostingCaller.GetHistoryTransactions = function (Params)
 HostingCaller.GetSupply = function (Params)
 {
     if(HTTPS_HOSTING_DOMAIN === "terafoundation.org")
-        return "" + (1000000000 - 380 * 1000000);
+        return "" + (1000000000 - 376 * 1000000);
     var Data = DApps.Accounts.ReadState(0);
     if(!Data)
         return "";
@@ -933,6 +933,7 @@ global.LoadBlockFromNetwork = function (Params,F)
         F(Err, Block);
     });
 }
+ToLog("global.START_PORT_NUMBER=" + global.START_PORT_NUMBER);
 if(global.LOCAL_RUN)
 {
     setTimeout(function ()

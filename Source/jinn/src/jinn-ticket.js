@@ -1,13 +1,25 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Reduction of the traffic of transactions through the use of tickets - short hash from the transaction
+ * Algorithm:
+ * First phase of dispatch of the tickets, then the phase of the transaction
+ * Sending tickets by condition:
+ * 1) Haven't sent yet
+ * 2) And either did not receive, or received but it was not a new ticket
+ * When you receive a ticket, set the special. flag:
+ * - FRESH_TIKET when it is a new ticket for us (i.e. did not receive from other nodes)
+ * - OLD_TICKET-already in the ticket array
+ * Transactions are sent only when the value of the ticket flag is not equal to OLD_TICKET (i.e. sent when the value is empty or equal to FRESH_TIKET)
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 global.glUseTicket = 1;
@@ -43,7 +55,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(!Child || !Child.Hot || Child.HotStart)
+            if(!Child || !Child.IsHot() || Child.HotStart)
                 continue;
             var ChildMap = Child.GetCacheByBlockNum(BlockNum);
             var Arr = [];
@@ -74,7 +86,7 @@ function InitClass(Engine)
             return ;
         }
         Engine.CheckHotConnection(Child);
-        if(!Child || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.IsHot() || Child.HotStart)
             return ;
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var Tree = Engine.GetTreeTicket(BlockNum);

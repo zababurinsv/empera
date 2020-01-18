@@ -1,13 +1,18 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * The module is designed to speed up the exchange
+ * Proactive + batch sending of unique requests to all neighboring nodes at once
+ * The implementation of the interception methods of sharing blocks and headers
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
 var BROADCAST_SHORT_PERIOD = 1000;
@@ -18,29 +23,61 @@ function InitClass(Engine)
     {
         var Size = 0;
         var ArrRet = [];
-        var BlockHeader = Engine.GetHeaderForChild({LoadNum:Status.LoadN, LoadHash:Status.LoadH});
-        if(BlockHeader)
+        var LoadNum = Status.LoadN;
+        var LoadHash = Status.LoadH;
+        var CacheHeaderMap = Child.GetCache("CacheHeaderMap", BlockNum);
+        for(var n = 0; n < Status.CountItem; n++)
         {
-            var CacheHeaderMap = Child.GetCache("CacheHeaderMap", BlockNum);
+            if(!LoadHash)
+                break;
+            var BlockHeader = Engine.GetHeaderForChild({LoadNum:LoadNum, LoadHash:LoadHash});
+            if(!BlockHeader || (BlockHeader.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT && n > 0))
+                break;
+            LoadNum = BlockHeader.BlockNum - 1;
+            LoadHash = BlockHeader.PrevBlockHash;
             var StrHash = GetHexFromArr(BlockHeader.Hash);
-            if(!glUseBHCache || !CacheHeaderMap[StrHash])
-            {
-                ArrRet.push(BlockHeader);
-                Size += BlockHeader.Size;
-            }
+            if(glUseBHCache && CacheHeaderMap[StrHash])
+                continue;
             CacheHeaderMap[StrHash] = 1;
+            ArrRet.push(BlockHeader);
+            Size += BlockHeader.Size;
+            if(Size >= JINN_CONST.MAX_BLOCK_SIZE)
+            {
+                break;
+            }
+        }
+        return ArrRet;
+    };
+    Engine.GetBodyArrForChild = function (BlockNum,Status,Child)
+    {
+        var CacheBodyMap = Child.GetCache("CacheBodyMap", BlockNum);
+        var SizeRet = 0;
+        var ArrRet = [];
+        var BlockBody = Engine.GetBodyForChild({LoadTreeNum:Status.LoadN, LoadTreeHash:Status.LoadH});
+        if(BlockBody)
+        {
+            var StrHash = GetHexFromArr(BlockBody.TreeHash);
+            if(!glUseBHCache || BlockBody.TxData && !CacheBodyMap[StrHash])
+            {
+                SizeRet = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, SizeRet);
+                CacheBodyMap[StrHash] = 1;
+            }
             for(var n = 1; n < Status.CountItem; n++)
             {
-                BlockHeader = Engine.GetHeaderForChild({LoadNum:BlockHeader.BlockNum - 1, LoadHash:BlockHeader.PrevHash});
-                if(!BlockHeader || BlockHeader.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
+                BlockBody = Engine.GetBodyByHash(BlockBody.BlockNum - 1, BlockBody.PrevBlockHash);
+                if(!BlockBody || BlockBody.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
                     break;
-                StrHash = GetHexFromArr(BlockHeader.Hash);
-                if(glUseBHCache && CacheHeaderMap[StrHash])
+                if(!BlockBody.TreeHash || !BlockBody.TxData || IsZeroArr(BlockBody.TreeHash))
+                {
                     continue;
-                CacheHeaderMap[StrHash] = 1;
-                ArrRet.push(BlockHeader);
-                Size += BlockHeader.Size;
-                if(Size >= JINN_CONST.MAX_BLOCK_SIZE)
+                }
+                StrHash = GetHexFromArr(BlockBody.TreeHash);
+                if(!glUseBHCache || !CacheBodyMap[StrHash])
+                {
+                    SizeRet = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, SizeRet);
+                    CacheBodyMap[StrHash] = 1;
+                }
+                if(SizeRet >= JINN_CONST.MAX_BLOCK_SIZE)
                 {
                     break;
                 }
@@ -48,7 +85,7 @@ function InitClass(Engine)
         }
         return ArrRet;
     };
-    Engine.GetBodyArrForChild = function (BlockNum,Status,Child)
+    Engine.GetBodyArrForChild0 = function (BlockNum,Status,Child)
     {
         var SizeRet = 0;
         var ArrRet = [];
@@ -65,7 +102,7 @@ function InitClass(Engine)
             }
             for(var n = 1; n < Status.CountItem; n++)
             {
-                BlockBody = Engine.GetBodyByHash(StartBlockNum - n, BlockBody.PrevHash);
+                BlockBody = Engine.GetBodyByHash(StartBlockNum - n, BlockBody.PrevBlockHash);
                 if(!BlockBody || BlockBody.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
                     break;
                 if(!BlockBody.TreeHash || !BlockBody.TxData || IsZeroArr(BlockBody.TreeHash))
@@ -92,7 +129,7 @@ function InitClass(Engine)
         var TreeHashTest = Engine.CalcTreeHash(Item.BlockNum, Item.TxData);
         if(!IsEqArr(TreeHashTest, BlockBody.TreeHash))
         {
-            Engine.ToLog("Error send block on AddBodyBlockToArr: TreeHash=" + TreeHashTest + "/" + BlockBody.TreeHash);
+            Engine.ToLog("Error send block = " + Item.BlockNum + " on AddBodyBlockToArr: TreeHash=" + TreeHashTest + "/" + BlockBody.TreeHash + "   " + BlockBody.Description);
             return Size;
         }
         Arr.push(Item);
@@ -106,9 +143,12 @@ function InitClass(Engine)
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
-            if(Block && Block.TxData && IsEqArr(Block.Hash, Hash))
+            if(Block && IsEqArr(Block.Hash, Hash))
             {
-                return Engine.GetBlockBody(Block);
+                if(Block.TxData && Block.TreeHash && !IsZeroArr(Block.TreeHash))
+                    return Engine.GetBlockBody(Block, 1);
+                else
+                    return {PrevBlockHash:Block.PrevBlockHash, BlockNum:Block.BlockNum};
             }
         }
         return undefined;
@@ -124,7 +164,7 @@ function InitAfter(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(Child && Child.Active && Child.Hot)
+            if(Child && Child.IsOpen() && Child.IsHot())
             {
                 Engine.SendMaxHashToOneNode(BlockNum, Child, Context, 30);
             }
@@ -157,7 +197,9 @@ function InitAfter(Engine)
                 else
                 {
                     Element.Mode = 0;
+                    Element.LoadN = 0;
                     Element.LoadH = ZERO_ARR_32;
+                    Element.CountItem = 0;
                 }
             var LoadHead = NodeStatus.LoadHead;
             if(Element.Mode && LoadHead)
@@ -249,8 +291,8 @@ function InitAfter(Engine)
     };
     Engine.MAXHASH_SEND = {Cache:"uint", BlockNum:"uint", Arr:[{Mode:"byte", DataHashNum:"byte", DataHash:"zhash", MinerHash:"hash",
             CountItem:"uint16", LoadN:"uint", LoadH:"zhash"}], };
-    Engine.MAXHASH_RET = {result:"byte", Cache:"uint", Mode:"byte", Arr1:[{BlockNum:"uint", PrevHash:"hash", TreeHash:"zhash",
-            AddrHash:"hash"}], Arr2:[{BlockNum:"uint", TxTransfer:[{Index:"uint16", body:"tr"}], TTTransfer:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH],
+    Engine.MAXHASH_RET = {result:"byte", Cache:"uint", Mode:"byte", Arr1:[{BlockNum:"uint", PrevBlockHash:"hash", LinkHash:"hash",
+            TreeHash:"zhash", MinerHash:"hash"}], Arr2:[{BlockNum:"uint", TxTransfer:[{Index:"uint16", body:"tr"}], TTTransfer:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH],
             TxReceive:["uint16"], TxSend:["uint16"]}]};
     Engine.MAXHASH = function (Child,Data)
     {
@@ -259,7 +301,7 @@ function InitAfter(Engine)
             return ;
         Child.LastTransferLider = Date.now();
         Engine.CheckHotConnection(Child);
-        if(!Child || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.IsHot() || Child.HotStart)
             return ;
         if(Data.Arr.length > JINN_CONST.MAX_LEADER_COUNT)
             Data.Arr.length = JINN_CONST.MAX_LEADER_COUNT;

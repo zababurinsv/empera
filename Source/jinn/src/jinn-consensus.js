@@ -1,13 +1,16 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * The algorithm of the consensus network (the maximal chain of blocks for the amount of PoW)
+ *
+ */
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 function InitClass(Engine)
@@ -30,7 +33,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(Child && Child.Active && Child.Hot)
+            if(Child && Child.IsOpen() && Child.IsHot())
             {
                 if(!Child.SendTransferLider)
                     Child.SendTransferLider = Date.now();
@@ -62,7 +65,7 @@ function InitClass(Engine)
             return ;
         Child.LastTransferLider = Date.now();
         Engine.CheckHotConnection(Child);
-        if(!Child || !Child.Hot || Child.HotStart)
+        if(!Child || !Child.IsHot() || Child.HotStart)
             return ;
         Child.CheckCache(Data.Cache, BlockNum);
         var Count = 0;
@@ -88,7 +91,7 @@ function InitClass(Engine)
         }
         return {result:1, Cache:Child.CurrentCache, Header:RetHeader, Body:RetBody};
     };
-    Engine.GetBlockArrFromNum = function (BlockNum)
+    Engine.GetBlockArrFromNum = function (BlockNum,bBody)
     {
         var Arr = [];
         if(BlockNum)
@@ -104,7 +107,10 @@ function InitClass(Engine)
                 var Block;
                 if(n ===  - 1)
                 {
-                    Block = Engine.GetBlockDB(BlockNum);
+                    if(bBody)
+                        Block = Engine.GetBlockDB(BlockNum);
+                    else
+                        Block = Engine.GetBlockDBLazy(BlockNum);
                 }
                 else
                 {
@@ -117,11 +123,20 @@ function InitClass(Engine)
     };
     Engine.GetHeaderForChild = function (Status)
     {
+        if(Status.LoadNum < JINN_CONST.BLOCK_GENESIS_COUNT)
+        {
+            var Block = Engine.GetGenesisBlock(Status.LoadNum);
+            return Engine.GetBlockHeader(Block);
+        }
+        if(!Status.LoadHash)
+            return undefined;
         var Arr = Engine.GetBlockArrFromNum(Status.LoadNum);
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
-            if(Block && IsEqArr(Block.Hash, Status.LoadHash))
+            if(Block && !Block.Hash)
+                throw "!Block.Hash";
+            if(Block && Block.Hash && IsEqArr(Block.Hash, Status.LoadHash))
             {
                 return Engine.GetBlockHeader(Block);
             }
@@ -163,13 +178,15 @@ function InitClass(Engine)
         for(var i = 0; i < ArrBlock.length; i++)
         {
             var CurBlock = ArrBlock[i];
+            if(!CurBlock || !CurBlock.Hash)
+                throw "!CurBlock.Hash";
             if(IsEqArr(CurBlock.Hash, Block.Hash))
             {
                 WasBlock = 1;
                 Block = CurBlock;
                 Child.ToDebug("WasBlock " + Block.BlockNum);
             }
-            if(!Block.TxData && CurBlock.TreeHash && IsEqArr(CurBlock.TreeHash, Block.TreeHash))
+            if(Block !== CurBlock && !Block.TxData && CurBlock.TreeHash && IsEqArr(CurBlock.TreeHash, Block.TreeHash))
             {
                 Block.TxData = CurBlock.TxData;
                 Child.ToDebug("Find TxData in channel " + i + " on Block=" + CurBlock.BlockNum);
@@ -179,17 +196,20 @@ function InitClass(Engine)
         {
             ArrBlock.push(Block);
         }
-        var ArrBlock1 = Engine.LoadingArr[Block.BlockNum - 1];
-        if(ArrBlock1)
+        if(!Block.PrevBlock)
         {
-            for(var i = 0; i < ArrBlock1.length; i++)
+            var ArrBlock1 = Engine.LoadingArr[Block.BlockNum - 1];
+            if(ArrBlock1)
             {
-                var Block1 = ArrBlock1[i];
-                if(IsEqArr(Block1.Hash, Block.PrevHash) && Block.PrevBlock !== Block1)
+                for(var i = 0; i < ArrBlock1.length; i++)
                 {
-                    Block.PrevBlock = Block1;
-                    Child.ToDebug("Cur prev link: " + Block1.BlockNum + "<-" + Block.BlockNum);
-                    break;
+                    var Block1 = ArrBlock1[i];
+                    if(IsEqArr(Block1.Hash, Block.PrevBlockHash) && Block.PrevBlock !== Block1)
+                    {
+                        Block.PrevBlock = Block1;
+                        Child.ToDebug("Cur prev link: " + Block1.BlockNum + "<-" + Block.BlockNum);
+                        break;
+                    }
                 }
             }
         }
@@ -199,7 +219,7 @@ function InitClass(Engine)
             for(var i = 0; i < ArrBlock2.length; i++)
             {
                 var Block2 = ArrBlock2[i];
-                if(IsEqArr(Block2.PrevHash, Block.Hash) && Block2.PrevBlock !== Block)
+                if(!Block2.PrevBlock && Block2.PrevBlockHash && IsEqArr(Block2.PrevBlockHash, Block.Hash) && Block2.PrevBlock !== Block)
                 {
                     Block2.PrevBlock = Block;
                     Child.ToDebug("Next prev link: " + Block.BlockNum + "<-" + Block2.BlockNum);
@@ -225,9 +245,9 @@ function InitClass(Engine)
                 }
                 var HeadBlock = Engine.GetFirstHeadBlock(NodeStatus.BlockSeed);
                 if(HeadBlock)
-                    Child.ToDebug("AddBlockHeader: HeadBlock=" + HeadBlock.BlockNum + " Hash=" + HeadBlock.Hash + " PrevHash=" + HeadBlock.PrevHash);
+                    Child.ToDebug("AddBlockHeader: HeadBlock=" + HeadBlock.BlockNum + " Hash=" + HeadBlock.Hash + " PrevBlockHash=" + HeadBlock.PrevBlockHash);
                 NodeStatus.LoadNum = HeadBlock.BlockNum - 1;
-                NodeStatus.LoadHash = HeadBlock.PrevHash;
+                NodeStatus.LoadHash = HeadBlock.PrevBlockHash;
                 NodeStatus.LoadHead = HeadBlock;
                 if(!bWas)
                 {
@@ -255,7 +275,7 @@ function InitClass(Engine)
                     NodeStatus.LoadNum = 0;
                     NodeStatus.LoadHash = [];
                     NodeStatus.LoadHead = undefined;
-                    FillSumPow(BlockDB, NodeStatus.BlockSeed);
+                    Engine.FillSumPow(BlockDB, NodeStatus.BlockSeed);
                 }
             }
         }
@@ -355,7 +375,7 @@ function InitClass(Engine)
             var BlockDB = Engine.GetBlockHeaderDB(HeadBlock.BlockNum);
             if(!BlockDB)
                 continue;
-            if(!FillSumPow(BlockDB, BlockSeed))
+            if(!Engine.FillSumPow(BlockDB, BlockSeed))
                 continue;
             if(!BlockSeed.SumPow)
                 continue;
@@ -385,24 +405,20 @@ function InitClass(Engine)
     };
     Engine.FillDataMaxLider = function (Data,BlockNum,bBlock)
     {
-        if(bBlock)
-            Data.DataHash = Data.SeqHash;
         if(Data.DataHash === undefined)
             throw "PrecessDataMaxLider Error DataHash on block:" + BlockNum;
-        if(bBlock)
-            Data.MinerHash = Data.AddrHash;
         if(Data.MinerHash === undefined)
             throw "PrecessDataMaxLider Error MinerHash on block:" + BlockNum;
     };
-    Engine.CalcHashMaxLider = function (Data,BlockNum,bBlock)
+    Engine.CalcHashMaxLider = function (Data,BlockNum)
     {
         Data.BlockNum = BlockNum;
         Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash));
-        Data.POWER = Engine.GetPowPower(Data.Hash);
+        Data.Power = Engine.GetPowPower(Data.Hash);
     };
     Engine.CompareMaxLider = function (Data1,Data2)
     {
-        if(Data1.POWER < Data2.POWER || (Data1.POWER === Data2.POWER && CompareArr(Data2.Hash, Data1.Hash) <= 0))
+        if(Data1.Power < Data2.Power || (Data1.Power === Data2.Power && CompareArr(Data2.Hash, Data1.Hash) <= 0))
         {
             return  - 1;
         }
@@ -437,7 +453,7 @@ function InitClass(Engine)
         }
         if(Ret >= 0)
         {
-            var NodeStatus2 = {POWER:Data.POWER, Hash:Data.Hash, DataHash:Data.DataHash, MinerHash:Data.MinerHash, BlockSeed:undefined,
+            var NodeStatus2 = {Power:Data.Power, Hash:Data.Hash, DataHash:Data.DataHash, MinerHash:Data.MinerHash, BlockSeed:undefined,
                 LoadNum:0, LoadHash:[], LoadTreeNum:0, LoadTreeHash:[]};
             if(bBlock)
             {
@@ -455,91 +471,6 @@ function InitClass(Engine)
         }
         return Ret;
     };
-    Engine.GetFirstEmptyBodyBlock0 = function (SeedBlock)
-    {
-        var Block = SeedBlock;
-        if(Block && !Block.TxData)
-            return Block;
-        while(Block && Block.PrevBlock)
-        {
-            if(Engine.IsValideDBSave(Block))
-                break;
-            Block = Block.PrevBlock;
-            if(!Block.TxData)
-            {
-                return Block;
-            }
-        }
-        return undefined;
-    };
-    Engine.GetFirstHeadBlock = function (SeedBlock)
-    {
-        var Block = SeedBlock;
-        while(Block && Block.PrevBlock)
-        {
-            if(Engine.IsValideDBSave(Block))
-                break;
-            Block = Block.PrevBlock;
-        }
-        SeedBlock.FirstHeadBlock = Block;
-        return Block;
-    };
-    Engine.GetFirstEmptyBodyBlock = function (SeedBlock)
-    {
-        var BodyForLoad = Engine.GetFirstEmptyBodyBlock0(SeedBlock);
-        if(!BodyForLoad)
-            return BodyForLoad;
-        var ArrBlock = Engine.GetBlockArrFromNum(BodyForLoad.BlockNum);
-        if(ArrBlock)
-        {
-            for(var i = 0; i < ArrBlock.length; i++)
-            {
-                var Block = ArrBlock[i];
-                if(Block && Block.TxData && IsEqArr(Block.TreeHash, BodyForLoad.TreeHash))
-                {
-                    BodyForLoad.TxData = Block.TxData;
-                    return Engine.GetFirstEmptyBodyBlock(BodyForLoad);
-                }
-            }
-        }
-        return BodyForLoad;
-    };
-}
-function FillSumPow(BlockDB,BlockSeed)
-{
-    if(!BlockDB)
-        throw "FillSumPow Error BlockDB";
-    if(!BlockSeed)
-        throw "FillSumPow Error BlockSeed";
-    var TotalSum = 0;
-    var Block = BlockSeed;
-    var StopBlock = undefined;
-    while(Block)
-    {
-        if(IsEqArr(BlockDB.Hash, Block.Hash))
-        {
-            StopBlock = Block;
-            StopBlock.SumPow = BlockDB.SumPow;
-            TotalSum += StopBlock.SumPow;
-            break;
-        }
-        TotalSum += Block.Power;
-        Block = Block.PrevBlock;
-        if(!Block)
-            return 0;
-    }
-    Block = BlockSeed;
-    while(Block)
-    {
-        if(Block === StopBlock)
-            break;
-        Block.SumPow = TotalSum;
-        TotalSum -= Block.Power;
-        Block = Block.PrevBlock;
-    }
-    if(TotalSum !== StopBlock.SumPow)
-        throw "Error fill FillSumPow";
-    return 1;
 }
 function CanProcessBlock(Engine,BlockNum,Step)
 {

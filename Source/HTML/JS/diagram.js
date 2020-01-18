@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -405,8 +405,12 @@ function GetValueByItemProperty(Value,Item)
     var KPrecision = Item.KPrecision;
     if(!Item.KPrecision)
         KPrecision = 1;
-    Value = Math.floor(Value * KPrecision + 0.5) / KPrecision;
-    return Value;
+    var RetValue = Math.floor(Value * KPrecision + 0.5) / KPrecision;
+    if(RetValue === 0)
+    {
+        RetValue = Value.toPrecision(3);
+    }
+    return RetValue;
 }
 function InitDiagramByArr(Arr,width)
 {

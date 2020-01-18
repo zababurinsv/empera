@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -385,7 +385,7 @@ class AccountApp extends require("./dapp")
         {
             Result = "" + e
             if(global.WATCHDOG_DEV)
-                ToErrorTx("BlockNum:" + BlockNum + ":" + e)
+                ToErrorTx("BlockNum:" + BlockNum + " : " + e)
         }
         if(Result !== true)
         {

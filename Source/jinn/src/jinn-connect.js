@@ -1,13 +1,22 @@
 /*
- * @project: TERA
- * @version: Development (beta)
+ * @project: JINN
+ * @version: 1.0
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2019 [progr76@gmail.com]
- * Web: https://terafoundation.org
- * Twitter: https://twitter.com/terafoundation
- * Telegram:  https://t.me/terafoundation
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
 */
 
+/**
+ *
+ * Dual connection protection algorithm:
+ If two nodes have public Internet addresses, it is likely that they will simultaneously connect to each other
+ In this case, you need to recognize this case and leave only one connection.
+ The HANDSHAKE method contains ip+port as a parameter and is used to generate a 32-byte unique IDArr number
+ If the nodes see that they already had a connection (Child) with the same value, it means that it is the same node
+ In this case, the Engine arrays are compared.IDArr and Child.IDArr between and depending on this
+ the incoming or outgoing connection with this node is deleted.
+ *
+**/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Connect"});
 var MAX_CONNECT_TIMEOUT = 4 * 1000;
@@ -19,7 +28,7 @@ function DoNode(Engine)
     if(Engine.ROOT_NODE)
         return 0;
     glWorkConnect++;
-    if(!Engine.WasSendToGenesis)
+    if(!Engine.WasSendToGenesis && JINN_EXTERN.NodeRoot)
     {
         Engine.WasSendToGenesis = 1;
         var Child = Engine.NewConnect(JINN_EXTERN.NodeRoot.IDArr, JINN_EXTERN.NodeRoot.ip, JINN_EXTERN.NodeRoot.port);
@@ -37,7 +46,7 @@ function DoNode(Engine)
             continue;
         }
         var AddrItem = Child.AddrItem;
-        if(!AddrItem || !Child.Hot)
+        if(!AddrItem || !Child.IsHot())
         {
             var DeltaTime = Date.now() - Child.ConnectStart;
             if(DeltaTime > MAX_CONNECT_TIMEOUT)
@@ -58,7 +67,7 @@ function DoNode(Engine)
     for(var i = 0; i < Engine.ConnectArray.length; i++)
     {
         var Child = Engine.ConnectArray[i];
-        if(!Child || Child.ROOT_NODE || Child.Del || !Child.AddrItem || !Child.Active || Child.Self || !Child.Hot)
+        if(!Child || Child.ROOT_NODE || Child.Del || !Child.AddrItem || !Child.IsOpen() || Child.Self || !Child.IsHot())
         {
             continue;
         }
@@ -104,13 +113,13 @@ function InitClass(Engine)
             if(Item.Del)
                 continue;
             CountAll++;
-            if(Item.Active)
+            if(Item.IsOpen())
                 CountActive++;
         }
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(Child && Child.Hot)
+            if(Child && Child.IsHot())
                 CountHot++;
         }
     };
@@ -131,13 +140,13 @@ function InitClass(Engine)
             return 1;
         return 1;
     };
-    Engine.AddConnect = function (Child)
+    Engine.OnAddConnect = function (Child)
     {
     };
     Engine.StartDisconnect = function (Child,bSend)
     {
         Engine.DisconnectHot(Child, bSend);
-        if(bSend && Child.Active)
+        if(bSend && Child.IsOpen())
         {
             Engine.CloseConnectionToChild(Child);
             Engine.OnDeleteConnect(Child);
