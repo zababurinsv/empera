@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1375;
+global.UPDATE_CODE_VERSION_NUM = 1376;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 global.FORK_MODE = 0;
@@ -305,13 +305,21 @@ function InitParamsArg()
                     if(str.substr(0, 5) == "PORT:")
                     {
                         global.START_PORT_NUMBER = parseInt(str.substr(5));
+                        if(global.NET_WORK_MODE)
+                            global.NET_WORK_MODE.port = global.START_PORT_NUMBER;
                     }
                     else
                         if(str.substr(0, 3) == "IP:")
+                        {
                             global.START_IP = str.substr(3);
+                            if(global.NET_WORK_MODE)
+                                global.NET_WORK_MODE.ip = global.START_IP;
+                        }
                         else
                             if(str.substr(0, 7) == "LISTEN:")
+                            {
                                 global.LISTEN_IP = str.substr(7);
+                            }
                             else
                                 if(str.substr(0, 8) == "HOSTING:")
                                 {

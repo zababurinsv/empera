@@ -650,7 +650,7 @@ function RunServer()
         global.START_PORT_NUMBER = NET_WORK_MODE.port;
     }
     var KeyPair = crypto.createECDH('secp256k1');
-    if(!global.SERVER_PRIVATE_KEY_HEX || global.NEW_SERVER_PRIVATE_KEY)
+    if(!global.SERVER_PRIVATE_KEY_HEX)
     {
         while(true)
         {

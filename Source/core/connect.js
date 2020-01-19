@@ -651,6 +651,7 @@ module.exports = class CConnect extends require("./connect2")
             else
             {
                 port = 30000
+                ToLog("AddNode port = " + port)
             }
         }
         this.GetNewNode(ip, port)
@@ -1438,6 +1439,7 @@ module.exports = class CConnect extends require("./connect2")
     }
     SetDirectMode()
     {
+        ToLog("SETDIRECTMODE")
         var CountNodes = this.ActualNodes.size;
         if(CountNodes && !global.NET_WORK_MODE)
         {

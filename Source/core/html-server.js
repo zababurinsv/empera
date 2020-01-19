@@ -1957,26 +1957,27 @@ if(global.HTTP_PORT_NUMBER)
                 }
             }
             if(!cookies_token || !TokenMap[cookies_token])
-            {
-                var StrToken = GetHexFromArr(crypto.randomBytes(16));
-                TokenMap[StrToken] = 0;
-                SendPasswordFile(request, response, Path, StrPort, StrToken);
-                return ;
-            }
+                if(!ClientIPMap2[remoteAddress])
+                {
+                    var StrToken = GetHexFromArr(crypto.randomBytes(16));
+                    TokenMap[StrToken] = 0;
+                    SendPasswordFile(request, response, Path, StrPort, StrToken);
+                    return ;
+                }
             if(request.method === "POST")
             {
                 var TokenHash = request.headers.tokenhash;
                 if(!TokenHash || !ClientTokenHashMap[TokenHash])
                 {
-                    var hash2 = GetCookieHash(cookies_token, TokenHash, Password + "-api");
-                    if(hash2 && hash2 === TokenHash)
+                    var hash2;
+                    if(cookies_token && TokenHash)
+                        hash2 = GetCookieHash(cookies_token, TokenHash, Password + "-api");
+                    if(TokenHash && hash2 && hash2 === TokenHash)
                     {
                         ClientTokenHashMap[TokenHash] = 1;
                     }
                     else
                     {
-                        if(TokenHash)
-                            ToLog("Invalid API token: " + request.method + "   path: " + Path + "  token:" + TokenHash + "/" + hash2);
                         response.writeHead(203, {'Content-Type':'text/html'});
                         response.end("Invalid API token");
                         return ;
@@ -2041,7 +2042,7 @@ function SendPasswordFile(request,response,Path,StrPort,cookies_token)
 {
     if(!Path || Path === "/" || Path.substr(Path.length - 4, 4) === "html")
     {
-        SendWebFile(request, response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/");
+        SendWebFile(request, response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/;SameSite=Strict;");
     }
     else
     {
