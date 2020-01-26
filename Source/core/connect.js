@@ -55,38 +55,7 @@ module.exports = class CConnect extends require("./connect2")
     {
         this.CommonKey = GetHexFromArr(WALLET.HashProtect(global.COMMON_KEY))
         this.KeyToNode = shaarr(global.COMMON_KEY)
-        this.NameToNode = this.ValueToXOR("Name", global.NODES_NAME)
-    }
-    СтатДанныеОтладкиИзБлока()
-    {
-        var Массив = [];
-        if(this.СтатБлок && this.СтатБлок.SeqHash)
-        {
-            WriteArrToArr(Массив, this.ValueToXORDevelop("Stat:BlockNum", this.СтатБлок.BlockNum, "uint"), 6)
-            WriteArrToArr(Массив, this.ValueToXORDevelop("Stat:SeqHash", this.СтатБлок.SeqHash, "hash"), 32)
-            WriteArrToArr(Массив, this.ValueToXORDevelop("Stat:AddrHash", this.СтатБлок.AddrHash, "hash"), 32)
-        }
-        return Массив;
-    }
-    ДоступенКлючРазработчика(Node)
-    {
-        if(Node.PubKey && WALLET.WalletOpen !== false && IsDeveloperAccount(WALLET.PubKeyArr))
-        {
-            return 1;
-        }
-        return 0;
-    }
-    БлокИзДанных(Node, Arr)
-    {
-        var Block = {};
-        if(this.ДоступенКлючРазработчика(Node) && !IsZeroArr(Arr))
-        {
-            var Data = BufLib.GetObjectFromBuffer(Arr, "{BlockNum:arr6,SeqHash:arr32,AddrHash:arr32}", {});
-            Block.BlockNum = this.ValueFromXORDevelop(Node, "Stat:BlockNum", Data.BlockNum, "uint")
-            Block.SeqHash = this.ValueFromXORDevelop(Node, "Stat:SeqHash", Data.SeqHash, "hash")
-            Block.AddrHash = this.ValueFromXORDevelop(Node, "Stat:AddrHash", Data.AddrHash, "hash")
-        }
-        return Block;
+        this.NameToNode = this.ValueToXOR("Name", "TERA:" + global.NODES_NAME)
     }
     StartConnectTry(Node)
     {
@@ -271,15 +240,22 @@ module.exports = class CConnect extends require("./connect2")
         var Node = Info.Node;
         var Data = this.DataFromF(Info);
         Info.Node.VERSIONMAX = Data.VERSIONMAX
+        var Name;
         if(Data.PingVersion >= 3 && global.COMMON_KEY && CompareArr(Data.Key, this.KeyToNode) === 0)
         {
-            Node.Name = this.ValueFromXOR(Node, "Name", Data.Name)
-            if(Node.BlockProcessCount < 5000000 + global.TRUST_PROCESS_COUNT)
-                Node.BlockProcessCount = 5000000 + global.TRUST_PROCESS_COUNT
+            Name = this.ValueFromXOR(Node, "Name", Data.Name)
+        }
+        if(Name && Name.substr(0, 5) === "TERA:")
+        {
+            Node.Name = Name.substr(5)
+            if(Node.BlockProcessCount < 7000000 + global.TRUST_PROCESS_COUNT)
+                Node.BlockProcessCount = 7000000 + global.TRUST_PROCESS_COUNT
         }
         else
         {
             Node.Name = ""
+            if(Node.BlockProcessCount >= 5000000)
+                Node.BlockProcessCount = 0
         }
         Node.INFO = Data
         Node.INFO.WasPing = 1
@@ -1543,47 +1519,6 @@ module.exports = class CConnect extends require("./connect2")
     {
         var Arr2 = shaarr(this.CommonKey + ":" + Node.addrStr + ":" + StrType);
         var Arr = WALLET.XORHash(Arr1, Arr2, 32);
-        var Str = Utf8ArrayToStr(Arr);
-        return Str;
-    }
-    ValueToXORDevelop(StrName, Data, Type)
-    {
-        var Arr1;
-        if(Type === "uint")
-        {
-            Arr1 = []
-            WriteUintToArr(Arr1, Data)
-        }
-        else
-            if(Type === "hash")
-            {
-                Arr1 = Data
-            }
-            else
-                if(Type === "str")
-                {
-                    Arr1 = toUTF8Array(Data)
-                }
-        var Arr2 = shaarr(this.КодДляРазработчикаХекс + ":" + StrName);
-        return WALLET.XORHash(Arr1, Arr2, Arr1.length);
-    }
-    ValueFromXORDevelop(Node, StrName, Arr1, Type)
-    {
-        if(!Node.КодДляРазработчикаХекс)
-        {
-            Node.КодДляРазработчикаХекс = GetHexFromArr(WALLET.KeyPair.computeSecret(Node.PubKey, null))
-        }
-        var Arr2 = shaarr(Node.КодДляРазработчикаХекс + ":" + StrName);
-        var Arr = WALLET.XORHash(Arr1, Arr2, Arr1.length);
-        if(Type === "uint")
-        {
-            return ReadUintFromArr(Arr, 0);
-        }
-        else
-            if(Type === "hash")
-            {
-                return Arr;
-            }
         var Str = Utf8ArrayToStr(Arr);
         return Str;
     }

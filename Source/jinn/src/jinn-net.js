@@ -68,12 +68,12 @@ function InitClass(Engine)
         {
             WriteUint32AtPos(TEMP_PACKET_ARR, 4 + DataBuf.length, 0);
         }
-        Child.SendPacketCount++;
         var DataBuf2 = TEMP_PACKET_ARR.concat(DataBuf);
         if(Engine.PrepareOnSendZip && global.glUseZip)
             Engine.PrepareOnSendZip(Child, DataBuf2);
         else
             Engine.SendToNetwork(Child, DataBuf2);
+        Child.SendPacketCount++;
     };
     Engine.PrepareOnReceive = function (Child,Chunk)
     {

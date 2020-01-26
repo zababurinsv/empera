@@ -408,7 +408,8 @@ function GetValueByItemProperty(Value,Item)
     var RetValue = Math.floor(Value * KPrecision + 0.5) / KPrecision;
     if(RetValue === 0)
     {
-        RetValue = Value.toPrecision(3);
+        if(typeof Value === "number")
+            RetValue = Value.toPrecision(3);
     }
     return RetValue;
 }

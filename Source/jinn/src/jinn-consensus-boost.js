@@ -139,7 +139,7 @@ function InitClass(Engine)
     };
     Engine.GetBodyByHash = function (BlockNum,Hash)
     {
-        var Arr = Engine.GetBlockArrFromNum(BlockNum);
+        var Arr = Engine.GetBlockArrFromNum(BlockNum, 1);
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];

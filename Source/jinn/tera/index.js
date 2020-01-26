@@ -36,6 +36,7 @@ module.exports.Create = function (Node)
     Engine.port = Node.port;
     Engine.IDArr = CalcIDArr(Engine.ip, Engine.port);
     Engine.IDStr = GetHexFromArr(Engine.IDArr);
+    Engine.Header1 = 0;
     global.CreateNodeEngine(Engine);
     require("./tera-base").Init(Engine);
     require("./tera-db").Init(Engine);

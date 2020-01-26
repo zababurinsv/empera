@@ -13,15 +13,18 @@
 **/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
-const DB_BLOCK_FORMAT = {BlockNum:"uint", LinkHash:"hash", TreeHash:"hash", MinerHash:"hash", PrevBlockHash:"hash", SumPow:"uint",
+global.DB_BLOCK_FORMAT = {BlockNum:"uint", LinkHash:"hash", TreeHash:"hash", MinerHash:"hash", PrevBlockHash:"hash", SumPow:"uint",
     TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}], };
-const DB_BLOCK_FORMATWRK = {};
+global.DB_BLOCK_FORMATWRK = {};
 const DB_BLOCK_HEADER_FORMAT = GetCopyObj(DB_BLOCK_FORMAT);
 delete DB_BLOCK_HEADER_FORMAT.TxData;
 const DB_BLOCK_HEADER_FORMATWRK = {};
 function InitClass(Engine)
 {
-    Engine.ArrDB = [];
+    Engine.InitDB = function ()
+    {
+        Engine.ArrDB = [];
+    };
     Engine.GetBlockDB = function (BlockNum)
     {
         if(BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
@@ -42,69 +45,16 @@ function InitClass(Engine)
         else
             return Engine.GetBlockHeaderDBInner(BlockNum);
     };
-    Engine.GetBlockDBLazy = function (BlockNum)
-    {
-        if(BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
-            return Engine.GetGenesisBlock(BlockNum);
-        var Block = Engine.GetBlockHeaderDB(BlockNum);
-        if(!Block)
-            return undefined;
-        Block._TxData = undefined;
-        Object.defineProperty(Block, "TxData", {set:function (x)
-            {
-                this._TxData = x;
-            }, get:function ()
-            {
-                if(!this._TxData)
-                {
-                    if(!this.TreeHash || IsZeroArr(this.TreeHash))
-                    {
-                        this._TxData = [];
-                    }
-                    else
-                    {
-                        var Block2 = Engine.GetBlockDBInner(BlockNum);
-                        if(!Block2.TreeHash || !IsEqArr(this.TreeHash, Block2.TreeHash))
-                            throw "Error Block2.TreeHash";
-                        this._TxData = Block2.TxData;
-                    }
-                }
-                return this._TxData;
-            }});
-        return Block;
-    };
     Engine.SaveToDB = function (Block,bCheckSum)
     {
         JINN_STAT.SaveDB++;
         Engine.ToDebug("SaveToDB  Block:" + Block.BlockNum + " POW=" + Block.SumPow);
         var BlockNum = Block.BlockNum;
-        if(Engine.ArrDB.length > BlockNum)
+        if(!IsZeroArr(Block.TreeHash) && !Block.TxData)
         {
-            Engine.ArrDB.length = BlockNum;
+            Engine.ToLogTrace("B=" + BlockNum + " SaveError Block TxData=" + Block.TxData + " " + Block.Description + " ChainDBBlockMin=" + Engine.ChainDBBlockMin + " CreateNum=" + Block.CreateNum);
+            return 0;
         }
-        var BlockDB = {};
-        BlockDB.BlockNum = Block.BlockNum;
-        BlockDB.LinkHash = Block.LinkHash;
-        BlockDB.TreeHash = Block.TreeHash;
-        BlockDB.MinerHash = Block.MinerHash;
-        BlockDB.Hash = Block.Hash;
-        BlockDB.TxData = Block.TxData;
-        if(!IsZeroArr(BlockDB.TreeHash) && (!Block.TxData || Block.TxData.length === 0))
-            Engine.ToLog("B=" + BlockNum + " SaveError Block TxData=" + Block.TxData + " " + Block.Description);
-        var PrevBlock;
-        if(BlockNum > 0)
-        {
-            PrevBlock = Engine.GetBlockHeaderDB(BlockNum - 1);
-            BlockDB.SumPow = PrevBlock.SumPow + Block.Power;
-            BlockDB.PrevBlockHash = PrevBlock.Hash;
-        }
-        else
-        {
-            BlockDB.SumPow = Block.Power;
-            BlockDB.PrevBlockHash = ZERO_ARR_32;
-        }
-        var Buf = SerializeLib.GetBufferFromObject(Block, DB_BLOCK_FORMAT, DB_BLOCK_FORMATWRK);
-        Engine.ArrDB[BlockNum] = Buf;
         if(global.JINN_WARNING >= 5)
         {
             var BlockDB2 = SerializeLib.GetObjectFromBuffer(Buf, DB_BLOCK_FORMAT, DB_BLOCK_FORMATWRK);
@@ -132,16 +82,31 @@ function InitClass(Engine)
                 throw "SaveToDB: Error LinkHash";
             if(PrevBlock.BlockNum !== Block.BlockNum - 1)
                 throw "SaveToDB: Error PrevBlock.BlockNum on Block=" + BlockNum;
-        }
-        if(bCheckSum)
-        {
-            if(BlockDB.SumPow !== Block.SumPow)
+            if(bCheckSum)
             {
-                var Str = "SaveToDB: Error Sum POW: " + BlockDB.SumPow + "/" + Block.SumPow + " on block=" + Block.BlockNum;
-                Engine.ToLog(Str);
+                var SumPow = PrevBlock.SumPow + Block.Power;
+                var PrevBlockHash = PrevBlock.Hash;
+                if(Block.SumPow !== SumPow)
+                {
+                    var Str = "SaveToDB: Error Sum POW: " + Block.SumPow + "/" + SumPow + " on block=" + Block.BlockNum;
+                    Engine.ToLog(Str);
+                }
             }
+            Block.PrevBlockHash = PrevBlock.Hash;
+            Block.SumPow = PrevBlock.SumPow + Block.Power;
         }
-        Engine.OnSaveBlock(BlockDB);
+        else
+        {
+            Block.PrevBlockHash = ZERO_ARR_32;
+            Block.SumPow = Block.Power;
+        }
+        if(Engine.ArrDB.length > BlockNum)
+        {
+            Engine.ArrDB.length = BlockNum;
+        }
+        var Buf = SerializeLib.GetBufferFromObject(Block, DB_BLOCK_FORMAT, DB_BLOCK_FORMATWRK);
+        Engine.ArrDB[BlockNum] = Buf;
+        Engine.OnSaveBlock(Block);
         return 1;
     };
     Engine.GetBlockDBInner = function (BlockNum)
@@ -195,6 +160,7 @@ function InitClass(Engine)
     {
         return Engine.GetBlockDB(Engine.GetMaxNumBlockDB());
     };
+    Engine.InitDB();
 }
 function GetCopyObj(Obj)
 {

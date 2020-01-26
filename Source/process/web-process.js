@@ -584,7 +584,7 @@ HostingCaller.GetNodeList = function (Params)
         List = AllNodeList;
     else
         List = HostNodeList;
-    var MaxNodes = 20;
+    var MaxNodes = 30;
     var len = List.length;
     var UseRandom = 0;
     if(len > MaxNodes)

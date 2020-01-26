@@ -96,8 +96,9 @@ function InitClass(Engine)
                     Tx = undefined;
                 if(!Tx || !CheckTx("" + Engine.ID + ". #2 ProcessBlockOnReceive", Tx, BlockNum, 1))
                 {
-                    if(global.JINN_WARNING >= 2)
-                        Engine.ToLog("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Key=" + KeyTicket + " . DO INCREMENT, TT: " + ChildMap.ReceiveTicketMap[KeyTicket] + "/" + ChildMap.SendTicketMap[KeyTicket]);
+                    if(global.JINN_WARNING >= 3)
+                        Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Key=" + KeyTicket + " . DO INCREMENT, TT: " + ChildMap.ReceiveTicketMap[KeyTicket] + "/" + ChildMap.SendTicketMap[KeyTicket],
+                        3);
                     Child.CahcheVersion++;
                     return 0;
                 }
@@ -112,8 +113,8 @@ function InitClass(Engine)
             var Tx = Child.SendTxArr[Index];
             if(!Tx || !CheckTx("" + Engine.ID + ". #3 ProcessBlockOnReceive", Tx, BlockNum, 1))
             {
-                if(global.JINN_WARNING >= 2)
-                    Engine.ToLog("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT");
+                if(global.JINN_WARNING >= 3)
+                    Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT", 3);
                 Child.CahcheVersion++;
                 return 0;
             }
@@ -125,8 +126,8 @@ function InitClass(Engine)
             var Tx = Child.ReceiveTxArr[Index];
             if(!Tx || !CheckTx("" + Engine.ID + ". #4 ProcessBlockOnReceive", Tx, BlockNum, 1))
             {
-                if(global.JINN_WARNING >= 2)
-                    Engine.ToLog("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT");
+                if(global.JINN_WARNING >= 3)
+                    Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT", 3);
                 Child.CahcheVersion++;
                 return 0;
             }

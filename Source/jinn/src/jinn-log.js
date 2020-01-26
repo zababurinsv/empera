@@ -72,6 +72,10 @@ function InitClass(Engine)
                 Engine.ToWarning("<-->" + ID + " ********ERROR: " + Str, WarningLevel);
             }
     };
+    Engine.ToLogTrace = function (Str)
+    {
+        ToLogTrace("" + Engine.ID + ". " + Str);
+    };
 }
 if(!global.ToLogTrace)
     global.ToLogTrace = function (Str)

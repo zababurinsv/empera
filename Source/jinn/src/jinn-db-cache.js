@@ -15,15 +15,18 @@
 global.JINN_MODULES.push({InitClass:InitClass});
 function InitClass(Engine)
 {
-    Engine.SaveVersionNum = 1;
-    Engine.CacheDBTree = new RBTree(function FBlockNum(a,b)
+    Engine.InitCacheDBTree = function ()
     {
-        return a.BlockNum - b.BlockNum;
-    });
-    Engine.VersionDBTree = new RBTree(function FBlockNum(a,b)
-    {
-        return a.SaveVersionNum - b.SaveVersionNum;
-    });
+        Engine.SaveVersionNum = 1;
+        Engine.CacheDBTree = new RBTree(function FBlockNum(a,b)
+        {
+            return a.BlockNum - b.BlockNum;
+        });
+        Engine.VersionDBTree = new RBTree(function FBlockNum(a,b)
+        {
+            return a.SaveVersionNum - b.SaveVersionNum;
+        });
+    };
     Engine.OnSaveBlock = function (Block)
     {
         Engine.SaveVersionNum++;
@@ -80,4 +83,5 @@ function InitClass(Engine)
         Block.WasSaveVersion = 0;
         return 0;
     };
+    Engine.InitCacheDBTree();
 }

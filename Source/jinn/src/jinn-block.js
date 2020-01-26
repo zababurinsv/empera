@@ -78,12 +78,12 @@ function InitClass(Engine)
             Engine.ToLog("Cannt create block=" + BlockNum);
             return ;
         }
-        var ArrBlock = Engine.GetLoadingArrayByNum(BlockNum);
+        var ArrBlock = Engine.GetChainArrByNum(BlockNum);
         if(ArrBlock.length === 0)
         {
             Engine.ToDebug("Add new mem block: " + BlockNum);
             Block.Comment = "Mem block";
-            ArrBlock.push(Block);
+            Engine.SetChainArr(Block);
         }
     };
     Engine.GetGenesisBlock = function (Num)
@@ -103,6 +103,7 @@ function InitClass(Engine)
         Block.BlockNum = Num;
         Block.TxData = [];
         Block.TreeHash = ZERO_ARR_32;
+        Block.BlockNum = Num;
         Block.LinkHash = Engine.GetLinkHashDB(Block);
         Block.MinerHash = ZERO_ARR_32;
         Engine.CalcBlockHash(Block);
@@ -135,7 +136,6 @@ function InitClass(Engine)
         Block.PrevBlockHash = PrevBlock.Hash;
         if(!bInMemory)
         {
-            Block.PrevBlock = PrevBlock;
         }
         return Block;
     };

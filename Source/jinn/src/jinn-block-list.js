@@ -10,55 +10,144 @@
 global.JINN_MODULES.push({InitClass:InitClass});
 function InitClass(Engine)
 {
-    Engine.GetFirstHeadBlock = function (SeedBlock)
+    Engine.EmptyBodyLink = 1;
+    Engine.BlockHeadLink = 1;
+    Engine.SetChainArr = function (Block)
     {
-        var JumpBlock;
-        var Block = SeedBlock;
-        while(Block && Block.PrevBlock)
+        var ArrBlock = Engine.GetChainArrByNum(Block.BlockNum);
+        ArrBlock.push(Block);
+        Engine.UpdateChainList(Block.BlockNum);
+    };
+    Engine.SetBlockData = function (Block,TxData)
+    {
+        Block.TxData = TxData;
+        Engine.UpdateChainList(Block.BlockNum);
+    };
+    Engine.GetPrevBlock = function (Block)
+    {
+        return Engine.GetBlockAtNum(Block.BlockNum - 1, Block.PrevBlockHash);
+    };
+    Engine.GetBlockAtNum = function (BlockNum,Hash)
+    {
+        var ArrBlock = Engine.GetChainArrByNum(BlockNum);
+        for(var i = 0; i < ArrBlock.length; i++)
         {
-            if(Engine.IsValideDBSave(Block))
-                break;
-            Block = Block.PrevBlock;
-            JINN_STAT.FindHeadCount++;
-            var FirstHeadBlock = Block.FirstHeadBlock;
-            if(FirstHeadBlock && FirstHeadBlock.HeadProcessNum && Block.HeadProcessNum && FirstHeadBlock.HeadProcessNum === Block.HeadProcessNum)
+            var Block2 = ArrBlock[i];
+            if(IsEqArr(Hash, Block2.Hash))
             {
-                JumpBlock = Block;
-                Block = FirstHeadBlock;
+                return Block2;
             }
         }
-        if(Block !== SeedBlock)
+        return undefined;
+    };
+    Engine.GetFirstHeadBlock = function (SeedBlock)
+    {
+        var Count = 0;
+        var JumpBlock, JumpBlockTo;
+        var Block = SeedBlock;
+        var BlockSet;
+        while(Block)
         {
-            SeedBlock.FirstHeadBlock = Block;
-            SeedBlock.HeadProcessNum = Engine.SaveVersionNum;
-            Block.HeadProcessNum = Engine.SaveVersionNum;
+            Count++;
+            if(Block.BlockNum < Engine.ChainDBBlockMin || Engine.IsValideDBSave(Block))
+            {
+                break;
+            }
+            if(Block.FirstHeadBlockNum && Block.HeadLinkVer && Block.BlockNum >= Engine.ChainDBBlockMin)
+            {
+                var FirstBlock = Engine.GetBlockAtNum(Block.FirstHeadBlockNum, Block.FirstHeadBlockHash);
+                if(FirstBlock && FirstBlock.HeadLinkVer && FirstBlock.HeadLinkVer === Block.HeadLinkVer)
+                {
+                    JumpBlock = Block;
+                    JumpBlockTo = FirstBlock;
+                    Block = FirstBlock;
+                    BlockSet = JumpBlockTo;
+                    continue;
+                }
+            }
+            var PrevBlock = Engine.GetPrevBlock(Block);
+            if(!PrevBlock)
+                break;
+            BlockSet = Block;
+            Block = PrevBlock;
+        }
+        JINN_STAT.MAXFindHeadCount = Math.max(JINN_STAT.MAXFindHeadCount, Count);
+        var Block0 = Engine.GetFirstHeadBlock0(SeedBlock);
+        if(Block0 !== Block)
+        {
+            var Str = "Err HeadBlock = " + BlockInfoH(Block) + "  Need = " + BlockInfoH(Block0) + "   ChainDBBlockMin=" + Engine.ChainDBBlockMin;
+            if(JumpBlock)
+                Str += "  JumpBlock = " + BlockInfoH(JumpBlock) + " -> " + BlockInfoH(JumpBlockTo);
+            Engine.ToLog(Str);
+        }
+        if(BlockSet && BlockSet !== SeedBlock)
+        {
+            SeedBlock.FirstHeadBlockNum = BlockSet.BlockNum;
+            SeedBlock.FirstHeadBlockHash = BlockSet.Hash;
+            if(BlockSet !== JumpBlockTo)
+            {
+                Engine.BlockHeadLink++;
+                BlockSet.HeadLinkVer = Engine.BlockHeadLink;
+                Engine.UpdateChainList(BlockSet.BlockNum);
+            }
+            SeedBlock.HeadLinkVer = BlockSet.HeadLinkVer;
+            Engine.UpdateChainList(SeedBlock.BlockNum);
         }
         return Block;
     };
     Engine.GetFirstHeadBlock0 = function (SeedBlock)
     {
         var Block = SeedBlock;
-        while(Block && Block.PrevBlock)
+        while(Block)
         {
-            if(Engine.IsValideDBSave(Block))
+            if(Block.BlockNum < Engine.ChainDBBlockMin || Engine.IsValideDBSave(Block))
                 break;
-            Block = Block.PrevBlock;
-            JINN_STAT.FindHeadCount0++;
+            var PrevBlock = Engine.GetPrevBlock(Block);
+            if(!PrevBlock)
+                break;
+            Block = PrevBlock;
         }
         return Block;
     };
+    function BlockInfoH(Block)
+    {
+        if(!Block)
+            return "-";
+        return "" + Block.BlockNum + " (" + Block.HeadLinkVer + ")";
+    };
+    function BlockInfoB(Block)
+    {
+        if(!Block)
+            return "-";
+        return "" + Block.BlockNum + " (" + Block.BodyLinkVer + ")";
+    };
     Engine.GetFirstEmptyBodyBlock = function (SeedBlock)
     {
+        var Count = 0;
         var Block = SeedBlock;
-        var LastBlock;
+        var BlockSet, JumpBlock, JumpBlockTo;
+        var FirstHeadBlock = Engine.GetFirstHeadBlock(SeedBlock);
         while(Block)
         {
-            LastBlock = Block;
+            BlockSet = Block;
+            Count++;
+            if(Block.BlockNum < FirstHeadBlock.BlockNum)
+            {
+                if(!FirstHeadBlock.TxData)
+                {
+                    Block = FirstHeadBlock;
+                }
+                else
+                {
+                    Block = undefined;
+                }
+                break;
+            }
             if(!IsZeroArr(Block.TreeHash))
             {
                 if(!Block.TxData)
                 {
-                    var ArrBlock = Engine.GetBlockArrFromNum(Block.BlockNum);
+                    var ArrBlock = Engine.GetBlockArrFromNum(Block.BlockNum, 1);
                     if(ArrBlock)
                     {
                         for(var i = 0; i < ArrBlock.length; i++)
@@ -66,7 +155,7 @@ function InitClass(Engine)
                             var Block2 = ArrBlock[i];
                             if(Block2 && Block2.TxData && IsEqArr(Block2.TreeHash, Block.TreeHash))
                             {
-                                Block2.TxData = Block2.TxData;
+                                Engine.SetBlockData(Block, Block2.TxData);
                             }
                         }
                     }
@@ -75,27 +164,87 @@ function InitClass(Engine)
                 {
                     break;
                 }
-                var FirstEmptyBody = Block.FirstEmptyBody;
-                if(FirstEmptyBody)
+            }
+            if(Block.FirstEmptyBodyNum && Block.BodyLinkVer)
+            {
+                var FirstBlock = Engine.GetBlockAtNum(Block.FirstEmptyBodyNum, Block.FirstEmptyBodyHash);
+                if(FirstBlock && FirstBlock.BodyLinkVer === Block.BodyLinkVer)
                 {
-                    if(FirstEmptyBody === "END")
-                    {
-                        Block = undefined;
-                        break;
-                    }
-                    FirstEmptyBody.Description = " jump from " + Block.BlockNum;
-                    Block = FirstEmptyBody;
+                    JumpBlock = Block;
+                    JumpBlockTo = FirstBlock;
+                    Block.Description = " jump to " + Block.FirstEmptyBodyNum + ":" + Block.BodyLinkVer;
+                    Block = FirstBlock;
+                    BlockSet = JumpBlockTo;
                     continue;
                 }
             }
-            Block = Block.PrevBlock;
+            Block = Engine.GetPrevBlock(Block);
         }
-        if(LastBlock !== SeedBlock)
+        JINN_STAT.MAXFindEmptyCount = Math.max(JINN_STAT.MAXFindEmptyCount, Count);
+        var Block0 = Engine.GetFirstEmptyBodyBlock0(SeedBlock);
+        if(Block0 !== Block)
         {
-            if(Block)
-                SeedBlock.FirstEmptyBody = LastBlock;
-            else
-                SeedBlock.FirstEmptyBody = "END";
+            var Str = "Err EmptyBody = " + BlockInfoB(Block) + "  Need = " + BlockInfoB(Block0) + "  FirstHeadBlock=" + FirstHeadBlock.BlockNum + "   ChainDBBlockMin=" + Engine.ChainDBBlockMin;
+            if(JumpBlock)
+                Str += "  JumpBlock = " + BlockInfoB(JumpBlock) + " -> " + BlockInfoB(JumpBlockTo);
+            Engine.ToLog(Str);
+        }
+        if(BlockSet && BlockSet !== SeedBlock)
+        {
+            SeedBlock.FirstEmptyBodyNum = BlockSet.BlockNum;
+            SeedBlock.FirstEmptyBodyHash = BlockSet.Hash;
+            if(BlockSet !== JumpBlockTo)
+            {
+                Engine.EmptyBodyLink++;
+                BlockSet.BodyLinkVer = Engine.EmptyBodyLink;
+                Engine.UpdateChainList(BlockSet.BlockNum);
+            }
+            SeedBlock.BodyLinkVer = BlockSet.BodyLinkVer;
+            Engine.UpdateChainList(SeedBlock.BlockNum);
+        }
+        return Block;
+    };
+    Engine.GetFirstEmptyBodyBlock0 = function (SeedBlock)
+    {
+        var Block = SeedBlock;
+        var FirstHeadBlock = Engine.GetFirstHeadBlock(SeedBlock);
+        while(Block)
+        {
+            if(Block.BlockNum < FirstHeadBlock.BlockNum)
+            {
+                if(!FirstHeadBlock.TxData)
+                {
+                    Block = FirstHeadBlock;
+                }
+                else
+                {
+                    Block = undefined;
+                }
+                break;
+            }
+            if(!IsZeroArr(Block.TreeHash))
+            {
+                if(!Block.TxData)
+                {
+                    var ArrBlock = Engine.GetBlockArrFromNum(Block.BlockNum, 1);
+                    if(ArrBlock)
+                    {
+                        for(var i = 0; i < ArrBlock.length; i++)
+                        {
+                            var Block2 = ArrBlock[i];
+                            if(Block2 && Block2.TxData && IsEqArr(Block2.TreeHash, Block.TreeHash))
+                            {
+                                Engine.SetBlockData(Block, Block2.TxData);
+                            }
+                        }
+                    }
+                }
+                if(!Block.TxData)
+                {
+                    break;
+                }
+            }
+            Block = Engine.GetPrevBlock(Block);
         }
         return Block;
     };
@@ -114,17 +263,24 @@ function InitClass(Engine)
             {
                 StopBlock = Block;
                 StopBlock.SumPow = BlockDB.SumPow;
+                StopBlock.SumPowPrevNum = BlockDB.BlockNum;
+                StopBlock.SumPowPrevHash = BlockDB.Hash;
                 TotalSum += StopBlock.SumPow;
                 break;
             }
-            if(Block.SumPow !== undefined && Block.SumPowFromNum !== undefined && BlockDB.BlockNum >= Block.SumPowFromNum)
+            if(Block.SumPowPrevNum && Block.SumPowPrevNum !== Block.BlockNum)
             {
-                StopBlock = Block;
-                TotalSum += StopBlock.SumPow;
-                break;
+                if(Block.SumPow === undefined)
+                    throw "Error Block.SumPow===undefined";
+                {
+                    StopBlock = Block;
+                    StopBlock.Description = " jump to " + Block.SumPowPrevNum;
+                    TotalSum += StopBlock.SumPow;
+                    break;
+                }
             }
             TotalSum += Block.Power;
-            Block = Block.PrevBlock;
+            Block = Engine.GetPrevBlock(Block);
             if(!Block)
             {
                 return 0;
@@ -133,27 +289,16 @@ function InitClass(Engine)
         Block = BlockSeed;
         while(Block)
         {
-            if(Block === StopBlock)
+            if(IsEqArr(StopBlock.Hash, Block.Hash))
                 break;
             Block.SumPow = TotalSum;
-            Block.SumPowFromNum = BlockDB.BlockNum;
+            Block.SumPowPrevNum = BlockDB.BlockNum;
+            Block.SumPowPrevHash = BlockDB.Hash;
             TotalSum -= Block.Power;
-            Block = Block.PrevBlock;
+            Block = Engine.GetPrevBlock(Block);
         }
         if(TotalSum !== StopBlock.SumPow)
             throw "Error fill FillSumPow";
-        Block = BlockSeed;
-        while(Block)
-        {
-            if(IsEqArr(BlockDB.Hash, Block.Hash))
-                break;
-            if(Block.SumPow === undefined)
-            {
-                Engine.ToLog("Error SumPow in block " + Block.BlockNum + " - " + Block.SumPowFromNum + " BlockSeed=" + BlockSeed.BlockNum + "  BlockDB=" + BlockDB.BlockNum + " StopBlock=" + StopBlock.BlockNum + " - " + StopBlock.SumPowFromNum);
-                break;
-            }
-            Block = Block.PrevBlock;
-        }
         return 1;
     };
     Engine.SaveChainToDB = function (SeedBlock,HeadBlock)
@@ -164,23 +309,42 @@ function InitClass(Engine)
         if(BlockDB)
         {
             if(!SeedBlock.SumPow || BlockDB.SumPow > SeedBlock.SumPow)
-                throw "SaveChainToDB: Error SumPow = " + SeedBlock.SumPow + "/" + BlockDB.SumPow;
+            {
+                Engine.ToLogTrace("SaveChainToDB: Error SumPow = " + SeedBlock.SumPow + "/" + BlockDB.SumPow);
+                return 0;
+            }
+        }
+        if(HeadBlock.BlockNum < Engine.ChainDBBlockMin)
+        {
+            return  - 1;
         }
         while(CurBlock)
         {
-            delete CurBlock.FirstHeadBlock;
-            delete CurBlock.HeadProcessNum;
-            delete CurBlock.FirstEmptyBody;
-            if(CurBlock === HeadBlock)
+            delete CurBlock.FirstHeadBlockNum;
+            delete CurBlock.FirstHeadBlockHash;
+            delete CurBlock.BodyLinkVer;
+            delete CurBlock.FirstEmptyBodyNum;
+            delete CurBlock.FirstEmptyBodyHash;
+            delete CurBlock.SumPowPrevNum;
+            delete CurBlock.SumPowPrevHash;
+            var BlockArr = Engine.GetChainArrByNum(CurBlock.BlockNum);
+            for(var i = 0; i < BlockArr.length; i++)
+                BlockArr[i].HeadLinkVer = 0;
+            if(IsEqArr(CurBlock.Hash, HeadBlock.Hash))
                 break;
             Arr.unshift(CurBlock);
-            CurBlock = CurBlock.PrevBlock;
+            CurBlock = Engine.GetPrevBlock(CurBlock);
         }
         for(var b = 0; b < Arr.length; b++)
         {
             var Block = Arr[b];
-            Engine.SaveToDB(Block, 1, 0);
+            var Res = Engine.SaveToDB(Block, 0, 0);
+            if(!Res)
+            {
+                return 0;
+            }
             Engine.SetBlockAsSave(Block);
         }
+        return 1;
     };
 }

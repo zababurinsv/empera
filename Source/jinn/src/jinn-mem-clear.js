@@ -100,13 +100,5 @@ function InitClass(Engine)
             return ;
         if(!Engine.CanHistoryClear())
             return ;
-        for(var key in Engine.LoadingArr)
-        {
-            var BlockNum =  + key;
-            if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
-                continue;
-            var BlockArr = Engine.LoadingArr[key];
-            delete Engine.LoadingArr[key];
-        }
     };
 }
