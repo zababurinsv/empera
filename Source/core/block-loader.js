@@ -235,6 +235,8 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(Ret.Result)
         {
             var Node = Ret.Node;
+            if(UseScoreBlockLoad(Node, Context.BlockNum))
+                Node.BlockProcessCount--
             this.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":{Foward:1, BlockNum:Context.BlockNum, Hash:BlockDB.SumHash}})
         }
     }
@@ -402,6 +404,8 @@ module.exports = class CBlock extends require("./rest-loader.js")
             {
                 this.TaskNodeIndex++
                 Node = arr[this.TaskNodeIndex % arr.length]
+                if(Node.BlockProcessCount < 0)
+                    continue;
             }
             if(Node.Active)
             {
@@ -546,6 +550,8 @@ module.exports = class CBlock extends require("./rest-loader.js")
             }
         if(arr2.length > 1)
         {
+            if(UseScoreBlockLoad(Info.Node, Context.BlockNum))
+                Info.Node.BlockProcessCount += 2
             Context.WasLoadNum = 1
             var chain = {id:0, StopSend:1, WriteToDBAfterLoad:1};
             this.ChainBindMethods(chain)
@@ -558,8 +564,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             if(!Context.WasLoadNum)
             {
-                ToLog("Not found: " + Context.BlockNum + " from node:" + NodeName(Info.Node), 2)
-                this.AddCheckErrCount(Info.Node, 10)
+                if(UseScoreBlockLoad(Info.Node, Context.BlockNum))
+                {
+                    ToLog("Not found: " + Context.BlockNum + " from node:" + NodeName(Info.Node), 2)
+                    this.AddCheckErrCount(Info.Node, 10)
+                }
                 Context.BlockNum = Math.floor(Context.BlockNum - Context.DeltaBlockNum)
                 Context.DeltaBlockNum = Context.DeltaBlockNum * 1.2
                 if(Context.BlockNum < BLOCK_PROCESSING_LENGTH2)
@@ -1618,3 +1627,13 @@ function GenerateChain(StartBlockTime)
     return true;
 }
 global.HistoryBlockBuf = new STreeBuffer(HISTORY_BLOCK_COUNT * 1000, CompareItemHashSimple, "string");
+function UseScoreBlockLoad(Node,BlockNum)
+{
+    if(Node.Name)
+        return 0;
+    var MaxBlockNum = GetCurrentBlockNumByTime();
+    var Delta = MaxBlockNum - BlockNum;
+    if(Delta < 100)
+        return 0;
+    return 1;
+}

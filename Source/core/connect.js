@@ -254,8 +254,6 @@ module.exports = class CConnect extends require("./connect2")
         else
         {
             Node.Name = ""
-            if(Node.BlockProcessCount >= 5000000)
-                Node.BlockProcessCount = 0
         }
         Node.INFO = Data
         Node.INFO.WasPing = 1

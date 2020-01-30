@@ -545,12 +545,12 @@ function NodeName(Node)
     if(!Node)
         return "";
     if(Node.Name)
-        return Node.Name;
+        return Node.Name + "(" + Node.BlockProcessCount + ")";
     if(LOCAL_RUN)
         return "" + Node.port;
     else
     {
-        return "" + Node.ip + ":" + Node.addrStr.substr(0, 6);
+        return "" + Node.ip + ":" + Node.addrStr.substr(0, 6) + "(" + Node.BlockProcessCount + ")";
     }
 }
 function FindNodeByAddr(Addr,bConnect)
