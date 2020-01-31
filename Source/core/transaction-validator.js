@@ -60,6 +60,8 @@ module.exports = class CSmartContract extends require("./block-exchange")
     }
     OnWriteBlock(Block)
     {
+        if(Block.BlockNum < GetCurrentBlockNumByTime() - 1000)
+            return ;
         this.AddToSenderMap(Block)
     }
     OnDelete(Block)

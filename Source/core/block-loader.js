@@ -236,7 +236,13 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             var Node = Ret.Node;
             if(UseScoreBlockLoad(Node, Context.BlockNum))
-                Node.BlockProcessCount--
+            {
+                Context.DeltaScore = Math.floor(Node.BlockProcessCount / 100)
+                if(Context.DeltaScore < 1)
+                    Context.DeltaScore = 1
+                ToLog("SEND LH Block: " + Context.BlockNum + " to " + NodeName(Node), 4)
+                Node.BlockProcessCount -= Context.DeltaScore
+            }
             this.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":{Foward:1, BlockNum:Context.BlockNum, Hash:BlockDB.SumHash}})
         }
     }
@@ -550,8 +556,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
             }
         if(arr2.length > 1)
         {
-            if(UseScoreBlockLoad(Info.Node, Context.BlockNum))
-                Info.Node.BlockProcessCount += 2
+            if(Context.DeltaScore && UseScoreBlockLoad(Info.Node, Context.BlockNum))
+            {
+                Info.Node.BlockProcessCount += Context.DeltaScore + 1
+                ToLog("RETBLOCKHEADER_FOWARD: " + Context.BlockNum + " from " + NodeName(Info.Node), 3)
+            }
             Context.WasLoadNum = 1
             var chain = {id:0, StopSend:1, WriteToDBAfterLoad:1};
             this.ChainBindMethods(chain)
@@ -936,13 +945,15 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 AddInfoBlock(BlockMem, "LOAD:" + GetPowPower(Block.PowHash) + " TH:" + this.GetStrFromHashShort(Block.TreeHash).substr(0, 4))
             }
         }
-        if(Block && FirstBlock)
+        if(Block && FirstBlock && Block.BlockNum > CurrentBlockNum - 1000)
         {
             var CurNumStart = Math.max(FirstBlock.BlockNum + 8, Block.BlockNum + 1);
             this.SetNoPOW(CurNumStart, 1, FirstBlock.BlockNum)
         }
         this.FREE_ALL_MEM_CHAINS()
         ADD_TO_STAT_TIME("WRITECHAIN_TO_DB_TIME", startTime)
+        if(this.LoadHistoryMessage)
+            ToLog("FINISHED WRITE DATA", 4)
     }
     CopyBlock(Block, BlockDst)
     {

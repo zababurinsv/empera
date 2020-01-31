@@ -1058,9 +1058,9 @@ global.IsDeveloperAccount = function (Key)
         }
     return 0;
 }
-global.DEVELOP_PUB_KEY_ARR = ["02250c8c8f7f7e1468cdc5e9b9203841ba14250e2f480f77ebcd502f3e691506d8", "027c0caec4e6f8f08d220f6dab24bb6f53d3f1d7b95231216805d9fac85d34a95f",
-"025defd5b884cc02f6948cd0d62b03d7b7445bf942206ab935158b6be8f0f7a2ce", "024a97d69cd81c965f162b4b8b7b506263bc8aec8dbcea9eec59f73b5b470a0be1",
-];
+global.DEVELOP_PUB_KEY_ARR = ["027e9fab89ea5dc9fad3cc45263b16d34a84be9460a71b33b58a0655ebccfce431", "02250c8c8f7f7e1468cdc5e9b9203841ba14250e2f480f77ebcd502f3e691506d8",
+"027c0caec4e6f8f08d220f6dab24bb6f53d3f1d7b95231216805d9fac85d34a95f", "025defd5b884cc02f6948cd0d62b03d7b7445bf942206ab935158b6be8f0f7a2ce",
+"024a97d69cd81c965f162b4b8b7b506263bc8aec8dbcea9eec59f73b5b470a0be1", ];
 for(var i = 0; i < DEVELOP_PUB_KEY_ARR.length; i++)
     DEVELOP_PUB_KEY_ARR[i] = Buffer.from(GetArrFromHex(DEVELOP_PUB_KEY_ARR[i]));
 global.DEVELOP_PUB_KEY = DEVELOP_PUB_KEY_ARR[0];

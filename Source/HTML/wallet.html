@@ -1408,6 +1408,11 @@
         -webkit-border-radius: 6px;
     }
 
+    .stat
+    {
+        min-width: 30px;
+        font-weight: bold;
+    }
 </style>
 
 
@@ -1485,8 +1490,8 @@
             <BR><BR>
             <DIV style="float: left; font-family: monospace">
                 Block:<B id="idCurBlockNum"></B>
-                DB delta:<B id="idDeltaDB" style="min-width: 30px"></B>
-                TX delta:<B id="idDeltaTX" style="min-width: 30px"></B>
+                DB delta:<span id="idDeltaDB" class="stat"></span>
+                TX delta:<span id="idDeltaTX" class="stat"></span>
                 Time delta:<B id="idDeltaTime"></B>
                 Wallet ver:<B id="idWalletVersion"></B>
                 Max:<B id="idSpeedSignLib" style="cursor: pointer" onclick='TestSignLib()'></B> tps
