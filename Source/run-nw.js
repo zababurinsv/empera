@@ -10,7 +10,7 @@ global.NWMODE=1;
 global.NWVERSION="0.37.4"
 
 global.START_IP="";
-global.START_PORT_NUMBER = 30000;
+global.START_PORT_NUMBER = STANDART_PORT_NUMBER;
 global.CREATE_ON_START=0;
 
 global.LOCAL_RUN=0;

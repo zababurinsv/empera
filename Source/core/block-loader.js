@@ -237,6 +237,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             var Node = Ret.Node;
             if(UseScoreBlockLoad(Node, Context.BlockNum))
             {
+                this.CheckBlockProcess(Node, "")
                 Context.DeltaScore = Math.floor(Node.BlockProcessCount / 100)
                 if(Context.DeltaScore < 1)
                     Context.DeltaScore = 1
@@ -1489,6 +1490,41 @@ module.exports = class CBlock extends require("./rest-loader.js")
         this.SetChainNum(chain)
         this.PrepareTransactionsForLoad(chain, arr, 1)
     }
+    CheckForBotNet(Node)
+    {
+        var CurrentBlockNum = GetCurrentBlockNumByTime();
+        var BlockNum = CurrentBlockNum - random(10000) - 50;
+        var BlockDB = this.ReadBlockHeaderDB(BlockNum);
+        if(!BlockDB)
+        {
+            return ;
+        }
+        var DeltaScore = Math.floor(Node.BlockProcessCount / 20);
+        if(DeltaScore < 5)
+            DeltaScore = 5
+        this.CheckBlockProcess(Node, "CheckBotNet")
+        Node.BlockProcessCount -= DeltaScore
+        var SELF = this;
+        this.SendF(Node, {"Method":"GETBLOCKHEADER", "Data":{Foward:0, BlockNum:BlockNum, Hash:BlockDB.SumHash, IsSum:1, Count:1},
+            "Context":{F:function (Info)
+                {
+                    var arr;
+                    if(Info.Data.length > 10)
+                    {
+                        var BufRead = BufLib.GetReadBuffer(Info.Data);
+                        arr = SELF.GetBlockArrFromBuffer_Load(BufRead, Info)
+                    }
+                    if(arr && arr.length === 1 && CompareArr(arr[0].Hash, BlockDB.Hash) === 0)
+                    {
+                        ToLog("WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " Length=" + arr.length, 5)
+                        Node.BlockProcessCount += DeltaScore + 2
+                    }
+                    else
+                    {
+                        ToLog("NOT WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node), 2)
+                    }
+                }}})
+    }
 };
 global.LoadBlockFromNetwork = function (Params,F)
 {
@@ -1644,7 +1680,7 @@ function UseScoreBlockLoad(Node,BlockNum)
         return 0;
     var MaxBlockNum = GetCurrentBlockNumByTime();
     var Delta = MaxBlockNum - BlockNum;
-    if(Delta < 100)
+    if(Delta < 20)
         return 0;
     return 1;
 }

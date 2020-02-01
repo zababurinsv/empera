@@ -358,6 +358,7 @@ module.exports = class CTransport extends require("./connect")
         this.BAN_IP[Key] = {TimeTo:TimeTo}
         Node.BlockProcessCount = 0
         this.DeleteNodeFromActiveByIP(Node.ip)
+        ToLog("ADD TO BAN: " + NodeName(Node) + " " + Str, 2)
         ADD_TO_STAT("AddToBan")
     }
     AddToBanIP(ip, Str, Period)
@@ -1102,7 +1103,7 @@ module.exports = class CTransport extends require("./connect")
     {
         if(!START_PORT_NUMBER || START_PORT_NUMBER === "undefined")
         {
-            START_PORT_NUMBER = 30000
+            START_PORT_NUMBER = STANDART_PORT_NUMBER
             ToLog("SET START_PORT_NUMBER = " + START_PORT_NUMBER)
         }
         let SELF = this;
@@ -1160,15 +1161,19 @@ module.exports = class CTransport extends require("./connect")
             Node.ErrCount = 0
             ADD_TO_STAT("ERRORS")
             Node.BlockProcessCount--
-            if(Node.BlockProcessCount <  - 30)
-            {
-                if(!StrErr)
-                    StrErr = ""
-                this.AddToBan(Node, StrErr + " BlockProcess:" + Node.BlockProcessCount)
-            }
-            else
-            {
-            }
+            this.CheckBlockProcess(Node, StrErr)
+        }
+    }
+    CheckBlockProcess(Node, StrErr)
+    {
+        if(Node.BlockProcessCount <  - 30)
+        {
+            if(!StrErr)
+                StrErr = ""
+            this.AddToBan(Node, StrErr + " BlockProcess:" + Node.BlockProcessCount)
+        }
+        else
+        {
         }
     }
 };

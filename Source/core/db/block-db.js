@@ -571,7 +571,7 @@ module.exports = class CDB extends require("../code")
         Block = BufLib.GetObjectFromBuffer(BufRead, FORMAT_STREAM_HEADER, WorkStructStreamHeader)
         if(Block.VersionDB !== global.DB_VERSION)
         {
-            throw ("ERROR Block.VersionDB");
+            ToLog("ERROR VersionDB on Block: " + BlockNum)
             return undefined;
         }
         Block.FilePos = Position

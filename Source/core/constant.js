@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1383;
+global.UPDATE_CODE_VERSION_NUM = 1390;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 global.FORK_MODE = 0;
@@ -32,7 +32,7 @@ global.CONST_NAME_ARR = ["AUTO_CORRECT_TIME", "DELTA_CURRENT_TIME", "COMMON_KEY"
 "TRANSACTION_PROOF_COUNT", "LIMIT_SEND_TRAFIC", "WATCHDOG_DEV", "ADDRLIST_MODE", "CheckPointDelta", "MIN_VER_STAT", "DEBUG_WALLET",
 "DEBUG_EXIT_ON_BADS", "HTTP_HOSTING_PORT", "HTTPS_HOSTING_DOMAIN", "HTTP_MAX_COUNT_ROWS", "HTTP_ADMIN_PASSWORD", "HTTP_START_PAGE",
 "HTTP_CACHE_LONG", "HTTP_USE_ZIP", "WATCHDOG_BADACCOUNT", "RESYNC_CONDITION", "MAX_CONNECTIONS_COUNT", "TRUST_PROCESS_COUNT",
-"REST_START_COUNT", "LOAD_TO_BEGIN", "MAX_SIZE_DB", ];
+"STRICT_PORT_MODE", "REST_START_COUNT", "LOAD_TO_BEGIN", "MAX_SIZE_DB", ];
 global.DEBUG_EXIT_ON_BADS = 0;
 global.UPDATE_CODE_1 = 36000000;
 global.UPDATE_CODE_2 = 40000000;
@@ -41,6 +41,7 @@ global.EXPERIMENTAL_CODE = 0;
 global.HTTP_USE_ZIP = 0;
 global.MAX_LENGTH_SENDER_MAP = 3000;
 global.DELTA_START_SENDER_MAP = 24;
+global.STRICT_PORT_MODE = 0;
 global.NODES_DELTA_CALC_HOUR = 4;
 global.USE_API_WALLET = 1;
 global.USE_API_V1 = 1;
@@ -164,6 +165,7 @@ if(global.LOCAL_RUN)
     global.START_NETWORK_DATE = Math.trunc(Num / 1000) * 1000;
 }
 global.NEW_SIGN_TIME = 25500000;
+global.STANDART_PORT_NUMBER = 30000;
 InitParamsArg();
 if(global.LOCAL_RUN || global.FORK_MODE)
 {
@@ -207,6 +209,7 @@ if(global.LOCAL_RUN || global.FORK_MODE)
 else
     if(global.TEST_NETWORK)
     {
+        global.STANDART_PORT_NUMBER = 40000;
         global.REST_BLOCK_SCALE = 100;
         var Num = Date.now() - 50 * 1000;
         console.log("CURRENT NUM: " + (Math.trunc(Num / 1000) * 1000));
@@ -223,8 +226,6 @@ else
         global.BLOCKNUM_TICKET_ALGO = 1;
         global.WALLET_NAME = "TEST";
         NETWORK = "TERA-TEST4";
-        if(global.START_PORT_NUMBER === undefined)
-            global.START_PORT_NUMBER = 40000;
         global.ALL_VIEW_ROWS = 1;
         global.NEW_ACCOUNT_INCREMENT = 1;
         global.NEW_BLOCK_REWARD1 = 1;
@@ -256,7 +257,7 @@ if(global.START_IP === undefined)
 if(global.LISTEN_IP === undefined)
     global.LISTEN_IP = "0.0.0.0";
 if(global.START_PORT_NUMBER === undefined)
-    global.START_PORT_NUMBER = 30000;
+    global.START_PORT_NUMBER = STANDART_PORT_NUMBER;
 if(global.HTTP_PORT_PASSWORD === undefined)
     global.HTTP_PORT_PASSWORD = "";
 if(global.HTTP_IP_CONNECT === undefined)

@@ -933,7 +933,6 @@ global.LoadBlockFromNetwork = function (Params,F)
         F(Err, Block);
     });
 }
-ToLog("global.START_PORT_NUMBER=" + global.START_PORT_NUMBER);
 if(global.LOCAL_RUN)
 {
     setTimeout(function ()

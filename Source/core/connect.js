@@ -38,7 +38,7 @@ module.exports = class CConnect extends require("./connect2")
         this.NodesArr = []
         this.NodesArrUnSort = []
         this.NodesMap = {}
-        this.NodesIPMap = {}
+        this.NodesIPPortMap = {}
         this.WasNodesSort = true
         this.PerioadAfterCanStart = 0
         this.КодДляРазработчикаХекс = GetHexFromArr(this.KeyPair.computeSecret(DEVELOP_PUB_KEY, null))
@@ -81,7 +81,7 @@ module.exports = class CConnect extends require("./connect2")
         if(!Node)
         {
             var key = "" + ip + ":" + port;
-            Node = this.NodesIPMap[key]
+            Node = this.NodesIPPortMap[key]
             if(!Node)
             {
                 Node = this.GetNewNode(ip, port, addrStr)
@@ -148,6 +148,8 @@ module.exports = class CConnect extends require("./connect2")
                     Node.PingNumber++
                     var Context = {"StartTime":GetCurrentTime(0), PingNumber:Node.PingNumber};
                     this.SendF(Node, {"Method":"PING", "Context":Context, "Data":this.GetPingData(Node)})
+                    if(Node.Hot)
+                        this.CheckForBotNet(Node)
                 }
             }
         }
@@ -618,13 +620,12 @@ module.exports = class CConnect extends require("./connect2")
         else
         {
             ip = Str
+            port = STANDART_PORT_NUMBER
             if(global.TEST_NETWORK || global.LOCAL_RUN)
             {
-                port = 40000
             }
             else
             {
-                port = 30000
                 ToLog("AddNode port = " + port)
             }
         }
@@ -638,6 +639,8 @@ module.exports = class CConnect extends require("./connect2")
         if(Node.ip === this.ip && Node.port === this.port)
             return false;
         if(this.addrStr === Node.addrStr)
+            return false;
+        if(global.STRICT_PORT_MODE && Node.port !== STANDART_PORT_NUMBER)
             return false;
         return true;
     }
@@ -704,7 +707,7 @@ module.exports = class CConnect extends require("./connect2")
         Node = this.NodesMap[Item.addrStr]
         if(!Node)
         {
-            Node = this.NodesIPMap[key]
+            Node = this.NodesIPPortMap[key]
         }
         if(!Node)
         {
@@ -720,7 +723,7 @@ module.exports = class CConnect extends require("./connect2")
             ADD_TO_STAT("AddToNodes")
         }
         this.NodesMap[Node.addrStr] = Node
-        this.NodesIPMap[key] = Node
+        this.NodesIPPortMap[key] = Node
         if(Node.addrArr && CompareArr(Node.addrArr, this.addrArr) === 0)
         {
             Node.Self = true
