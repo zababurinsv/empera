@@ -418,6 +418,13 @@ module.exports = class CBlock extends require("./rest-loader.js")
         arr.sort(SortNodeBlockProcessCountTimeAvg)
         if(arr.length > 40)
             arr.length = 40
+        var NodeCount1 = arr.length;
+        var NodeCount2 = 0;
+        var NodeCount3 = 0;
+        var NodeCount4 = 0;
+        var NodeCount5 = 0;
+        var NodeCount6 = 0;
+        var NodeCount7 = 0;
         for(var i = StartI; i < arr.length; i++)
         {
             var Node;
@@ -430,22 +437,25 @@ module.exports = class CBlock extends require("./rest-loader.js")
             {
                 this.TaskNodeIndex++
                 Node = arr[this.TaskNodeIndex % arr.length]
-                if(Node.BlockProcessCount < 0)
-                    continue;
             }
+            NodeCount2++
+            NodeCount3++
             if(Node.Active)
             {
+                NodeCount4++
                 if(!Node.INFO || !Node.INFO.WasPing || Node.StopGetBlock || (Node.INFO.CheckPointHashDB && CHECK_POINT.BlockNum && CompareArr(CHECK_POINT.Hash,
                 Node.INFO.CheckPointHashDB) !== 0))
                 {
                     timewait = true
                     continue;
                 }
+                NodeCount5++
                 if(BlockNum !== undefined && Node.INFO && BlockNum > Node.INFO.BlockNumDB)
                 {
                     timewait = true
                     continue;
                 }
+                NodeCount6++
                 if(Node.TaskLastSend)
                 {
                     var Delta = CurTime - Node.TaskLastSend;
@@ -455,13 +465,15 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         continue;
                     }
                 }
+                NodeCount7++
                 var keysend = "" + Node.addrStr + ":" + keyid;
                 if(task.MapSend[keysend])
                     continue;
                 Node.TaskKeyID = keyid
                 Node.TaskLastSend = CurTime
                 task.time = CurTime
-                return {Result:true, Node:Node, timewait:timewait};
+                return {Result:true, Node:Node, timewait:timewait, ArrStat:[NodeCount1, NodeCount2, NodeCount3, NodeCount4, NodeCount5, NodeCount6,
+                    NodeCount7]};
             }
         }
         if(!task.RestartGetNextNode)
@@ -1049,13 +1061,40 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(Ret.Result)
         {
             var Node = Ret.Node;
-            ToLog("SEND GETBLOCK: " + Block.BlockNum + " to " + NodeName(Node) + " atime=" + Node.DeltaTimeAvg, 6)
-            Node.DeltaTimeAvg += 2000
+            var StrStat = Ret.ArrStat.join(",");
+            ToLog("SEND GETBLOCK: " + Block.BlockNum + " to " + NodeName(Node) + " atime=" + Node.DeltaTimeAvg + " STAT:" + StrStat, 6)
             if(!Block.Context)
                 Block.Context = {Block:Block}
             this.SendF(Node, {"Method":"GETBLOCK", "Context":Block.Context, "Data":{BlockNum:Block.BlockNum, TreeHash:Block.TreeHash}})
             Node.SendBlockCount++
             SendResult = 1
+            let DeltaScore = 0;
+            let SELF = this;
+            if(UseScoreBlockLoad(Node, Block.BlockNum))
+            {
+                this.CheckBlockProcess(Node, "")
+                DeltaScore = Math.floor(Node.BlockProcessCount / 100)
+                if(DeltaScore < 1)
+                    DeltaScore = 1
+                Node.BlockProcessCount -= DeltaScore
+                Node.DeltaTimeAvg += 2000
+            }
+            Block.Context.F = function (Info)
+            {
+                var Node = Info.Node;
+                var Result = SELF.RETGETBLOCK(Info);
+                if(Result && DeltaScore)
+                {
+                    if(Node.LastDeltaTime <= global.PERIOD_GET_BLOCK)
+                        Node.BlockProcessCount += DeltaScore + 2
+                    else
+                        if(Node.LastDeltaTime <= 2 * global.PERIOD_GET_BLOCK)
+                            Node.BlockProcessCount += DeltaScore + 1
+                        else
+                            Node.BlockProcessCount += DeltaScore
+                }
+                ToLog("BLOCK_LOADED: " + Block.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime, 5)
+            }
             AddInfoBlock(Block, "SendNext")
             if(Block.chain)
                 Block.chain.AddInfo("QUERY BL:" + Block.BlockNum + "/" + this.GetStrFromHashShort(Block.TreeHash) + " TO:" + GetNodeStrPort(Node))
@@ -1153,7 +1192,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     TreeHash:hash,\
                 }";
     }
-    RETGETBLOCK(Info, CurTime)
+    RETGETBLOCK(Info)
     {
         Info.Node.NextPing = MIN_PERIOD_PING
         var Block = Info.Context.Block;
@@ -1164,7 +1203,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             if(Data.BlockNum !== Block.BlockNum || CompareArr(Data.TreeHash, Block.TreeHash) !== 0)
             {
                 this.SetBlockNOSendToNode(Block, Info.Node, "NO")
-                return ;
+                return 0;
             }
             if(Block.chain)
             {
@@ -1177,7 +1216,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             {
                 ToLog("2. BAD CMP TreeHash block=" + Block.BlockNum + " from:" + NodeName(Info.Node) + "  TreeHash=" + GetHexFromArr(TreeHash) + "  BlockTreeHash=" + GetHexFromArr(Block.TreeHash))
                 this.SetBlockNOSendToNode(Block, Info.Node, "BAD CMP TreeHash")
-                return ;
+                return 0;
             }
             if(Data.BlockNum >= START_BAD_ACCOUNT_CONTROL && arrContent.length > 0 && Data.BlockNum % PERIOD_ACCOUNT_HASH === 0)
             {
@@ -1202,7 +1241,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         else
                         {
                         }
-                        return ;
+                        return 0;
                     }
                 }
             }
@@ -1214,14 +1253,13 @@ module.exports = class CBlock extends require("./rest-loader.js")
             if(!Ret)
             {
                 this.SetBlockNOSendToNode(Block, Info.Node, "Error write")
-                return ;
+                return 0;
             }
             Block.TreeEq = true
             delete Block.Send
             delete Block.MapSend
             delete Block.Context
             ADD_TO_STAT("BLOCK_LOADED", 1)
-            ToLog("BLOCK_LOADED: " + Block.BlockNum + " from " + NodeName(Info.Node) + " ltime=" + Info.Node.LastDeltaTime, 5)
             Info.Node.LoadBlockCount++
             if(GrayConnect())
                 Info.Node.BlockProcessCount++
@@ -1231,7 +1269,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 Context.PrevBlockNum = Context.BlockNum
                 Context.StartTimeHistory = Date.now()
             }
+            return 1;
         }
+        return 0;
     }
     SendCanBlock(Node, Block)
     {
@@ -1522,9 +1562,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             return ;
         }
-        var DeltaScore = Math.floor(Node.BlockProcessCount / 20);
-        if(DeltaScore < 5)
-            DeltaScore = 5
+        var DeltaScore = Math.floor(Node.BlockProcessCount / 50);
+        if(DeltaScore < 2)
+            DeltaScore = 2
         this.CheckBlockProcess(Node, "CheckBotNet")
         Node.BlockProcessCount -= DeltaScore
         let SELF = this;
