@@ -1563,3 +1563,5 @@ function GetGrayServerConnections()
     return Count;
 }
 global.GetGrayServerConnections = GetGrayServerConnections;
+global.PrepareBlockProcessSort = PrepareBlockProcessSort;
+global.SortNodeBlockProcessCount = SortNodeBlockProcessCount;

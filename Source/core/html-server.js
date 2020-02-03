@@ -1844,13 +1844,12 @@ function SetSafeResponce(response)
 }
 if(global.HTTP_PORT_NUMBER)
 {
+    var glStrToken = GetHexFromArr(crypto.randomBytes(16));
     var ClientTokenHashMap = {};
-    var ClientTokenMap = {};
     var ClientIPMap = {};
     var ClientIPMap2 = {};
     setInterval(function ()
     {
-        ClientTokenMap = {};
         ClientTokenHashMap = {};
     }, 24 * 3600 * 1000);
     var MaxTimeEmptyAccess = 600;
@@ -1922,8 +1921,7 @@ if(global.HTTP_PORT_NUMBER)
             if(!Password)
             {
                 var cookies = parseCookies(request.headers.cookie);
-                var cookies_token = cookies["NW_TOKEN"];
-                if(cookies_token === global.NW_TOKEN)
+                if(cookies["NW_TOKEN"] === global.NW_TOKEN)
                 {
                     CheckPassword = 0;
                 }
@@ -1935,55 +1933,59 @@ if(global.HTTP_PORT_NUMBER)
         }
         if(CheckPassword && Password)
         {
-            var TokenMap;
-            TokenMap = ClientTokenMap;
             var StrPort = "";
             if(global.HTTP_PORT_NUMBER !== 80)
                 StrPort = global.HTTP_PORT_NUMBER;
             var cookies = parseCookies(request.headers.cookie);
-            var cookies_token = cookies["token" + StrPort];
             var cookies_hash = cookies["hash" + StrPort];
-            if(cookies_token && cookies_hash && TokenMap[cookies_token] === 0)
+            var bSendPSW = 0;
+            if(cookies_hash && !ClientTokenHashMap[cookies_hash])
             {
-                var hash = GetCookieHash(cookies_token, cookies_hash, Password);
+                var hash = GetCookieHash(cookies_hash, Password);
                 if(hash && hash === cookies_hash)
                 {
-                    TokenMap[cookies_token] = 1;
+                    ClientTokenHashMap[cookies_hash] = 1;
                 }
                 else
                 {
-                    SendPasswordFile(request, response, Path, StrPort, cookies_token);
-                    return ;
+                    bSendPSW = 1;
                 }
             }
-            if(!cookies_token || !TokenMap[cookies_token])
-                if(!ClientIPMap2[remoteAddress])
+            else
+                if(!ClientIPMap2[remoteAddress] && !cookies_hash)
                 {
-                    var StrToken = GetHexFromArr(crypto.randomBytes(16));
-                    TokenMap[StrToken] = 0;
-                    SendPasswordFile(request, response, Path, StrPort, StrToken);
-                    return ;
+                    bSendPSW = 1;
                 }
-            if(request.method === "POST")
+            if(Path === "/password.html")
+                bSendPSW = 1;
+            if(bSendPSW)
             {
-                var TokenHash = request.headers.tokenhash;
-                if(!TokenHash || !ClientTokenHashMap[TokenHash])
+                SendPasswordFile(request, response, Path, StrPort);
+                return ;
+            }
+            else
+                if(request.method === "POST")
                 {
-                    var hash2;
-                    if(cookies_token && TokenHash)
-                        hash2 = GetCookieHash(cookies_token, TokenHash, Password + "-api");
-                    if(TokenHash && hash2 && hash2 === TokenHash)
+                    var TokenHash = request.headers.tokenhash;
+                    if(!TokenHash || !ClientTokenHashMap[TokenHash])
                     {
-                        ClientTokenHashMap[TokenHash] = 1;
-                    }
-                    else
-                    {
-                        response.writeHead(203, {'Content-Type':'text/html'});
-                        response.end("Invalid API token");
-                        return ;
+                        var hash2;
+                        if(TokenHash)
+                            hash2 = GetCookieHash(TokenHash, Password + "-api");
+                        if(TokenHash && hash2 && hash2 === TokenHash)
+                        {
+                            ClientTokenHashMap[TokenHash] = 1;
+                        }
+                        else
+                        {
+                            if(TokenHash && hash2)
+                                ToLog("Invalid API token: " + request.method + "   path: " + Path + "  token:" + TokenHash + "/" + hash2);
+                            response.writeHead(203, {'Content-Type':'text/html'});
+                            response.end("Invalid API token");
+                            return ;
+                        }
                     }
                 }
-            }
         }
         if(!ClientIPMap2[remoteAddress])
         {
@@ -2038,11 +2040,11 @@ if(global.HTTP_PORT_NUMBER)
         ToError(err);
     });
 }
-function SendPasswordFile(request,response,Path,StrPort,cookies_token)
+function SendPasswordFile(request,response,Path,StrPort)
 {
     if(!Path || Path === "/" || Path.substr(Path.length - 4, 4) === "html")
     {
-        SendWebFile(request, response, "./HTML/password.html", "token" + StrPort + "=" + cookies_token + ";path=/;SameSite=Strict;");
+        SendWebFile(request, response, "./HTML/password.html", "token" + StrPort + "=" + glStrToken + ";path=/;SameSite=Strict;");
     }
     else
     {
@@ -2275,7 +2277,7 @@ function GetTransactionFromBody(Params,Block,TrNum,Body)
     }
     return {result:0, BlockNum:Block.BlockNum, Meta:Params ? Params.Meta : undefined};
 }
-function GetCookieHash(cookies_token,cookies_hash,Password)
+function GetCookieHash(cookies_hash,Password)
 {
     if(!cookies_hash || cookies_hash.substr(0, 4) !== "0000")
     {
@@ -2289,7 +2291,7 @@ function GetCookieHash(cookies_token,cookies_hash,Password)
         if(!nonce)
             nonce = 0;
     }
-    var hash = CalcClientHash(cookies_token + "-" + Password, nonce);
+    var hash = CalcClientHash(glStrToken + "-" + Password, nonce);
     return hash;
 }
 require("../process/api-exchange.js");

@@ -718,7 +718,10 @@ function RunOnce()
         clearInterval(idRunOnce);
         require("../core/update");
         RunOnUpdate();
-        StartAllProcess(1);
+        setTimeout(function ()
+        {
+            StartAllProcess(1);
+        }, 1000);
         require("./dogs");
         if(global.RESTART_PERIOD_SEC)
         {

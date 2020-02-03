@@ -557,6 +557,7 @@ module.exports = class CTransport extends require("./connect")
             Buf.Context = {}
         }
         Buf.Context.ContextID = Buf.ContextID
+        this.MethodTimeProcess(Node, Buf.Method, Buf.Context)
         Buf.Node = Node
         Buf.Socket = Socket
         Buf.MethodTiming = Param
@@ -583,6 +584,23 @@ module.exports = class CTransport extends require("./connect")
         }
         ADD_TO_STAT_TIME("MAX:TIMEDOGETDATA", startTime)
         return 1;
+    }
+    MethodTimeProcess(Node, Method, Context)
+    {
+        var Time1 = Context.TimeMethodSend;
+        if(!Time1)
+            return ;
+        var Arr = Node.TimeArr;
+        var Time2 = GetCurrentTime(0) - 0;
+        var Delta = Time2 - Time1;
+        Arr.unshift(Delta)
+        if(Arr.length > 20)
+            Arr.length = 20
+        var SumDelta = 0;
+        for(var i = 0; i < Arr.length; i++)
+            SumDelta += Arr[i]
+        Node.DeltaTimeAvg = Math.floor(SumDelta / Arr.length)
+        Node.LastDeltaTime = Delta
     }
     StopDoSendPacket(Param, Node, Name)
     {
@@ -737,6 +755,7 @@ module.exports = class CTransport extends require("./connect")
                 Info.ContextID = crypto.randomBytes(32)
                 Info.Context.ContextID = Info.ContextID
             }
+            Info.Context.TimeMethodSend = GetCurrentTime(0) - 0
             global.ContextPackets.SaveValue(Info.ContextID, Info.Context)
         }
         else
