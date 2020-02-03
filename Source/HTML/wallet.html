@@ -437,6 +437,7 @@
         if(!Data || !Data.result)
             return;
 
+
         CONFIG_DATA=Data;
         ServerBlockNumDB=Data.BlockNumDB;
         ServerCurBlockNum=Data.CurBlockNum;
@@ -561,6 +562,8 @@
 
         SetVisibleBlock("idDevelopService",Data.IsDevelopAccount);
         SetVisibleBlock("idDevelopService2",Data.IsDevelopAccount);
+        SetVisibleBlock("idTimeDelta",CONFIG_DATA.CONSTANTS.COMMON_KEY?"inline-block":0);
+
 
         if(Data.CurBlockNum<1000000 || Data.IsDevelopAccount)
             SetVisibleBlock("idCleanChain","inline");
@@ -1492,9 +1495,9 @@
                 Block:<B id="idCurBlockNum"></B>
                 DB delta:<span id="idDeltaDB" class="stat"></span>
                 TX delta:<span id="idDeltaTX" class="stat"></span>
-                Time delta:<B id="idDeltaTime"></B>
-                Wallet ver:<B id="idWalletVersion"></B>
-                Max:<B id="idSpeedSignLib" style="cursor: pointer" onclick='TestSignLib()'></B> tps
+                Protocol:<B id="idWalletVersion"></B>
+                Max tps:<B id="idSpeedSignLib" style="cursor: pointer" onclick='TestSignLib()'></B>
+                <span id="idTimeDelta">Time delta:<B id="idDeltaTime"></B></span>
             </DIV>
             <DIV id="idSignLibError" style="display: none;">
                 <BR><BR><DIV align='center' style="border: 1px solid #ff791a;padding: 5px"><b class="red">*************** WARNING: VERY SLOW LIBRARY: secp256k1 ***************<BR>Install all dependent packages, see detail: <a href="https://www.npmjs.com/package/secp256k1">https://www.npmjs.com/package/secp256k1</a></b>

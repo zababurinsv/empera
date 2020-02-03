@@ -152,7 +152,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var StartBlockNum;
         if(PrevStartedBlockNum)
         {
-            var DeltaNum = Math.floor(1.2 * (this.BlockNumDB - PrevStartedBlockNum));
+            var DeltaNum = Math.floor(1.1 * (this.BlockNumDB - PrevStartedBlockNum));
             if(DeltaNum < 1000)
                 DeltaNum = 1000
             StartBlockNum = this.BlockNumDB - DeltaNum
@@ -239,22 +239,14 @@ module.exports = class CBlock extends require("./rest-loader.js")
             let SELF = this;
             let BLOCKNUM = Context.BlockNum;
             let DeltaScore = 0;
-            if(UseScoreBlockLoad(Node, Context.BlockNum))
-            {
-                this.CheckBlockProcess(Node, "")
-                DeltaScore = Math.floor(Node.BlockProcessCount / 30)
-                if(DeltaScore < 1)
-                    DeltaScore = 1
-                Node.BlockProcessCount -= DeltaScore
-                Node.DeltaTimeAvg += 2000
-            }
+            Node.DeltaTimeAvg += 2000
             this.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":{Foward:1, BlockNum:Context.BlockNum, Hash:BlockDB.SumHash},
             })
             Context.F = function (Info)
             {
                 var Node = Info.Node;
                 var Result = SELF.RETBLOCKHEADER_FOWARD(Info);
-                if(Result && DeltaScore)
+                if(Result)
                 {
                     if(Node.LastDeltaTime <= global.PERIOD_GET_BLOCK)
                         Node.BlockProcessCount += DeltaScore + 2
@@ -1070,20 +1062,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
             SendResult = 1
             let DeltaScore = 0;
             let SELF = this;
-            if(UseScoreBlockLoad(Node, Block.BlockNum))
-            {
-                this.CheckBlockProcess(Node, "")
-                DeltaScore = Math.floor(Node.BlockProcessCount / 100)
-                if(DeltaScore < 1)
-                    DeltaScore = 1
-                Node.BlockProcessCount -= DeltaScore
-                Node.DeltaTimeAvg += 2000
-            }
+            Node.DeltaTimeAvg += 2000
             Block.Context.F = function (Info)
             {
                 var Node = Info.Node;
                 var Result = SELF.RETGETBLOCK(Info);
-                if(Result && DeltaScore)
+                if(Result)
                 {
                     if(Node.LastDeltaTime <= global.PERIOD_GET_BLOCK)
                         Node.BlockProcessCount += DeltaScore + 2
