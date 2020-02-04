@@ -154,7 +154,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var StartBlockNum;
         if(PrevStartedBlockNum)
         {
-            var DeltaNum = this.BlockNumDB - PrevStartedBlockNum + 60;
+            var DeltaNum = this.BlockNumDB - PrevStartedBlockNum + 600;
             if(DeltaNum < 1000)
                 DeltaNum = 1000
             StartBlockNum = this.BlockNumDB - DeltaNum
@@ -1526,12 +1526,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     }
                     if(arr && arr.length === 1 && CompareArr(arr[0].Hash, BlockDB.Hash) === 0)
                     {
-                        ToLog("WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " Length=" + arr.length, 5)
+                        ToLog("WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " arr=" + arr.length, 5)
                         Node.BlockProcessCount += DeltaScore + 2
                     }
                     else
                     {
-                        ToLog("NOT WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node), 2)
+                        ToLog("NOT WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " Data.length=" + Info.Data.length, 2)
                     }
                 }}})
     }
@@ -1721,23 +1721,26 @@ function GetBlockFromNode(Addr,BlockNum)
         };
     }
 }
-function GetHeaderFromNode(Addr,BlockNum)
+function GetHeaderFromNode(Addr,BlockNum,bForward)
 {
     var Node = FindNodeByAddr(Addr);
     if(Node)
     {
         var BlockDB = SERVER.ReadBlockHeaderDB(BlockNum);
         let Context = {Foward:1, BlockNum:BlockDB.BlockNum, MapSend:{}};
-        SERVER.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":{Foward:1, BlockNum:BlockDB.BlockNum, Hash:BlockDB.SumHash},
-        });
+        var Data;
+        if(bForward)
+            Data = {Foward:1, BlockNum:BlockNum, Hash:BlockDB.SumHash};
+        else
+            Data = {Foward:0, BlockNum:BlockNum, Hash:BlockDB.SumHash, IsSum:1, Count:1};
+        SERVER.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":Data, });
         Context.F = function (Info)
         {
             var Node = Info.Node;
-            var Result = SERVER.RETBLOCKHEADER_FOWARD(Info);
             var BufRead = BufLib.GetReadBuffer(Info.Data);
             var arr = SERVER.GetBlockArrFromBuffer_Load(BufRead, Info);
             ToLog("----------------------------------------------------------------");
-            ToLog("TEST HEADER: " + BlockDB.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime + " Result=" + Result + " arr=" + arr.length);
+            ToLog("TEST HEADER: " + BlockDB.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime + " arr=" + arr.length);
             ToLog("WANT SUMHASH = " + GetHexFromArr(BlockDB.SumHash));
             ToLog("WANT HASH = " + GetHexFromArr(BlockDB.Hash));
             ToLog("----------------------------------------------------------------");
