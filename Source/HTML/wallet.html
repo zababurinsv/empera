@@ -1887,7 +1887,7 @@
                             <th id="GetHexFromArr(Item.PowHash)" class="hash">PowHash</th>
                             <th id="GetHexFromArr(Item.Hash)" class="hash">Block Hash</th>
                             <!--<th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
-                            <!--<th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>-->
+<!--                            <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>-->
                             <th id="Item.TrDataLen" class="num">Bytes</th>
                             <th id="Item.Power" class="num">Pow</th>
                             <th id="(RetHistoryAccount(Item,'Miner')+'<BR><b>'+Item.MinerName)+'</b>'" class="num">Miner</th>
@@ -1975,6 +1975,7 @@
                     Number of blocks in depth:<INPUT type="number" id="idBlockCount" onchange = "SaveValues()" value="0"><BR>
                     <INPUT type="button" onclick="RestartNode()"  class="bt btdoit btutil" value="Restart node">
                     <INPUT type="button" onclick="RewriteTransactions()"  class="bt btdoit btutil" value="Rewrite tx">
+                    <INPUT type="button" onclick="RewriteAllTransactions()"  class="bt btdoit btutil" value="Rewrite All tx">
                     <INPUT type="button" id="idCleanChain" onclick="CleanChain()"  class="btdoit btutil bt" style="display: none;" value="Clean chain">
                     <INPUT type="button" onclick="TruncateBlockChain()" class="btdoit btutil bt" value="Truncate chain">
                     <INPUT type="button" onclick="ClearDataBase();InitArrInfo();" class="btdoit btutil bt" value="Clear DataBase">

@@ -135,6 +135,8 @@ module.exports = class CBlock extends require("./rest-loader.js")
     }
     StartSyncBlockchain(Node, bSilent, bCheckPoint, PrevStartedBlockNum)
     {
+        if(Date.now() - this.StartTime < 10 * 1000)
+            return ;
         this.FREE_ALL_MEM_CHAINS()
         if(global.NO_HISTORY_MODE)
         {
@@ -152,7 +154,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var StartBlockNum;
         if(PrevStartedBlockNum)
         {
-            var DeltaNum = Math.floor(1.1 * (this.BlockNumDB - PrevStartedBlockNum));
+            var DeltaNum = this.BlockNumDB - PrevStartedBlockNum + 60;
             if(DeltaNum < 1000)
                 DeltaNum = 1000
             StartBlockNum = this.BlockNumDB - DeltaNum
@@ -167,7 +169,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         this.LoadHistoryMode = true
         this.LoadHistoryMessage = !bSilent
         this.LoadHistoryContext = {PrevBlockNum: - 1, Node:Node, BlockNum:StartBlockNum, MapSend:{}, Foward:1, Pause:0, DeltaBlockNum:10,
-            StartTimeHistory:Date.now(), MaxTimeOut:30 * 1000}
+            StartTimeHistory:Date.now(), MaxTimeOut:60 * 1000}
         if(!bSilent && !bCheckPoint && REST_START_COUNT)
         {
             this.CheckSyncRest()
@@ -231,15 +233,14 @@ module.exports = class CBlock extends require("./rest-loader.js")
             if(!BlockDB)
                 return ;
         }
-        var Ret = this.GetNextNode(Context, Context.BlockNum, 1);
+        var Ret = this.GetNextNode(Context, Context.BlockNum, 1, Context.BlockNum);
         if(Ret.Result)
         {
             var Node = Ret.Node;
             ToLog("SEND LH Block: " + Context.BlockNum + " to " + NodeName(Node) + " atime=" + Node.DeltaTimeAvg, 4)
             let SELF = this;
             let BLOCKNUM = Context.BlockNum;
-            let DeltaScore = 0;
-            Node.DeltaTimeAvg += 2000
+            Node.DeltaTimeAvg += 1000
             this.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":{Foward:1, BlockNum:Context.BlockNum, Hash:BlockDB.SumHash},
             })
             Context.F = function (Info)
@@ -249,12 +250,18 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 if(Result)
                 {
                     if(Node.LastDeltaTime <= global.PERIOD_GET_BLOCK)
-                        Node.BlockProcessCount += DeltaScore + 2
+                        Node.BlockProcessCount += 2
                     else
                         if(Node.LastDeltaTime <= 2 * global.PERIOD_GET_BLOCK)
-                            Node.BlockProcessCount += DeltaScore + 1
+                            Node.BlockProcessCount += 1
                         else
-                            Node.BlockProcessCount += DeltaScore
+                            Node.BlockProcessCount += 0
+                }
+                else
+                {
+                    Node.DeltaTimeAvg += 1000
+                    Node.BlockProcessCount--
+                    SELF.CheckBlockProcess(Node, "")
                 }
                 ToLog("RETBLOCKHEADER_FOWARD: " + BLOCKNUM + " from " + NodeName(Node) + " Result=" + Result + " ltime=" + Node.LastDeltaTime,
                 3)
@@ -442,7 +449,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     continue;
                 }
                 NodeCount5++
-                if(BlockNum !== undefined && Node.INFO && BlockNum > Node.INFO.BlockNumDB)
+                if(BlockNum !== undefined && (BlockNum < Node.BlockNumDBMin || BlockNum > Node.BlockNumDB))
                 {
                     timewait = true
                     continue;
@@ -487,7 +494,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     }
     SendChainNext(chain, checktime)
     {
-        var Ret = this.GetNextNode(chain, chain.BlockNum, checktime);
+        var Ret = this.GetNextNode(chain, chain.BlockNum, checktime, chain.BlockNum);
         if(Ret.Result)
         {
             if(!chain.Context)
@@ -534,7 +541,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     {
         if(!Info.Context.Foward)
             return 0;
-        var Context = this.LoadHistoryContext;
+        var Context = Info.Context;
         Context.time = undefined
         var BufRead = BufLib.GetReadBuffer(Info.Data);
         var arr = this.GetBlockArrFromBuffer_Load(BufRead, Info);
@@ -554,10 +561,6 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         break;
                     }
                     Context.FindCheckPoint = true
-                }
-                if(Block.BlockNum < this.BlockNumDB)
-                {
-                    break;
                 }
                 if(!bFindDB)
                 {
@@ -595,21 +598,6 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         else
         {
-            if(!Context.WasLoadNum)
-            {
-                ToLog("Not found block: " + Context.BlockNum + " from node:" + NodeName(Info.Node), 1)
-                if(UseScoreBlockLoad(Info.Node, Context.BlockNum))
-                {
-                    this.AddCheckErrCount(Info.Node, 10)
-                }
-                Context.BlockNum = Math.floor(Context.BlockNum - Context.DeltaBlockNum)
-                Context.DeltaBlockNum = Context.DeltaBlockNum * 1.2
-                if(Context.BlockNum < BLOCK_PROCESSING_LENGTH2)
-                    Context.BlockNum = BLOCK_PROCESSING_LENGTH2 - 1
-                this.BlockNumDB = Context.BlockNum
-                this.SetTruncateBlockDB(Context.BlockNum)
-            }
-            else
             {
                 var keysend = "" + Info.Node.addrStr + ":" + Context.BlockNum;
                 Context.MapSend[keysend] = 1
@@ -802,7 +790,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(arr.length > 0)
         {
             for(var i = 0; i < arr.length; i++)
+            {
                 arr[i].AddToLoad = 1
+            }
             chain.CurNumArrLoad = 0
         }
     }
@@ -1060,9 +1050,8 @@ module.exports = class CBlock extends require("./rest-loader.js")
             this.SendF(Node, {"Method":"GETBLOCK", "Context":Block.Context, "Data":{BlockNum:Block.BlockNum, TreeHash:Block.TreeHash}})
             Node.SendBlockCount++
             SendResult = 1
-            let DeltaScore = 0;
             let SELF = this;
-            Node.DeltaTimeAvg += 2000
+            Node.DeltaTimeAvg += 1000
             Block.Context.F = function (Info)
             {
                 var Node = Info.Node;
@@ -1070,14 +1059,23 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 if(Result)
                 {
                     if(Node.LastDeltaTime <= global.PERIOD_GET_BLOCK)
-                        Node.BlockProcessCount += DeltaScore + 2
+                        Node.BlockProcessCount += 2
                     else
                         if(Node.LastDeltaTime <= 2 * global.PERIOD_GET_BLOCK)
-                            Node.BlockProcessCount += DeltaScore + 1
+                            Node.BlockProcessCount += 1
                         else
-                            Node.BlockProcessCount += DeltaScore
+                            Node.BlockProcessCount += 0
+                    ToLog("BLOCK_LOADED: " + Block.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime, 5)
                 }
-                ToLog("BLOCK_LOADED: " + Block.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime, 5)
+                else
+                {
+                    Node.DeltaTimeAvg += 1000
+                    var DeltaScore = Math.floor(Node.BlockProcessCount / 50);
+                    if(!DeltaScore || DeltaScore < 2)
+                        DeltaScore = 2
+                    Node.BlockProcessCount = Node.BlockProcessCount - DeltaScore
+                    SELF.CheckBlockProcess(Node, "")
+                }
             }
             AddInfoBlock(Block, "SendNext")
             if(Block.chain)
@@ -1241,8 +1239,6 @@ module.exports = class CBlock extends require("./rest-loader.js")
             }
             Block.TreeEq = true
             delete Block.Send
-            delete Block.MapSend
-            delete Block.Context
             ADD_TO_STAT("BLOCK_LOADED", 1)
             Info.Node.LoadBlockCount++
             if(GrayConnect())
@@ -1256,39 +1252,6 @@ module.exports = class CBlock extends require("./rest-loader.js")
             return 1;
         }
         return 0;
-    }
-    SendCanBlock(Node, Block)
-    {
-        Node.SendBlockCount++
-        if(!Node.INFO.BlockNumDB)
-            return ;
-        if(Node.INFO.BlockNumDB >= Block.BlockNum)
-        {
-            this.SendF(Node, {"Method":"CANBLOCK", "Data":{BlockNum:Block.BlockNum}})
-        }
-    }
-    static
-    CANBLOCK_F()
-    {
-        return "{BlockNum:uint}";
-    }
-    CANBLOCK(Info, CurTime)
-    {
-        var Data = this.DataFromF(Info);
-        this.SendF(Info.Node, {"Method":"RETCANBLOCK", "Data":{Result:1}})
-    }
-    static
-    RETCANBLOCK_F()
-    {
-        return "{Result:byte}";
-    }
-    RETCANBLOCK(Info, CurTime)
-    {
-        var Data = this.DataFromF(Info);
-        if(Data.Result === 1)
-        {
-            Info.Node.LoadBlockCount++
-        }
     }
     SetBlockNOSendToNode(Block, Node, Str)
     {
@@ -1584,7 +1547,7 @@ global.LoadBlockFromNetwork = function (Params,F)
     }
     ToLog("Start DownloadBlockFromNetwork:" + BlockNum, 2);
     var TaskLoadBlockFromNetwork = {MapSend:{}};
-    var Ret = SERVER.GetNextNode(TaskLoadBlockFromNetwork, BlockNum, 1);
+    var Ret = SERVER.GetNextNode(TaskLoadBlockFromNetwork, BlockNum, 1, BlockNum);
     if(Ret.Result)
     {
         let Node = Ret.Node;
@@ -1739,3 +1702,47 @@ function SortNodeBlockProcessCountTimeAvg(a,b)
         return a.DeltaTimeAvg - b.DeltaTimeAvg;
     return a.id - b.id;
 }
+function GetBlockFromNode(Addr,BlockNum)
+{
+    var Node = FindNodeByAddr(Addr);
+    if(Node)
+    {
+        var Block = SERVER.ReadBlockHeaderDB(BlockNum);
+        Block.MapSend = {};
+        Block.Context = {Block:Block};
+        SERVER.SendF(Node, {"Method":"GETBLOCK", "Context":Block.Context, "Data":{BlockNum:Block.BlockNum, TreeHash:Block.TreeHash}});
+        Block.Context.F = function (Info)
+        {
+            var Node = Info.Node;
+            var Result = SERVER.RETGETBLOCK(Info);
+            ToLog("----------------------------------------------------------------");
+            ToLog("TEST BLOCK: " + Block.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime + " Result=" + Result);
+            ToLog("----------------------------------------------------------------");
+        };
+    }
+}
+function GetHeaderFromNode(Addr,BlockNum)
+{
+    var Node = FindNodeByAddr(Addr);
+    if(Node)
+    {
+        var BlockDB = SERVER.ReadBlockHeaderDB(BlockNum);
+        let Context = {Foward:1, BlockNum:BlockDB.BlockNum, MapSend:{}};
+        SERVER.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":{Foward:1, BlockNum:BlockDB.BlockNum, Hash:BlockDB.SumHash},
+        });
+        Context.F = function (Info)
+        {
+            var Node = Info.Node;
+            var Result = SERVER.RETBLOCKHEADER_FOWARD(Info);
+            var BufRead = BufLib.GetReadBuffer(Info.Data);
+            var arr = SERVER.GetBlockArrFromBuffer_Load(BufRead, Info);
+            ToLog("----------------------------------------------------------------");
+            ToLog("TEST HEADER: " + BlockDB.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime + " Result=" + Result + " arr=" + arr.length);
+            ToLog("WANT SUMHASH = " + GetHexFromArr(BlockDB.SumHash));
+            ToLog("WANT HASH = " + GetHexFromArr(BlockDB.Hash));
+            ToLog("----------------------------------------------------------------");
+        };
+    }
+}
+global.GetHeaderFromNode = GetHeaderFromNode;
+global.GetBlockFromNode = GetBlockFromNode;

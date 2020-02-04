@@ -587,6 +587,8 @@ module.exports = class CTransport extends require("./connect")
     }
     MethodTimeProcess(Node, Method, Context)
     {
+        if(Method != "RETBLOCKHEADER" && Method != "RETGETBLOCK")
+            return ;
         var Time1 = Context.TimeMethodSend;
         if(!Time1)
             return ;

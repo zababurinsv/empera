@@ -148,7 +148,7 @@ module.exports = class CConnect extends require("./connect2")
                     Node.PingNumber++
                     var Context = {"StartTime":GetCurrentTime(0), PingNumber:Node.PingNumber};
                     this.SendF(Node, {"Method":"PING", "Context":Context, "Data":this.GetPingData(Node)})
-                    if(Node.Hot)
+                    if(Node.Hot && !Node.LoadHistoryMode)
                         this.CheckForBotNet(Node)
                 }
             }
@@ -188,10 +188,11 @@ module.exports = class CConnect extends require("./connect2")
         var DirectMAccount = 0;
         var Ret = {VERSIONMAX:DEF_VERSION, FIRST_TIME_BLOCK:0, PingVersion:3, GrayConnect:GrayAddres, Reserve2:0, AutoCorrectTime:AUTO_CORRECT_TIME,
             LevelCount:LevelCount, Time:(GetCurrentTime() - 0), BlockNumDB:this.BlockNumDB, LoadHistoryMode:this.LoadHistoryMode, CanStart:global.CAN_START,
-            CheckPoint:CHECK_POINT, Reserv3:[], Key:this.KeyToNode, Name:this.NameToNode, TrafficFree:this.SendTrafficFree, AccountBlockNum:BlockNumHash,
-            AccountsHash:AccountsHash, MemoryUsage:Math.trunc(process.memoryUsage().heapTotal / 1024 / 1024), CheckDeltaTime:CHECK_DELTA_TIME,
-            CodeVersion:CODE_VERSION, IsAddrList:global.ADDRLIST_MODE, CheckPointHashDB:CheckPointHashDB, PortWeb:HTTP_HOSTING_PORT, HashDB:HashDB,
-            StopGetBlock:StopGetBlock, NetConstant:NET_CONSTANT, LevelsBit:this.GetBitsByLevel(), };
+            CheckPoint:CHECK_POINT, BlockNumDBMin:this.BlockNumDBMin, Reserv3:[], Key:this.KeyToNode, Name:this.NameToNode, TrafficFree:this.SendTrafficFree,
+            AccountBlockNum:BlockNumHash, AccountsHash:AccountsHash, MemoryUsage:Math.trunc(process.memoryUsage().heapTotal / 1024 / 1024),
+            CheckDeltaTime:CHECK_DELTA_TIME, CodeVersion:CODE_VERSION, IsAddrList:global.ADDRLIST_MODE, CheckPointHashDB:CheckPointHashDB,
+            PortWeb:HTTP_HOSTING_PORT, HashDB:HashDB, StopGetBlock:StopGetBlock, NetConstant:NET_CONSTANT, LevelsBit:this.GetBitsByLevel(),
+        };
         return Ret;
     }
     static
@@ -209,7 +210,8 @@ module.exports = class CConnect extends require("./connect2")
             LoadHistoryMode:byte,\
             CanStart:byte,\
             CheckPoint:{BlockNum:uint,Hash:hash,Sign:arr64},\
-            Reserv3:arr38,\
+            BlockNumDBMin:uint,\
+            Reserv3:arr32,\
             Key:arr32,\
             Name:arr32,\
             TrafficFree:uint,\
@@ -261,6 +263,8 @@ module.exports = class CConnect extends require("./connect2")
         Node.INFO.WasPing = 1
         Node.LevelCount = Data.LevelCount
         Node.LoadHistoryMode = Data.LoadHistoryMode
+        Node.BlockNumDB = Data.BlockNumDB
+        Node.BlockNumDBMin = Data.BlockNumDBMin
         Node.LastTime = GetCurrentTime() - 0
         Node.NextConnectDelta = 1000
         Node.StopGetBlock = Data.StopGetBlock

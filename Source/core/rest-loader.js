@@ -473,7 +473,7 @@ module.exports = class CRest extends require("./db/block-db")
         if(!BlockDB)
             return ;
         Context.BlockNum = BlockDB.BlockNum
-        var Ret = this.GetNextNode(Context, Context.BlockNum, 1);
+        var Ret = this.GetNextNode(Context, Context.BlockNum, 1, Context.BlockNum);
         if(Ret.Result)
         {
             var Node = Ret.Node;

@@ -55,7 +55,7 @@ module.exports = class CNode
         this.DeltaTime = 1000
         this.SumDeltaTime = 0
         this.TimeArr = []
-        this.DeltaTimeAvg = 1000
+        this.DeltaTimeAvg = 10000
         this.LastDeltaTime = 0
         this.TransferCount = 0
         this.StopGetBlock = 0
@@ -95,6 +95,8 @@ module.exports = class CNode
         var Prioritet = this.BlockProcessCount;
         SERVER.SetNodePrioritet(this, Prioritet)
         this.SendPacketNum = 0
+        this.BlockNumDB = 0
+        this.BlockNumDBMin = 0
     }
     ConnectStatus()
     {
