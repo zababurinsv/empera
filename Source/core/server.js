@@ -884,11 +884,17 @@ module.exports = class CTransport extends require("./connect")
             this.SendCloseSocket(Socket, "DEF_NETWORK=" + Info.DEF_NETWORK + " MUST:" + GetNetworkName())
             return ;
         }
-        var Node = this.FindRunNodeContext(Info.addrArr, Info.FromIP, Info.FromPort, true);
         if(CompareArr(Info.addrArr, this.addrArr) === 0)
         {
             AddNodeInfo(Node, "SERV: GET SELF")
             this.SendCloseSocket(Socket, "SELF")
+            return ;
+        }
+        var Node = this.FindRunNodeContext(Info.addrArr, Info.FromIP, Info.FromPort, true);
+        if(!Node)
+        {
+            AddNodeInfo(Node, "Error Node Context")
+            this.SendCloseSocket(Socket, "Error Node Context")
             return ;
         }
         var Hash = shaarr2(this.addrArr, Socket.HashRND);

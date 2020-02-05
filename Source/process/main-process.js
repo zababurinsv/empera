@@ -708,7 +708,8 @@ function DoStartFindList()
         if(keyThisServer === key)
             continue;
         var Node = SERVER.GetNewNode(item.ip, item.port);
-        Node.StartFindList = 1;
+        if(Node)
+            Node.StartFindList = 1;
     }
 }
 function RunOnce()

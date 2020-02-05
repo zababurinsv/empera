@@ -154,7 +154,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var StartBlockNum;
         if(PrevStartedBlockNum)
         {
-            var DeltaNum = this.BlockNumDB - PrevStartedBlockNum + 600;
+            var DeltaNum = this.BlockNumDB - PrevStartedBlockNum + 1000;
             if(DeltaNum < 1000)
                 DeltaNum = 1000
             StartBlockNum = this.BlockNumDB - DeltaNum
@@ -169,7 +169,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         this.LoadHistoryMode = true
         this.LoadHistoryMessage = !bSilent
         this.LoadHistoryContext = {PrevBlockNum: - 1, Node:Node, BlockNum:StartBlockNum, MapSend:{}, Foward:1, Pause:0, DeltaBlockNum:10,
-            StartTimeHistory:Date.now(), MaxTimeOut:60 * 1000}
+            StartTimeHistory:Date.now(), MaxTimeOut:20 * 1000}
         if(!bSilent && !bCheckPoint && REST_START_COUNT)
         {
             this.CheckSyncRest()
@@ -1502,16 +1502,27 @@ module.exports = class CBlock extends require("./rest-loader.js")
     }
     CheckForBotNet(Node)
     {
-        var CurrentBlockNum = GetCurrentBlockNumByTime();
-        var BlockNum = CurrentBlockNum - random(10000) - 50;
+        let DeltaScore = Math.floor(Node.BlockProcessCount / 20);
+        if(DeltaScore < 5)
+            DeltaScore = 5
+        var DeltaNode = Node.BlockNumDB - Node.BlockNumDBMin;
+        if(DeltaNode < 10000)
+        {
+            ToLog("BAD DeltaDB  " + NodeName(Info.Node), 3)
+            Node.BlockProcessCount -= DeltaScore
+            return ;
+        }
+        var DeltaDB = this.BlockNumDB - this.BlockNumDBMin;
+        var Margin = 1000;
+        var Delta = Math.min(DeltaNode, DeltaDB) - Margin;
+        if(DeltaDB <= 0)
+            return ;
+        var BlockNum = this.BlockNumDB - random(Delta) - Margin;
         var BlockDB = this.ReadBlockHeaderDB(BlockNum);
         if(!BlockDB)
         {
             return ;
         }
-        var DeltaScore = Math.floor(Node.BlockProcessCount / 50);
-        if(DeltaScore < 2)
-            DeltaScore = 2
         this.CheckBlockProcess(Node, "CheckBotNet")
         Node.BlockProcessCount -= DeltaScore
         let SELF = this;
@@ -1531,7 +1542,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     }
                     else
                     {
-                        ToLog("NOT WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " Data.length=" + Info.Data.length, 2)
+                        ToLog("NOT WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " Data.length=" + Info.Data.length, 3)
                     }
                 }}})
     }
