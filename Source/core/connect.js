@@ -74,8 +74,6 @@ module.exports = class CConnect extends require("./connect2")
     }
     FindRunNodeContext(addrArr, ip, port, bUpdate)
     {
-        if(!this.IsCorrectNode(ip, port))
-            return undefined;
         var Node, addrStr;
         addrStr = GetHexFromAddres(addrArr)
         Node = this.NodesMap[addrStr]
@@ -85,6 +83,8 @@ module.exports = class CConnect extends require("./connect2")
             Node = this.NodesIPPortMap[key]
             if(!Node)
             {
+                if(!this.IsCorrectNode(ip, port))
+                    return undefined;
                 Node = this.GetNewNode(ip, port, addrStr)
                 if(!Node)
                     return undefined;
@@ -246,7 +246,7 @@ module.exports = class CConnect extends require("./connect2")
     {
         var Node = Info.Node;
         var Data = this.DataFromF(Info);
-        Info.Node.VERSIONMAX = Data.VERSIONMAX
+        Node.VERSIONMAX = Data.VERSIONMAX
         var Name;
         if(Data.PingVersion >= 3 && global.COMMON_KEY && CompareArr(Data.Key, this.KeyToNode) === 0)
         {
