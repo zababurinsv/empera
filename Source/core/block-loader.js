@@ -1508,7 +1508,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var DeltaNode = Node.BlockNumDB - Node.BlockNumDBMin;
         if(DeltaNode < 10000)
         {
-            ToLog("BAD DeltaDB  " + NodeName(Info.Node), 3)
+            ToLog("BAD DeltaDB  " + NodeName(Node), 3)
             Node.BlockProcessCount -= DeltaScore
             return ;
         }
