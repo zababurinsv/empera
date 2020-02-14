@@ -19,7 +19,7 @@ global.JINN_MODULES = [];
 global.JINN_WARNING = 3;
 global.DEBUG_ID = 0;
 global.JINN_STAT = {AllTraffic:0, TxSend:0, TTSend:0, HeaderSend:0, BodySend:0, BodyTxSend:0, SaveDB:0, LoadDB:0, LoadHDB:0,
-    CheckSave:0, MAXFindHeadCount:0, MAXFindEmptyCount:0};
+    CheckSave:0, MAXFindHeadCount:0, MAXFindEmptyCount:0, MAXCacheChainLength:0, };
 JINN_STAT.Clear = function ()
 {
     for(var key in JINN_STAT)

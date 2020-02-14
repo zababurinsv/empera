@@ -16,12 +16,12 @@ function InitClass(Engine)
     {
         var ArrBlock = Engine.GetChainArrByNum(Block.BlockNum);
         ArrBlock.push(Block);
-        Engine.UpdateChainList(Block.BlockNum);
+        Engine.SetChainListForSave(Block.BlockNum);
     };
     Engine.SetBlockData = function (Block,TxData)
     {
         Block.TxData = TxData;
-        Engine.UpdateChainList(Block.BlockNum);
+        Engine.SetChainListForSave(Block.BlockNum);
     };
     Engine.GetPrevBlock = function (Block)
     {
@@ -88,10 +88,10 @@ function InitClass(Engine)
             {
                 Engine.BlockHeadLink++;
                 BlockSet.HeadLinkVer = Engine.BlockHeadLink;
-                Engine.UpdateChainList(BlockSet.BlockNum);
+                Engine.SetChainListForSave(BlockSet.BlockNum);
             }
             SeedBlock.HeadLinkVer = BlockSet.HeadLinkVer;
-            Engine.UpdateChainList(SeedBlock.BlockNum);
+            Engine.SetChainListForSave(SeedBlock.BlockNum);
         }
         return Block;
     };
@@ -197,10 +197,10 @@ function InitClass(Engine)
             {
                 Engine.EmptyBodyLink++;
                 BlockSet.BodyLinkVer = Engine.EmptyBodyLink;
-                Engine.UpdateChainList(BlockSet.BlockNum);
+                Engine.SetChainListForSave(BlockSet.BlockNum);
             }
             SeedBlock.BodyLinkVer = BlockSet.BodyLinkVer;
-            Engine.UpdateChainList(SeedBlock.BlockNum);
+            Engine.SetChainListForSave(SeedBlock.BlockNum);
         }
         return Block;
     };

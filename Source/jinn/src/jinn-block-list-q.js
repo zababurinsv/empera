@@ -7,7 +7,14 @@
 */
 
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
+function DoNode(Engine)
+{
+    if(Engine.TickNum % 10 === 0)
+    {
+        Engine.SaveCacheChainList();
+    }
+}
 function InitClass(Engine)
 {
     Engine.ChainVersionNum = 0;
@@ -37,17 +44,32 @@ function InitClass(Engine)
             Engine.CacheChainDBTree.insert(Find);
             Engine.VersionChainDBTree.insert(Find);
         }
+        if(!bReadOnly)
+            Find.ToSaveDB = 1;
         return Find.ArrBlock;
     };
-    Engine.UpdateChainList = function (BlockNum)
+    Engine.SetChainListForSave = function (BlockNum)
+    {
+        var Find = Engine.FindChainInCache(BlockNum);
+        if(Find)
+        {
+            Find.ToSaveDB = 1;
+        }
+    };
+    Engine.SaveCacheChainList = function ()
     {
         while(Engine.VersionChainDBTree.size > JINN_CONST.MAX_CHAIN_IN_MEMORY)
         {
             var OldItem = Engine.VersionChainDBTree.min();
             Engine.VersionChainDBTree.remove(OldItem);
             Engine.CacheChainDBTree.remove(OldItem);
-            Engine.WriteChainItemToDB(OldItem);
+            if(OldItem.ToSaveDB)
+            {
+                Engine.WriteChainItemToDB(OldItem);
+                OldItem.ToSaveDB = 0;
+            }
         }
+        JINN_STAT.MAXCacheChainLength = Math.max(JINN_STAT.MAXCacheChainLength, Engine.VersionChainDBTree.size);
     };
     Engine.SetMinChainBlockNum = function (BlockNum)
     {

@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-var WEB_WALLET_VERSION = "0." + window.CLIENT_VERSION;
+var WEB_WALLET_VERSION = "1." + window.CLIENT_VERSION;
 var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idCurTabName", "idViewBlockNum", "idViewAccountNum", "idViewDappNum",
 "idLang"];
 var CONFIG_DATA = {PRICE_DAO:{NewAccount:10}, MaxNumBlockDB:0, MaxAccID:0, MaxDappsID:0};
@@ -629,7 +629,7 @@ function SetExplorerData(Data)
         InitDiagram();
     }
     FirstCallDiagram = 0;
-    var StrVersion = " 0." + Data.VersionNum;
+    var StrVersion = " 1." + Data.VersionNum;
     $("idBHeight").innerText = Data.MaxNumBlockDB;
     $("idBVersion").innerText = StrVersion;
     $("idWVersion").innerText = WEB_WALLET_VERSION;

@@ -461,7 +461,7 @@
             FillCurrencyAsync("idCurrencyList");
         WasInitCurrency=1;
 
-        var StrVersion=" 0."+Data.VersionNum;
+        var StrVersion=" 1."+Data.VersionNum;
         if(Data.CODE_VERSION.VersionNum && Data.VersionNum<Data.CODE_VERSION.VersionNum)
         {
             StrVersion=StrVersion+"/0."+Data.CODE_VERSION.VersionNum;
@@ -561,7 +561,7 @@
         //document.getElementById("idAdviser").max=MaxAccID;
 
         SetVisibleBlock("idDevelopService",Data.IsDevelopAccount);
-        SetVisibleBlock("idDevelopService2",Data.IsDevelopAccount);
+        SetVisibleBlock("idDevelopService2",CONFIG_DATA.CONSTANTS.WALLET_DESCRIPTION);
         SetVisibleBlock("idTimeDelta",CONFIG_DATA.CONSTANTS.COMMON_KEY?"inline-block":0);
 
 

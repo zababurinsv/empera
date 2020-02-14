@@ -1251,6 +1251,8 @@ function SaveValuesByArr(Arr,DopStr)
         var name = Arr[i];
         var name2 = DopStr + name;
         var Item = $(name);
+        if(!Item)
+            continue;
         if(Item.type === "checkbox")
             window.Storage.setItem(name2, 0 + Item.checked);
         else
