@@ -118,6 +118,7 @@ module.exports = class CNode
         AddNodeInfo(NODE, "===CreateConnect===")
         CloseSocket(NODE.Socket, "CreateConnect")
         NODE.SocketStart = Date.now()
+        ToLog("Connect to: " + NODE.ip, 3)
         NODE.Socket = net.createConnection(NODE.port, NODE.ip, function ()
         {
             if(NODE.Socket)

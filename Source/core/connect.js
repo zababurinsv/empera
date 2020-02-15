@@ -660,6 +660,12 @@ module.exports = class CConnect extends require("./connect2")
     }
     IsCorrectNode(ip, port)
     {
+        var Arr = ip.match(/[\w\.]/g);
+        if(!Arr || !ip || Arr.length !== ip.length)
+        {
+            ToLog("Not correct ip addres: " + ip, 2)
+            return 0;
+        }
         if(global.UNIQUE_IP_MODE)
         {
             var CountPorts = this.GetCountPortsByIP(ip);
