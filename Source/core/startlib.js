@@ -8,7 +8,9 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 var fs = require("fs");
+
 global.GetDataPath = function GetDataPath(name)
 {
     if(global.DATA_PATH.substr(global.DATA_PATH.length - 1, 1) !== "/")
@@ -19,12 +21,15 @@ global.GetCodePath = function GetCodePath(name)
 {
     if(global.CODE_PATH.substr(global.CODE_PATH.length - 1, 1) !== "/")
         global.CODE_PATH = global.CODE_PATH + "/";
+    
     return GetNormalPathString(global.CODE_PATH + name);
 }
+
 global.GetNormalPathString = function (Str)
 {
     return Str.split("\\").join('/');
 }
+
 global.CheckCreateDir = function (Path,bHidden,IsFile)
 {
     Path = GetNormalPathString(Path);
@@ -32,14 +37,17 @@ global.CheckCreateDir = function (Path,bHidden,IsFile)
     {
         if(!bHidden)
             console.log("Create: " + Path);
+        
         var arr = Path.split('/');
         var CurPath = arr[0];
         if(IsFile)
         {
             arr.length--;
         }
+        
         for(var i = 1; i < arr.length; i++)
         {
+            
             CurPath += "/" + arr[i];
             if(!fs.existsSync(CurPath))
             {
@@ -48,12 +56,14 @@ global.CheckCreateDir = function (Path,bHidden,IsFile)
         }
     }
 }
+
 global.CopyFiles = CopyFiles;
 function CopyFiles(FromPath,ToPath,bRecursive)
 {
     if(fs.existsSync(FromPath))
     {
         var arr = fs.readdirSync(FromPath);
+        
         for(var i = 0; i < arr.length; i++)
         {
             var name1 = FromPath + "/" + arr[i];
@@ -77,6 +87,7 @@ function CopyFiles(FromPath,ToPath,bRecursive)
         }
     }
 }
+
 if(!global.ToLog)
     global.ToLog = function (Str)
     {

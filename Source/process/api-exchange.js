@@ -8,15 +8,20 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 const crypto = require('crypto');
+
+
 WebApi2.GenerateKeys = function (Params)
 {
     var KeyPair = crypto.createECDH('secp256k1');
     var PrivKey = sha3(crypto.randomBytes(32));
     KeyPair.setPrivateKey(Buffer.from(PrivKey));
     var PubKey = KeyPair.getPublicKey('', 'compressed');
+    
     return {result:1, PrivKey:GetHexFromArr(PrivKey), PubKey:GetHexFromArr(PubKey), Meta:Params ? Params.Meta : undefined};
 }
+
 WebApi2.CreateAccount = function (Params,response)
 {
     if(typeof Params === "object" && Params.Name && Params.PrivKey)
@@ -27,9 +32,12 @@ WebApi2.CreateAccount = function (Params,response)
         var TR = {Type:TYPE_TRANSACTION_CREATE, Currency:Params.Currency, PubKey:PubKey, Name:Params.Name, Smart:Params.Smart, };
         var Body = BufLib.GetBufferFromObject(TR, FORMAT_CREATE, 1000, {}, 1);
         Body = Body.slice(0, Body.len + 12);
+        
         if(Params.Confirm === undefined)
             Params.Confirm = 8;
+        
         var Confirm = ParseNum(Params.Confirm);
+        
         SendTransaction(Body, TR, Confirm, function (result,text)
         {
             var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
@@ -46,6 +54,7 @@ WebApi2.CreateAccount = function (Params,response)
                 setTimeout(function ()
                 {
                     var RetFind = GetTransactionByID(Result);
+                    
                     if(RetFind.result)
                         response.end(JSON.stringify(Result));
                     else
@@ -53,39 +62,51 @@ WebApi2.CreateAccount = function (Params,response)
                 }, DeltaTime);
             }
         });
+        
         return null;
     }
+    
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
+
+
 var MapSendID = {};
 WebApi2.Send = function (Params,response,A,request,bJsonRet)
 {
     if(typeof Params !== "object")
         return {result:0};
+    
     var Coin;
     if(typeof Params.Amount === "number")
         Coin = COIN_FROM_FLOAT2(Params.Amount);
     else
         Coin = Params.Amount;
+    
     var FromNum = ParseNum(Params.FromID);
+    
     if(!Coin)
         return {result:0, Meta:Params.Meta, text:"Params.Amount required"};
     if(!FromNum)
         return {result:0, Meta:Params.Meta, text:"Params.FromID required"};
     if(!Params.ToID)
         return {result:0, Meta:Params.Meta, text:"Params.ToID required"};
+    
     if(Params.Confirm === undefined)
         Params.Confirm = 8;
+    
     var Confirm = ParseNum(Params.Confirm);
+    
     var ToPubKeyArr = [];
     var ToID = 0;
     if(typeof Params.ToID === "string" && Params.ToID.length === 66)
         ToPubKeyArr = GetArrFromHex(Params.ToID);
     else
         ToID = ParseNum(Params.ToID);
+    
     var DataFrom = DApps.Accounts.ReadState(FromNum);
     if(!DataFrom)
         return {result:0, Meta:Params.Meta, text:"Error read account: " + FromNum};
+    
     var OperationID;
     if(!MapSendID[FromNum])
     {
@@ -103,17 +124,23 @@ WebApi2.Send = function (Params,response,A,request,bJsonRet)
     OperationID++;
     MapSendID[FromNum].OperationID = OperationID;
     MapSendID[FromNum].Date = Date.now();
+    
     var TR = {Type:111, Version:3, Reserve:0, FromID:FromNum, OperationID:OperationID, To:[{PubKey:ToPubKeyArr, ID:ToID, SumCOIN:Coin.SumCOIN,
             SumCENT:Coin.SumCENT}], Description:Params.Description, Body:[], };
+    
     if(bJsonRet)
         return {result:1, Tx:TR};
+    
     if(!Params.FromPrivKey)
         return {result:0, Meta:Params.Meta, text:"Params.FromPrivKey required"};
     TR.Sign = DApps.Accounts.GetSignTransferTx(TR, GetArrFromHex(Params.FromPrivKey));
+    
     var Body = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER3, MAX_TRANSACTION_SIZE, {}, 1);
     Body = Body.slice(0, Body.len + 12);
+    
     SendTransaction(Body, TR, Confirm, function (result,text)
     {
+        
         var TxID = GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6));
         var Result = {result:result, text:text, TxID:TxID, BlockNum:TR._BlockNum, Meta:Params.Meta, };
         if(typeof Params.F === "function")
@@ -128,6 +155,7 @@ WebApi2.Send = function (Params,response,A,request,bJsonRet)
             setTimeout(function ()
             {
                 var RetFind = GetTransactionByID(Result);
+                
                 if(RetFind.result)
                     response.end(JSON.stringify(Result));
                 else
@@ -135,8 +163,10 @@ WebApi2.Send = function (Params,response,A,request,bJsonRet)
             }, DeltaTime);
         }
     });
+    
     return null;
 }
+
 WebApi2.GetBalance = function (Params,response)
 {
     if(typeof Params === "object")
@@ -151,10 +181,15 @@ WebApi2.GetBalance = function (Params,response)
             return Result;
         }
     }
+    
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
+
+
+
 WebApi2.GetTransaction = function (Params)
 {
+    
     if(typeof Params === "object" && Params.TxID)
     {
         return GetTransactionByID(Params);
@@ -174,8 +209,10 @@ WebApi2.GetTransaction = function (Params)
             }
         }
     }
+    
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
+
 WebApi2.GetHistoryTransactions = function (Params)
 {
     if(typeof Params === "object" && Params.AccountID)
@@ -210,41 +247,50 @@ WebApi2.GetHistoryTransactions = function (Params)
                 }
             }
         }
+        
         var Result = {result:arr.length > 0 ? 1 : 0, History:arr, Tail:DApps.Accounts.DBStateHistory.Read(Params.AccountID), Meta:Params ? Params.Meta : undefined};
         return Result;
     }
+    
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
+
 WebApi2.CreateRawTransaction = function (Params)
 {
     if(typeof Params === "object")
     {
         var Ret = WebApi2.Send(Params, undefined, undefined, undefined, 1);
+        
         TxArrToHex(Ret.Tx);
         Ret.Meta = Params.Meta;
         return Ret;
     }
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
+
 WebApi2.SignRawTransaction = function (Params)
 {
     if(typeof Params === "object" && Params.Tx)
     {
+        
         if(!Params.FromPrivKey)
             return {result:0, Meta:Params.Meta, text:"Params.FromPrivKey required"};
         if(typeof Params.Tx !== "object")
             return {result:0, Meta:Params.Meta, text:"Params.Tx required"};
         if(!Params.Tx.To || !Params.Tx.To.length)
             return {result:0, Meta:Params.Meta, text:"Params.Tx.To required"};
+        
         var TR = Params.Tx;
         TxHexToArr(TR);
         TR.Sign = DApps.Accounts.GetSignTransferTx(TR, GetArrFromHex(Params.FromPrivKey));
         TxArrToHex(TR);
+        
         var Ret = {result:1, Tx:TR, Meta:Params ? Params.Meta : undefined};
         return Ret;
     }
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
+
 WebApi2.SendRawTransaction = function (Params,response)
 {
     if(typeof Params === "object" && Params.Tx)
@@ -255,21 +301,26 @@ WebApi2.SendRawTransaction = function (Params,response)
             return {result:0, Meta:Params.Meta, text:"Params.Tx.To required"};
         if(!Params.Tx.Sign)
             return {result:0, Meta:Params.Meta, text:"Params.Tx.Sign required"};
+        
         var TR = Params.Tx;
         TxHexToArr(TR);
         var Body = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER3, MAX_TRANSACTION_SIZE, {}, 1);
         Body = Body.slice(0, Body.len + 12);
+        
         SendTransaction(Body, TR, Params.Wait, function (result,text)
         {
             var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
                 Meta:Params.Meta, };
+            
             var Str = JSON.stringify(Result);
             response.end(Str);
         });
+        
         return null;
     }
     return {result:0, Meta:Params ? Params.Meta : undefined};
 }
+
 function TxArrToHex(TR)
 {
     if(TR && TR.To && TR.To[0].PubKey)
@@ -293,12 +344,15 @@ function TxHexToArr(TR)
         TR.Sign = GetArrFromHex(TR.Sign);
     else
         TR.Sign = [];
+    
     for(var i = 0; i < TR.To.length; i++)
     {
         TR.To[i].PubKey = GetArrFromHex(TR.To[i].PubKey);
     }
 }
+
 var DELTA_FOR_TIME_TX = 1;
+
 function GetBlockNumTr(arr)
 {
     var BlockNum = DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime();
@@ -309,8 +363,10 @@ function GetBlockNumTr(arr)
             BlockNum2 = BlockNum2 + 10;
         BlockNum = BlockNum2;
     }
+    
     return BlockNum;
 }
+
 function CreateHashBodyPOWInnerMinPower(TR,arr,MinPow,startnonce)
 {
     var BlockNum = GetBlockNumTr(arr);
@@ -318,6 +374,7 @@ function CreateHashBodyPOWInnerMinPower(TR,arr,MinPow,startnonce)
     {
         MinPow = MIN_POWER_POW_TR + Math.log2(arr.length / 128);
     }
+    
     var nonce = startnonce;
     while(1)
     {
@@ -336,6 +393,7 @@ function CreateHashBodyPOWInnerMinPower(TR,arr,MinPow,startnonce)
         }
     }
 }
+
 function SendTransaction(Body,TR,Wait,F)
 {
     if(Body.length > 16000)
@@ -345,8 +403,10 @@ function SendTransaction(Body,TR,Wait,F)
         F(1, TR, Body);
         return ;
     }
+    
     global.GlobalRunID++;
     let WebID = global.GlobalRunID;
+    
     CreateNonceAndSend(0, 0);
     function CreateNonceAndSend(startnonce,NumNext)
     {
@@ -357,12 +417,16 @@ function SendTransaction(Body,TR,Wait,F)
             F(0, TR, Body);
             return ;
         }
+        
         var nonce = CreateHashBodyPOWInnerMinPower(TR, Body, undefined, startnonce);
+        
         process.RunRPC("AddTransactionFromWeb", {WebID:WebID, HexValue:GetHexFromArr(Body)}, function (Err,Result)
         {
             var text = AddTrMap[Result];
+            
             TR._result = Err ? 0 : 1;
             TR._text = text;
+            
             if(text === "Not add" || text === "Bad PoW")
             {
                 CreateNonceAndSend(nonce + 1, NumNext + 1);
@@ -379,6 +443,7 @@ function SendTransaction(Body,TR,Wait,F)
                         return ;
                     }
                 }
+            
             if(Wait && TR._result)
             {
                 global.GlobalRunMap[WebID] = F;

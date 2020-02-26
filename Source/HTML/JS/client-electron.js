@@ -9,13 +9,16 @@
 */
 
 const ipcRenderer = require('electron').ipcRenderer;
+
 function GetDataElectron(Method,ObjPost,Func)
 {
+    
     if(Func === undefined)
     {
         Func = ObjPost;
         ObjPost = null;
     }
+    
     var reply;
     try
     {
@@ -28,4 +31,7 @@ function GetDataElectron(Method,ObjPost,Func)
     if(Func)
         Func(reply);
 }
+
+
+
 window.GetData = GetDataElectron;

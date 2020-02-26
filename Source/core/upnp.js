@@ -8,7 +8,9 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 var natUpnp;
+
 try
 {
     natUpnp = require('nat-upnp');
@@ -16,6 +18,7 @@ try
 catch(e)
 {
 }
+
 if(natUpnp)
 {
     var ClientUPNP = natUpnp.createClient();
@@ -25,10 +28,12 @@ else
 {
     global.StartPortMapping = StartUseStun;
 }
+
 function StartUseUPNP(ip,port,F)
 {
     if(F)
         ToLog("USE UPNP");
+    
     ClientUPNP.portMapping({public:port, private:port, ttl:0}, function (err,results)
     {
         if(!err)
@@ -39,14 +44,17 @@ function StartUseUPNP(ip,port,F)
             StartUseStun(ip, port, F);
             return ;
         }
+        
         if(F)
             CheckMapping();
+        
         if(ip)
         {
             if(F)
                 F(ip);
             return ;
         }
+        
         ClientUPNP.externalIp(function (err,ip2)
         {
             if(err)
@@ -59,17 +67,21 @@ function StartUseUPNP(ip,port,F)
         });
     });
 }
+
 function StartUseStun(ip,port,F)
 {
     ToLog("NOT USE UPNP");
+    
     if(ip)
     {
         if(F)
             F(ip);
         return ;
     }
+    
     let server = Stun.createServer();
     const request = Stun.createMessage(Stun.constants.STUN_BINDING_REQUEST);
+    
     server.on('error', function (err)
     {
         ToLog("Error work stun server #2");
@@ -81,11 +93,14 @@ function StartUseStun(ip,port,F)
         var value = stunMsg.getAttribute(Stun.constants.STUN_ATTR_XOR_MAPPED_ADDRESS).value;
         var ip2 = value.address;
         ToLog("STUN INTERNET IP:" + ip2);
+        
         if(server)
             server.close();
+        
         if(F)
             F(ip2);
     });
+    
     var StrStunAddr = 'stun.l.google.com';
     const dns = require('dns');
     dns.lookup(StrStunAddr, function (err,address,family)
@@ -96,6 +111,7 @@ function StartUseStun(ip,port,F)
             ToLog("Error work stun server #1");
     });
 }
+
 function CheckMapping()
 {
     ClientUPNP.getMappings({local:true}, function (err,arr)
@@ -113,11 +129,13 @@ function CheckMapping()
                 }
             }
         }
+        
         if(!WasFind)
         {
             ToLog("Start UPNP on port: " + SERVER.port);
             StartUseUPNP(SERVER.ip, SERVER.port);
         }
+        
         setTimeout(CheckMapping, 600 * 1000);
     });
 }

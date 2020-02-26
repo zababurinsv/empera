@@ -19,14 +19,21 @@
 **/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Connect"});
+
 var MAX_CONNECT_TIMEOUT = 4 * 1000;
+
 var glWorkConnect = 0;
+
+//Engine context
+
 function DoNode(Engine)
 {
     if(Engine.TickNum % 10 !== 0)
         return ;
+    
     if(Engine.ROOT_NODE)
         return 0;
+    
     glWorkConnect++;
     if(!Engine.WasSendToGenesis && JINN_EXTERN.NodeRoot)
     {
@@ -45,6 +52,7 @@ function DoNode(Engine)
         {
             continue;
         }
+        
         var AddrItem = Child.AddrItem;
         if(!AddrItem || !Child.IsHot())
         {
@@ -56,11 +64,13 @@ function DoNode(Engine)
             }
             continue;
         }
+        
         if(AddrItem.WorkConnect !== glWorkConnect)
         {
             AddrItem.ConnectCount = 0;
             AddrItem.WorkConnect = glWorkConnect;
         }
+        
         AddrItem.ConnectCount++;
         Child.ConnectNum = AddrItem.ConnectCount;
     }
@@ -71,8 +81,10 @@ function DoNode(Engine)
         {
             continue;
         }
+        
         if(Child.AddrItem.ConnectCount <= 1)
             continue;
+        
         if(CompareArr(Engine.IDArr, Child.IDArr) > 0)
         {
             if(Child.InComeConnect)
@@ -92,13 +104,18 @@ function DoNode(Engine)
             }
         }
     }
+    
     Engine.DoStatConnect();
 }
+
+
 function InitClass(Engine)
 {
     Engine.WasSendToGenesis = 0;
     Engine.IndexChildLoop = 0;
+    
     Engine.ConnectArray = [];
+    
     Engine.DoStatConnect = function ()
     {
         var CountDel = 0;
@@ -112,10 +129,12 @@ function InitClass(Engine)
                 CountDel++;
             if(Item.Del)
                 continue;
+            
             CountAll++;
             if(Item.IsOpen())
                 CountActive++;
         }
+        
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
@@ -123,26 +142,33 @@ function InitClass(Engine)
                 CountHot++;
         }
     };
+    
     Engine.SendConnectReq = function (Child)
     {
         if(!Engine.CanConnect(Child))
             return ;
+        
         Engine.CreateConnectionToChild(Child, function (result)
         {
             if(!result)
                 return ;
+            
             Engine.StartHandShake(Child);
         });
     };
+    
     Engine.CanConnect = function (Child)
     {
         if(Engine.ROOT_NODE)
             return 1;
+        
         return 1;
     };
+    
     Engine.OnAddConnect = function (Child)
     {
     };
+    
     Engine.StartDisconnect = function (Child,bSend)
     {
         Engine.DisconnectHot(Child, bSend);
@@ -156,20 +182,26 @@ function InitClass(Engine)
             Engine.OnDeleteConnect(Child);
         }
     };
-    Engine.OnDeleteConnect = function (Child)
+    
+    Engine.OnDeleteConnect = function (Child,StrError)
     {
         if(Engine.InHotStart(Child))
             Engine.DenyHotConnection(Child);
+        
         Engine.DisconnectHot(Child, 0);
+        
         if(Engine.OnDeleteConnectNext)
-            Engine.OnDeleteConnectNext(Child);
+            Engine.OnDeleteConnectNext(Child, StrError);
+        
         Engine.RemoveConnect(Child);
     };
 }
+
 function CanTime(Obj,Name,Period)
 {
     var NameLastTime = Name + "LastTime";
     var NamePeriod = Name + "Period";
+    
     var CurTume = Date.now();
     if(!Obj[NameLastTime])
     {
@@ -182,4 +214,5 @@ function CanTime(Obj,Name,Period)
     Obj[NameLastTime] = CurTume;
     return 1;
 }
+
 global.CanTime = CanTime;

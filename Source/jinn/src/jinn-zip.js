@@ -13,16 +13,21 @@
 **/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
+
 const zlib = require('zlib');
 const Writable = require('stream').Writable;
+
 global.glUseZip = 1;
+
 function InitClass(Engine)
 {
     Engine.PrepareOnSendZip = function (Child,Data)
     {
+        
         if(!Child.EncodeZip)
         {
             const level = zlib.constants.Z_BEST_SPEED;
+            
             Child.EncodeZip = zlib.createGzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_LENGTH, level:level});
             Child.WriterZip = new Writable({objectMode:true, write:function (chunk,encoding,callback)
                 {

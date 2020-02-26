@@ -9,27 +9,35 @@
 */
 
 "use strict";
+
 const fs = require("fs");
 const crypto = require('crypto');
 require('./block-loader-const');
+
 const STAT_BLOCK_LOAD_PERIOD = CONSENSUS_PERIOD_TIME / 5;
+
 module.exports = class CBlock extends require("./rest-loader.js")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
+        
         this.MapMapLoaded = {}
         this.BlockChain = {}
+        
         this.ChainID = 0
         this.BlockID = 0
         this.TaskNodeIndex = 0
         this.LoadedChainList = []
         this.LastChainLoad = undefined
         this.StartLoadBlockTime = 0
+        
         this.LoadHistoryMode = false
         this.MapBlockBodyLoad = {}
+        
         if(!global.ADDRLIST_MODE && !this.VirtualMode)
         {
+            
             let Self = this;
             setTimeout(function ()
             {
@@ -40,49 +48,62 @@ module.exports = class CBlock extends require("./rest-loader.js")
             }, 1000)
         }
     }
+    
     StopNode()
     {
         global.glStopNode = true
     }
+    
     GenesisBlockHeaderDB(Num)
     {
         if(Num < 0)
             return undefined;
+        
         var Block = {BlockNum:Num, TreeHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0], AddrHash:DEVELOP_PUB_KEY0, Hash:this.GetHashGenesis(Num), PowHash:this.GetHashGenesis(Num), PrevHash:[0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], SeqHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], SumHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], Comment1:"GENESIS", Comment2:"", TrCount:0, TrDataPos:0, TrDataLen:0, };
+        
         Block.SeqHash = this.GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
+        
         Block.SumPow = 0
         Block.bSave = true
         return Block;
     }
+    
     CheckStartedBlocks()
     {
         this.FindStartBlockNum()
         if(this.UseTruncateBlockDB)
             this.TruncateBlockDB(this.UseTruncateBlockDB)
+        
         var CurNum = GetCurrentBlockNumByTime();
         if(CurNum <= this.BlockNumDB)
         {
             this.TruncateBlockDB(CurNum)
         }
+        
         CurNum = this.GetMaxNumBlockDB()
         if(CurNum <= this.BlockNumDB)
         {
             this.TruncateBlockDB(CurNum)
             this.BlockNumDB = CurNum
         }
+        
         if(this.BlockNumDB < BLOCK_GENESIS_COUNT)
             this.CreateGenesisBlocks()
+        
         GenerateStartedBlocks()
+        
         if(fs.existsSync(GetCodePath("EXPERIMENTAL/_run.js")))
         {
             require(GetCodePath("EXPERIMENTAL/_run.js"))
         }
+        
         this.LoadMemBlocksOnStart()
     }
+    
     CreateGenesisBlocks()
     {
         var PrevArr = [];
@@ -115,6 +136,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var PrevHash = CalcHashFromArray(arr, true);
         return PrevHash;
     }
+    
     GetLinkHashDB(Block)
     {
         var startPrev = Block.BlockNum - BLOCK_PROCESSING_LENGTH2;
@@ -125,11 +147,17 @@ module.exports = class CBlock extends require("./rest-loader.js")
             var PrevBlock = this.ReadBlockHeaderDB(num);
             if(!PrevBlock || !PrevBlock.bSave)
             {
-                ToError(" ERROR CALC BLOCK: " + Block.BlockNum + " - prev block not found: " + num)
+                var StrDop = "";
+                if(PrevBlock)
+                    StrDop = "  NO Save"
+                else
+                    StrDop = "  NOT Found"
+                ToLogTrace(" ERROR CALC BLOCK: " + Block.BlockNum + " - prev block " + StrDop + ": " + num + "  MaxNumBlockDB=" + this.GetMaxNumBlockDB())
                 return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
             }
             arr.push(PrevBlock.Hash)
         }
+        
         var PrevHash = CalcHashFromArray(arr, true);
         return PrevHash;
     }
@@ -137,20 +165,24 @@ module.exports = class CBlock extends require("./rest-loader.js")
     {
         if(Date.now() - this.StartTime < 10 * 1000)
             return ;
+        
         this.FREE_ALL_MEM_CHAINS()
         if(global.NO_HISTORY_MODE)
         {
             this.LoadHistoryMode = 0
             return ;
         }
+        
         if(global.CREATE_ON_START && !LOCAL_RUN)
             return ;
+        
         if(!GrayConnect())
             this.RelayMode = true
         else
             this.RelayMode = false
         if(!bSilent)
             this.RelayMode = true
+        
         var StartBlockNum;
         if(PrevStartedBlockNum)
         {
@@ -160,36 +192,50 @@ module.exports = class CBlock extends require("./rest-loader.js")
             StartBlockNum = this.BlockNumDB - DeltaNum
             if(StartBlockNum <= 0)
                 StartBlockNum = 15
+            if(StartBlockNum <= this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2 + 1)
+            {
+                DeltaNum = 0
+                StartBlockNum = Math.min(this.BlockNumDB, this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2 + 1)
+                this.BlockNumDB = StartBlockNum
+                this.TruncateBlockDB(StartBlockNum)
+            }
+            
             ToLog("Current DeltaNum=" + DeltaNum + "  StartBlockNum=" + StartBlockNum, 2)
         }
         else
         {
             StartBlockNum = this.BlockNumDB
         }
+        
         this.LoadHistoryMode = true
         this.LoadHistoryMessage = !bSilent
         this.LoadHistoryContext = {PrevBlockNum: - 1, Node:Node, BlockNum:StartBlockNum, MapSend:{}, Foward:1, Pause:0, DeltaBlockNum:10,
             StartTimeHistory:Date.now(), MaxTimeOut:20 * 1000}
+        
         if(!bSilent && !bCheckPoint && REST_START_COUNT)
         {
             this.CheckSyncRest()
         }
-        if(!this.ActualNodes.size)
+        
+        if(this.ActualNodes && !this.ActualNodes.size)
         {
             ToLog("There is no connections to other nodes")
         }
         else
         {
+            
             if(this.LoadHistoryMessage)
             {
                 ToLog("Start synchronization")
             }
         }
     }
+    
     LoopSyncBlockchain()
     {
         if(!this.ActualNodes.size)
             return ;
+        
         var Context;
         if(this.LoadRestContext && this.LoadRestContext.Mode < 200)
             Context = this.LoadRestContext
@@ -210,43 +256,54 @@ module.exports = class CBlock extends require("./rest-loader.js")
             Context.PrevBlockNum = Context.BlockNum
             Context.StartTimeHistory = Date.now()
         }
+        
         if(Context.LoopSyncRest)
         {
             this.LoopSyncRest()
             return ;
         }
+        
         if(Context.Pause)
         {
             if(this.LoadedChainList.length)
             {
                 return ;
             }
+            
             Context.Pause = 0
             Context.BlockNum = this.BlockNumDB
         }
+        
         var BlockDB = this.ReadBlockHeaderDB(Context.BlockNum);
+        
         if(!BlockDB || this.BlockNumDB >= GetCurrentBlockNumByTime() - BLOCK_PROCESSING_LENGTH - 2)
         {
             this.LoadHistoryMode = false
             if(this.LoadHistoryMessage)
                 ToLog("Finish synchronization")
+            
             if(!BlockDB)
                 return ;
         }
+        
         var Ret = this.GetNextNode(Context, Context.BlockNum, 1, Context.BlockNum);
         if(Ret.Result)
         {
             var Node = Ret.Node;
             ToLog("SEND LH Block: " + Context.BlockNum + " to " + NodeName(Node) + " atime=" + Node.DeltaTimeAvg, 4)
+            
             let SELF = this;
             let BLOCKNUM = Context.BlockNum;
             Node.DeltaTimeAvg += 1000
+            
             this.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":{Foward:1, BlockNum:Context.BlockNum, Hash:BlockDB.SumHash},
             })
+            
             Context.F = function (Info)
             {
                 var Node = Info.Node;
                 var Result = SELF.RETBLOCKHEADER_FOWARD(Info);
+                
                 if(Result)
                 {
                     if(Node.LastDeltaTime <= global.PERIOD_GET_BLOCK)
@@ -274,22 +331,29 @@ module.exports = class CBlock extends require("./rest-loader.js")
             return ;
         if(global.NO_HISTORY_MODE)
             return ;
+        
         this.StartLoadBlockTime = Date.now()
+        
         if(Num > this.CurrentBlockNum + TIME_START_SAVE)
         {
             return ;
         }
+        
         bIsSum = bIsSum || false
         var Tree = this.GetHistoryTree("StartLoadBlockHeader");
         if(Tree.find({hash:LoadHash}))
             return false;
         Tree.insert({hash:LoadHash})
+        
         var chain = {id:0, Count:16, BlockNum:Num, IsSum:bIsSum, Hash:LoadHash, time:undefined, FindBlockDB:false, LoadDB:false, LoadCountDB:0,
             LoadSumDB:0, LoadSum:0, ParentChain:undefined, RootChain:undefined, BlockNumStart:Num, HashStart:LoadHash, IsSumStart:bIsSum,
             BlockHead:undefined, MapSend:{}, Comment2:"", StopSend:false, Info:"", Error:false, };
+        
         this.ChainBindMethods(chain)
         chain.AddInfo(StrInfo)
+        
         this.SetChainNum(chain)
+        
         var max = 3;
         while(max > 0)
         {
@@ -297,8 +361,10 @@ module.exports = class CBlock extends require("./rest-loader.js")
             if(!this.SendChainNext(chain, false))
                 break;
         }
+        
         return true;
     }
+    
     SetChainNum(chain)
     {
         if(!chain.id)
@@ -306,14 +372,18 @@ module.exports = class CBlock extends require("./rest-loader.js")
             this.ChainID++
             chain.id = this.ChainID
         }
+        
         this.LoadedChainList.push(chain)
     }
+    
     LoopChainLoad()
     {
         if(glStopNode)
             return ;
+        
         if(this.UseTruncateBlockDB)
             this.TruncateBlockDB(this.UseTruncateBlockDB)
+        
         if(this.LoadHistoryMode)
         {
             this.LoopSyncBlockchain()
@@ -328,9 +398,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             this.SendLoadToBegin()
         }
+        
         var CountStopSend = 0;
         var min_num = this.CurrentBlockNum - MAX_COUNT_CHAIN_LOAD;
         var min_num_load = this.CurrentBlockNum;
+        
         for(var i = 0; i < this.LoadedChainList.length; i++)
         {
             var chain = this.LoadedChainList[i];
@@ -342,8 +414,10 @@ module.exports = class CBlock extends require("./rest-loader.js")
             var RootChain = chain.GetRootChain();
             if(chain.RootChain)
                 chain.RootChain = RootChain
+            
             if(RootChain.BlockNum < min_num_load)
                 min_num_load = RootChain.BlockNum
+            
             if(!chain.StopSend)
             {
                 if(chain.BlockHead)
@@ -364,6 +438,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                                 ToLog("Timeout - stop load chain with id=" + chain.id + "  (" + chain.BlockNum + "-" + chain.BlockNumMax + ")")
                             chain.StopSend = true
                             chain.AddInfo("Stop load #2")
+                            
                             this.ClearChains(chain, 0)
                         }
                 }
@@ -389,9 +464,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 this.SendChainNext(chain, true)
             }
         }
+        
         ADD_TO_STAT("MAX:LOADEDCHAINLIST", this.LoadedChainList.length)
+        
         this.FREE_MEM_CHAINS(min_num_load)
         this.LastLoadedBlockNum = 0
+        
         if(this.LoadedChainList.length > COUNT_HISTORY_BLOCKS_FOR_LOAD)
         {
             if(global.WATCHDOG_DEV)
@@ -399,9 +477,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
             this.FREE_ALL_MEM_CHAINS()
         }
     }
+    
     GetNextNode(task, keyid, checktime, BlockNum)
     {
+        
         var CurTime = GetCurrentTime(0) - 0;
+        
         if(checktime && task.time)
         {
             var Delta = CurTime - task.time;
@@ -411,10 +492,13 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var StartI = 0;
         if(task.Node)
             StartI =  - 1
+        
         var timewait = false;
         var arr = this.GetActualNodes();
+        
         PrepareBlockProcessSort(arr)
         arr.sort(SortNodeBlockProcessCountTimeAvg)
+        
         if(arr.length > 40)
             arr.length = 40
         var NodeCount1 = arr.length;
@@ -424,6 +508,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var NodeCount5 = 0;
         var NodeCount6 = 0;
         var NodeCount7 = 0;
+        
         for(var i = StartI; i < arr.length; i++)
         {
             var Node;
@@ -442,18 +527,21 @@ module.exports = class CBlock extends require("./rest-loader.js")
             if(Node.Active)
             {
                 NodeCount4++
+                
                 if(!Node.INFO || !Node.INFO.WasPing || Node.StopGetBlock || (Node.INFO.CheckPointHashDB && CHECK_POINT.BlockNum && CompareArr(CHECK_POINT.Hash,
                 Node.INFO.CheckPointHashDB) !== 0))
                 {
                     timewait = true
                     continue;
                 }
+                
                 NodeCount5++
                 if(BlockNum !== undefined && (BlockNum < Node.BlockNumDBMin || BlockNum > Node.BlockNumDB))
                 {
                     timewait = true
                     continue;
                 }
+                
                 NodeCount6++
                 if(Node.TaskLastSend)
                 {
@@ -464,13 +552,17 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         continue;
                     }
                 }
+                
                 NodeCount7++
+                
                 var keysend = "" + Node.addrStr + ":" + keyid;
                 if(task.MapSend[keysend])
                     continue;
+                
                 Node.TaskKeyID = keyid
                 Node.TaskLastSend = CurTime
                 task.time = CurTime
+                
                 return {Result:true, Node:Node, timewait:timewait, ArrStat:[NodeCount1, NodeCount2, NodeCount3, NodeCount4, NodeCount5, NodeCount6,
                     NodeCount7]};
             }
@@ -490,8 +582,10 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 return {Result:false, timewait:true};
             }
         }
+        
         return {Result:false, timewait:timewait};
     }
+    
     SendChainNext(chain, checktime)
     {
         var Ret = this.GetNextNode(chain, chain.BlockNum, checktime, chain.BlockNum);
@@ -499,13 +593,16 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             if(!chain.Context)
                 chain.Context = {Chain:chain}
+            
             var Node = Ret.Node;
             this.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":chain.Context, "Data":{Foward:0, BlockNum:chain.BlockNum, Hash:chain.Hash,
                     IsSum:chain.IsSum, Count:chain.Count}})
+            
             var DopStr = "";
             if(chain.IsSum)
                 DopStr = "SUM:"
             chain.AddInfo(chain.BlockNum + "/" + DopStr + this.GetStrFromHashShort(chain.Hash) + "->" + GetNodeStrPort(Node))
+            
             return true;
         }
         return false;
@@ -530,6 +627,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 Count:uint\
             }";
     }
+    
     GetBlockArrFromBuffer_Load(BufRead, Info)
     {
         var BlockArr = GetBlockArrFromBuffer(BufRead, Info);
@@ -537,14 +635,18 @@ module.exports = class CBlock extends require("./rest-loader.js")
             BlockArr.unshift(this.ReadBlockHeaderDB(BLOCK_PROCESSING_LENGTH2 - 1))
         return BlockArr;
     }
+    
     RETBLOCKHEADER_FOWARD(Info)
     {
         if(!Info.Context.Foward)
             return 0;
+        
         var Context = Info.Context;
+        
         Context.time = undefined
         var BufRead = BufLib.GetReadBuffer(Info.Data);
         var arr = this.GetBlockArrFromBuffer_Load(BufRead, Info);
+        
         var arr2 = [];
         var bFindDB = 0;
         if(arr.length > 1 && arr[0].BlockNum === Context.BlockNum)
@@ -554,6 +656,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 var Block = arr[i];
                 if(!Block)
                     return 0;
+                
                 if(Block.BlockNum === CHECK_POINT.BlockNum && !IsZeroArr(CHECK_POINT.Hash))
                 {
                     if(CompareArr(CHECK_POINT.Hash, Block.Hash) !== 0)
@@ -562,6 +665,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     }
                     Context.FindCheckPoint = true
                 }
+                
                 if(!bFindDB)
                 {
                     var BlockDB = this.ReadBlockHeaderDB(Block.BlockNum);
@@ -584,16 +688,20 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     }
             }
         }
+        
         if(arr2.length > 1)
         {
             var Node = Info.Node;
+            
             Context.WasLoadNum = 1
             var chain = {id:0, StopSend:1, WriteToDBAfterLoad:1};
             this.ChainBindMethods(chain)
+            
             this.SetChainNum(chain)
             this.PrepareTransactionsForLoad(chain, arr2)
             Context.BlockNum = Block.BlockNum
             Context.Pause = 1
+            
             return 1;
         }
         else
@@ -603,13 +711,17 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 Context.MapSend[keysend] = 1
             }
         }
+        
         return 0;
     }
+    
     RETBLOCKHEADER(Info, CurTime)
     {
         Info.Node.NextPing = MIN_PERIOD_PING
+        
         if(Info.Context.Foward)
             return this.RETBLOCKHEADER_FOWARD(Info, CurTime);
+        
         var chain = Info.Context.Chain;
         if(chain && !chain.StopSend && !chain.Deleted)
         {
@@ -624,24 +736,30 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 return ;
             }
             chain.AddInfo("L=" + arr.length + " from:" + GetNodeStrPort(Info.Node))
+            
             var NextLoadBlock;
             var PrevBlock;
             for(var i = arr.length - 1; i >= 0; i--)
             {
                 var Block = arr[i];
+                
                 var StrKey = GetHexFromArr(Block.SumHash);
                 var MapBlockLoaded = this.GetMapLoaded(Block.BlockNum);
+                
                 var BlockFind = MapBlockLoaded[StrKey];
                 if(BlockFind && BlockFind.chain !== chain && BlockFind.chain.Deleted)
                 {
                     delete MapBlockLoaded[StrKey]
                     BlockFind = undefined
                 }
+                
                 if(!chain.BlockHead)
                     chain.BlockHead = Block
                 if(!chain.BlockNumMax)
                     chain.BlockNumMax = Block.BlockNum
+                
                 var PrevBlock0 = PrevBlock;
+                
                 if(BlockFind)
                 {
                     if(PrevBlock)
@@ -660,20 +778,25 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     }
                     PrevBlock = Block
                 }
+                
                 if(BlockFind && BlockFind.chain !== chain)
                 {
+                    
                     chain.ParentChain = BlockFind.chain
                     chain.RootChain = BlockFind.chain.GetRootChain()
                     if(chain.RootChain)
                         chain.RootChain.BlockNumMax = chain.BlockHead.BlockNum
+                    
                     chain.StopSend = true
                     chain.AddInfo("StopSend - Find load Block")
+                    
                     break;
                 }
                 else
                     if(!BlockFind)
                     {
                         Block.chain = chain
+                        
                         Block.Node = Info.Node
                         var StrSumHash = GetHexFromArr(Block.SumHash);
                         MapBlockLoaded[StrSumHash] = Block
@@ -681,6 +804,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         MapBlockLoaded["H:" + StrHash] = Block
                         var StrTreeHash = GetHexFromArr(Block.TreeHash);
                         MapBlockLoaded["TH:" + StrTreeHash] = Block
+                        
                         var BlockDB = this.ReadBlockHeaderDB(Block.BlockNum);
                         if(BlockDB)
                         {
@@ -688,20 +812,25 @@ module.exports = class CBlock extends require("./rest-loader.js")
                             chain.LoadCountDB++
                             chain.LoadSumDB += BlockDB.Power
                             chain.LoadSum += Block.Power
+                            
                             if(CompareArr(BlockDB.SumHash, Block.SumHash) === 0)
                             {
                                 Block.FindBlockDB = true
                                 Block.SumPow = BlockDB.SumPow
+                                
                                 chain.FindBlockDB = true
                                 chain.StopSend = true
                                 chain.AddInfo("BlockFind - Find Block in DB")
+                                
                                 NextLoadBlock = undefined
                                 break;
                             }
                         }
+                        
                         NextLoadBlock = Block
                     }
             }
+            
             if(NextLoadBlock && !NextLoadBlock.chain.StopSend)
             {
                 if(arr.length >= chain.Count)
@@ -710,6 +839,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     if(chain.Count > COUNT_BLOCKS_FOR_LOAD)
                         chain.Count = COUNT_BLOCKS_FOR_LOAD
                 }
+                
                 if(chain.LoadCountDB >= COUNT_BLOCKS_FOR_CHECK_POW)
                 {
                     if(chain.LoadSumDB - chain.LoadSum > MAX_DELTA_COUNT_SUM_FOR_LOAD)
@@ -719,33 +849,42 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         chain.AddInfo(Str)
                     }
                 }
+                
                 if(!chain.StopSend)
                     this.BlockChainLoad(NextLoadBlock)
             }
+            
             if(chain.GetFindDB())
                 this.CheckToStartLoadBlockData(chain)
         }
     }
+    
     BlockChainLoad(Block)
     {
         var chain = Block.chain;
         Block.Send = undefined
+        
         chain.BlockNum = Block.BlockNum
         chain.Hash = Block.SumHash
         chain.IsSum = true
+        
         chain.StopSend = false
         chain.FindBlockDB = false
         chain.RootChain = undefined
         chain.ParentChain = undefined
+        
         chain.AddInfo("SetChainSend:" + chain.BlockNum)
     }
+    
     CheckToStartLoadBlockData(chain)
     {
         if(chain.Deleted)
             return ;
+        
         var arr = this.GetArrFromChain(chain);
         if(arr.length < 2)
             return ;
+        
         var BlockMax = arr[arr.length - 1];
         var BlockMin = arr[0];
         var PrevBlock = BlockMin;
@@ -763,10 +902,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
             chain.AddInfo(Str)
             return ;
         }
+        
         var Str = "Start Load blocks: " + (BlockMin.BlockNum + 1) + "  -  " + BlockMax.BlockNum;
         chain.AddInfo(Str)
         this.PrepareTransactionsForLoad(chain, arr)
     }
+    
     GetArrFromChain(chain)
     {
         var arr = [];
@@ -778,14 +919,17 @@ module.exports = class CBlock extends require("./rest-loader.js")
             {
                 break;
             }
+            
             Block = Block.BlockDown
         }
         return arr;
     }
+    
     PrepareTransactionsForLoad(chain, arr, bNoSlice)
     {
         if(!bNoSlice)
             arr = arr.slice(1)
+        
         chain.arr = arr
         if(arr.length > 0)
         {
@@ -793,13 +937,16 @@ module.exports = class CBlock extends require("./rest-loader.js")
             {
                 arr[i].AddToLoad = 1
             }
+            
             chain.CurNumArrLoad = 0
         }
     }
+    
     LoopBlockLoad()
     {
         if(glStopNode)
             return ;
+        
         var CountSend = 0;
         for(var num = 0; num < this.LoadedChainList.length; num++)
         {
@@ -810,6 +957,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 for(var i = chain.CurNumArrLoad; i < chain.arr.length; i++)
                 {
                     Count++
+                    
                     var Block = chain.arr[i];
                     if(!IsZeroArr(Block.TreeHash) && !Block.TreeEq && !Block.LoadDBFinaly)
                     {
@@ -830,8 +978,10 @@ module.exports = class CBlock extends require("./rest-loader.js")
                                     }
                                 }
                             }
+                            
                             Block.MapSend = {}
                         }
+                        
                         if(this.SendBlockNext(Block))
                         {
                             CountSend++
@@ -847,10 +997,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
                             Count = 0
                         }
                 }
+                
                 this.CheckAndWriteLoadedChain(chain)
             }
         }
     }
+    
     CheckAndWriteLoadedChain(chain)
     {
         if(chain.CurNumArrLoad >= chain.arr.length)
@@ -869,9 +1021,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
                             bAllLoaded = false
                             break;
                         }
+                        
                         cur_parent = cur_parent.ParentChain
                     }
                 }
+                
                 if(bAllLoaded)
                 {
                     var arr = [];
@@ -891,11 +1045,14 @@ module.exports = class CBlock extends require("./rest-loader.js")
             }
         }
     }
+    
     WriteLoadedBlockArr(arr)
     {
         if(!arr.length)
             return ;
+        
         var startTime = process.hrtime();
+        
         var CurrentBlockNum = GetCurrentBlockNumByTime();
         var CountBlockWithTx = 0;
         var Block, FirstBlock;
@@ -904,6 +1061,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             Block = arr[i]
             if(Block.BlockNum > this.BlockNumDB + 1)
                 break;
+            
             if(!FirstBlock)
                 FirstBlock = Block
             Block.BlockDown = undefined
@@ -945,6 +1103,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 return ;
             }
             Block.LoadDB = true
+            
             if(Block.BlockNum >= CurrentBlockNum - BLOCK_COUNT_IN_MEMORY)
             {
                 this.CopyBlockToMem(Block)
@@ -955,6 +1114,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     Block.arrContent.length = 0
                 Block.arrContent = undefined
             }
+            
             var BlockMem = this.BlockChain[Block.BlockNum];
             if(BlockMem)
             {
@@ -966,12 +1126,15 @@ module.exports = class CBlock extends require("./rest-loader.js")
             var CurNumStart = Math.max(FirstBlock.BlockNum + 8, Block.BlockNum + 1);
             this.SetNoPOW(CurNumStart, 1, FirstBlock.BlockNum)
         }
+        
         this.FREE_ALL_MEM_CHAINS()
         ADD_TO_STAT_TIME("WRITECHAIN_TO_DB_TIME", startTime)
+        
         if(this.LoadHistoryMessage)
             ToLog("WRITE DATA Count:" + arr.length + "  " + arr[0].BlockNum + "-" + arr[arr.length - 1].BlockNum + "  TxBlocks:" + CountBlockWithTx,
             2)
     }
+    
     CopyBlock(Block, BlockDst)
     {
         BlockDst.BlockNum = Block.BlockNum
@@ -979,6 +1142,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         BlockDst.AddrHash = Block.AddrHash
         BlockDst.PrevHash = Block.PrevHash
         BlockDst.SumHash = Block.SumHash
+        
         BlockDst.SumPow = Block.SumPow
         BlockDst.TrDataPos = Block.TrDataPos
         BlockDst.TrDataLen = Block.TrDataLen
@@ -987,8 +1151,10 @@ module.exports = class CBlock extends require("./rest-loader.js")
         BlockDst.PowHash = Block.PowHash
         BlockDst.TrCount = Block.TrCount
         BlockDst.arrContent = Block.arrContent
+        
         BlockDst.bSave = Block.bSave
     }
+    
     CopyBlockToMem(Block)
     {
         var BlockMem = this.BlockChain[Block.BlockNum];
@@ -1001,6 +1167,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         this.AddToStatBlockConfirmation(Block)
     }
+    
     ClearMaxInBlock(Block)
     {
         Block.MaxPOW = {}
@@ -1012,6 +1179,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         POW.Hash = Block.Hash
         POW.PowHash = Block.PowHash
         POW.SumPow = Block.SumPow
+        
         Block.MaxSum = {}
         POW = Block.MaxSum
         POW.SeqHash = Block.SeqHash
@@ -1023,6 +1191,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         POW.SumHash = Block.SumHash
         POW.SumPow = Block.SumPow
     }
+    
     AddToStatBlockConfirmation(Block)
     {
         if(Block.BlockNum > START_BLOCK_RUN + BLOCK_PROCESSING_LENGTH2)
@@ -1035,27 +1204,34 @@ module.exports = class CBlock extends require("./rest-loader.js")
             ADD_TO_STAT("MAX:BlockConfirmation", BLOCK_PROCESSING_LENGTH)
         }
     }
+    
     SendBlockNext(Block)
     {
         var SendResult = 0;
         var Key = GetHexFromArr(Block.TreeHash);
+        
         var Ret = this.GetNextNode(Block, Key, true, Block.BlockNum);
         if(Ret.Result)
         {
             var Node = Ret.Node;
+            
             var StrStat = Ret.ArrStat.join(",");
             ToLog("SEND GETBLOCK: " + Block.BlockNum + " to " + NodeName(Node) + " atime=" + Node.DeltaTimeAvg + " STAT:" + StrStat, 6)
+            
             if(!Block.Context)
                 Block.Context = {Block:Block}
             this.SendF(Node, {"Method":"GETBLOCK", "Context":Block.Context, "Data":{BlockNum:Block.BlockNum, TreeHash:Block.TreeHash}})
             Node.SendBlockCount++
             SendResult = 1
+            
             let SELF = this;
             Node.DeltaTimeAvg += 1000
             Block.Context.F = function (Info)
             {
                 var Node = Info.Node;
+                
                 var Result = SELF.RETGETBLOCK(Info);
+                
                 if(Result)
                 {
                     if(Node.LastDeltaTime <= global.PERIOD_GET_BLOCK)
@@ -1077,7 +1253,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     SELF.CheckBlockProcess(Node, "")
                 }
             }
+            
             AddInfoBlock(Block, "SendNext")
+            
             if(Block.chain)
                 Block.chain.AddInfo("QUERY BL:" + Block.BlockNum + "/" + this.GetStrFromHashShort(Block.TreeHash) + " TO:" + GetNodeStrPort(Node))
         }
@@ -1088,6 +1266,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 this.ClearChains(Block.chain, true)
             }
         }
+        
         return SendResult;
     }
     ClearChains(DeleteChain, bShow)
@@ -1098,6 +1277,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             return this.LoadedChainList.length;
         }
         var allsum = this.LoadedChainList.length;
+        
         var Sum = 0;
         for(var i = 0; i < this.LoadedChainList.length; i++)
         {
@@ -1116,22 +1296,28 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 }
             }
         }
+        
         if(bShow)
         {
             ToLog("===========ClearChains================= " + DeleteChain.id + " count=" + Sum + "/" + allsum)
         }
+        
         return Sum;
     }
+    
     RecalcLoadBlockStatictic()
     {
         return ;
+        
         var TimeNum = Math.floor(Date.now() / STAT_BLOCK_LOAD_PERIOD);
         if(this.LoadBlockStatNum === TimeNum)
             return ;
         this.LoadBlockStatNum = TimeNum
+        
         const PeriodSec = 5;
         const Period = CONSENSUS_PERIOD_TIME / STAT_BLOCK_LOAD_PERIOD;
         const PeriodCount = PeriodSec * Period;
+        
         var FreeGet = 64;
         var it = this.ActualNodes.iterator(), Node;
         while((Node = it.next()) !== null)
@@ -1142,20 +1328,24 @@ module.exports = class CBlock extends require("./rest-loader.js")
             {
                 arr.shift()
             }
+            
             arr = Node.LoadBlockArr
             arr.push(Node.LoadBlockCount)
             if(arr.length > PeriodCount)
             {
                 arr.shift()
             }
+            
             var SendPackets = 0;
             var LoadPackets = 0;
             for(var i = 0; i < Node.SendBlockArr.length; i++)
                 SendPackets += Node.SendBlockArr[i]
             for(var i = 0; i < Node.LoadBlockArr.length; i++)
                 LoadPackets += Node.LoadBlockArr[i]
+            
             Node.SendBlockCountAll = SendPackets
             Node.LoadBlockCountAll = LoadPackets
+            
             var Nuts = Math.floor(LoadPackets / PeriodSec);
             var RestPackets = SendPackets - LoadPackets;
             var CountGet = 1 + Math.floor(Math.max(0, (Nuts - RestPackets / Period)));
@@ -1163,10 +1353,13 @@ module.exports = class CBlock extends require("./rest-loader.js")
             FreeGet -= Node.CanGetBlocks
             Node.SendBlockCount = 0
             Node.LoadBlockCount = 0
+            
             ADD_TO_STAT("NODE_CAN_GET:" + NodeName(Node), Node.CanGetBlocks, 1)
         }
     }
+    
     static
+    
     GETBLOCK_F()
     {
         return "{\
@@ -1174,25 +1367,32 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     TreeHash:hash,\
                 }";
     }
+    
     RETGETBLOCK(Info)
     {
         Info.Node.NextPing = MIN_PERIOD_PING
+        
         var Block = Info.Context.Block;
+        
         if(Block && !Block.TreeEq)
         {
             var Data = BufLib.GetObjectFromBuffer(Info.Data, FORMAT_BLOCK_TRANSFER, WRK_BLOCK_TRANSFER);
             Info.Data = undefined
+            
             if(Data.BlockNum !== Block.BlockNum || CompareArr(Data.TreeHash, Block.TreeHash) !== 0)
             {
                 this.SetBlockNOSendToNode(Block, Info.Node, "NO")
                 return 0;
             }
+            
             if(Block.chain)
             {
                 Block.chain.AddInfo("Load TR:" + Data.BlockNum + "/" + this.GetStrFromHashShort(Data.TreeHash) + " from:" + GetNodeStrPort(Info.Node))
                 AddInfoBlock(Block, "LOAD TR OK")
             }
+            
             var arrContent = Data.arrContent;
+            
             var TreeHash = CalcTreeHashFromArrBody(Block.BlockNum, arrContent);
             if(CompareArr(Block.TreeHash, TreeHash) !== 0)
             {
@@ -1210,9 +1410,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         if(!this.BADHashCount)
                             this.BADHashCount = 0
                         this.BADHashCount++
+                        
                         ToLog("**** BAD ACCOUNT Hash in block=" + Block.BlockNum + " from:" + NodeName(Info.Node) + " ****")
                         ToLog("May be need to Rewrite transactions from: " + (Block.BlockNum - 2 * DELTA_BLOCK_ACCOUNT_HASH))
                         this.SetBlockNOSendToNode(Block, Info.Node, "BAD CMP ACC HASH")
+                        
                         if(global.WATCHDOG_BADACCOUNT && this.BADHashCount > 60)
                         {
                             ToLog("Run WATCHDOG!")
@@ -1232,6 +1434,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             Block.TrCount = 0
             Block.arrContent.length = 0
             Block.arrContent = undefined
+            
             if(!Ret)
             {
                 this.SetBlockNOSendToNode(Block, Info.Node, "Error write")
@@ -1239,20 +1442,26 @@ module.exports = class CBlock extends require("./rest-loader.js")
             }
             Block.TreeEq = true
             delete Block.Send
+            
             ADD_TO_STAT("BLOCK_LOADED", 1)
+            
             Info.Node.LoadBlockCount++
+            
             if(GrayConnect())
                 Info.Node.BlockProcessCount++
+            
             if(this.LoadHistoryMode)
             {
                 var Context = this.LoadHistoryContext;
                 Context.PrevBlockNum = Context.BlockNum
                 Context.StartTimeHistory = Date.now()
             }
+            
             return 1;
         }
         return 0;
     }
+    
     SetBlockNOSendToNode(Block, Node, Str)
     {
         var Str = GetHexFromArr(Block.TreeHash);
@@ -1262,6 +1471,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(Block.chain)
             Block.chain.AddInfo("" + Block.BlockNum + " " + Str2 + "<-" + GetNodeStrPort(Node))
     }
+    
     FindBlockInLoadedChain(BlockNum, TreeHash)
     {
         var StrTreeHash = GetHexFromArr(TreeHash);
@@ -1272,10 +1482,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
         else
             return undefined;
     }
+    
     CheckSeqHashDB(Block, StrError)
     {
         if(Block.BlockNum < BLOCK_PROCESSING_LENGTH2)
             return true;
+        
         var TreeHashTest = CalcTreeHashFromArrBody(Block.BlockNum, Block.arrContent);
         if(CompareArr(TreeHashTest, Block.TreeHash) !== 0)
         {
@@ -1284,25 +1496,31 @@ module.exports = class CBlock extends require("./rest-loader.js")
             var Str = StrError + " #3 ERROR TREEHASH: " + Block.BlockNum + "  Hex:" + StrHex0.substr(0, 12) + " != " + StrHex.substr(0,
             12);
             if(global.WATCHDOG_DEV)
-                ToErrorTrace(Str)
+                ToLogTrace(Str)
             else
                 ToError(Str)
             return false;
         }
+        
         var PrevHash = this.GetLinkHashDB(Block);
+        
         var testSeqHash = this.GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
+        
         var TestValue = GetHashFromSeqAddr(testSeqHash, Block.AddrHash, Block.BlockNum, PrevHash);
+        
         if(CompareArr(TestValue.Hash, Block.Hash) !== 0)
         {
             var Str = StrError + " #2 ERROR HASH - block num: " + Block.BlockNum + "  " + GetHexFromArr(Block.Hash) + "/" + GetHexFromArr(TestValue.Hash);
             if(global.WATCHDOG_DEV)
-                ToErrorTrace(Str)
+                ToLogTrace(Str)
             else
                 ToError(Str)
             return false;
         }
+        
         return true;
     }
+    
     ToLogBlock(Block, StrInfo, arr)
     {
         ToLog("-------------" + StrInfo)
@@ -1314,17 +1532,21 @@ module.exports = class CBlock extends require("./rest-loader.js")
         ToLog("AddrHash=" + GetHexFromArr(Block.AddrHash))
         ToLog("SumHash=" + GetHexFromArr(Block.SumHash))
         ToLog("SumPow=" + Block.SumPow)
+        
         for(var i = 0; i < arr.length; i++)
         {
             ToLog("arr[" + i + "]=" + GetHexFromArr(arr[i]))
         }
     }
+    
     GetBlock(num, bToMem, bReadBody)
     {
         if(bToMem === undefined)
             bToMem = true
+        
         if(num < this.CurrentBlockNum - BLOCK_COUNT_IN_MEMORY)
             bToMem = false
+        
         var Block = this.BlockChain[num];
         if(!Block)
         {
@@ -1332,6 +1554,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 Block = this.ReadBlockDB(num)
             else
                 Block = this.ReadBlockHeaderDB(num)
+            
             if(bToMem)
             {
                 this.BlockChain[num] = Block
@@ -1339,23 +1562,27 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         return Block;
     }
+    
     GetMapLoaded(num)
     {
         if(num < 0)
             num = 0
         var index = Math.floor(num / BLOCK_COUNT_IN_MEMORY);
+        
         var map = this.MapMapLoaded[index];
         if(!map)
         {
             map = {}
             this.MapMapLoaded[index] = map
         }
+        
         return map;
     }
     GetMapLoadedFromChain(chain)
     {
         return this.GetMapLoaded(chain.BlockNumStart);
     }
+    
     FREE_MEM_BLOCKS(NumMax)
     {
         for(var key in this.BlockChain)
@@ -1370,6 +1597,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     FREE_MEM_CHAINS(NumMax)
     {
         this.FREE_MEM_BLOCKS(NumMax - BLOCK_COUNT_IN_MEMORY)
+        
         var maxArrMap = Math.floor(NumMax / BLOCK_COUNT_IN_MEMORY) - 1;
         if(maxArrMap >= 0)
         {
@@ -1384,7 +1612,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
     }
     FREE_ALL_MEM_CHAINS()
     {
+        
         this.FREE_MEM_BLOCKS(this.BlockNumDB - BLOCK_COUNT_IN_MEMORY)
+        
         for(var i = 0; i < this.LoadedChainList.length; i++)
         {
             var chain = this.LoadedChainList[i];
@@ -1394,16 +1624,20 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 chain.ChainMax = undefined
             }
         }
+        
         if(!this.LoadHistoryMode)
         {
             this.AddValueToHistory("LoadedChainList", this.LoadedChainList)
             this.AddValueToHistory("MapMapLoaded", this.MapMapLoaded)
         }
+        
         this.LoadedChainList = []
         this.MapMapLoaded = {}
+        
         if(typeof gc === "function")
             gc()
     }
+    
     AddValueToHistory(typedata, val)
     {
         var Arr = global.HistoryBlockBuf.LoadValue(typedata, 1);
@@ -1414,6 +1648,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         Arr.push(val)
     }
+    
     GetHistoryTree(typedata)
     {
         var Tree = global.HistoryBlockBuf.LoadValue(typedata, 1);
@@ -1424,6 +1659,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         return Tree;
     }
+    
     ChainBindMethods(chain)
     {
         function GetRootChain()
@@ -1451,6 +1687,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             else
                 return false;
         };
+        
         chain.GetRootChain = GetRootChain.bind(chain)
         chain.GetFindDB = GetFindDB.bind(chain)
         chain.AddInfo = AddInfoChain.bind(chain)
@@ -1459,6 +1696,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     {
         return Str + ":##:" + Math.floor(this.CurrentBlockNum / BLOCK_COUNT_IN_MEMORY);
     }
+    
     GetStrFromHashShort(Hash)
     {
         var Str = GetHexFromArr(Hash);
@@ -1467,6 +1705,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         else
             return "";
     }
+    
     ToLogTime(startTime, Str)
     {
         const Time = process.hrtime(startTime);
@@ -1495,6 +1734,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         this.MapBlockBodyLoad = {}
         if(!arr.length)
             return ;
+        
         var chain = {StopSend:1, WriteToDBAfterLoad:1, BodyLoad:1};
         this.ChainBindMethods(chain)
         this.SetChainNum(chain)
@@ -1525,6 +1765,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         this.CheckBlockProcess(Node, "CheckBotNet")
         Node.BlockProcessCount -= DeltaScore
+        
         let SELF = this;
         this.SendF(Node, {"Method":"GETBLOCKHEADER", "Data":{Foward:0, BlockNum:BlockNum, Hash:BlockDB.SumHash, IsSum:1, Count:1},
             "Context":{F:function (Info)
@@ -1547,6 +1788,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 }}})
     }
 };
+
 global.LoadBlockFromNetwork = function (Params,F)
 {
     var BlockNum = Params.BlockNum;
@@ -1556,14 +1798,18 @@ global.LoadBlockFromNetwork = function (Params,F)
         F(1);
         return ;
     }
+    
     ToLog("Start DownloadBlockFromNetwork:" + BlockNum, 2);
     var TaskLoadBlockFromNetwork = {MapSend:{}};
     var Ret = SERVER.GetNextNode(TaskLoadBlockFromNetwork, BlockNum, 1, BlockNum);
     if(Ret.Result)
     {
+        
         let Node = Ret.Node;
+        
         SERVER.SendF(Node, {"Method":"GETBLOCK", "Data":{BlockNum:BlockNum, TreeHash:[]}, "Context":{F:function (Info)
                 {
+                    
                     var Block = BufLib.GetObjectFromBuffer(Info.Data, FORMAT_BLOCK_TRANSFER, WRK_BLOCK_TRANSFER);
                     Info.Data = undefined;
                     if(!Block.BlockNum || Block.BlockNum !== Params.BlockNum)
@@ -1572,8 +1818,11 @@ global.LoadBlockFromNetwork = function (Params,F)
                         F(1);
                         return ;
                     }
+                    
                     ToLog("Got BlockFromNetwork:" + Params.BlockNum + " from " + NodeName(Info.Node), 2);
+                    
                     var ResError;
+                    
                     if(!Block.arrContent || (Block.arrContent.length === 0 && !IsZeroArr(Block.TreeHash)))
                     {
                         ToLog("ERR BLOCK:\n" + JSON.stringify(Block), 2);
@@ -1584,6 +1833,7 @@ global.LoadBlockFromNetwork = function (Params,F)
                         ResError = 0;
                         SERVER.WriteBlockDB(Block);
                     }
+                    
                     F(ResError, Block);
                 }}, });
     }
@@ -1593,12 +1843,17 @@ global.LoadBlockFromNetwork = function (Params,F)
         F(1);
     }
 }
+
+
 global.CleanChain = GenerateChain;
+
 function GenerateStartedBlocks()
 {
+    
     if(CREATE_ON_START)
     {
         global.CAN_START = true;
+        
         var StartBlockTime;
         if(global.START_BLOCK_RUN)
         {
@@ -1606,6 +1861,7 @@ function GenerateStartedBlocks()
         }
         else
         {
+            
             SERVER.FindStartBlockNum();
             StartBlockTime = SERVER.BlockNumDB;
         }
@@ -1614,18 +1870,22 @@ function GenerateStartedBlocks()
     {
         if(SERVER.BlockNumDB < BLOCK_GENESIS_COUNT)
             SERVER.CreateGenesisBlocks();
+        
         if(CREATE_ON_START)
         {
             GenerateChain(StartBlockTime);
         }
     }
+    
     if(global.TEST_TRANSACTION_GENERATE)
         setInterval(TransactionGenerate, 1000);
 }
+
 function TransactionGenerate()
 {
     if(!global.TEST_TRANSACTION_GENERATE)
         return ;
+    
     var start = SERVER.TreePoolTr.size;
     for(var n = start; n < TEST_TRANSACTION_GENERATE; n++)
     {
@@ -1633,6 +1893,7 @@ function TransactionGenerate()
         SERVER.AddTransaction(Tr);
     }
 }
+
 function GenerateChain(StartBlockTime)
 {
     if(StartBlockTime < BLOCK_PROCESSING_LENGTH)
@@ -1641,6 +1902,7 @@ function GenerateChain(StartBlockTime)
     ToLog("========START GENERATE STARTING BLOCKS======== from : " + nStartBlockGenerate);
     var CountG = 0;
     var PrevBlock = SERVER.ReadBlockHeaderDB(nStartBlockGenerate - 1);
+    
     for(var n = nStartBlockGenerate; n <= GetCurrentBlockNumByTime(); n++)
     {
         var Block = {BlockNum:n, TreeHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1658,10 +1920,13 @@ function GenerateChain(StartBlockTime)
                 ToLog("*************************** ERROR Not found : " + BlockNum);
                 return false;
             }
+            
             arr.push(Prev.Hash);
         }
+        
         Block.PrevHash = CalcHashFromArray(arr, true);
         Block.SeqHash = SERVER.GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash);
+        
         if(n % 100000 === 0)
             ToLog("Create: " + n);
         var Result = CreateHashMinimal(Block, 0);
@@ -1669,32 +1934,41 @@ function GenerateChain(StartBlockTime)
         {
             throw "ERROR CreateHashMinimal!!";
         }
+        
         Block.SumPow = PrevBlock.SumPow + GetPowPower(Block.Hash);
+        
         SERVER.WriteBlockDB(Block);
         CountG++;
+        
         if(Block.BlockNum >= GetCurrentBlockNumByTime() - 100)
         {
             SERVER.BlockChain[Block.BlockNum] = Block;
             Block.EndExchange = 1;
             Block.bSave = 1;
         }
+        
         PrevBlock = Block;
     }
     ToLog("======Was generating " + CountG + " blocks from " + nStartBlockGenerate + " to " + n + " curnum=" + GetCurrentBlockNumByTime());
     SERVER.LoadMemBlocksOnStart();
     SERVER.FREE_ALL_MEM_CHAINS();
+    
     if(Block && WALLET && WALLET.WalletOpen)
     {
         var CheckNum = Block.BlockNum - 8;
         var Ret = SetCheckPointOnBlock(CheckNum);
         ToLog("***************************SetCheckPoint result:" + Ret + " on Block:" + CheckNum);
     }
+    
     SERVER.ClearBufMap();
     global.CAN_START = true;
     SERVER.LoadHistoryMode = false;
+    
     return true;
 }
+
 global.HistoryBlockBuf = new STreeBuffer(HISTORY_BLOCK_COUNT * 1000, CompareItemHashSimple, "string");
+
 function UseScoreBlockLoad(Node,BlockNum)
 {
     if(Node.Name)
@@ -1703,16 +1977,23 @@ function UseScoreBlockLoad(Node,BlockNum)
     var Delta = MaxBlockNum - BlockNum;
     if(Delta < 20)
         return 0;
+    
     return 1;
 }
+
+
+
 function SortNodeBlockProcessCountTimeAvg(a,b)
 {
     if(b.BlockProcessCountLg !== a.BlockProcessCountLg)
         return b.BlockProcessCountLg - a.BlockProcessCountLg;
+    
     if(a.DeltaTimeAvg !== b.DeltaTimeAvg)
         return a.DeltaTimeAvg - b.DeltaTimeAvg;
+    
     return a.id - b.id;
 }
+
 function GetBlockFromNode(Addr,BlockNum)
 {
     var Node = FindNodeByAddr(Addr);
@@ -1722,9 +2003,11 @@ function GetBlockFromNode(Addr,BlockNum)
         Block.MapSend = {};
         Block.Context = {Block:Block};
         SERVER.SendF(Node, {"Method":"GETBLOCK", "Context":Block.Context, "Data":{BlockNum:Block.BlockNum, TreeHash:Block.TreeHash}});
+        
         Block.Context.F = function (Info)
         {
             var Node = Info.Node;
+            
             var Result = SERVER.RETGETBLOCK(Info);
             ToLog("----------------------------------------------------------------");
             ToLog("TEST BLOCK: " + Block.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime + " Result=" + Result);
@@ -1739,17 +2022,22 @@ function GetHeaderFromNode(Addr,BlockNum,bForward)
     {
         var BlockDB = SERVER.ReadBlockHeaderDB(BlockNum);
         let Context = {Foward:1, BlockNum:BlockDB.BlockNum, MapSend:{}};
+        
         var Data;
         if(bForward)
             Data = {Foward:1, BlockNum:BlockNum, Hash:BlockDB.SumHash};
         else
             Data = {Foward:0, BlockNum:BlockNum, Hash:BlockDB.SumHash, IsSum:1, Count:1};
+        
         SERVER.SendF(Node, {"Method":"GETBLOCKHEADER", "Context":Context, "Data":Data, });
+        
         Context.F = function (Info)
         {
             var Node = Info.Node;
+            
             var BufRead = BufLib.GetReadBuffer(Info.Data);
             var arr = SERVER.GetBlockArrFromBuffer_Load(BufRead, Info);
+            
             ToLog("----------------------------------------------------------------");
             ToLog("TEST HEADER: " + BlockDB.BlockNum + " from " + NodeName(Node) + " ltime=" + Node.LastDeltaTime + " arr=" + arr.length);
             ToLog("WANT SUMHASH = " + GetHexFromArr(BlockDB.SumHash));

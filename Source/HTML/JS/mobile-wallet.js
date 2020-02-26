@@ -8,20 +8,26 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 var WEB_WALLET_VERSION = "1." + window.CLIENT_VERSION;
+
 var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idCurTabName", "idViewBlockNum", "idViewAccountNum", "idViewDappNum",
 "idLang"];
+
 var CONFIG_DATA = {PRICE_DAO:{NewAccount:10}, MaxNumBlockDB:0, MaxAccID:0, MaxDappsID:0};
 var CountViewRows = 20;
 var DefAccounts = {BlockName:"idPaginationAccount", NumName:"idViewAccountNum", TabName:"explorer_accounts", APIName:"GetAccountList"};
 var DefBlock = {BlockName:"idPaginationBlock", NumName:"idViewBlockNum", TabName:"explorer_blocks", APIName:"GetBlockList"};
 var DefDapps = {BlockName:"idPaginationDapps", NumName:"idViewDappNum", TabName:"dapps_list", APIName:"GetDappList", CountViewRows:10,
     FilterName:"idCategory"};
+
 function SetImg()
 {
 }
+
 var CONNECT_STATUS = 0;
 var NotModalClose = 0;
+
 function OnResetPage()
 {
     var HasPassword = IsLockedWallet();
@@ -31,11 +37,14 @@ function OnResetPage()
         DoExitWallet();
     }
 }
+
 window.onload = function ()
 {
     DoNewSession();
+    
     InitAccountsCard();
     DoLangScript();
+    
     InitWalletKeyName();
     if(IsLocalClient())
     {
@@ -54,6 +63,7 @@ window.onload = function ()
             }
         });
     }
+    
     var HasPassword = IsLockedWallet();
     if(HasPassword)
     {
@@ -66,6 +76,7 @@ window.onload = function ()
         Storage.setItem(WALLET_KEY_EXIT, "");
     }
     SetUsePassword(HasPassword);
+    
     window.onkeydown = function (e)
     {
         if(e.keyCode === 27)
@@ -80,7 +91,9 @@ window.onload = function ()
                     OnConfirmOK();
             }
     };
+    
     $("idAccountsList").addEventListener("click", MyToggleList);
+    
     if(window.addEventListener)
     {
         window.addEventListener("message", OnMessage);
@@ -89,12 +102,14 @@ window.onload = function ()
     {
         window.attachEvent("onmessage", OnMessage);
     }
+    
     if(UseInnerPage())
     {
         AddFrame("HistoryPage", "./history.html");
         AddFrame("BlockViewerPage", "./blockviewer.html");
     }
 }
+
 function SetServerList(Name)
 {
     NETWORK_NAME = Name;
@@ -102,6 +117,7 @@ function SetServerList(Name)
     $("idCurNetwork").value = NETWORK_NAME;
     Storage.setItem("NETWORK", NETWORK_NAME);
 }
+
 function OnLoad()
 {
     {
@@ -111,16 +127,22 @@ function OnLoad()
         }
         $("idCurNetwork").value = NETWORK_NAME;
     }
+    
     LoadValues();
+    
     InitDappsCard();
+    
     StartWebWallet();
+    
     setInterval(UpdatesExplorerData, 2000);
     setInterval(UpdatesAccountsData, 2000);
+    
     DoStableScroll();
     window.onmousemove = function (event)
     {
         SetDiagramMouseX(event);
     };
+    
     if(window.location.hash)
     {
         var LocationPath = window.location.hash.substr(1);
@@ -130,23 +152,27 @@ function OnLoad()
         }
     }
 }
+
 function ChangeNetwork(bStart)
 {
     FirstAccountsData = 1;
     CONNECT_STATUS = 0;
     NETWORK_NAME = $("idCurNetwork").value;
     Storage.setItem("NETWORK", NETWORK_NAME);
+    
     if(bStart)
         StartWebWallet();
     else
         ConnectWebWallet();
 }
+
 function UpdateTabs()
 {
     UpdatesExplorerData();
     UpdatesAccountsData();
     ViewDapps();
 }
+
 function OnFindServer()
 {
     if(!MainServer)
@@ -156,12 +182,16 @@ function OnFindServer()
         Storage.setItem("MainServer", undefined);
         return ;
     }
+    
     CONNECT_STATUS = 2;
     Storage.setItem("MainServer", JSON.stringify({ip:MainServer.ip, port:MainServer.port}));
     FillCurrencyAsync("idCurrencyList");
+    
     SetDataUpdateTime(10);
+    
     UpdateTabs();
 }
+
 function LoadValues()
 {
     var StrDelList = Storage.getItem("DelList");
@@ -169,19 +199,23 @@ function LoadValues()
         DelList = JSON.parse(StrDelList);
     if(typeof DelList !== "object")
         DelList = {};
+    
     if(LoadValuesByArr(SaveIdArr))
     {
         ChangeLang();
     }
     InitPrivKey();
 }
+
 function SaveValues()
 {
     SaveValuesByArr(SaveIdArr);
     Storage.setItem("DelList", JSON.stringify(DelList));
 }
+
 var TabArr = [{name:"TabWelcome"}, {name:"TabWalletSet"}, {name:"TabKeySet"}, {name:"TabAccounts"}, {name:"TabSend"}, {name:"TabDapps"},
     {name:"TabExplorer"}, {name:"TabLogo"}];
+
 function SelectTab(name)
 {
     SetStatus("");
@@ -189,10 +223,12 @@ function SelectTab(name)
     SetVisibleTab();
     SaveValues();
     OnSelectTab(name);
+    
     if(!isMobile())
         if(name && history.pushState)
             history.pushState(null, null, "#" + name);
 }
+
 function OnSelectTab(name)
 {
     if(!GetPrivKey())
@@ -201,6 +237,7 @@ function OnSelectTab(name)
         SetPrivKey($("idPrivKeyEdit").value.trim());
         InitPrivKey();
     }
+    
     if(name === "TabAccounts" || name === "TabSend")
     {
         UpdatesAccountsData(1);
@@ -216,11 +253,13 @@ function OnSelectTab(name)
                 ViewDapps();
             }
 }
+
 function SetVisibleTab()
 {
     var CurTabName = $("idCurTabName").value;
     if(!CurTabName || CurTabName === "undefined")
         CurTabName = TabArr[0].name;
+    
     var str;
     for(var i = 0; i < TabArr.length; i++)
     {
@@ -238,6 +277,7 @@ function SetVisibleTab()
             Item.style.display = 'none';
             str = "";
         }
+        
         var ItemM = $("M" + name);
         if(ItemM)
         {
@@ -252,6 +292,7 @@ function SetVisibleTab()
         }
     }
 }
+
 function IsPrivateMode()
 {
     var PrivKeyStr = GetPrivKey();
@@ -260,6 +301,8 @@ function IsPrivateMode()
     else
         return 0;
 }
+
+
 function SetVisiblePrivKey()
 {
     if(bShowPrivKey)
@@ -273,10 +316,12 @@ function OnVisiblePrivKey()
     bShowPrivKey = !bShowPrivKey;
     SetVisiblePrivKey();
 }
+
 function SetPubKeyHTML()
 {
     $("idPubKeyStatic").innerText = GetPubKey();
 }
+
 function GenerateKeyNew()
 {
     var arr = new Uint8Array(32);
@@ -291,6 +336,7 @@ function OnGenerateKeyNew()
 function OnEditPrivKey()
 {
 }
+
 function OnPrivKeyOK()
 {
     SetPrivKey($("idPrivKeyEdit").value.trim());
@@ -298,14 +344,18 @@ function OnPrivKeyOK()
     SelectTab('TabKeySet');
     ClearSend();
 }
+
 function OnPrivKeyCancel()
 {
     InitPrivKey();
     SelectTab('TabKeySet');
 }
+
+
 var FirstAccountsData = 1;
 var AccountsCount =  - 1;
 var DataUpdateTime = 0;
+
 function SetDataUpdateTime(PeriodSec)
 {
     DataUpdateTime = Date.now() + 1000 * PeriodSec;
@@ -314,13 +364,16 @@ function UpdatesAccountsData(bGetData)
 {
     if(IsVisibleClass(".accounts-info__add"))
         return ;
+    
     if(!CONNECT_STATUS)
         return ;
+    
     var Str = GetPubKey();
     if(!Str)
     {
         return ;
     }
+    
     if(!bGetData)
     {
         if(IsVisibleBlock("TabAccounts") || DataUpdateTime >= Date.now())
@@ -328,17 +381,21 @@ function UpdatesAccountsData(bGetData)
             bGetData = 1;
         }
     }
+    
     if(!bGetData)
         return ;
+    
     GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData}, function (Data,responseText)
     {
         if(!Data || !Data.result || !Data.arr)
             return ;
+        
         if(AccountsCount === Data.arr.length)
         {
             if(IsVisibleClass(".accounts-info__add2"))
                 return ;
         }
+        
         AccountsCount = Data.arr.length;
         SetVisibleClass(".accounts-info__acc-list", AccountsCount);
         SetVisibleClass(".accounts-info__empty", !AccountsCount);
@@ -353,6 +410,7 @@ function UpdatesAccountsData(bGetData)
         FirstAccountsData = 0;
     });
 }
+
 function ViewAddAccount(Visible)
 {
     SetVisibleClass(".accounts-info__add", Visible);
@@ -365,6 +423,7 @@ function OnViewAddAccount()
     ViewAddAccount(1);
     $("idAccountName").focus();
 }
+
 function CancelAddAccount()
 {
     ViewAddAccount(0);
@@ -376,6 +435,7 @@ function OnChangeAccName()
 function CancelCreateAccount()
 {
 }
+
 function OnAddAccount()
 {
     var Name = $("idAccountName").value;
@@ -391,6 +451,8 @@ function OnAddAccount()
     SetVisibleClass(".accounts-info__add", 0);
     SetVisibleClass(".accounts-info__add2", 1);
 }
+
+
 var WasAccountsDataStr;
 var StrAccCardTemplate;
 function InitAccountsCard()
@@ -401,8 +463,10 @@ function InitAccountsCard()
         $("AccCardTemplate").outerHTML = "";
     }
 }
+
 function SetAccountsCard(Data,AccountsDataStr)
 {
+    
     if(!Data || !Data.result)
     {
         return ;
@@ -410,6 +474,7 @@ function SetAccountsCard(Data,AccountsDataStr)
     if(AccountsDataStr === WasAccountsDataStr)
         return ;
     WasAccountsDataStr = AccountsDataStr;
+    
     var arr = [];
     for(var i = 0; Data.arr && i < Data.arr.length; i++)
     {
@@ -425,18 +490,25 @@ function SetAccountsCard(Data,AccountsDataStr)
         var options = Select.options;
         options.length = arr.length;
     }
+    
     MaxBlockNum = GetCurrentBlockNumByTime();
+    
     $("idListCount").innerText = arr.length;
+    
     var StrList = "";
+    
     var ListTotal = {};
+    
     for(var i = 0; arr && i < arr.length; i++)
     {
         var Item = arr[i];
         Item.MyAccount = true;
+        
         var Num = ParseNum(Item.Num);
         if(!MapAccounts[Num])
             MapAccounts[Num] = {};
         CopyObjKeys(MapAccounts[Num], Item);
+        
         var option = Select.options[i];
         var StrText = GetAccountText(Item, Num, 1);
         if(option.text !== StrText)
@@ -467,6 +539,7 @@ function SetAccountsCard(Data,AccountsDataStr)
         Str = Str.replace("$Value.SumCOIN", Str1);
         Str = Str.replace("$Value.SumCENT", Str2);
         Str = Str.replace("$Value.CurrencyName", StrCurrencyName);
+        
         var CurrencyObj = Item.CurrencyObj;
         if(!CurrencyObj)
             CurrencyObj = {IconBlockNum:0, Num:0};
@@ -474,7 +547,9 @@ function SetAccountsCard(Data,AccountsDataStr)
         var CurrencyPath = RetIconPath(CurrencyObj);
         if(CurrencyPath.substr(0, 6) !== "/file/")
             Str = Str.replace("prod-card__currency--with-dot", "");
+        
         Str = Str.replace("$Item.Name", escapeHtml(Item.Name));
+        
         var SmartObj = Item.SmartObj;
         if(!SmartObj)
             SmartObj = {Name:"", Num:0, HTMLLength:0};
@@ -483,6 +558,7 @@ function SetAccountsCard(Data,AccountsDataStr)
         Str = Str.replace("$SmartObj.Name", escapeHtml(SmartObj.Name));
         Str = Str.replace(/\$SmartObj.Num/g, SmartObj.Num);
         Str = Str.replace(/\$SmartObj.HTMLLength/g, SmartObj.HTMLLength);
+        
         if(SmartObj.Num)
         {
             Str = Str.replace("prod-card__link--connect", "myhidden");
@@ -492,8 +568,10 @@ function SetAccountsCard(Data,AccountsDataStr)
             Str = Str.replace("prod-card__link--dapp", "myhidden");
             Str = Str.replace("prod-card__dropdown", "prod-card__dropdown nodapp");
         }
+        
         StrList += Str;
         Str = "";
+        
         if(Item.Value.SumCOIN >= 1e12)
             continue;
         var Total = ListTotal[Item.Currency];
@@ -506,6 +584,7 @@ function SetAccountsCard(Data,AccountsDataStr)
     }
     $("idAccountsList").innerHTML = StrList;
     StrList = "";
+    
     var StrTotal = "";
     for(var key in ListTotal)
     {
@@ -513,6 +592,7 @@ function SetAccountsCard(Data,AccountsDataStr)
         StrTotal += '<div class="total-info__item"><dt>' + Total.Name + '</dt><dd>' + STRING_FROM_COIN(Total) + '</dd></div>';
     }
     $("idTotalList").innerHTML = StrTotal;
+    
     var CurentValue = LoadMapAfter["idAccount"];
     if(CurentValue)
     {
@@ -520,6 +600,7 @@ function SetAccountsCard(Data,AccountsDataStr)
         delete LoadMapAfter["idAccount"];
     }
 }
+
 var glWasSmart;
 var glWasNumAccount;
 function ChangeSmartLocal(NumAccount,WasSmart)
@@ -529,6 +610,7 @@ function ChangeSmartLocal(NumAccount,WasSmart)
         SetError("Pls, open wallet");
         return 0;
     }
+    
     openModal('idSmartEnter');
     if(WasSmart)
         $("idSmartNum").value = WasSmart;
@@ -538,11 +620,13 @@ function ChangeSmartLocal(NumAccount,WasSmart)
     glWasNumAccount = NumAccount;
     glWasSmart = WasSmart;
 }
+
 function DoSetSmartLocal()
 {
     DoChangeSmart(glWasNumAccount, glWasSmart, $("idSmartNum").value);
     closeModal();
 }
+
 function ConnectSmart(NumAccount)
 {
     ChangeSmartLocal(NumAccount, 0);
@@ -555,6 +639,7 @@ function DelSmart(NumAccount,WasSmart)
 {
     SetSmartToAccount(NumAccount, 0);
 }
+
 function DelAccount(NumAccount)
 {
     DelList[NumAccount] = 1;
@@ -562,6 +647,7 @@ function DelAccount(NumAccount)
     WasAccountsDataStr = "";
     SaveValues();
     FirstAccountsData = 1;
+    
     UpdatesAccountsData(1);
 }
 function RestoreAllAccounts()
@@ -570,11 +656,13 @@ function RestoreAllAccounts()
     DelAccount(0);
     FirstAccountsData = 1;
 }
+
 function UpdatesExplorerData(bGetData)
 {
     var bDiagram = 0;
     if(IsVisibleBlock("TabExplorer") && IsVisibleBlock("idStatBlock"))
         bDiagram = 1;
+    
     if(!bGetData)
     {
         if(bDiagram || DataUpdateTime >= Date.now())
@@ -582,8 +670,10 @@ function UpdatesExplorerData(bGetData)
             bGetData = 1;
         }
     }
+    
     if(!bGetData)
         return ;
+    
     var WasSendTr = 0;
     for(var key in MapSendTransaction)
     {
@@ -594,12 +684,15 @@ function UpdatesExplorerData(bGetData)
             break;
         }
     }
+    
     GetData("GetCurrentInfo", {Diagram:bDiagram, ArrLog:WasSendTr}, function (Data)
     {
         if(!Data || !Data.result)
             return ;
+        
         SetExplorerData(Data);
         SetBlockChainConstant(Data);
+        
         var arr = Data.arr;
         for(var i = 0; arr && i < arr.length; i++)
         {
@@ -607,15 +700,18 @@ function UpdatesExplorerData(bGetData)
             var ItemClient = DiagramMap[ItemServer.name];
             if(!ItemClient || ItemClient.Extern)
                 continue;
+            
             ItemClient.arr = ItemServer.arr;
             ItemClient.AvgValue = ItemServer.AvgValue;
             ItemClient.steptime = ItemServer.steptime;
             ItemClient.fillStyle = "white";
+            
             DrawDiagram(ItemClient);
         }
     });
 }
 var FirstCallDiagram = 1;
+
 function SetExplorerData(Data)
 {
     if(!Data || !Data.result)
@@ -629,16 +725,20 @@ function SetExplorerData(Data)
         InitDiagram();
     }
     FirstCallDiagram = 0;
+    
     var StrVersion = " 1." + Data.VersionNum;
     $("idBHeight").innerText = Data.MaxNumBlockDB;
     $("idBVersion").innerText = StrVersion;
     $("idWVersion").innerText = WEB_WALLET_VERSION;
+    
     SetArrLog(Data.ArrLog);
 }
+
 function SetArrLog(arr)
 {
     if(!arr)
         return ;
+    
     for(var i = 0; i < arr.length; i++)
     {
         var Item = arr[i];
@@ -649,6 +749,7 @@ function SetArrLog(arr)
         {
             TR.WasProcess = 1;
             SetStatus(Item.text);
+            
             if(Item.text.indexOf("Add to blockchain") >= 0)
             {
                 if(TR.Run)
@@ -657,6 +758,7 @@ function SetArrLog(arr)
                     TR.Run = undefined;
                 }
             }
+            
             var Account = MapCheckTransaction[Item.key];
             if(Account)
             {
@@ -667,9 +769,11 @@ function SetArrLog(arr)
     }
     CheckSending();
 }
+
 var DiagramArr = [{name:"MAX:ALL_NODES", text:"All nodes count", value:0, red:"#1d506b", MouseText:" nodes", CountNameX:10},
     {name:"MAX:HASH_RATE_B", text:"HashRate, Tera hash/s", value:0, red:"#286b16", MathPow:2, MathDiv:1024 * 1024 * 1024 * 1024,
     KPrecision:10, NoTextMax:1, MouseText:" T h/s", CountNameX:10}, ];
+
 function InitDiagram()
 {
     var width = 1120;
@@ -681,10 +785,12 @@ function InitDiagram()
     }
     InitDiagramByArr(DiagramArr, width);
 }
+
 function ViewCounters(This)
 {
     var BlockName = "idStatBlock";
     var element = $(BlockName);
+    
     var bVisible = IsVisibleBlock(BlockName);
     if(!bVisible)
         MoveUp(element);
@@ -697,17 +803,22 @@ function ViewCounters(This)
             This.className += " btpress";
     }
 }
+
+
 setInterval(CheckSending, 1000);
+
 function OpenAddressBook()
 {
     return ;
     var bVisible = IsVisibleBlock("idAddressBook");
     SetVisibleBlock("idAddressBook", !bVisible);
 }
+
 function CloaseAddressBook()
 {
     OpenAddressBook();
 }
+
 function ClearSend()
 {
     $("idAccount").value = "";
@@ -716,6 +827,8 @@ function ClearSend()
     $("idDescription").value = "";
     $("idNameTo2").innerText = "";
 }
+
+
 function downloadKey(fieldID)
 {
     var text = document.getElementById(fieldID).value;
@@ -729,6 +842,7 @@ function downloadKey(fieldID)
     anchor.click();
     document.body.removeChild(anchor);
 }
+
 var glWasModal = 0;
 function openModal(id)
 {
@@ -743,6 +857,7 @@ function closeModal()
     if(NotModalClose)
         return ;
     glConfirmF = undefined;
+    
     glWasModal = 0;
     var modals = document.querySelectorAll(".modal");
     var overlay = document.querySelector("#overlay");
@@ -752,6 +867,7 @@ function closeModal()
     });
     overlay.style.display = "none";
 }
+
 function showMenu(Num)
 {
     var menu = document.querySelector("#idBt" + Num);
@@ -772,6 +888,7 @@ function closeMenu(Num)
         menu.style.display = "none";
     }, 115);
 }
+
 function UploadKey(id)
 {
     var file = $(id).files[0];
@@ -793,6 +910,8 @@ function UploadKey(id)
     };
     reader.readAsArrayBuffer(file);
 }
+
+
 function InitPrivKey()
 {
     $("idPrivKeyEdit").value = GetPrivKey();
@@ -800,10 +919,12 @@ function InitPrivKey()
     SetVisiblePrivKey();
     $("idSave2").disabled = !IsPrivateMode();
 }
+
 function SendMobileBefore()
 {
     if($("idSendButton").disabled)
         return ;
+    
     var FromID = ParseNum($("idAccount").value);
     var Item = MapAccounts[FromID];
     if(!Item)
@@ -813,8 +934,10 @@ function SendMobileBefore()
     }
     $("idConfirmFromID").innerText = Item.Num;
     $("idConfirmFromName").innerText = Item.Name + " (" + STRING_FROM_COIN(Item.Value) + " " + CurrencyNameItem(Item) + ")";
+    
     var ToID = ($("idTo").value);
     $("idConfirmToID").innerText = ToID;
+    
     var Item2 = MapAccounts[ToID];
     if(Item2)
     {
@@ -824,18 +947,24 @@ function SendMobileBefore()
     {
         $("idConfirmToName").innerText = "";
     }
+    
     var CoinAmount = COIN_FROM_FLOAT($("idSumSend").value);
     $("idConfirmAmount").innerText = STRING_FROM_COIN(CoinAmount);
     $("idConfirmCurrency").innerText = CurrencyNameItem(Item);
+    
     $("idConfirmDescription").innerText = $("idDescription").value;
+    
     SetVisibleClass(".send-page__setting", 0);
     SetVisibleClass(".send-page__confirm", 1);
+    
     SetStatus("");
     UpdatesAccountsData(1);
     UpdatesExplorerData(1);
 }
+
 function OKSend()
 {
+    
     SendMoney(function ()
     {
         if(glWasModal)
@@ -843,21 +972,27 @@ function OKSend()
             ClearSend();
             SaveValues();
         }
+        
         closeModal();
     });
     SetDataUpdateTime(20);
+    
     CancelSend();
+    
     openModal('idSending');
     setTimeout(function ()
     {
         closeModal();
     }, 8 * 1000);
 }
+
 function CancelSend()
 {
     SetVisibleClass(".send-page__setting", 1);
     SetVisibleClass(".send-page__confirm", 0);
 }
+
+
 function SetNewPassword()
 {
     var Str1 = $("Password1").value.trim();
@@ -867,10 +1002,13 @@ function SetNewPassword()
         SetError("Wrong passwords");
         return ;
     }
+    
     var Key = GetPrivKey();
     SetWalletPassword(Str1);
+    
     SetPrivKey(Key);
     SetPubKeyHTML();
+    
     closeModal();
     $("Password1").value = "";
     $("Password2").value = "";
@@ -880,7 +1018,9 @@ function SetNewPassword()
         SetStatus("Password has been reset successfully");
     SetUsePassword(Str1);
 }
+
 var MultipleMode = 0;
+
 function MyOpenWallet(bNoCheck)
 {
     var Result = MyOpenWalletInner(bNoCheck);
@@ -896,6 +1036,7 @@ function MyOpenWalletInner(bNoCheck)
         return 0;
     }
     $("Password").value = "";
+    
     if(Str.substr(0, 11) === "--subwallet")
     {
         Str = Str.substr(11);
@@ -921,14 +1062,17 @@ function MyOpenWalletInner(bNoCheck)
         closeModal();
         return 1;
     }
+    
     SetWalletPassword(Str);
     OpenWalletKey();
+    
     SetStatus("");
     var PrivKey = GetArrFromHex(GetPrivKey());
     if(bNoCheck)
     {
         MultipleMode = 1;
         SetVisibleBlock("idKeyEdit", 0);
+        
         SetVisibleBlock("idLoad2", 0);
     }
     else
@@ -942,35 +1086,45 @@ function MyOpenWalletInner(bNoCheck)
             return 0;
         }
         SetStatus("Password ok");
+        
         MultipleMode = 0;
         SetVisibleBlock("idKeyEdit", 1);
+        
         SetVisibleBlock("idLoad2", 1);
     }
+    
     NotModalClose = 0;
     closeModal();
     InitPrivKey();
     SetPubKeyHTML();
+    
     SetUsePassword(1);
+    
     Storage.setItem(WALLET_KEY_LOGIN, GetHexFromArr(PrivKey));
     setTimeout(function ()
     {
         Storage.setItem(WALLET_KEY_LOGIN, "");
     }, 10);
     Storage.setItem(WALLET_KEY_EXIT, "");
+    
     return 1;
 }
+
 function SetUsePassword(bUse)
 {
     document.documentElement.style.setProperty('--fill--password', bUse ? 'red' : 'white');
     SetVisibleBlock("idWalletExit", !!bUse);
+    
     SetVisibleBlock("idEntrance", Storage.getItem("USESUBWALLET") === "1");
 }
+
 function OpenPasswordForm()
 {
     openModal('password-modal-enter');
     glConfirmF = MyOpenWallet;
     $("Password").focus();
 }
+
 function DoExitWallet()
 {
     ClearSend();
@@ -980,8 +1134,10 @@ function DoExitWallet()
     SetWalletPassword("");
     OpenWalletKey();
     OpenPasswordForm();
+    
     Storage.setItem(WALLET_KEY_EXIT, Date.now());
 }
+
 var StrDappCardTemplate;
 var StrDappRowCardTemplate;
 var CardMapList = {};
@@ -997,6 +1153,7 @@ function InitDappsCard()
         StrDappCardTemplate = $("DappCardTemplate").outerHTML;
     }
 }
+
 function ViewDapps()
 {
     ViewCurrent(DefDapps);
@@ -1015,36 +1172,44 @@ function ViewDapps()
         }
     });
 }
+
 function FillDappCard(Str,Item)
 {
     CardMapList[Item.Num] = Item;
+    
     Str = Str.replace(/\$Item.Num/g, Item.Num);
     Str = Str.replace("$Item.Name", escapeHtml(Item.Name));
     Str = Str.replace("$Item.Description", escapeHtml(Item.Description));
     Str = Str.replace("$Item.Owner", Item.Owner);
+    
     if(!Item.TokenGenerate)
         Str = Str.replace("dapp-modal__ok-token", "myhidden");
+    
     Str = Str.replace(/\$Item.HTMLLength/g, Item.HTMLLength);
     Str = Str.replace("$item.iconpath", "src='" + RetIconPath(Item, 0) + "'");
     return Str;
 }
+
 function RetDappCard(Item)
 {
     var Str = FillDappCard(StrDappRowCardTemplate, Item);
     Str = Str.replace("DappRowCardTemplate", "idCard" + Item.Num);
     return Str;
 }
+
 function OpenDappCard(Num)
 {
     var Item = CardMapList[Num];
     if(!Item)
         return ;
+    
     var Str = FillDappCard(StrDappCardTemplate, Item);
     Str = Str.replace("$Item.Account", RetBaseAccount(Item));
     Str = Str.replace("$Item.BlockNum", RetOpenBlock(Item.BlockNum, 2));
     Str = FillDappCategory(Str, Item, 1);
     Str = FillDappCategory(Str, Item, 2);
     Str = FillDappCategory(Str, Item, 3);
+    
     $("DappCardTemplate").outerHTML = Str;
     openModal('DappCardTemplate');
 }
@@ -1056,6 +1221,7 @@ function OpenOnlyDapp(Num,HTMLLength)
         closeModal();
     }
 }
+
 function FillDappCategory(Str,Item,Num)
 {
     var Value = Item["Category" + Num];
@@ -1069,17 +1235,21 @@ function FillDappCategory(Str,Item,Num)
     }
     return Str;
 }
+
 function MyToggleList(e)
 {
     var item = e.target;
+    
     while(true)
     {
         if(!item)
             break;
         if(!item.classList)
             break;
+        
         if(item.onclick && item.onclick !== MyToggleList)
             break;
+        
         if(item.classList.contains("find--switch"))
         {
             if(item.classList.contains("prod-card--switch"))
@@ -1094,11 +1264,14 @@ function MyToggleList(e)
                 item.classList.remove("prod-card--toggle");
                 item.classList.add("prod-card--switch");
             }
+            
             break;
         }
+        
         item = item.parentNode;
     }
 }
+
 function OpenHistoryPage(Num)
 {
     if(!UseInnerPage() || isOS())
@@ -1106,9 +1279,11 @@ function OpenHistoryPage(Num)
         OpenWindow("./history.html#" + Num, 'history', 800, 800);
         return ;
     }
+    
     SetVisibleFrame("idHistoryPage", 1);
     SendMessage("HistoryPage", {Account:Num, FrameName:"idHistoryPage"});
 }
+
 function OpenBlockViewerPage(Num)
 {
     if(!UseInnerPage() || isOS())
@@ -1116,9 +1291,11 @@ function OpenBlockViewerPage(Num)
         OpenWindow("./blockviewer.html#" + Num);
         return ;
     }
+    
     SetVisibleFrame("idBlockViewerPage", 1);
     SendMessage("BlockViewerPage", {BlockNum:Num, FrameName:"idBlockViewerPage"});
 }
+
 function AddFrame(name,filename)
 {
     var iframe = document.createElement('iframe');
@@ -1129,6 +1306,7 @@ function AddFrame(name,filename)
     iframe.style = "display: none";
     document.getElementsByTagName('body')[0].appendChild(iframe);
 }
+
 function SetVisibleFrame(name,bVisible)
 {
     SetVisibleBlock("idMainHeader", !bVisible);
@@ -1137,6 +1315,7 @@ function SetVisibleFrame(name,bVisible)
     if(bVisible)
         $(name).focus();
 }
+
 function SendMessage(name,Data)
 {
     var win = window.frames[name];
@@ -1147,6 +1326,7 @@ function OnMessage(event)
     var Data = event.data;
     if(!Data || typeof Data !== "object")
         return ;
+    
     var cmd = Data.cmd;
     if(cmd === "Close")
     {
@@ -1159,7 +1339,10 @@ function OnMessage(event)
             OpenBlockViewerPage(Data.BlockNum);
         }
 }
+
+
 var LangItems = [];
+
 function InitLangItems(ArrItems)
 {
     var tags = ["TITLE", "BUTTON", "DIV", "INPUT", "TH", "TD", "SPAN", "A", "H1", "H2", "H3", "H4", "H5", "P", "DT"];
@@ -1175,14 +1358,18 @@ function InitLangItems(ArrItems)
                 continue;
             if(!Text)
                 continue;
+            
             if(Text.substr(0, 1) === "$")
                 continue;
+            
             if(Text.toUpperCase() == Text.toLowerCase())
                 continue;
+            
             ArrItems.push({key:Text, elem:elem});
         }
     }
 }
+
 function DoLangItems(ArrItems,Map)
 {
     var Map2 = {};
@@ -1198,6 +1385,7 @@ function DoLangItems(ArrItems,Map)
                 Map[key] = key;
                 TextNew = key;
             }
+            
             if(elem.innerText !== TextNew)
             {
                 elem.innerText = TextNew;
@@ -1210,12 +1398,15 @@ function DoLangItems(ArrItems,Map)
     }
     return Map2;
 }
+
 function DoLangScript()
 {
     InitLangItems(LangItems);
     LangMap["ENG"] = DoLangItems(LangItems);
+    
     FillSelect("idLang", LangMap, "KEY");
 }
+
 function ChangeLang()
 {
     var key = $("idLang").value;
@@ -1227,10 +1418,12 @@ function ChangeLang()
     DoLangItems(LangItems, LangMap[key]);
     SaveValues();
 }
+
 function GetNewLangItem()
 {
     console.log(JSON.stringify(LangMap["ENG"]));
 }
+
 function OpenHelp()
 {
     var Key = $("idLang").value;
@@ -1240,6 +1433,7 @@ function OpenHelp()
         Link = "https://medium.com/@evkara777/tera-cryptocurrency-wallet-types-account-creation-97735abad783";
     OpenWindow(Link);
 }
+
 var LangMap = {};
 LangMap["ENG"] = {};
 LangMap["RUS"] = {"TERA WALLET":"TERA КОШЕЛЕК", "Generate key":"Сгенерировать ключ", "OK":"OK", "Cancel":"Отмена", "Edit":"Редактирование",

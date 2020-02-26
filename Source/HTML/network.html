@@ -136,7 +136,10 @@
                         Name=Node.addrStr.substr(0,6);
                     Str+=Name;
 
-                    Str+="="+Node.BlockProcessCount+" ping:"+Node.DeltaTime+" ";
+                    if(Node.BlockProcessCount)
+                        Str+="="+Node.BlockProcessCount;
+                    if(Node.DeltaTime)
+                        Str+=" ping:"+Node.DeltaTime+" ";
                     if(Node.Name)
                         strClass="mnode";
                     else

@@ -8,10 +8,16 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 "use strict";
+
 require("./library.js");
+
+
 const net = require("net");
+
 var ConnectIDCount = 1;
+
 module.exports = class CNode
 {
     constructor(addrStr, ip, port)
@@ -22,6 +28,7 @@ module.exports = class CNode
         this.StartFindList = 0
         this.WhiteConnect = 0
         this.GrayConnect = 0
+        
         this.POW = 0
         this.FirstTime = 0
         this.FirstTimeStr = ""
@@ -30,25 +37,35 @@ module.exports = class CNode
         this.LastTimeTransfer = 0
         this.FromIP = undefined
         this.FromPort = undefined
+        
         this.Active = false
         this.Hot = false
         this.CanHot = false
+        
         this.CountChildConnect = 0
         this.BlockProcessCount = 0
+        
         this.VersionOK = false
         this.VersionNum = 0
         this.Delete = 0
+        
         this.DeltaBan = 300
         this.Name = ""
+        
         this.Info = ""
         this.PrevInfo = ""
+        
         this.StartTimeHot = 0
         this.NextHotDelta = 1000
+        
         this.LevelsBit = 0
+        
         this.ResetNode()
     }
+    
     ResetNode()
     {
+        
         this.LastTimeGetNode = 0
         this.DeltaGlobTime = 0
         this.CountDeltaTime = 0
@@ -57,47 +74,64 @@ module.exports = class CNode
         this.TimeArr = []
         this.DeltaTimeAvg = 10000
         this.LastDeltaTime = 0
+        
         this.TransferCount = 0
         this.StopGetBlock = 0
         this.LevelCount = 0
         this.LevelEnum = 100
+        
         this.TimeMap = {}
+        
         this.bInit = 1
         this.INFO = {}
+        
         this.DoubleConnectCount = 0
+        
         this.StartTimeConnect = 0
         this.NextConnectDelta = 1000
         this.StartTimeGetNodes = 0
         this.NextGetNodesDelta = 1000
+        
         this.PingStart = 0
         this.NextPing = MIN_PERIOD_PING
+        
         this.SendBlockArr = []
         this.LoadBlockArr = []
         this.SendBlockCount = 0
         this.LoadBlockCount = 0
         this.SendBlockCountAll = 0
         this.LoadBlockCountAll = 0
+        
         this.WantHardTrafficArr = []
         this.WantHardTraffic = 0
         this.CanHardTraffic = 0
+        
         this.BufWriteLength = 0
         this.BufWrite = Buffer.alloc(0)
         this.SendPacket = new RBTree(function (a,b)
         {
             return b.PacketNum - a.PacketNum;
         })
+        
         this.ConnectCount = 0
+        
         this.TrafficArr = []
+        
         this.SendTrafficCurrent = 0
         this.SendTrafficLimit = 0
+        
         this.ErrCount = 0
         this.ErrCountAll = 0
+        
         var Prioritet = this.BlockProcessCount;
         SERVER.SetNodePrioritet(this, Prioritet)
+        
         this.SendPacketNum = 0
+        
         this.BlockNumDB = 0
         this.BlockNumDBMin = 0
     }
+    
     ConnectStatus()
     {
         if(this.Socket)
@@ -105,9 +139,11 @@ module.exports = class CNode
         else
             return 0;
     }
+    
     CreateConnect()
     {
         delete SERVER.BAN_IP[this.ip]
+        
         let NODE = this;
         if(NODE.ConnectStatus())
         {
@@ -116,15 +152,19 @@ module.exports = class CNode
             return ;
         }
         AddNodeInfo(NODE, "===CreateConnect===")
+        
         CloseSocket(NODE.Socket, "CreateConnect")
+        
         NODE.SocketStart = Date.now()
         ToLog("Connect to: " + NODE.ip, 3)
+        
         NODE.Socket = net.createConnection(NODE.port, NODE.ip, function ()
         {
             if(NODE.Socket)
             {
                 socketInit(NODE.Socket, "s")
                 AddNodeInfo(NODE, "OK connected *" + NODE.Socket.ConnectID)
+                
                 NODE.Socket.ConnectToServer = true
                 SetSocketStatus(NODE.Socket, 2)
             }
@@ -133,13 +173,17 @@ module.exports = class CNode
         NODE.Socket.Node = NODE
         NODE.Socket.ConnectID = "~C" + ConnectIDCount
         ConnectIDCount++
+        
         this.SetEventsProcessing(NODE.Socket, 0)
     }
+    
     CreateReconnection()
     {
         let NODE = this;
         AddNodeInfo(NODE, "===CreateReconnection===")
+        
         CloseSocket(NODE.Socket2, "CreateReconnection")
+        
         NODE.SocketStart = Date.now()
         NODE.Socket2 = net.createConnection(NODE.port, NODE.ip, function ()
         {
@@ -157,35 +201,45 @@ module.exports = class CNode
         ConnectIDCount++
         this.SetEventsProcessing(NODE.Socket2, 1)
     }
+    
     SwapSockets()
     {
         if(!this.Socket2)
             return ;
+        
         var SocketOld = this.Socket;
+        
         this.Socket = this.Socket2
         this.Socket2 = undefined
+        
         this.Socket.Node = this
         SetSocketStatus(this.Socket, 100)
         this.Socket.Buf = SocketOld.Buf
         SERVER.LoadBufSocketList.remove(SocketOld)
         SERVER.LoadBufSocketList.insert(this.Socket)
+        
         SocketOld.Buf = undefined
         SocketOld.WasClose = 1
         SocketOld.Node = undefined
+        
         this.ErrCount = 0
     }
+    
     SetEventsProcessing(Socket, Reconnection)
     {
         let SOCKET = Socket;
         let NODE = this;
         let RECONNECTION = Reconnection;
+        
         SOCKET.on('data', function (data)
         {
             if(Socket.WasClose)
                 return ;
+            
             if(GetSocketStatus(SOCKET) === 2)
             {
                 SetSocketStatus(SOCKET, 3)
+                
                 var Buf = SERVER.GetDataFromBuf(data);
                 if(Buf)
                 {
@@ -195,6 +249,7 @@ module.exports = class CNode
                         return ;
                     }
                 }
+                
                 CloseSocket(SOCKET, Buf ? "Method=" + Buf.Method : "=CLIENT ON DATA=")
             }
             else
@@ -207,6 +262,7 @@ module.exports = class CNode
                         if(Str && typeof Str === "string" && Str.substr(0, 24) === "WAIT_CONNECT_FROM_SERVER")
                         {
                             AddNodeInfo(NODE, "2. CLIENT OK POW")
+                            
                             CloseSocket(SOCKET, "WAIT_CONNECT_FROM_SERVER")
                             NODE.WaitConnectFromServer = 1
                             NODE.WaitConnectIP = NODE.ip
@@ -226,6 +282,7 @@ module.exports = class CNode
                                 NODE.NextConnectDelta = 1000
                                 SetSocketStatus(SOCKET, 100)
                                 AddNodeInfo(NODE, "4. CLIENT OK CONNECT")
+                                
                                 if(RECONNECTION)
                                 {
                                     if(NODE.Socket)
@@ -236,6 +293,7 @@ module.exports = class CNode
                                     if(!NODE.Active)
                                         SERVER.AddNodeToActive(NODE)
                                 }
+                                
                                 return ;
                             }
                             else
@@ -252,6 +310,7 @@ module.exports = class CNode
                                         AddNodeInfo(NODE, "ERROR:" + Str)
                                     }
                     }
+                    
                     CloseSocket(SOCKET, Buf ? "Method=" + Buf.Method + ":" + Str : "=CLIENT ON DATA=")
                 }
                 else
@@ -264,6 +323,7 @@ module.exports = class CNode
         {
             if(GetSocketStatus(SOCKET))
                 AddNodeInfo(NODE, "Get socket end *" + SOCKET.ConnectID + " Stat: " + SocketStatistic(SOCKET))
+            
             if(GetSocketStatus(SOCKET) === 200)
             {
                 NODE.SwapSockets()
@@ -278,13 +338,16 @@ module.exports = class CNode
             {
                 if(GetSocketStatus(SOCKET) >= 2)
                 {
+                    
                     CloseSocket(SOCKET, "GET CLOSE")
                 }
             }
+            
             SetSocketStatus(SOCKET, 0)
         })
         SOCKET.on('error', function (err)
         {
+            
             if(GetSocketStatus(SOCKET) >= 2)
             {
                 SERVER.AddCheckErrCount(NODE, 1, "ERR##1 : socket")
@@ -292,20 +355,25 @@ module.exports = class CNode
             }
         })
     }
+    
     SendPOWFromClientToServer(Socket, data)
     {
         var Node = this;
+        
         if(Node.ReconnectFromServer)
         {
             Node.ReconnectFromServer = 0
+            
             var Info = this.GetPOWClientData(0);
             Info.Reconnect = 1
             Info.SecretForReconnect = Node.SecretForReconnect
+            
             var BufWrite = BufLib.GetBufferFromObject(Info, FORMAT_POW_TO_SERVER, 1200, {});
             var BufAll = SERVER.GetBufFromData("POW_CONNECT7", BufWrite, 1);
             Socket.write(BufAll)
             return 1;
         }
+        
         try
         {
             var Buf = BufLib.GetObjectFromBuffer(data, FORMAT_POW_TO_CLIENT, {});
@@ -315,6 +383,7 @@ module.exports = class CNode
             SERVER.SendCloseSocket(Socket, "FORMAT_POW_TO_CLIENT")
             return 0;
         }
+        
         if(CompareArr(Buf.addrArr, SERVER.addrArr) === 0)
         {
             Node.Self = true
@@ -322,22 +391,27 @@ module.exports = class CNode
             SERVER.SendCloseSocket(Socket, "SELF")
             return ;
         }
+        
         var addrStr = GetHexFromAddres(Buf.addrArr);
+        
         if(!Node.StartFindList && addrStr !== Node.addrStr)
         {
             AddNodeInfo(Node, "END: CHANGED ADDR: " + Node.addrStr.substr(0, 16) + "->" + addrStr.substr(0, 16))
             SERVER.SendCloseSocket(Socket, "ADDRESS_HAS_BEEN_CHANGED")
             return ;
         }
+        
         if(Node.addrStrTemp)
         {
             AddNodeInfo(Node, "Set Addr = " + addrStr)
             Node.addrStr = addrStr
             SERVER.CheckNodeMap(Node)
         }
+        
         var Result = false;
         if(Buf.PubKeyType === 2 || Buf.PubKeyType === 3)
         {
+            
             Result = secp256k1.verify(Buffer.from(shaarr(addrStr)), Buffer.from(Buf.Sign), Buffer.from([Buf.PubKeyType].concat(Buf.addrArr)))
             if(!Result)
             {
@@ -348,17 +422,21 @@ module.exports = class CNode
         {
             ToLog("END: ERROR_SIGN_SERVER ADDR: " + addrStr.substr(0, 16) + " from ip: " + Socket.remoteAddress)
             AddNodeInfo(Node, "END: ERROR_SIGN_SERVER ADDR: " + addrStr.substr(0, 16) + " from ip: " + Socket.remoteAddress)
+            
             SERVER.SendCloseSocket(Socket, "ERROR_SIGN_SERVER")
             return ;
         }
+        
         if(Buf.MIN_POWER_POW_HANDSHAKE > 1 + MIN_POWER_POW_HANDSHAKE)
         {
             ToLog("END: BIG_MIN_POWER_POW_HANDSHAKE ADDR: " + addrStr.substr(0, 16) + " from ip: " + Socket.remoteAddress)
             return 0;
         }
+        
         var TestNode = SERVER.NodesMap[addrStr];
         if(TestNode && TestNode !== Node)
         {
+            
             if(GetSocketStatus(TestNode.Socket))
             {
                 AddNodeInfo(Node, "DoubleConnection find")
@@ -371,6 +449,7 @@ module.exports = class CNode
                 TestNode.DoubleConnection = true
             }
         }
+        
         Node.PubKey = Buffer.from([Buf.PubKeyType].concat(Buf.addrArr))
         Node.addrArr = Buf.addrArr
         Node.addrStr = addrStr
@@ -381,6 +460,7 @@ module.exports = class CNode
         }
         var Hash = shaarr2(Buf.addrArr, Buf.HashRND);
         var nonce = CreateNoncePOWExternMinPower(Hash, 0, Buf.MIN_POWER_POW_HANDSHAKE);
+        
         var Info;
         if(WALLET.WalletOpen && IsDeveloperAccount(WALLET.PubKeyArr))
         {
@@ -399,15 +479,18 @@ module.exports = class CNode
             Info.PubKeyType = SERVER.PubKeyType
             Info.Sign = secp256k1.sign(Buffer.from(Hash), SERVER.KeyPair.getPrivateKey('')).signature
         }
+        
         var BufWrite = BufLib.GetBufferFromObject(Info, FORMAT_POW_TO_SERVER, 1200, {});
         var BufAll = SERVER.GetBufFromData("POW_CONNECT6", BufWrite, 1);
         Socket.write(BufAll)
         return 1;
     }
+    
     GetPOWClientData(nonce)
     {
         var Node = this;
         var Info = {};
+        
         Info.DEF_NETWORK = GetNetworkName()
         Info.DEF_VERSION = DEF_VERSION
         Info.DEF_CLIENT = DEF_CLIENT
@@ -421,15 +504,20 @@ module.exports = class CNode
         Info.SendBytes = 0
         Info.SecretForReconnect = []
         Info.Reserv = []
+        
         if(GrayConnect())
             Info.GrayConnect = 1
+        
         return Info;
     }
+    
     write(BufWrite)
     {
         if(!this.Socket)
             return ;
+        
         socketWrite(this.Socket, BufWrite)
+        
         try
         {
             this.Socket.write(BufWrite)
@@ -443,23 +531,30 @@ module.exports = class CNode
         }
     }
 };
+
 global.socketInit = function (Socket,Str)
 {
     if(!Socket)
         return ;
+    
     Socket.GetBytes = 0;
     Socket.SendBytes = 0;
+    
     Socket.ConnectID = "" + ConnectIDCount + Str;
+    
     ConnectIDCount++;
 }
+
 global.socketRead = function (Socket,Buf)
 {
     Socket.GetBytes += Buf.length;
 }
+
 global.socketWrite = function (Socket,Buf)
 {
     Socket.SendBytes += Buf.length;
 }
+
 global.CloseSocket = function (Socket,StrError,bHide)
 {
     if(!Socket || Socket.WasClose)
@@ -468,17 +563,21 @@ global.CloseSocket = function (Socket,StrError,bHide)
             Socket.SocketStatus = 0;
         return ;
     }
+    
     var Node = Socket.Node;
     if(Socket.Node && Socket.Node.Socket2 === Socket && Socket.Node.Socket && Socket.Node.Socket.SocketStatus === 200)
         SetSocketStatus(Socket.Node.Socket, 100);
+    
     var StrNode = NodeInfo(Socket.Node);
     Socket.WasClose = 1;
     Socket.SocketStatus = 0;
     Socket.Node = undefined;
     Socket.end();
+    
     if(!bHide)
         AddNodeInfo(Node, "CLOSE " + StrNode + "  *" + Socket.ConnectID + " - " + StrError);
 }
+
 function SetSocketStatus(Socket,Status)
 {
     if(Socket && Socket.SocketStatus !== Status)
@@ -490,10 +589,12 @@ function SetSocketStatus(Socket,Status)
         }
         if(Status === 100 && Socket.Node)
             Socket.Node.LastTime = GetCurrentTime() - 0;
+        
         Socket.SocketStatus = Status;
         Socket.TimeStatus = Date.now();
     }
 }
+
 function GetSocketStatus(Socket)
 {
     if(Socket && Socket.SocketStatus)
@@ -513,6 +614,7 @@ function GetSocketStatus(Socket)
         return 0;
     }
 }
+
 function SocketInfo(Socket)
 {
     if(Socket)
@@ -524,11 +626,13 @@ function SocketStatistic(Socket)
 {
     if(!Socket)
         return "";
+    
     var Str = "";
     if(!Socket.SendBytes)
         Socket.SendBytes = 0;
     if(!Socket.GetBytes)
         Socket.GetBytes = 0;
+    
     if(Socket.SendBytes)
         Str += " Send=" + Socket.SendBytes;
     if(Socket.GetBytes)
@@ -552,6 +656,7 @@ function NodeName(Node)
         return "";
     if(Node.Name)
         return Node.Name + "(" + Node.BlockProcessCount + ")";
+    
     if(LOCAL_RUN)
         return "" + Node.port;
     else
@@ -559,11 +664,13 @@ function NodeName(Node)
         return "" + Node.ip + ":" + Node.addrStr.substr(0, 6) + "(" + Node.BlockProcessCount + ")";
     }
 }
+
 function FindNodeByAddr(Addr,bConnect)
 {
     var Node = SERVER.NodesMap[Addr.trim()];
     if(Node && Node.ConnectStatus() === 100)
         return Node;
+    
     if(Node && bConnect)
     {
         Node.NextConnectDelta = 1000;
@@ -572,10 +679,12 @@ function FindNodeByAddr(Addr,bConnect)
     }
     return undefined;
 }
+
 function AddNodeInfo(Node,Str,bSet)
 {
     if(!global.STAT_MODE)
         return ;
+    
     if(!Node)
         return ;
     if(!Node.Info)
@@ -592,6 +701,7 @@ function AddNodeInfo(Node,Str,bSet)
             Node.Socket.Info = "";
         }
     }
+    
     if(Node.Info.length > 1000)
     {
         Node.PrevInfo = Node.Info;
@@ -603,11 +713,15 @@ function AddNodeInfo(Node,Str,bSet)
         Node.Info += Str + "\n";
     }
 }
+
 global.SocketStatistic = SocketStatistic;
 global.GetSocketStatus = GetSocketStatus;
 global.SetSocketStatus = SetSocketStatus;
 global.NodeInfo = NodeInfo;
 global.NodeName = NodeName;
 global.SocketInfo = SocketInfo;
+
+
+
 global.FindNodeByAddr = FindNodeByAddr;
 global.AddNodeInfo = AddNodeInfo;

@@ -9,23 +9,31 @@
 */
 
 "use strict";
+
 const MAX_MESSAGE_COUNT = 1000;
+
 module.exports = class CMessages extends require("./transaction-validator")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
+        
         this.MemPoolMsg = []
+        
         for(var i = 0; i <= MAX_LEVEL_SPECIALIZATION; i++)
             this.MemPoolMsg[i] = new RBTree(CompareItemTimePow)
     }
+    
     AddMsgToQuote(Msg)
     {
+        
         var Tree = this.MemPoolMsg[Msg.Level];
         if(Tree)
         {
+            
             if(Tree.insert(Msg))
             {
+                
                 if(Tree.size > MEM_POOL_MSG_COUNT)
                 {
                     var maxitem = Tree.max();
@@ -40,8 +48,10 @@ module.exports = class CMessages extends require("./transaction-validator")
                 return 3;
             }
         }
+        
         return 0;
     }
+    
     IsValidMsg(Msg)
     {
         this.CheckCreateMsgHASH(Msg)
@@ -49,8 +59,10 @@ module.exports = class CMessages extends require("./transaction-validator")
             return  - 1;
         if(Msg.time > this.CurrentBlockNum)
             return  - 1;
+        
         return 1;
     }
+    
     CheckCreateMsgHASH(Msg)
     {
         if(!Msg.HashPow)
@@ -64,25 +76,30 @@ module.exports = class CMessages extends require("./transaction-validator")
                 Msg.Level = MAX_LEVEL_SPECIALIZATION
         }
     }
+    
     CreateMsgFromBody(Body, ToAddr)
     {
         var HASH = sha3(Body);
         var Msg = {HASH:HASH, body:Body, addrArr:ToAddr, nonce:CreateNoncePOWExtern(HASH, this.CurrentBlockNum, 3 * (1 << MIN_POWER_POW_MSG)),
             time:this.CurrentBlockNum, };
         this.CheckCreateMsgHASH(Msg)
+        
         return Msg;
     }
+    
     SendMessage(Body, ToAddr)
     {
         var Msg = this.CreateMsgFromBody(Body, ToAddr);
         this.SendMessageNext(Msg)
     }
+    
     SendMessageNext(Msg)
     {
         var CountNodes = 3;
         var LevelStart = Msg.Level;
         if(CompareArr(this.addrArr, Msg.addrArr) === 0)
             return false;
+        
         for(var L = LevelStart; L >= 0; L--)
             if(this.LevelNodes[L] && this.LevelNodes[L].length)
             {
@@ -91,6 +108,7 @@ module.exports = class CMessages extends require("./transaction-validator")
                 {
                     var Node = arr[j];
                     this.SendF(Node, {"Method":"MESSAGE", "Data":{Arr:[Msg]}})
+                    
                     CountNodes--
                     if(CountNodes <= 0)
                         break;
@@ -130,13 +148,16 @@ module.exports = class CMessages extends require("./transaction-validator")
             }
         }
     }
+    
     SendGetMessage(Node)
     {
         var Context = {"SendGetMessage":1};
         this.Send(Node, {"Method":"GETMESSAGE", "Context":Context, "Data":undefined})
     }
+    
     GETMESSAGE(Info, CurTime)
     {
+        
         var arr = [];
         var BufLength = 300;
         var Level = AddrLevelArr(this.addrArr, Info.Node.addrArr);
@@ -148,20 +169,25 @@ module.exports = class CMessages extends require("./transaction-validator")
             {
                 if(arr.length >= MAX_MESSAGE_COUNT)
                     break;
+                
                 arr.push(Item)
                 BufLength += Item.body.length + 50
             }
         }
+        
         this.SendF(Info.Node, {"Method":"MESSAGE", "Context":Info.Context, "Data":{Arr:arr}}, BufLength)
     }
+    
     AddTransaction(Tr, ToAll)
     {
         Tr.ToAll = ToAll
         var Res = this.IsValidTransaction(Tr, this.CurrentBlockNum);
         if(Res <= 0 && Res !==  - 3)
             return Res;
+        
         if(Tr.num < this.CurrentBlockNum)
             return  - 3;
+        
         var delta = Tr.num - this.CurrentBlockNum;
         if(delta > 3)
         {
@@ -181,6 +207,7 @@ module.exports = class CMessages extends require("./transaction-validator")
             }
             return  - 3;
         }
+        
         var Block = this.GetBlockContext(Tr.num);
         if(!Block)
             return  - 5;
@@ -195,12 +222,16 @@ module.exports = class CMessages extends require("./transaction-validator")
                 this.SendTransaction(Tr)
         }
         ToLogContext("#1 Add " + TrName(Tr) + " for Block: " + Tr.num + " Res=" + Res)
+        
         return Res;
     }
+    
     SendTransaction(Tr)
     {
+        
         if(!Tr.ToAll)
             return ;
+        
         var CurTime = GetCurrentTime(0) - 0;
         var Count;
         if(GrayConnect())
@@ -209,12 +240,14 @@ module.exports = class CMessages extends require("./transaction-validator")
             Count = Math.min(this.ActualNodes.size, 16)
         if(Count < 2)
             Count = 2
+        
         var ArrNodes = this.GetActualNodes();
         for(var i = 0; i < ArrNodes.length; i++)
         {
             var Node = ArrNodes[i];
             if(!Node)
                 continue;
+            
             if(Node.TaskLastSend)
             {
                 var Delta = CurTime - Node.TaskLastSend;
@@ -223,19 +256,24 @@ module.exports = class CMessages extends require("./transaction-validator")
                     continue;
                 }
             }
+            
             Node.TaskLastSend = CurTime
             this.SendF(Node, {"Method":"TRANSACTION", "Data":Tr}, Tr.body.length + 1000)
+            
             ToLogContext("Send " + TrName(Tr) + " to " + NodeName(Node))
             Count--
             if(Count <= 0)
                 break;
         }
     }
+    
     static
+    
     TRANSACTION_F()
     {
         return "{body:tr}";
     }
+    
     TRANSACTION(Info, CurTime)
     {
         var Tr = this.DataFromF(Info);
@@ -250,6 +288,7 @@ function TrName(Tr)
 {
     if(!Tr.HASH)
         SERVER.CheckCreateTransactionObject(Tr);
+    
     var Str = GetHexFromArr(Tr.HASH);
     return "Tx:" + Str.substr(0, 8);
 }

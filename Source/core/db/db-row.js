@@ -8,73 +8,102 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 "use strict";
+
 const fs = require('fs');
-module.exports = class CDBState extends require("./db")
+
+module.exports = class CDBRow extends require("./db")
 {
-    constructor(FileName, DataSize, Format, bReadOnly)
+    constructor(FileName, DataSize, Format, bReadOnly, NumName)
     {
         super()
+        
         this.FileName = FileName
         this.DataSize = DataSize
+        if(typeof Format === "object")
+            Format = BufLib.GetFormatFromObject(Format)
+        
         this.Format = Format
         this.WorkStruct = {}
+        if(NumName)
+            this.NumName = NumName
+        else
+            this.NumName = "Num"
+        
         var FI = this.OpenDBFile(this.FileName, !bReadOnly);
         this.FileNameFull = FI.fname
+        
         this.LastHash = undefined
         this.WasUpdate = 1
+        
         this.BufMap = {}
         this.BufMapCount = 0
         setInterval(this.CheckBufMap.bind(this), 1000)
     }
+    
     GetMaxNum()
     {
         var FI = this.OpenDBFile(this.FileName);
         var Num = Math.floor(FI.size / this.DataSize) - 1;
         return Num;
     }
+    
     CheckNewNum(Data)
     {
-        if(Data.Num === undefined)
-            Data.Num = this.GetMaxNum() + 1
+        if(Data[this.NumName] === undefined)
+            Data[this.NumName] = this.GetMaxNum() + 1
     }
+    
     Write(Data, RetBuf)
     {
         var startTime = process.hrtime();
+        
         this.LastHash = undefined
         this.WasUpdate = 1
+        
         this.CheckNewNum(Data)
-        Data.Num = Math.trunc(Data.Num)
-        this.DeleteMap(Data.Num)
+        Data[this.NumName] = Math.trunc(Data[this.NumName])
+        this.DeleteMap(Data[this.NumName])
+        
         var BufWrite = BufLib.GetBufferFromObject(Data, this.Format, this.DataSize, this.WorkStruct, 1);
-        var Position = Data.Num * this.DataSize;
+        var Position = Data[this.NumName] * this.DataSize;
         var FI = this.OpenDBFile(this.FileName, 1);
+        
         var written = fs.writeSync(FI.fd, BufWrite, 0, BufWrite.length, Position);
+        
         if(written !== BufWrite.length)
         {
             TO_ERROR_LOG("DB-ROW", 10, "Error write to file:" + written + " <> " + BufWrite.length)
             return false;
         }
+        
         if(RetBuf)
         {
             RetBuf.Buf = BufWrite
         }
+        
         if(Position >= FI.size)
         {
             FI.size = Position + this.DataSize
         }
+        
         ADD_TO_STAT_TIME("ROWS_WRITE_MS", startTime)
         ADD_TO_STAT("ROWS_WRITE")
+        
         return true;
     }
+    
     Read(Num, GetBufOnly)
     {
         Num = Math.trunc(Num)
+        
         var Data;
         if(isNaN(Num) || Num < 0 || Num > this.GetMaxNum())
         {
             return undefined;
         }
+        
         var BufRead = this.GetMap(Num);
         if(!BufRead)
         {
@@ -86,10 +115,12 @@ module.exports = class CDBState extends require("./db")
                 return undefined;
             this.SetMap(Num, BufRead)
         }
+        
         if(GetBufOnly)
         {
             return BufRead;
         }
+        
         try
         {
             Data = BufLib.GetObjectFromBuffer(BufRead, this.Format, this.WorkStruct)
@@ -99,7 +130,8 @@ module.exports = class CDBState extends require("./db")
             ToLog("DBROW:" + e)
             return undefined;
         }
-        Data.Num = Num
+        
+        Data[this.NumName] = Num
         return Data;
     }
     GetRows(start, count)
@@ -114,15 +146,18 @@ module.exports = class CDBState extends require("./db")
         }
         return arr;
     }
+    
     Truncate(LastNum)
     {
         var startTime = process.hrtime();
         LastNum = Math.trunc(LastNum)
+        
         var Position = (LastNum + 1) * this.DataSize;
         if(Position < 0)
             Position = 0
+        
         var FI = this.OpenDBFile(this.FileName, 1);
-        if(Position < FI.size)
+        if(Position !== FI.size)
         {
             this.LastHash = undefined
             this.WasUpdate = 1
@@ -130,21 +165,26 @@ module.exports = class CDBState extends require("./db")
                 ToLog("Truncate " + this.FileName + " from 0", 2)
             FI.size = Position
             fs.ftruncateSync(FI.fd, FI.size)
+            
             this.BufMap = {}
             this.BufMapCount = 0
         }
         ADD_TO_STAT_TIME("ROWS_WRITE_MS", startTime)
     }
+    
     DeleteHistory(BlockNumFrom)
     {
+        
         var MaxNum = this.GetMaxNum();
         if(MaxNum ===  - 1)
             return ;
+        
         for(var num = MaxNum; num >= 0; num--)
         {
             var ItemCheck = this.Read(num);
             if(!ItemCheck)
                 break;
+            
             if(ItemCheck.BlockNum < BlockNumFrom)
             {
                 if(num < MaxNum)
@@ -156,11 +196,14 @@ module.exports = class CDBState extends require("./db")
         }
         this.Truncate( - 1)
     }
+    
     FastFindBlockNum(BlockNum)
     {
+        
         var MaxNum = this.GetMaxNum();
         if(MaxNum ===  - 1)
             return ;
+        
         var StartNum = 0;
         var EndNum = MaxNum;
         var CurNum = Math.trunc(MaxNum / 2);
@@ -248,6 +291,7 @@ module.exports = class CDBState extends require("./db")
         this.BufMap = {}
         this.BufMapCount = 0
     }
+    
     Close()
     {
         this.ClearBufMap()

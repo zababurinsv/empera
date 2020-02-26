@@ -469,8 +469,38 @@
 
         SetTitle(Name+StrVersion);
 
+        DeltaTime=DeltaTime.toFixed(3);
+        var DeltaDB=Data.CurBlockNum-Data.BlockNumDB;
+        var DeltaTX=Data.CurBlockNum-Data.TXBlockNum;
 
-        if(Data.RelayMode && Data.CurBlockNum>Data.BlockNumDB+BLOCK_PROCESSING_LENGTH*2)
+
+        var RestContext=Data.RestContext;
+        if(RestContext)
+        {
+            CanSendTransaction=0;
+             var Percent=StrMode
+
+            var Percent;
+            if(RestContext.Mode<=4)
+            {
+                //4%
+                Percent=RestContext.Mode;
+            }
+            else
+            {
+                //90%
+                var AllTask=1+RestContext.SmartTask+RestContext.AccTask;
+                var FinischTask=RestContext.SmartTaskFinished+RestContext.AccTaskFinished;
+                Percent=4+90*FinischTask/AllTask;
+                Percent=Percent.toFixed(1);
+            }
+            var StrMode=" "+Percent+" %";
+
+            SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for the balance to load "+StrMode+"</B></big></DIV>");
+            WalletStatus="WAIT";
+        }
+        else
+        if(Data.RelayMode && DeltaDB>BLOCK_PROCESSING_LENGTH*2 || DeltaDB>BLOCK_PROCESSING_LENGTH*20)
         {
             CanSendTransaction=0;
             var StrMode="";
@@ -480,8 +510,16 @@
                 var Percent=100*Data.BlockNumDB/MaxNum;
                 if(Percent<0)
                     Percent=0;
-                Percent=Percent.toFixed(2);
-                StrMode=" "+Percent+"% "+" ("+Data.BlockNumDB+"/"+MaxNum+")";
+                if(Percent>=99.5)
+                    Percent=Percent.toFixed(3);
+                else
+                    Percent=Percent.toFixed(2);
+
+                if(Data.NodeSyncStatus)
+                    StrMode=" "+Percent+"% "+" "+Data.NodeSyncStatus
+                else
+                    StrMode=" "+Percent+"% "+" ("+Data.BlockNumDB+"/"+MaxNum+")";
+
             }
 
             SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for synchronization "+StrMode+"</B></big></DIV>");
@@ -520,10 +558,6 @@
 
         HistoryMaxNum=Data.HistoryMaxNum;
 
-        DeltaTime=DeltaTime.toFixed(3);
-
-        var DeltaDB=Data.CurBlockNum-Data.BlockNumDB;
-        var DeltaTX=Data.CurBlockNum-Data.TXBlockNum;
 
 
         $("idCurBlockNum").innerText=Data.CurBlockNum;
@@ -1273,7 +1307,7 @@
             var Item=ArrInfo[i];
 
             var Arr=Item.PowerArr;
-            var DeltaX=Item.DX/Arr.length;
+            var DeltaX=Item.DX/(Arr.length?Arr.length:1);
             var x2=0;
             for(var n=0;n<Arr.length;n++)
             {
@@ -1886,21 +1920,25 @@
                             <th id="GetHexFromArr(Item.TreeHash)" class="hash">Data Hash</th>
                             <th id="GetHexFromArr(Item.PowHash)" class="hash">PowHash</th>
                             <th id="GetHexFromArr(Item.Hash)" class="hash">Block Hash</th>
-                            <!--<th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
+
+<!--                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
 <!--                            <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>-->
+<!--                            <th id="Item.SumPow" class="num">SumPow</th>-->
+
                             <th id="Item.TrDataLen" class="num">Bytes</th>
                             <th id="Item.Power" class="num">Pow</th>
-                            <th id="(RetHistoryAccount(Item,'Miner')+'<BR><b>'+Item.MinerName)+'</b>'" class="num">Miner</th>
+                            <th id="(RetHistoryAccount(Item,'Miner')+'<BR><b>'+(Item.MinerName?Item.MinerName:''))+'</b>'" class="num">Miner</th>
 
 
                             <!--<th id="GetHexFromArr(Item.Hash1)" class="hash">Hash1</th>-->
                             <!--<th id="GetHexFromArr(Item.Hash2)" class="hash">Hash2</th>-->
 
-                            <!--<th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->
+<!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->
 
                             <!--<th id="ReadUintFromArr(Item.AddrHash,6)" class="hash">Nonce0</th>-->
                             <!--<th id="ReadUintFromArr(Item.AddrHash,12)" class="hash">Nonce1</th>-->
                             <!--<th id="ReadUintFromArr(Item.AddrHash,18)" class="hash">Nonce2</th>-->
+
 
                             <!--<th id="GetPowPower(Item.Hash1)" class="num">Pow1</th>-->
                             <!--<th id="GetPowPower(Item.Hash2)" class="num">Pow2</th>-->
@@ -1976,10 +2014,10 @@
                     <INPUT type="button" onclick="RestartNode()"  class="bt btdoit btutil" value="Restart node">
                     <INPUT type="button" onclick="RewriteTransactions()"  class="bt btdoit btutil" value="Rewrite tx">
                     <INPUT type="button" onclick="RewriteAllTransactions()"  class="bt btdoit btutil" value="Rewrite All tx">
-                    <INPUT type="button" id="idCleanChain" onclick="CleanChain()"  class="btdoit btutil bt" style="display: none;" value="Clean chain">
                     <INPUT type="button" onclick="TruncateBlockChain()" class="btdoit btutil bt" value="Truncate chain">
                     <INPUT type="button" onclick="ClearDataBase();InitArrInfo();" class="btdoit btutil bt" value="Clear DataBase">
 
+                    <INPUT type="button" id="idCleanChain" onclick="CleanChain()"  class="btdoit btutil bt" style="display: none;" value="DEV:Clean chain">
 
                     <DIV id="idDevelopService2">
                         <BR>

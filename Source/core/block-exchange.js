@@ -9,21 +9,32 @@
 */
 
 "use strict";
+
+
+
 require('./library');
 require('./crypto-library');
+
+
 const TX_PROCESS_TIME = 100;
 const TX_DELTA_PROCESS_TIME = 300;
+
 global.CAN_START = false;
 global.StrWarn = "";
+
 global.SUM_LIST_LENGTH = 2 * BLOCK_PROCESSING_LENGTH;
+
 global.CONSENSUS_TIK_TIME = CONSENSUS_PERIOD_TIME / 10;
 global.CONSENSUS_CHECK_TIME = CONSENSUS_PERIOD_TIME / 20;
-const PERIOD_FOR_NEXT_SEND = CONSENSUS_TIK_TIME * 3;
+const PERIOD_FOR_NEXT_SEND = CONSENSUS_TIK_TIME * 3
 global.BLOCK_DELTA_ACTIVATE = 0;
 global.TIME_END_EXCHANGE =  - 3;
 global.TIME_START_POW =  - 4;
 global.TIME_START_SAVE =  - 4;
+
+
 global.TIME_START_LOAD = global.TIME_START_SAVE - 4;
+
 var FORMAT_DATA_TRANSFER = "{\
         Version:uint16,\
         BlockNum:uint,\
@@ -37,34 +48,47 @@ var FORMAT_DATA_TRANSFER = "{\
         TxArray:[{body:tr}],\
         NoSendTx:uint,\
         }";
+
+
 const WorkStructSend = {};
+
 module.exports = class CConsensus extends require("./block-exchange2")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
+        
         this.CurrentBlockNum = 0
+        
         this.SendBlockID = 0
         this.RelayMode = false
         this.TreeSendPacket = new RBTree(CompareItemHash)
+        
         if(!global.ADDRLIST_MODE && (!this.VirtualMode || global.TEST_JINN))
         {
+            
             this.idBlockChainTimer = setInterval(this.StartBlockChain.bind(this), CONSENSUS_PERIOD_TIME - 5)
+            
             setInterval(this.DoTransfer.bind(this), CONSENSUS_CHECK_TIME)
         }
     }
+    
     StartBlockChain()
     {
         this.OnStartSecond()
+        
         var CurTimeNum = GetCurrentTime() - CONSENSUS_PERIOD_TIME / 2;
         var StartTimeNum = Math.floor((CurTimeNum + CONSENSUS_PERIOD_TIME) / CONSENSUS_PERIOD_TIME) * CONSENSUS_PERIOD_TIME;
         var DeltaForStart = StartTimeNum - CurTimeNum;
+        
         if(DeltaForStart < (CONSENSUS_PERIOD_TIME - 5))
         {
             var self = this;
+            
             if(self.idBlockChainTimer)
                 clearInterval(self.idBlockChainTimer)
             self.idBlockChainTimer = 0
+            
             setTimeout(function ()
             {
                 self.idBlockChainTimer = setInterval(self.StartBlockChain.bind(self), CONSENSUS_PERIOD_TIME)
@@ -72,24 +96,33 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }, DeltaForStart)
         }
     }
+    
     OnStartSecond0()
     {
         PrepareStatEverySecond()
         this.AddStatOnTimer()
+        
         this.DoBlockChain()
     }
+    
     CreateBlockContext()
     {
         var Context = {};
         Context.AddInfo = AddInfoBlock.bind(Context)
+        
         Context.Active = false
+        
         Context.TransferFromAddr = {}
         Context.LevelsTransfer = []
         Context.ErrRun = ""
+        
         Context.PowTxTree = new RBTree(CompareItemTimePow)
+        
         Context.bSave = false
+        
         Context.PrevHash = undefined
         Context.TreeHash = undefined
+        
         Context.MaxPOW = {}
         Context.MaxSum = {}
         Context.SumPow = 0
@@ -98,8 +131,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
         Context.TrDataPos = 0
         Context.TrDataLen = 0
         Context.Info = "Create at:" + GetStrOnlyTimeUTC()
+        
         var Transfer;
         var TransferM2;
+        
         var LocalLevel = 0;
         var Levels = this.LevelNodes;
         for(let L = 0; L < Levels.length; L++)
@@ -112,9 +147,11 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 LocalLevel++
                 Context.LevelsTransfer.push(Transfer)
                 Context.StartLevel = Context.LevelsTransfer.length - 1
+                
                 for(let j = 0; j < arr.length; j++)
                 {
                     var Node = arr[j];
+                    
                     var Addr = Node.addrStr;
                     if(!Transfer.TransferNodes[Addr])
                     {
@@ -126,16 +163,22 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
         Context.MLevelSend = Context.StartLevel
+        
         return Context;
     }
+    
     StartConsensus()
     {
         if(!CAN_START)
             return ;
+        
         var StartBlockNum = GetCurrentBlockNumByTime();
+        
         if(StartBlockNum < BLOCK_PROCESSING_LENGTH2)
             return ;
+        
         this.CurrentBlockNum = StartBlockNum
+        
         if(!this.WasReloadSenderMapFromDB)
             this.ReloadSenderMapFromDB()
         var Block0 = this.GetBlockContext(StartBlockNum - BLOCK_DELTA_ACTIVATE);
@@ -149,6 +192,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             AddInfoBlock(Block0, "Was Active")
         }
     }
+    
     TrToInfo(Block, Array, StrInfo)
     {
         var Str = "";
@@ -160,6 +204,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         AddInfoBlock(Block, "" + StrInfo + ": Arr=[" + Str + "]")
     }
+    
     TRANSFER(Info, CurTime)
     {
         var startTime = process.hrtime();
@@ -167,8 +212,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
         var Node = Info.Node;
         Node.TransferBlockNum = Data.BlockNum
         Node.CurBlockNum = Data.BaseBlockNum + Data.BlockNum
+        
         if(Data.Version !== 5)
             return ;
+        
         var Block = this.GetBlockContext(Data.BlockNum);
         if(!Block || Block.StartLevel === undefined)
         {
@@ -178,6 +225,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         if(!Block.Active)
             this.StartBlock(Block)
+        
         var Key = Node.addrStr;
         var Transfer = Block.TransferFromAddr[Key];
         if(!Transfer)
@@ -186,11 +234,14 @@ module.exports = class CConsensus extends require("./block-exchange2")
             this.AddCheckErrCount(Node, 1, "Err Transfer")
             return ;
         }
+        
         Transfer.WasGet = true
+        
         if(global.DoTxLog && Data.TicketArray.length)
             ToLog("TRANSFER BlockNum:" + Block.BlockNum + " TicketArray=" + Data.TicketArray.length + " from " + NodeName(Node))
         if(global.DoTxLog && Data.TxArray.length)
             ToLog("TRANSFER BlockNum:" + Block.BlockNum + " TxArray=" + Data.TxArray.length + " from " + NodeName(Node))
+        
         this.ToMaxPOWList(Data.MaxPOW)
         this.ToMaxSumList(this.GetMaxSumListFromID(Node, Data.MaxSumID, Data.BlockList))
         var WasNewAdd = 0;
@@ -204,7 +255,9 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     WasNewAdd = 1
             }
         }
+        
         ADD_TO_STAT_TIME("TRANSFER_MS", startTime)
+        
         var Delta = Date.now() - this.StartLoadBlockTime;
         if(Delta > 10 * 1000 && Node.TransferCount > 10)
         {
@@ -212,19 +265,25 @@ module.exports = class CConsensus extends require("./block-exchange2")
             Node.NextHotDelta = 10 * 1000
         }
         Node.TransferCount++
+        
         Node.LastTimeTransfer = GetCurrentTime() - 0
+        
         var Item = Transfer.TransferNodes[Key];
         Item.GetTiming = GetCurrentTime(Block.DELTA_CURRENT_TIME) - Block.StartTimeNum
+        
         if(!Block.TransferNodesCount)
             Block.TransferNodesCount = 0
         Block.TransferNodesCount++
     }
+    
     DoTransfer0()
     {
+        
         var MaxPOWList;
         var MaxSumList;
         var start = this.CurrentBlockNum - BLOCK_PROCESSING_LENGTH;
         var finish = this.GetLastCorrectBlockNum();
+        
         for(var b = start; b <= finish; b++)
         {
             var Block = this.GetBlock(b);
@@ -234,6 +293,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 continue;
             if(!Block.Active)
                 continue;
+            
             if(Block.MLevelSend < 0)
             {
                 this.CheckEndExchange(Block)
@@ -241,6 +301,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
             if(Block.EndExchange)
                 continue;
+            
             var Transfer = Block.LevelsTransfer[Block.MLevelSend];
             if(!Transfer.WasSend)
             {
@@ -249,7 +310,9 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     MaxPOWList = this.GetMaxPOWList()
                     MaxSumList = this.GetMaxSumList()
                 }
+                
                 var ArrT = this.GetArrayFromTxTree(Block);
+                
                 this.SendDataTransfer(Transfer, ArrT, MaxPOWList, MaxSumList, Block)
             }
             Transfer.WasSend = true
@@ -258,21 +321,27 @@ module.exports = class CConsensus extends require("./block-exchange2")
             {
                 var CurTimeNum = GetCurrentTime(Block.DELTA_CURRENT_TIME) - 0;
                 var DeltaTime = CurTimeNum - Block.StartTimeNum;
+                
                 if(DeltaTime > Transfer.MustDeltaTime)
                 {
                     bNext = true
                     Block.ErrRun = "" + Transfer.LocalLevel + " " + Block.ErrRun
+                    
                     for(var Addr in Transfer.TransferNodes)
                     {
                         var Item = Transfer.TransferNodes[Addr];
+                        
                         ADD_TO_STAT("TRANSFER_TIME_OUT")
                         this.AddCheckErrCount(Item.Node, 1, "TRANSFER_TIME_OUT")
                     }
+                    
                     ADD_TO_STAT("TimeOutLevel")
                 }
             }
+            
             if(bNext)
             {
+                
                 if(Block.MLevelSend === 0)
                 {
                     Block.EndExchangeTime = Date.now()
@@ -282,12 +351,15 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
     }
+    
     CheckEndExchange(Block)
     {
         if(Block.EndExchange)
             return ;
+        
         this.CreateTreeHash(Block)
     }
+    
     SendDataTransfer(Transfer, ArrT, MaxPOWList, MaxSumList, Block)
     {
         for(var Addr in Transfer.TransferNodes)
@@ -295,6 +367,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             var Item = Transfer.TransferNodes[Addr];
             Transfer.SendCount++
             var arrPow = [];
+            
             for(var i = 0; i < MaxPOWList.length; i++)
             {
                 var elem = MaxPOWList[i];
@@ -318,20 +391,26 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     arrSum.push(elem)
                 }
             }
+            
             var Arr = ArrT;
+            
             if(global.DoTxLog)
                 ToLog("SEND TRANSFER BlockNum:" + Block.BlockNum + " Arr=" + Arr.length + " to " + NodeName(Item.Node))
+            
             var BufData = this.CreateTransferBuffer(Arr, arrPow, arrSum, Block, Item.Node);
             this.Send(Item.Node, {"Method":"TRANSFER", "Context":{}, "Data":BufData}, 1)
+            
             if(!Block.JobListTX)
                 Block.JobListTX = []
             Block.JobListTX.push({Node:Item.Node, TreeLevel:Item.TreeLevel, Time:Date.now()})
         }
     }
+    
     CanSendTest()
     {
         return 1;
     }
+    
     GetMaxSumListFromID(Node, MaxSumID, BlockList)
     {
         var Str0 = "GETBL:" + Node.id;
@@ -340,6 +419,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             var elemBlockList = BlockList[i];
             global.TreeBlockBuf.SaveValue(Str0 + elemBlockList.ID, elemBlockList)
         }
+        
         var MaxSum = [];
         MaxSum:
         for(var i = 0; i < MaxSumID.length; i++)
@@ -355,11 +435,13 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 }
                 Arr.push(elemBlockList)
             }
+            
             elem.SumList = Arr
             MaxSum.push(elem)
         }
         return MaxSum;
     }
+    
     CreateTransferBuffer(ArrT, MaxPOWList, MaxSumList, Block, Node)
     {
         var Data;
@@ -373,6 +455,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             {
                 var elemBlockList = elem0.SumList[n];
                 var Str = "BL:" + Node.id + GetHexFromArr(elemBlockList.Hash3);
+                
                 var ID = global.TreeBlockBuf.LoadValue(Str, 1);
                 if(ID === undefined)
                 {
@@ -382,17 +465,23 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     elemBlockList.ID = ID
                     BlockList.push(elemBlockList)
                 }
+                
                 ArrID.push(ID)
             }
+            
             MaxSumID.push({BlockNum:elem0.BlockNum, SumHash:elem0.SumHash, SumListID:ArrID})
         }
         var ArrTx = ArrT;
+        
         Data = {"Version":5, "BlockNum":Block.BlockNum, "Reserv1":0, "MaxPOW":MaxPOWList, "Reserv2":0, "BaseBlockNum":this.CurrentBlockNum - Block.BlockNum,
             "MaxSumID":MaxSumID, "BlockList":BlockList, "TicketArray":[], "TxArray":ArrTx, "NoSendTx":Node.NoSendTx, }
+        
         var BufWrite = BufLib.GetBufferFromObject(Data, FORMAT_DATA_TRANSFER, MAX_BLOCK_SIZE + 30000, WorkStructSend);
         return BufWrite;
     }
+    
     static
+    
     TRANSFER_F()
     {
         return FORMAT_DATA_TRANSFER;
@@ -411,23 +500,29 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         Block.CheckMaxPow = true
     }
+    
     AddToMaxPOW(Block, item, Node)
     {
         if(Block && item)
         {
+            
             if(!Block.MaxPOW)
                 Block.MaxPOW = {}
             var POW = Block.MaxPOW;
+            
             if(!Block.PrevHash)
                 return ;
+            
             item.BlockNum = Block.BlockNum
             item.PrevHash = Block.PrevHash
             CalcHashBlockFromSeqAddr(item, Block.PrevHash, global.MINING_VERSION_NUM)
+            
             if(POW.SeqHash === undefined || CompareArr(item.PowHash, POW.PowHash) < 0)
             {
                 POW.AddrHash = item.AddrHash
                 POW.Hash = item.Hash
                 POW.PowHash = item.PowHash
+                
                 POW.PrevHash = item.PrevHash
                 POW.TreeHash = item.TreeHash
                 POW.SeqHash = item.SeqHash
@@ -444,7 +539,9 @@ module.exports = class CConsensus extends require("./block-exchange2")
             var wasLider;
             if(POW.MaxTree)
                 wasLider = POW.MaxTree.min()
+            
             this.AddPOWToMaxTree(POW, item)
+            
             if(wasLider)
             {
                 var newLider = POW.MaxTree.min();
@@ -456,6 +553,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
     }
+    
     AddPOWToMaxTree(POW, item)
     {
         if(!POW.MaxTree)
@@ -465,6 +563,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 return CompareArr(a.PowHash, b.PowHash);
             })
         }
+        
         if(!POW.MaxTree.find(item))
         {
             POW.MaxTree.insert(item)
@@ -475,12 +574,15 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
     }
+    
     GetMaxPOWList()
     {
         var arr = [];
+        
         var start, finish;
         start = this.CurrentBlockNum + TIME_START_SAVE - 2
         finish = this.CurrentBlockNum
+        
         for(var b = start; b < finish; b++)
         {
             var Block = this.GetBlock(b);
@@ -489,6 +591,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 if(Block.MaxPOW && Block.MaxPOW.MaxTree)
                 {
                     this.RecreateMaxPOW(Block)
+                    
                     var it = Block.MaxPOW.MaxTree.iterator(), Item;
                     while((Item = it.next()) !== null)
                     {
@@ -499,6 +602,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         return arr;
     }
+    
     ToMaxPOWList(Arr)
     {
         for(var i = 0; i < Arr.length; i++)
@@ -511,6 +615,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
     }
+    
     RecreateMaxPOW(Block)
     {
         if(Block.MaxPOW && Block.MaxPOW.MaxTree)
@@ -521,6 +626,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             {
                 if(!Item.PrevHash)
                     ToLog("NO Item.PrevHash in " + Block.BlockNum)
+                
                 if(Item.PrevHash && CompareArr(Item.PrevHash, Block.PrevHash) !== 0)
                 {
                     Tree.remove(Item)
@@ -530,11 +636,14 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         Block.CheckMaxSum = false
     }
+    
     CheckMaxSum(Block)
     {
         var POW = Block.MaxSum;
+        
         var List = this.GetBlockList(Block.BlockNum);
         var SumPow = this.GetSumFromList(List, Block.BlockNum);
+        
         if(POW && POW.SumHash && POW.SumPow > SumPow)
         {
             var LoadBlockNum = Block.BlockNum;
@@ -545,6 +654,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         Block.CheckMaxSum = true
     }
+    
     AddToMaxSum(Block, item)
     {
         if(Block && item)
@@ -552,12 +662,15 @@ module.exports = class CConsensus extends require("./block-exchange2")
             if(!Block.MaxSum)
                 Block.MaxSum = {}
             var POW = Block.MaxSum;
+            
             var SumPow = this.GetSumFromList(item.SumList, Block.BlockNum);
             if(POW.SumHash === undefined || SumPow > POW.SumPow)
             {
+                
                 POW.SumPow = SumPow
                 POW.SumHash = item.SumHash
                 POW.SumList = item.SumList
+                
                 AddInfoBlock(Block, "SumPow:" + POW.SumPow)
                 Block.CheckMaxSum = false
             }
@@ -565,12 +678,15 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         return 0;
     }
+    
     GetMaxSumList()
     {
         var Arr = [];
+        
         var start, finish;
         start = this.CurrentBlockNum + TIME_START_LOAD - 2
         finish = this.CurrentBlockNum
+        
         for(var b = start; b <= finish; b++)
         {
             var Block = this.GetBlock(b);
@@ -578,16 +694,19 @@ module.exports = class CConsensus extends require("./block-exchange2")
             {
                 var POW = Block.MaxSum;
                 var item = {BlockNum:Block.BlockNum, SumHash:POW.SumHash, SumList:POW.SumList, };
+                
                 Arr.push(item)
             }
         }
         return Arr;
     }
+    
     ToMaxSumList(Arr)
     {
         var start, finish;
         start = this.CurrentBlockNum + TIME_START_LOAD - 2
         finish = this.CurrentBlockNum
+        
         for(var i = 0; i < Arr.length; i++)
         {
             var item = Arr[i];
@@ -602,9 +721,11 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
     }
+    
     GetBlockList(CurBlockNum)
     {
         var arr = [];
+        
         for(var b = CurBlockNum - SUM_LIST_LENGTH + 1; b <= CurBlockNum; b++)
         {
             var Block = this.GetBlock(b);
@@ -620,13 +741,16 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         return arr;
     }
+    
     GetSumFromList(arr, CurBlockNum)
     {
         var SumPow = 0;
         if(arr.length !== SUM_LIST_LENGTH)
             return SumPow;
+        
         var CountLoad = 0;
         var BlockNumStart = CurBlockNum - arr.length + 1;
+        
         for(var i = 0; i < arr.length; i++)
         {
             var Item = arr[i];
@@ -644,10 +768,12 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         return SumPow;
     }
+    
     GetArrayFromTxTree(Block)
     {
         if(!Block.PowTxTree)
             return [];
+        
         var BufLength = 0;
         var arr = [];
         var it = Block.PowTxTree.iterator(), Item;
@@ -660,6 +786,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         return arr;
     }
+    
     CheckPrioritetTx(Tr)
     {
         if(Tr.Prioritet === undefined)
@@ -673,11 +800,13 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 if(Tr.SenderNum && Tr.SenderNum > 0)
                 {
                     Tr.Prioritet = this.GetSenderPrioritet(Tr.num, Tr.SenderNum)
+                    
                     Tr.TimePow = Tr.Prioritet + Tr.power
                 }
             }
         }
     }
+    
     AddToQuote(Tree, Tr)
     {
         this.CheckPrioritetTx(Tr)
@@ -693,9 +822,11 @@ module.exports = class CConsensus extends require("./block-exchange2")
             {
                 var maxitem = Tree.max();
                 Tree.remove(maxitem)
+                
                 if(CompareArr(maxitem.HashPow, Tr.HashPow) === 0)
                     return 0;
             }
+            
             return 1;
         }
     }
@@ -711,10 +842,12 @@ module.exports = class CConsensus extends require("./block-exchange2")
             return Res;
         }
     }
+    
     GetBlockContext(BlockNum)
     {
         if(BlockNum === undefined || !this.IsCorrectBlockNum(BlockNum))
             return undefined;
+        
         var Context = this.GetBlock(BlockNum);
         if(!Context || !Context.StartTimeNum)
         {
@@ -722,6 +855,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             Context.BlockNum = BlockNum
             Context.DELTA_CURRENT_TIME = GetDeltaCurrentTime()
             Context.StartTimeNum = (BlockNum - 1 + BLOCK_DELTA_ACTIVATE) * CONSENSUS_PERIOD_TIME + START_NETWORK_DATE
+            
             this.BlockChain[BlockNum] = Context
         }
         if(!Context.TransferFromAddr)
@@ -729,26 +863,32 @@ module.exports = class CConsensus extends require("./block-exchange2")
             Context.TransferFromAddr = {}
             Context.LevelsTransfer = []
         }
+        
         return Context;
     }
+    
     StartBlock(Block)
     {
         Block.Active = true
     }
+    
     IsCorrectBlockNum(BlockNum)
     {
         var start = this.CurrentBlockNum - BLOCK_PROCESSING_LENGTH;
         var finish = this.GetLastCorrectBlockNum();
+        
         if(BlockNum < start || BlockNum > finish)
         {
             return false;
         }
+        
         return true;
     }
     GetLastCorrectBlockNum()
     {
         return this.CurrentBlockNum + 4;
     }
+    
     GetStrSendCount(Block)
     {
         if(!Block)
@@ -764,6 +904,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         return "" + Count + ":[" + Str.substr(1) + "]";
     }
+    
     GetStrGetCount(Block)
     {
         if(!Block)
@@ -778,11 +919,14 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         return "" + Count + ":[" + Str.substr(1) + "]";
     }
+    
     ToStrBlocks(DopStr)
     {
+        
         var num = Math.floor(this.CurrentBlockNum / 3) * 3;
         var start = num - BLOCK_PROCESSING_LENGTH2 + 2;
         var finish = this.CurrentBlockNum;
+        
         if(!DopStr)
             DopStr = ""
         var Str = "";
@@ -803,15 +947,20 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 {
                     hashStr = GetHexFromAddres(Block.TreeHash).substr(0, 5)
                 }
+            
             Str = Str + "|" + (hashStr + "     ").substr(0, 5)
         }
         Str = Str.substr(1)
+        
         ToInfo("" + finish + " -> " + Str + " " + DopStr)
     }
+    
     PreparePOWHash(Block)
     {
+        
         if(!Block.TreeHash)
             Block.TreeHash = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        
         var PrevHash = this.GetLinkHash(Block);
         if(!PrevHash)
         {
@@ -828,8 +977,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
             AddInfoBlock(Block, "-send mining-")
             global.SetCalcPOW(Block, "FastCalcBlock")
         }
+        
         return true;
     }
+    
     CalcTreeHashFromArrTr(BlockNum, arrTr)
     {
         var arrHASH = [];
@@ -841,6 +992,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         var Tree = CalcMerklFromArray(BlockNum, arrHASH);
         return Tree.Root;
     }
+    
     CreateTreeHash(Block)
     {
         if(Block.EndExchange)
@@ -848,28 +1000,35 @@ module.exports = class CConsensus extends require("./block-exchange2")
         Block.EndExchange = true
         if(Block.bSave)
             return ;
+        
         var PrevBlock = this.GetBlock(Block.BlockNum - 1);
         if(PrevBlock && !PrevBlock.EndExchange && !PrevBlock.bSave)
         {
             AddInfoBlock(Block, "Prev Not End Exchange")
             return ;
         }
+        
         AddInfoBlock(Block, "End Exchange,N=" + Block.TransferNodesCount)
+        
         var arrContent = [];
         var arrHASH = [];
+        
         var arrTr = this.GetArrayFromTxTree(Block);
         this.AddDAppTransactions(Block.BlockNum, arrTr)
+        
         for(var i = 0; i < arrTr.length; i++)
         {
             var Tr = arrTr[i];
             arrContent.push(Tr.body)
             arrHASH.push(Tr.HASH)
         }
+        
         var Tree = CalcMerklFromArray(Block.BlockNum, arrHASH);
         Block.TreeHash = Tree.Root
         Block.arrContent = arrContent
         Block.TrCount = Block.arrContent.length
     }
+    
     WatchdogSaved(BlockNum)
     {
         var Block = this.GetBlock(BlockNum);
@@ -878,6 +1037,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             ToLog("#1 WatchdogSaved: no BlockNum=" + BlockNum)
             return ;
         }
+        
         if(Block.bSave)
         {
             var BlockDB = this.ReadBlockDB(BlockNum);
@@ -904,6 +1064,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 ToLog("#5 WatchdogSaved: Error SeqHash on Num=" + BlockNum)
                 return ;
             }
+            
             var PrevHash = this.GetLinkHash(Block);
             if(!PrevHash)
             {
@@ -918,8 +1079,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 ToLog("#7 WatchdogSaved: Error SeqHash on Num=" + BlockNum)
                 return ;
             }
+            
             PrevHash = this.GetLinkHashDB(BlockDB)
             SeqHash = this.GetSeqHash(BlockDB.BlockNum, PrevHash, BlockDB.TreeHash)
+            
             if(CompareArr(SeqHash, BlockDB.SeqHash) !== 0)
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
@@ -928,14 +1091,18 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
     }
+    
     DoBlockChain()
     {
+        
         if(glStopNode)
             return ;
         if(!CAN_START)
             return ;
+        
         this.StartConsensus()
         var CURRENTBLOCKNUM = this.CurrentBlockNum;
+        
         if(GrayConnect())
         {
             if(!this.LoadHistoryMode)
@@ -944,10 +1111,12 @@ module.exports = class CConsensus extends require("./block-exchange2")
         }
         if(this.LoadHistoryMode)
             return ;
+        
         var bWasSave = false;
         var LoadBlockNum;
         var LoadHash;
         var start_save = CURRENTBLOCKNUM + TIME_START_SAVE;
+        
         for(var BlockNum = CURRENTBLOCKNUM - BLOCK_PROCESSING_LENGTH2; BlockNum > BLOCK_PROCESSING_LENGTH2 && BlockNum < CURRENTBLOCKNUM; BlockNum++)
         {
             var Block = this.GetBlock(BlockNum);
@@ -959,6 +1128,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     continue;
                 }
             }
+            
             if(Block.bSave)
             {
                 var BlockDB = this.ReadBlockDB(BlockNum);
@@ -967,8 +1137,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     Block.bSave = false
                 }
             }
+            
             if(global.WATCHDOG_DEV)
                 this.WatchdogSaved(Block.BlockNum)
+            
             if(Block.bSave)
             {
                 bWasSave = true
@@ -977,6 +1149,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     AddInfoBlock(Block, "CheckMaxSum")
                     this.CheckMaxSum(Block)
                 }
+                
                 if(BlockNum <= CURRENTBLOCKNUM - BLOCK_PROCESSING_LENGTH * 4)
                 {
                     Block.TransferFromAddr = undefined
@@ -985,14 +1158,17 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     Block.MaxPOW = undefined
                     Block.MaxSum = undefined
                     Block.arrContent = undefined
+                    
                     if(Block.PowTxTree)
                     {
                         Block.PowTxTree.clear()
                         Block.PowTxTree = undefined
                     }
                 }
+                
                 continue;
             }
+            
             var PrevBlock = this.GetBlock(BlockNum - 1);
             if(!PrevBlock)
             {
@@ -1019,12 +1195,15 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 {
                     if(!Block.EndExchange)
                         this.CreateTreeHash(Block)
+                    
                     AddInfoBlock(Block, "Start POW")
+                    
                     this.PreparePOWHash(Block)
                     if(!Block.Prepared)
                         AddInfoBlock(Block, "!!Prepared")
                     continue;
                 }
+            
             if(!Block.EndExchange)
             {
                 AddInfoBlock(Block, "Not EndExchange")
@@ -1032,6 +1211,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 Block.Prepared = 0
                 this.CreateTreeHash(Block)
             }
+            
             if(!Block.Prepared)
             {
                 Block.HasErr = 1
@@ -1050,10 +1230,12 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 var SeqHash = this.GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
                 if(CompareArr(SeqHash, Block.SeqHash) !== 0)
                 {
+                    
                     Block.HasErr = 1
                     AddInfoBlock(Block, "New fast pow")
                     this.PreparePOWHash(Block)
                 }
+                
                 if(Block.MaxPOW && Block.MaxPOW.SeqHash && Block.MaxPOW.AddrHash && Block.MaxPOW.LocalSeqHash && CompareArr(Block.SeqHash,
                 Block.MaxPOW.LocalSeqHash) === 0)
                 {
@@ -1061,6 +1243,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     {
                         Block.AddrHash = Block.MaxPOW.LocalAddrHash
                         CalcHashBlockFromSeqAddr(Block, Block.PrevHash, global.MINING_VERSION_NUM)
+                        
                         AddInfoBlock(Block, "->Local lider:" + GetPowPower(Block.PowHash))
                     }
                     if(CompareArr(Block.SeqHash, Block.MaxPOW.SeqHash) === 0 && CompareArr(Block.MaxPOW.AddrHash, Block.AddrHash) !== 0 && CompareArr(Block.MaxPOW.PowHash,
@@ -1068,6 +1251,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     {
                         Block.AddrHash = Block.MaxPOW.AddrHash
                         CalcHashBlockFromSeqAddr(Block, Block.PrevHash, global.MINING_VERSION_NUM)
+                        
                         AddInfoBlock(Block, "->Max lider")
                     }
                 }
@@ -1081,8 +1265,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     AddInfoBlock(Block, "CheckMaxPow")
                     this.CheckingMaxPowOther(Block)
                 }
+                
                 if(BlockNum > start_save)
                     continue;
+                
                 if(PrevBlock.bSave && this.BlockNumDB + 1 >= Block.BlockNum)
                 {
                     this.AddToStatBlockConfirmation(Block)
@@ -1091,6 +1277,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     {
                         if(Block.arrContent && Block.arrContent.length)
                             ADD_TO_STAT("MAX:TRANSACTION_COUNT", Block.arrContent.length)
+                        
                         AddInfoBlock(Block, "SAVE:" + Power + " TH:" + this.GetStrFromHashShort(Block.TreeHash).substr(0, 4))
                     }
                     else
@@ -1098,11 +1285,13 @@ module.exports = class CConsensus extends require("./block-exchange2")
                         Block.HasErr = 1
                         AddInfoBlock(Block, "ERROR WRITE DB")
                     }
+                    
                     this.AddToMaxSum(Block, {SumHash:Block.SumHash, SumList:this.GetBlockList(Block.BlockNum), })
                     if(typeof global.RESYNC_CONDITION === "object")
                     {
                         if(!this.OwnBlockCount)
                             this.OwnBlockCount = 0
+                        
                         var Miner = ReadUintFromArr(Block.AddrHash, 0);
                         var MultK = RESYNC_CONDITION.K_POW;
                         var MaxBlocks = RESYNC_CONDITION.OWN_BLOCKS;
@@ -1139,6 +1328,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
         }
         var MaxNumBlockDB = this.GetMaxNumBlockDB();
+        
         if(CURRENTBLOCKNUM + BLOCK_PROCESSING_LENGTH2 > MaxNumBlockDB && CURRENTBLOCKNUM - BLOCK_PROCESSING_LENGTH2 < MaxNumBlockDB)
             for(var BlockNum = CURRENTBLOCKNUM - BLOCK_PROCESSING_LENGTH2; BlockNum > BLOCK_PROCESSING_LENGTH2 && BlockNum < start_save; BlockNum++)
             {
@@ -1151,6 +1341,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     ToLog("PRESAVE DATA: " + Block.BlockNum, 2)
                 }
             }
+        
         this.RelayMode = !bWasSave
         this.FREE_MEM_BLOCKS(CURRENTBLOCKNUM - BLOCK_COUNT_IN_MEMORY)
     }
@@ -1173,12 +1364,14 @@ module.exports = class CConsensus extends require("./block-exchange2")
         else
             return SumPow / Count;
     }
+    
     CreatePOWNew(Block)
     {
         CreateHashMinimal(Block, GENERATE_BLOCK_ACCOUNT)
         this.AddToMaxPOW(Block, {SeqHash:Block.SeqHash, AddrHash:Block.AddrHash, PrevHash:Block.PrevHash, TreeHash:Block.TreeHash,
         })
     }
+    
     SetNoPOW(BlockNumFrom, bReload, RefBlockNum)
     {
         var CurNum = BlockNumFrom;
@@ -1186,6 +1379,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         while(true)
         {
             var BlockMem = this.BlockChain[CurNum];
+            
             if(BlockMem)
             {
                 if(BlockMem.Prepared)
@@ -1196,63 +1390,84 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     BlockMem.StartMining = false
                     this.PreparePOWHash(BlockMem)
                 }
+                
                 this.RecreateMaxPOW(BlockMem)
             }
+            
             if(!BlockMem && CurNum > finish)
                 break;
+            
             CurNum++
         }
     }
+    
     MiningProcess(msg)
     {
+        
         var BlockMining = this.GetBlock(msg.BlockNum);
         if(!BlockMining)
         {
             return ;
         }
+        
         if(!BlockMining.StartMining || BlockMining.bSave)
             return ;
+        
         if(BlockMining && BlockMining.Hash && BlockMining.SeqHash && CompareArr(BlockMining.SeqHash, msg.SeqHash) === 0)
         {
+            
             var ValueOld = GetHashFromSeqAddr(BlockMining.SeqHash, BlockMining.AddrHash, BlockMining.BlockNum);
             var ValueMsg = GetHashFromSeqAddr(msg.SeqHash, msg.AddrHash, BlockMining.BlockNum);
+            
             var bWas = 0;
             if(CompareArr(ValueOld.Hash1, ValueMsg.Hash1) > 0)
             {
+                
                 var Nonce1 = ReadUintFromArr(msg.AddrHash, 12);
                 var DeltaNum1 = ReadUint16FromArr(msg.AddrHash, 24);
                 WriteUintToArrOnPos(BlockMining.AddrHash, Nonce1, 12)
                 WriteUint16ToArrOnPos(BlockMining.AddrHash, DeltaNum1, 24)
+                
                 bWas += 1
             }
             if(CompareArr(ValueOld.Hash2, ValueMsg.Hash2) > 0)
             {
+                
                 var Nonce0 = ReadUintFromArr(msg.AddrHash, 6);
                 var Nonce2 = ReadUintFromArr(msg.AddrHash, 18);
                 var DeltaNum2 = ReadUint16FromArr(msg.AddrHash, 26);
                 WriteUintToArrOnPos(BlockMining.AddrHash, Nonce0, 6)
                 WriteUintToArrOnPos(BlockMining.AddrHash, Nonce2, 18)
                 WriteUint16ToArrOnPos(BlockMining.AddrHash, DeltaNum2, 26)
+                
                 bWas += 2
             }
             if(!bWas)
                 return ;
+            
             var ValueNew = GetHashFromSeqAddr(BlockMining.SeqHash, BlockMining.AddrHash, BlockMining.BlockNum);
+            
             BlockMining.Hash = ValueNew.Hash
             BlockMining.PowHash = ValueNew.PowHash
             BlockMining.Power = GetPowPower(BlockMining.PowHash)
+            
             ADD_TO_STAT("MAX:POWER", BlockMining.Power)
+            
             var Power = GetPowPower(BlockMining.PowHash);
             var HashCount = Math.pow(2, Power);
             ADD_HASH_RATE(HashCount)
+            
             AddInfoBlock(BlockMining, "Set POW: " + Power)
             this.SetNoPOW(BlockMining.BlockNum + 8, 0, BlockMining.BlockNum)
+            
             this.AddToMaxPOW(BlockMining, {SeqHash:BlockMining.SeqHash, AddrHash:BlockMining.AddrHash, PrevHash:BlockMining.PrevHash, TreeHash:BlockMining.TreeHash,
             })
         }
     }
 };
+
 global.TreeBlockBuf = new STreeBuffer(50 * 1000, CompareItemHashSimple, "string");
+
 var PrevTimeIdle = 0;
 OnTimeIdle();
 function OnTimeIdle()
@@ -1263,6 +1478,8 @@ function OnTimeIdle()
     {
         ADD_TO_STAT("TIME_IDLE", 5);
     }
+    
     setTimeout(OnTimeIdle, 49);
     PrevTimeIdle = CurTime;
 }
+

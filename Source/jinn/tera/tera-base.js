@@ -6,7 +6,9 @@
  * Telegram:  https://t.me/progr76
 */
 
+
 module.exports.Init = Init;
+
 function Init(Engine)
 {
     Engine.GetTx = function (body,HASH,HashPow)
@@ -14,6 +16,7 @@ function Init(Engine)
         var Tx = {};
         Tx.IsTx = 1;
         Tx.num = ReadUintFromArr(body, body.length - 12);
+        
         if(HASH)
             Tx.HASH = HASH;
         else
@@ -21,6 +24,7 @@ function Init(Engine)
                 Tx.HASH = sha3(body);
             else
                 Tx.HASH = shaarr(body);
+        
         Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
         Tx.KEY = GetHexFromArr(Tx.HashTicket);
         Tx.body = body;
@@ -33,32 +37,48 @@ function Init(Engine)
         {
             Engine.FillTicket(Tx);
         }
+        
         Tx.name = Tx.KEY.substr(0, 6) + "-" + Tx.TimePow;
+        
         return Tx;
     };
+    
     SERVER.AddTransaction = function (Tr,ToAll)
     {
         var Tx = Engine.GetTx(Tr.body);
+        
         if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", Tx.num))
             return  - 4;
+        
         var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        
         if(Tx.num < CurBlockNum)
             return  - 3;
         if(Tx.num > CurBlockNum + 20)
             return  - 5;
+        
         Engine.AddCurrentProcessingTx(Tx.num, [Tx]);
+        
         return 1;
     };
     Engine.CalcTreeHash = CalcTreeHashFromArrBody;
+    
     Engine.GetPowPower = GetPowPower;
+    
     Engine.GetGenesisBlock = function (BlockNum)
     {
         if(BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT)
-            throw "Error GenesisBlock Num = " + BlockNum;
+        {
+            ToLogTrace("Error GenesisBlock Num = " + BlockNum);
+            return undefined;
+        }
+        
         var Block = SERVER.GenesisBlockHeaderDB(BlockNum);
-        Engine.ConvertFromTera(Block, 1);
+        Engine.ConvertFromTera(Block, 1, 1);
+        
         return Block;
     };
+    
     Engine.CalcBlockHash = function CalcBlockHash(Block)
     {
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
@@ -67,14 +87,19 @@ function Init(Engine)
             Block.DataHash = Block2.DataHash;
             Block.Hash = Block2.Hash;
             Block.PowHash = Block2.PowHash;
-            Block.Power = Block2.Power;
+            
+            Block.Power = Engine.GetPowPower(Block.PowHash);
         }
         else
         {
-            if(!Block.LinkHash || IsZeroArr(Block.LinkHash))
-                throw "Zero Block.LinkHash";
+            if(!Block.LinkHash)
+            {
+                ToLogTrace("No LinkHash on block " + Block.BlockNum);
+                Block.LinkHash = ZERO_ARR_32;
+            }
             if(!Block.TreeHash)
-                throw "No Block.TreeHash";
+                ToLogTrace("No TreeHash on block " + Block.BlockNum);
+            
             Block.DataHash = SERVER.GetSeqHash(Block.BlockNum, Block.LinkHash, Block.TreeHash);
             Block.SeqHash = Block.DataHash;
             Block.AddrHash = Block.MinerHash;
@@ -87,20 +112,23 @@ function Init(Engine)
         Data.BlockNum = BlockNum;
         Data.SeqHash = Data.DataHash;
         Data.AddrHash = Data.MinerHash;
+        
         CalcHashBlockFromSeqAddr(Data);
         Data.Power = GetPowPower(Data.PowHash);
     };
     Engine.ConvertToTera = function (Block,bBody)
     {
+        if(!Block.LinkHash)
+            ToLogTrace("!Block.LinkHash on Block=" + Block.BlockNum);
+        if(!Block.MinerHash)
+            ToLogTrace("!Block.MinerHash on Block=" + Block.BlockNum);
+        if(!Block.DataHash)
+            ToLogTrace("!Block.DataHash on Block=" + Block.BlockNum);
+        
         Block.PrevHash = Block.LinkHash;
         Block.AddrHash = Block.MinerHash;
         Block.SeqHash = Block.DataHash;
-        if(!Block.PrevHash)
-            throw "!Block.PrevHash";
-        if(!Block.AddrHash)
-            throw "!Block.AddrHash";
-        if(!Block.SeqHash)
-            throw "!Block.SeqHash";
+        
         if(bBody && Block.TxData)
         {
             var Arr = [];
@@ -111,22 +139,20 @@ function Init(Engine)
             Block.arrContent = Arr;
         }
     };
-    Engine.ConvertFromTera = function (Block,bBody)
+    
+    Engine.ConvertFromTera = function (Block,bBody,bCalcPrevBlockHash)
     {
+        if(!Block.PrevHash)
+            ToLogTrace("!Block.PrevHash on Block=" + Block.BlockNum);
+        if(!Block.AddrHash)
+            ToLogTrace("!Block.AddrHash on Block=" + Block.BlockNum);
+        if(!Block.SeqHash)
+            ToLogTrace("!Block.SeqHash on Block=" + Block.BlockNum);
+        
         Block.LinkHash = Block.PrevHash;
         Block.MinerHash = Block.AddrHash;
         Block.DataHash = Block.SeqHash;
-        Block.PrevBlockHash = ZERO_ARR_32;
-        if(Block.BlockNum > 0)
-        {
-            var PrevBlock;
-            if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
-                PrevBlock = SERVER.GenesisBlockHeaderDB(Block.BlockNum - 1);
-            else
-                PrevBlock = SERVER.ReadBlockHeaderDB(Block.BlockNum - 1);
-            if(PrevBlock)
-                Block.PrevBlockHash = PrevBlock.Hash;
-        }
+        
         if(bBody && Block.arrContent)
         {
             var Arr = [];
@@ -136,6 +162,10 @@ function Init(Engine)
                 Arr.push(Tx);
             }
             Block.TxData = Arr;
+        }
+        if(bCalcPrevBlockHash)
+        {
+            Block.PrevBlockHash = Engine.GetPrevBlockHashDB(Block);
         }
     };
 }

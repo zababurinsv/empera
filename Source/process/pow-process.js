@@ -8,11 +8,14 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 global.PROCESS_NAME = "POW";
 global.POWPROCESS = 1;
+
 require("../core/library");
 require("../core/crypto-library");
 require("../core/terahashmining");
+
 var PROCESS = process;
 if(process.send && !global.DEBUGPROCESS)
 {
@@ -22,17 +25,22 @@ else
 {
     PROCESS = global.DEBUGPROCESS;
 }
+
 var LastAlive = Date.now();
 setInterval(CheckAlive, 1000);
+
 var idInterval = undefined;
 var Block = {};
+
 PROCESS.on('message', function (msg)
 {
     LastAlive = Date.now();
+    
     if(msg.cmd === "FastCalcBlock")
     {
         var FastBlock = msg;
         StartHashPump(FastBlock);
+        
         FastBlock.RunCount = 0;
         try
         {
@@ -56,10 +64,12 @@ PROCESS.on('message', function (msg)
             }
 }
 );
+
 function CheckAlive()
 {
     if(global.NOALIVE)
         return ;
+    
     var Delta = Date.now() - LastAlive;
     if(Math.abs(Delta) > CHECK_STOP_CHILD_PROCESS)
     {
@@ -67,16 +77,19 @@ function CheckAlive()
         return ;
     }
 }
+
 function CalcPOWHash()
 {
     if(!Block.SeqHash)
         return ;
+    
     if(new Date() - Block.Time > Block.Period)
     {
         clearInterval(idInterval);
         idInterval = undefined;
         return ;
     }
+    
     try
     {
         if(CreatePOWVersionX(Block))
@@ -88,6 +101,7 @@ function CalcPOWHash()
         ToError(e);
     }
 }
+
 global.BlockPump = undefined;
 var idIntervalPump = undefined;
 function StartHashPump(SetBlock)
@@ -97,17 +111,20 @@ function StartHashPump(SetBlock)
         global.BlockPump = {BlockNum:SetBlock.BlockNum, RunCount:SetBlock.RunCount, MinerID:SetBlock.MinerID, Percent:SetBlock.Percent,
             LastNonce:0, };
     }
+    
     if(!idIntervalPump)
     {
         idIntervalPump = setInterval(PumpHash, global.POWRunPeriod);
     }
 }
+
 var StartTime = 1;
 var EndTime = 0;
 function PumpHash()
 {
     if(!BlockPump)
         return ;
+    
     var CurTime = Date.now();
     if(StartTime > EndTime)
     {

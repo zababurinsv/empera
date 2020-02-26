@@ -9,53 +9,78 @@
 */
 
 "use strict";
+
 const crypto = require('crypto');
 const CNode = require("./node");
+
 global.PERIOD_FOR_RECONNECT = 3600 * 1000;
+
 global.CHECK_DELTA_TIME = {Num:0, bUse:0, StartBlockNum:0, EndBlockNum:0, bAddTime:0, DeltaTime:0, Sign:[]};
 global.CHECK_POINT = {BlockNum:0, Hash:[], Sign:[]};
 global.CODE_VERSION = {BlockNum:0, addrArr:[], LevelUpdate:0, BlockPeriod:0, VersionNum:UPDATE_CODE_VERSION_NUM, Hash:[], Sign:[],
     StartLoadVersionNum:0};
 global.NET_CONSTANT = {Num:0, BlockNum:0, MaxTrasactionLimit:MAX_TRANSACTION_LIMIT, ProtocolVer:global.PROTOCOL_VER, ProtocolMode:global.PROTOCOL_MODE,
     MaxLevel:global.MAX_LEVEL, Reserv1:[], Reserv2:0, Reserv3:0, Reserv4:0, Reserv5:0, Hash:[], Sign:[]};
+
 const FORMAT_NET_CONSTANT = "Num:uint,BlockNum:uint,MaxTrasactionLimit:uint,ProtocolVer:byte,ProtocolMode:byte,MaxLevel:byte, Reserv1:arr3, Reserv2:uint,Reserv3:uint,Reserv4:uint,Reserv5:uint";
+
 global.START_LOAD_CODE = {};
+
 const MAX_PERIOD_GETNODES = 120 * 1000;
 global.MIN_PERIOD_PING = 4 * 1000;
 const MAX_PERIOD_PING = 120 * 1000;
+
 global.MAX_PING_FOR_CONNECT = 400;
+
 var MAX_TIME_CORRECT = 3 * 3600 * 1000;
+
 global.MAX_WAIT_PERIOD_FOR_HOT = 4 * CONSENSUS_PERIOD_TIME;
+
 const PERIOD_FOR_START_CHECK_TIME = 300;
+
 module.exports = class CConnect extends require("./connect2")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
+        
         this.StartTime = Date.now()
+        
         this.LevelNodes = []
+        
         this.NodesArr = []
         this.NodesArrUnSort = []
         this.NodesMap = {}
         this.NodesIPPortMap = {}
+        
         this.NodesTree = new RBTree(CompareNodeIPPort)
+        
         this.PerioadAfterCanStart = 0
+        
         this.КодДляРазработчикаХекс = GetHexFromArr(this.KeyPair.computeSecret(DEVELOP_PUB_KEY, null))
+        
         this.DO_CONSTANT()
+        
         if(!global.ADDRLIST_MODE && !this.VirtualMode)
         {
+            
             setInterval(this.StartPingPong.bind(this), 1000)
+            
             setInterval(this.DeleteBadConnectingByTimer.bind(this), MAX_WAIT_PERIOD_FOR_STATUS / 2)
+            
             setInterval(this.StartCheckTransferTree.bind(this), 1000)
         }
+        
         setInterval(this.NodesArrSort.bind(this), 30000)
     }
     DO_CONSTANT()
     {
         this.CommonKey = GetHexFromArr(WALLET.HashProtect(global.COMMON_KEY))
+        
         this.KeyToNode = shaarr(global.COMMON_KEY)
         this.NameToNode = this.ValueToXOR("Name", "TERA:" + global.NODES_NAME)
     }
+    
     StartConnectTry(Node)
     {
         var Delta = Date.now() - Node.StartTimeConnect;
@@ -68,13 +93,17 @@ module.exports = class CConnect extends require("./connect2")
                     Node.NextConnectDelta = Node.NextConnectDelta * 2
                 else
                     Node.NextConnectDelta = Math.trunc(Node.NextConnectDelta * 1.2)
+                
                 Node.CreateConnect()
             }
         }
     }
+    
     FindRunNodeContext(addrArr, ip, port, bUpdate)
     {
+        
         var Node, addrStr;
+        
         addrStr = GetHexFromAddres(addrArr)
         Node = this.NodesMap[addrStr]
         if(!Node)
@@ -85,17 +114,20 @@ module.exports = class CConnect extends require("./connect2")
             {
                 if(!this.IsCorrectNode(ip, port))
                     return undefined;
+                
                 Node = this.GetNewNode(ip, port, addrStr)
                 if(!Node)
                     return undefined;
             }
         }
+        
         if(Node.addrStr !== addrStr)
         {
             delete this.NodesMap[Node.addrStr]
             this.NodesMap[addrStr] = Node
             Node.addrStrTemp = undefined
         }
+        
         Node.addrArr = addrArr
         Node.addrStr = addrStr
         Node.ip = ip.trim()
@@ -107,6 +139,7 @@ module.exports = class CConnect extends require("./connect2")
         if(Node.addrStrTemp && Node.addrStrTemp !== Node.addrStr)
         {
             delete this.NodesMap[Node.addrStrTemp]
+            
             var Node2 = this.NodesMap[Node.addrStr];
             if(Node2 && Node2 !== Node)
             {
@@ -114,10 +147,12 @@ module.exports = class CConnect extends require("./connect2")
                 AddNodeInfo(Node2, "FIND DOUBLE!!")
                 delete this.NodesMap[Node.addrStr]
             }
+            
             this.NodesMap[Node.addrStr] = Node
             Node.addrStrTemp = undefined
         }
     }
+    
     StartHandshake(Node)
     {
         return this.StartConnectTry(Node);
@@ -126,9 +161,11 @@ module.exports = class CConnect extends require("./connect2")
     {
         if(glStopNode)
             return ;
+        
         if(global.CAN_START)
             this.PerioadAfterCanStart++
         this.TimeDevCorrect()
+        
         var arr = SERVER.GetActualNodes();
         for(var i = 0; i < arr.length; i++)
         {
@@ -139,31 +176,39 @@ module.exports = class CConnect extends require("./connect2")
                     Node.NextPing = MIN_PERIOD_PING
                 if(Node.NextPing < MIN_PERIOD_PING)
                     Node.NextPing = MIN_PERIOD_PING
+                
                 var Delta = Date.now() - Node.PingStart;
                 if(Delta >= Node.NextPing)
                 {
+                    
                     Node.PingStart = Date.now()
                     Node.NextPing = Node.NextPing * 1.5
                     if(Node.NextPing > MAX_PERIOD_PING)
                         Node.NextPing = MAX_PERIOD_PING
+                    
                     if(!Node.PingNumber)
                         Node.PingNumber = 0
                     Node.PingNumber++
+                    
                     var Context = {"StartTime":GetCurrentTime(0), PingNumber:Node.PingNumber};
                     this.SendF(Node, {"Method":"PING", "Context":Context, "Data":this.GetPingData(Node)})
+                    
                     if(Node.Hot && !Node.LoadHistoryMode)
                         this.CheckForBotNet(Node)
                 }
             }
         }
     }
+    
     GetPingData(Node)
     {
         var GrayAddres = 0;
         if(GrayConnect())
             GrayAddres = 1
+        
         var BlockNumHash = Math.trunc((GetCurrentBlockNumByTime() - BLOCK_PROCESSING_LENGTH2) / PERIOD_ACCOUNT_HASH) * PERIOD_ACCOUNT_HASH;
         var AccountsHash = DApps.Accounts.GetHashOrUndefined(BlockNumHash);
+        
         var CheckPointHashDB = [];
         if(CHECK_POINT.BlockNum && CHECK_POINT.BlockNum <= this.BlockNumDB)
         {
@@ -180,15 +225,19 @@ module.exports = class CConnect extends require("./connect2")
             if(Block)
                 HashDB = Block.Hash
         }
+        
         var LevelCount = this.GetLevelEnum(Node);
+        
         var StopGetBlock = global.STOPGETBLOCK;
         if(!StopGetBlock && this.BusyLevel)
         {
             if(Node.BlockProcessCount <= this.BusyLevel)
                 StopGetBlock = 1
         }
+        
         var СтатДанные = [];
         var DirectMAccount = 0;
+        
         var Ret = {VERSIONMAX:DEF_VERSION, FIRST_TIME_BLOCK:0, PingVersion:3, GrayConnect:GrayAddres, Reserve2:0, AutoCorrectTime:AUTO_CORRECT_TIME,
             LevelCount:LevelCount, Time:(GetCurrentTime() - 0), BlockNumDB:this.BlockNumDB, LoadHistoryMode:this.LoadHistoryMode, CanStart:global.CAN_START,
             CheckPoint:CHECK_POINT, BlockNumDBMin:this.BlockNumDBMin, Reserv3:[], Key:this.KeyToNode, Name:this.NameToNode, TrafficFree:this.SendTrafficFree,
@@ -196,9 +245,12 @@ module.exports = class CConnect extends require("./connect2")
             CheckDeltaTime:CHECK_DELTA_TIME, CodeVersion:CODE_VERSION, IsAddrList:global.ADDRLIST_MODE, CheckPointHashDB:CheckPointHashDB,
             PortWeb:HTTP_HOSTING_PORT, HashDB:HashDB, StopGetBlock:StopGetBlock, NetConstant:NET_CONSTANT, LevelsBit:this.GetBitsByLevel(),
         };
+        
         return Ret;
     }
+    
     static
+    
     PING_F(bSend)
     {
         return "{\
@@ -232,26 +284,34 @@ module.exports = class CConnect extends require("./connect2")
             LevelsBit:uint32,\
             }";
     }
+    
     static
+    
     PONG_F(bSend)
     {
         return CConnect.PING_F(bSend);
     }
+    
     PING(Info, CurTime)
     {
         this.DoPingData(Info, 1)
+        
         this.SendF(Info.Node, {"Method":"PONG", "Context":Info.Context, "Data":this.GetPingData(Info.Node)})
     }
+    
     DoPingData(Info, bCheckPoint)
     {
         var Node = Info.Node;
         var Data = this.DataFromF(Info);
+        
         Node.VERSIONMAX = Data.VERSIONMAX
+        
         var Name;
         if(Data.PingVersion >= 3 && global.COMMON_KEY && CompareArr(Data.Key, this.KeyToNode) === 0)
         {
             Name = this.ValueFromXOR(Node, "Name", Data.Name)
         }
+        
         if(Name && Name.substr(0, 5) === "TERA:")
         {
             Node.Name = Name.substr(5)
@@ -262,12 +322,14 @@ module.exports = class CConnect extends require("./connect2")
         {
             Node.Name = ""
         }
+        
         Node.INFO = Data
         Node.INFO.WasPing = 1
         Node.LevelCount = Data.LevelCount
         Node.LoadHistoryMode = Data.LoadHistoryMode
         Node.BlockNumDB = Data.BlockNumDB
         Node.BlockNumDBMin = Data.BlockNumDBMin
+        
         Node.LastTime = GetCurrentTime() - 0
         Node.NextConnectDelta = 1000
         Node.StopGetBlock = Data.StopGetBlock
@@ -280,6 +342,7 @@ module.exports = class CConnect extends require("./connect2")
             this.CheckDeltaTime(Data, Info.Node)
         }
     }
+    
     PONG(Info, CurTime)
     {
         var Data = this.DataFromF(Info);
@@ -290,28 +353,37 @@ module.exports = class CConnect extends require("./connect2")
             return ;
         if(Info.Context.PingNumber !== Node.PingNumber)
             return ;
+        
         this.DoPingData(Info, 0)
+        
         var DeltaTime = GetCurrentTime(0) - Info.Context.StartTime;
         Node.DeltaTimeM = DeltaTime
+        
         Node.SumDeltaTime += DeltaTime
         Node.CountDeltaTime++
         Node.DeltaTime = Math.trunc(Node.SumDeltaTime / Node.CountDeltaTime)
         if(!Node.DeltaTime)
             Node.DeltaTime = 1000
+        
         if(DeltaTime)
         {
             Node.DeltaGlobTime = GetCurrentTime() - (Data.Time + DeltaTime / 2)
         }
         this.CheckCheckPoint(Data, Info.Node)
+        
         if(!START_LOAD_CODE.StartLoadVersionNum)
             START_LOAD_CODE.StartLoadVersionNum = 0
+        
         this.CheckNetConstant(Data, Info.Node)
+        
         this.CheckCodeVersion(Data, Info.Node)
+        
         if(!global.CAN_START)
         {
             if(DeltaTime > MAX_PING_FOR_CONNECT)
                 ToLog("DeltaTime=" + DeltaTime + ">" + MAX_PING_FOR_CONNECT + " ms  -  " + NodeInfo(Node), 2)
         }
+        
         var Times;
         if(DeltaTime <= MAX_PING_FOR_CONNECT)
         {
@@ -321,9 +393,11 @@ module.exports = class CConnect extends require("./connect2")
                 Times = {SumDelta:0, Count:0, AvgDelta:0, Arr:[]}
                 Node.Times = Times
             }
+            
             var Time1 = Data.Time;
             var Time2 = GetCurrentTime();
             var Delta2 =  - (Time2 - Time1 - DeltaTime / 2);
+            
             Times.Arr.push(Delta2)
             Times.SumDelta += Delta2
             Times.Count++
@@ -336,6 +410,7 @@ module.exports = class CConnect extends require("./connect2")
                 })
                 Node.AvgDelta = Times.Arr[0]
             }
+            
             if(global.AUTO_CORRECT_TIME)
             {
                 this.CorrectTime()
@@ -345,18 +420,22 @@ module.exports = class CConnect extends require("./connect2")
         {
         }
         ADD_TO_STAT("MAX:PING_TIME", DeltaTime)
+        
         if(!global.CAN_START)
             if(Times && Times.Count >= 1 && Times.AvgDelta <= 200)
             {
                 ToLog("****************************************** CAN_START")
                 global.CAN_START = true
             }
+        
         this.CheckDeltaTime(Data, Info.Node)
     }
+    
     CheckCheckPoint(Data, Node)
     {
         if(CREATE_ON_START)
             return ;
+        
         if(Data.CheckPoint.BlockNum && Data.CheckPoint.BlockNum > CHECK_POINT.BlockNum)
         {
             var SignArr = arr2(Data.CheckPoint.Hash, GetArrFromValue(Data.CheckPoint.BlockNum));
@@ -364,8 +443,10 @@ module.exports = class CConnect extends require("./connect2")
             {
                 global.CHECK_POINT = Data.CheckPoint
                 this.ResetNextPingAllNode()
+                
                 if(Data.CheckPoint.BlockNum < this.BlockNumDBMin)
                     return ;
+                
                 var Block = this.ReadBlockHeaderDB(CHECK_POINT.BlockNum);
                 if(Block && CompareArr(Block.Hash, CHECK_POINT.Hash) !== 0)
                 {
@@ -403,6 +484,7 @@ module.exports = class CConnect extends require("./connect2")
                 }
             }
     }
+    
     CheckNetConstant(Data, Node)
     {
         if(Data.NetConstant.Num > NET_CONSTANT.Num)
@@ -411,12 +493,15 @@ module.exports = class CConnect extends require("./connect2")
             if(CheckDevelopSign(SignArr, Data.NetConstant.Sign))
             {
                 global.NET_CONSTANT = Data.NetConstant
+                
                 var CurBlockNum = GetCurrentBlockNumByTime();
                 var Delta = Data.NetConstant.BlockNum - CurBlockNum;
                 if(Delta < 1)
                     Delta = 1
+                
                 this.ResetNextPingAllNode()
                 ToLog("Get new NetConstant (wait " + Delta + " s) Num=" + Data.NetConstant.Num)
+                
                 if(this.idTimerSetConst)
                     clearTimeout(this.idTimerSetConst)
                 let SELF = this;
@@ -434,14 +519,17 @@ module.exports = class CConnect extends require("./connect2")
             }
         }
     }
+    
     DoNetConst()
     {
         global.MAX_TRANSACTION_LIMIT = NET_CONSTANT.MaxTrasactionLimit
+        
         global.PROTOCOL_VER = NET_CONSTANT.ProtocolVer
         global.PROTOCOL_MODE = NET_CONSTANT.ProtocolMode
         global.MAX_LEVEL = NET_CONSTANT.MaxLevel
         this.OnSetProtocolMode()
     }
+    
     CheckCodeVersion(Data, Node)
     {
         var CodeVersion = Data.CodeVersion;
@@ -454,9 +542,11 @@ module.exports = class CConnect extends require("./connect2")
         {
             Node.VersionOK = false
         }
+        
         if(Node.VersionOK)
         {
             Node.CanHot = true
+            
             if(CHECK_POINT.BlockNum && Data.CheckPoint.BlockNum)
                 if(CHECK_POINT.BlockNum !== Data.CheckPoint.BlockNum || CompareArr(CHECK_POINT.Hash, Data.CheckPoint.Hash) !== 0)
                 {
@@ -472,11 +562,13 @@ module.exports = class CConnect extends require("./connect2")
                 Node.NextConnectDelta = 60 * 1000
             }
         }
+        
         var bLoadVer = 0;
         if(CodeVersion.BlockNum && (CodeVersion.BlockNum <= GetCurrentBlockNumByTime() || CodeVersion.BlockPeriod === 0) && CodeVersion.BlockNum > CODE_VERSION.BlockNum && !IsZeroArr(CodeVersion.Hash) && (CodeVersion.VersionNum > CODE_VERSION.VersionNum && CodeVersion.VersionNum > START_LOAD_CODE.StartLoadVersionNum || CodeVersion.VersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash)))
         {
             bLoadVer = 1
         }
+        
         if(bLoadVer)
         {
             var Level = AddrLevelArrFromBegin(this.addrArr, CodeVersion.addrArr);
@@ -485,12 +577,14 @@ module.exports = class CConnect extends require("./connect2")
                 var Delta = GetCurrentBlockNumByTime() - CodeVersion.BlockNum;
                 Level += Delta / CodeVersion.BlockPeriod
             }
+            
             if(Level >= CodeVersion.LevelUpdate)
             {
                 var SignArr = arr2(CodeVersion.Hash, GetArrFromValue(CodeVersion.VersionNum));
                 if(CheckDevelopSign(SignArr, CodeVersion.Sign))
                 {
                     ToLog("Get new CodeVersion = " + CodeVersion.VersionNum + " HASH:" + GetHexFromArr(CodeVersion.Hash).substr(0, 20))
+                    
                     if(CodeVersion.VersionNum > CODE_VERSION.VersionNum && CodeVersion.VersionNum > START_LOAD_CODE.StartLoadVersionNum)
                     {
                         this.StartLoadCode(Node, CodeVersion)
@@ -511,6 +605,7 @@ module.exports = class CConnect extends require("./connect2")
             }
         }
     }
+    
     GetSignCheckNetConstant(Data)
     {
         var Buf = BufLib.GetBufferFromObject(Data, "{" + FORMAT_NET_CONSTANT + "}", 1000, {});
@@ -522,6 +617,7 @@ module.exports = class CConnect extends require("./connect2")
         1000, {});
         return shaarr(Buf);
     }
+    
     ResetNextPingAllNode()
     {
         var arr = SERVER.GetActualNodes();
@@ -532,6 +628,7 @@ module.exports = class CConnect extends require("./connect2")
                 Node2.NextPing = 5 * 1000
         }
     }
+    
     StartDisconnectHot(Node, StrError, bDeleteHot)
     {
         AddNodeInfo(Node, "DisconnectHot:" + StrError)
@@ -540,34 +637,43 @@ module.exports = class CConnect extends require("./connect2")
             AddNodeInfo(Node, "SEND DISCONNECTHOT")
             this.Send(Node, {"Method":"DISCONNECTHOT", "Context":{}, "Data":StrError}, STR_TYPE)
         }
+        
         this.DeleteNodeFromHot(Node)
     }
+    
     DISCONNECTHOT(Info, CurTime)
     {
         this.DeleteNodeFromHot(Info.Node)
         ADD_TO_STAT("DISCONNECTHOT")
         AddNodeInfo(Info.Node, "GET DISCONNECTHOT:" + Info.Data)
     }
+    
     StartGetNodes(Node)
     {
         if(glStopNode)
             return ;
+        
         var Delta = Date.now() - Node.StartTimeGetNodes;
+        
         if(Delta >= Node.NextGetNodesDelta)
         {
             Node.StartTimeGetNodes = Date.now()
             Node.NextGetNodesDelta = Math.min(Node.NextGetNodesDelta * 2, MAX_PERIOD_GETNODES)
             if(global.ADDRLIST_MODE)
                 Node.NextGetNodesDelta = MAX_PERIOD_GETNODES
+            
             this.Send(Node, {"Method":"GETNODES", "Context":{}, "Data":undefined})
         }
     }
+    
     GETNODES(Info, CurTime)
     {
         this.SendF(Info.Node, {"Method":"RETGETNODES", "Context":Info.Context, "Data":{arr:this.GetDirectNodesArray(false, 0, 1), IsAddrList:global.ADDRLIST_MODE,
             }}, MAX_NODES_RETURN * 250 + 300)
     }
+    
     static
+    
     RETGETNODES_F()
     {
         return "{arr:[\
@@ -584,6 +690,7 @@ module.exports = class CConnect extends require("./connect2")
                     ],\
                     IsAddrList:byte}";
     }
+    
     RETGETNODES(Info, CurTime)
     {
         var Data = this.DataFromF(Info);
@@ -596,6 +703,7 @@ module.exports = class CConnect extends require("./connect2")
                 if(this.IsCorrectNode(elem.ip, elem.port))
                 {
                     elem.addrStr = GetHexFromArr(elem.addrArr)
+                    
                     var Item = this.AddToArrNodes(elem, true);
                     if(Item)
                     {
@@ -607,6 +715,7 @@ module.exports = class CConnect extends require("./connect2")
         Info.Node.IsAddrList = Data.IsAddrList
         AddNodeInfo(Info.Node, "RETGETNODES length=" + arr.length)
     }
+    
     GetNewNode(ip, port, addrStr)
     {
         var bTemp;
@@ -617,8 +726,10 @@ module.exports = class CConnect extends require("./connect2")
         }
         var Node = new CNode(addrStr, ip, port);
         this.AddToArrNodes(Node, false)
+        
         if(bTemp)
             Node.addrStrTemp = addrStr
+        
         return Node;
     }
     AddNode(Str)
@@ -648,24 +759,30 @@ module.exports = class CConnect extends require("./connect2")
         else
             return undefined;
     }
+    
     IsCanConnect(Node)
     {
         if(Node.addrStr === this.addrStr || this.NodeInBan(Node) || Node.Delete || Node.Self || Node.DoubleConnection)
             return false;
+        
         if(Node.ip === this.ip && Node.port === this.port)
             return false;
+        
         if(this.addrStr === Node.addrStr)
             return false;
+        
         return true;
     }
+    
     IsCorrectNode(ip, port)
     {
         var Arr = ip.match(/[\w\.]/g);
         if(!Arr || !ip || Arr.length !== ip.length)
         {
-            ToLog("Not correct ip addres: " + ip, 2)
+            ToLog("Not correct ip addres: " + ip, 3)
             return 0;
         }
+        
         if(global.UNIQUE_IP_MODE)
         {
             var CountPorts = this.GetCountPortsByIP(ip);
@@ -674,6 +791,7 @@ module.exports = class CConnect extends require("./connect2")
         }
         return 1;
     }
+    
     GetCountPortsByIP(ip)
     {
         var Count = 0;
@@ -685,10 +803,13 @@ module.exports = class CConnect extends require("./connect2")
             var item = it.data();
             if(!item || item.ip !== ip)
                 break;
+            
             Count++
         }
+        
         return Count;
     }
+    
     GetDirectNodesArray(bAll, bWebPort, bGetAddrArr)
     {
         var ret = [];
@@ -697,6 +818,7 @@ module.exports = class CConnect extends require("./connect2")
         if(bGetAddrArr)
             Value.addrArr = GetArrFromHex(Value.addrStr)
         ret.push(Value)
+        
         var len = this.NodesArr.length;
         var UseRandom = 0;
         var MaxDeltaTime = 24 * 3600 * 1000;
@@ -707,6 +829,7 @@ module.exports = class CConnect extends require("./connect2")
             len = MAX_NODES_RETURN
         }
         var mapWasAdd = {};
+        
         var CurTime = GetCurrentTime();
         for(var i = 0; i < len; i++)
         {
@@ -726,23 +849,30 @@ module.exports = class CConnect extends require("./connect2")
             }
             if(bWebPort && !Item.portweb)
                 continue;
+            
             if(!this.IsCanConnect(Item, 1))
                 continue;
             if(Item.GrayConnect)
                 continue;
+            
             if(Item.BlockProcessCount < 0)
                 continue;
+            
             if(!GrayConnect() && Item.LastTime - 0 < CurTime - MaxDeltaTime)
                 continue;
+            
             var Value = {addrStr:Item.addrStr, ip:Item.ip, port:Item.port, FirstTime:Item.FirstTime, FirstTimeStr:Item.FirstTimeStr, LastTime:Item.LastTime - 0,
                 DeltaTime:Item.DeltaTime, Hot:Item.Hot, BlockProcessCount:Item.BlockProcessCount, Name:Item.Name, portweb:Item.portweb, LevelsBit:Item.LevelsBit,
             };
             if(bGetAddrArr)
                 Value.addrArr = GetArrFromHex(Value.addrStr)
+            
             ret.push(Value)
         }
+        
         return ret;
     }
+    
     AddToArrNodes(Item)
     {
         if(Item.addrStr === "" || Item.addrStr === this.addrStr)
@@ -754,26 +884,34 @@ module.exports = class CConnect extends require("./connect2")
         {
             Node = this.NodesIPPortMap[key]
         }
+        
         if(!Node)
         {
+            
             if(Item instanceof CNode)
                 Node = Item
             else
                 Node = new CNode(Item.addrStr, Item.ip, Item.port)
             Node.id = this.NodesArr.length
             Node.addrArr = GetAddresFromHex(Node.addrStr)
+            
             this.NodesMap[Node.addrStr] = Node
             this.NodesArr.push(Node)
             this.NodesArrUnSort.push(Node)
+            
             this.NodesTree.insert(Node)
+            
             ADD_TO_STAT("AddToNodes")
         }
+        
         this.NodesMap[Node.addrStr] = Node
         this.NodesIPPortMap[key] = Node
+        
         if(Node.addrArr && CompareArr(Node.addrArr, this.addrArr) === 0)
         {
             Node.Self = true
         }
+        
         if(Item.BlockProcessCount)
             Node.BlockProcessCount = Item.BlockProcessCount
         if(Item.FirstTime)
@@ -785,14 +923,18 @@ module.exports = class CConnect extends require("./connect2")
             Node.Name = Item.Name
         if(Item.portweb)
             Node.portweb = Item.portweb
+        
         if(Node.LastTime < Item.LastTime && Item.LastTime <= GetCurrentTime() - 0)
             Node.LevelsBit = Item.LevelsBit
+        
         return Node;
     }
+    
     NodesArrSort()
     {
         PrepareBlockProcessSort(this.NodesArr)
         this.NodesArr.sort(SortNodeBlockProcessCount)
+        
         if((GrayConnect() || !this.LoadHistoryMode) && Date.now() - this.StartTime > 120 * 1000)
         {
             var arr0 = this.GetDirectNodesArray(true);
@@ -800,11 +942,13 @@ module.exports = class CConnect extends require("./connect2")
             SaveParams(GetDataPath("nodes.lst"), arr)
         }
     }
+    
     LoadNodesFromFile()
     {
         var arr = LoadParams(GetDataPath("nodes.lst"), []);
         PrepareBlockProcessSort(arr)
         arr.sort(SortNodeBlockProcessCount)
+        
         for(var i = 0; i < arr.length; i++)
         {
             var elem = arr[i];
@@ -820,6 +964,7 @@ module.exports = class CConnect extends require("./connect2")
             }
         }
     }
+    
     GetLevelEnum(Node)
     {
         var Level = this.AddrLevelNode(Node);
@@ -829,6 +974,7 @@ module.exports = class CConnect extends require("./connect2")
             Node.LevelEnum = 1
             return 1;
         }
+        
         var arr = [].concat(arr0);
         var bWas = 0;
         for(var n = 0; n < arr.length; n++)
@@ -839,10 +985,12 @@ module.exports = class CConnect extends require("./connect2")
                 break;
             }
         }
+        
         if(!bWas)
             arr.push(Node)
         PrepareBlockProcessSort(arr)
         arr.sort(SortNodeBlockProcessCount)
+        
         for(var n = 0; n < arr.length; n++)
         {
             if(arr[n] === Node)
@@ -853,29 +1001,38 @@ module.exports = class CConnect extends require("./connect2")
         }
         return Node.LevelEnum;
     }
+    
     StartAddLevelConnect(Node)
     {
         if(!global.CAN_START)
             return ;
+        
         ADD_TO_STAT("NETCONFIGURATION")
+        
         if(Node.Active && Node.CanHot)
             this.SendF(Node, {"Method":"ADDLEVELCONNECT", "Context":{}, "Data":this.GetLevelEnum(Node)})
     }
+    
     static
+    
     ADDLEVELCONNECT_F()
     {
         return "uint";
     }
+    
     ADDLEVELCONNECT(Info, CurTime)
     {
         Info.Node.LevelCount = this.DataFromF(Info)
+        
         var ret;
         var Count;
         if(!global.CAN_START)
             return ;
         if(Info.Node.GrayConnect || GrayConnect())
             return ;
+        
         var Count = this.GetLevelEnum(Info.Node);
+        
         var bAdd = this.AddLevelConnect(Info.Node);
         if(bAdd)
         {
@@ -885,13 +1042,17 @@ module.exports = class CConnect extends require("./connect2")
         {
             ret = {result:0, Count:Count}
         }
+        
         AddNodeInfo(Info.Node, "GET ADDLEVELCONNECT, DO bAdd=" + bAdd)
+        
         this.SendF(Info.Node, {"Method":"RETADDLEVELCONNECT", "Context":Info.Context, "Data":ret})
     }
+    
     AddLevelConnect(Node)
     {
         if(!global.CAN_START)
             return false;
+        
         var Level = this.AddrLevelNode(Node);
         Node.Hot = true
         var arr = this.LevelNodes[Level];
@@ -908,6 +1069,7 @@ module.exports = class CConnect extends require("./connect2")
             }
         if(!bWas)
             arr.push(Node)
+        
         Node.TransferCount = 0
         if(this.LoadHistoryMode)
             Node.LastTimeTransfer = (GetCurrentTime() - 0) + 30 * 1000
@@ -917,21 +1079,28 @@ module.exports = class CConnect extends require("./connect2")
         this.CheckDisconnectHot(Level)
         if(!Node.CanHot)
             return false;
+        
         this.SendGetMessage(Node)
         ADD_TO_STAT("NETCONFIGURATION")
         ADD_TO_STAT("AddLevelConnect")
         AddNodeInfo(Node, "Add Level connect")
+        
         return true;
     }
+    
     static
+    
     RETADDLEVELCONNECT_F()
     {
         return "{result:byte,Count:uint}";
     }
+    
     RETADDLEVELCONNECT(Info, CurTime)
     {
         var Data = this.DataFromF(Info);
+        
         AddNodeInfo(Info.Node, "GET RETADDLEVELCONNECT: " + Data.result)
+        
         if(Data.result === 1)
         {
             this.AddLevelConnect(Info.Node)
@@ -940,23 +1109,30 @@ module.exports = class CConnect extends require("./connect2")
         {
             this.AddCheckErrCount(Info.Node, 1)
         }
+        
         Info.Node.LevelCount = Data.Count
     }
+    
     DeleteBadConnectingByTimer()
     {
+        
         if(glStopNode)
             return ;
+        
         var CurTime = GetCurrentTime();
+        
         var arr = SERVER.NodesArr;
         for(var i = 0; i < arr.length; i++)
         {
             var Node = arr[i];
             var Status = GetSocketStatus(Node.Socket);
+            
             if(Node.Active && Status < 100)
             {
                 var Delta = CurTime - Node.LastTime;
                 if(Delta > MAX_WAIT_PERIOD_FOR_STATUS)
                 {
+                    
                     AddNodeInfo(Node, "Close bad connecting by time")
                     this.DeleteNodeFromActive(Node)
                 }
@@ -966,6 +1142,7 @@ module.exports = class CConnect extends require("./connect2")
     CheckDisconnectHot(Level)
     {
         var CurTime = GetCurrentTime() - 0;
+        
         var MaxCountChilds = this.GetMaxConnectChilds();
         if(Level < 3 && MaxCountChilds > 4)
             MaxCountChilds = 4
@@ -984,6 +1161,7 @@ module.exports = class CConnect extends require("./connect2")
                     }
                 }
             }
+            
             PrepareBlockProcessSort(arr)
             arr.sort(SortNodeBlockProcessCount)
             var ChildCount = arr.length;
@@ -992,6 +1170,7 @@ module.exports = class CConnect extends require("./connect2")
                 var Node = arr[n];
                 if(Node)
                 {
+                    
                     if(ChildCount > MaxCountChilds)
                     {
                         ChildCount--
@@ -1034,6 +1213,7 @@ module.exports = class CConnect extends require("./connect2")
             ToLog("Error Wallet not open")
             return 0;
         }
+        
         if(!this.SignCurrentTimeDev)
         {
             var SignArr = GetArrFromHex(SERVER.addrStr);
@@ -1058,6 +1238,7 @@ module.exports = class CConnect extends require("./connect2")
         }
         return Count;
     }
+    
     TIME(Info, CurTime)
     {
         if(global.AUTO_CORRECT_TIME)
@@ -1077,12 +1258,14 @@ module.exports = class CConnect extends require("./connect2")
             }
         }
     }
+    
     AddToConnect(Node)
     {
         AddNodeInfo(Node, "To connect")
         Node.WasAddToConnect = 1
         ArrConnect.push(Node)
     }
+    
     ConnectToAll()
     {
         var Count = 0;
@@ -1114,6 +1297,7 @@ module.exports = class CConnect extends require("./connect2")
         }
         return Count;
     }
+    
     GetHotTimeNodes()
     {
         if(this.LoadHistoryMode || !global.CAN_START)
@@ -1121,6 +1305,7 @@ module.exports = class CConnect extends require("./connect2")
         else
             return this.GetHotNodes();
     }
+    
     CorrectTime()
     {
         var MaxCorrect = MAX_TIME_CORRECT;
@@ -1136,15 +1321,19 @@ module.exports = class CConnect extends require("./connect2")
                 continue;
             if(Node.Times.Count < 2)
                 continue;
+            
             if(PerioadAfterCanStart >= PERIOD_FOR_START_CHECK_TIME)
                 if(Node.Times.Count < 5)
                     continue;
+            
             NodesSet.add(Node)
         }
+        
         for(var Node of NodesSet)
         {
             DeltaArr.push(Node.Times.AvgDelta)
         }
+        
         if(DeltaArr.length < 1)
             return ;
         if(this.LoadHistoryMode && CountNodes > 10)
@@ -1152,6 +1341,7 @@ module.exports = class CConnect extends require("./connect2")
             PerioadAfterCanStart = 0
             CountNodes = 10
         }
+        
         if(DeltaArr.length < CountNodes / 2)
             return ;
         if(PerioadAfterCanStart >= PERIOD_FOR_START_CHECK_TIME)
@@ -1159,6 +1349,7 @@ module.exports = class CConnect extends require("./connect2")
             if(DeltaArr.length < 3 * CountNodes / 4)
                 return ;
         }
+        
         DeltaArr.sort(function (a,b)
         {
             return a - b;
@@ -1174,6 +1365,7 @@ module.exports = class CConnect extends require("./connect2")
             start = Math.floor(DeltaArr.length / 2)
             finish = start
         }
+        
         var Sum = 0;
         var Count = 0;
         for(var i = start; i <= finish; i++)
@@ -1181,7 +1373,9 @@ module.exports = class CConnect extends require("./connect2")
             Sum = Sum + DeltaArr[i]
             Count++
         }
+        
         var AvgDelta = Sum / Count;
+        
         if(PerioadAfterCanStart < PERIOD_FOR_START_CHECK_TIME)
         {
             var KT = (PERIOD_FOR_START_CHECK_TIME - PerioadAfterCanStart) / PERIOD_FOR_START_CHECK_TIME;
@@ -1191,11 +1385,13 @@ module.exports = class CConnect extends require("./connect2")
         {
             MaxCorrect = 25
         }
+        
         if(AvgDelta < ( - MaxCorrect))
             AvgDelta =  - MaxCorrect
         else
             if(AvgDelta > MaxCorrect)
                 AvgDelta = MaxCorrect
+        
         AvgDelta = Math.trunc(AvgDelta)
         if(Math.abs(AvgDelta) < 15)
         {
@@ -1205,8 +1401,10 @@ module.exports = class CConnect extends require("./connect2")
             ADD_TO_STAT("CORRECT_TIME_UP", AvgDelta)
         else
             ADD_TO_STAT("CORRECT_TIME_DOWN",  - AvgDelta)
+        
         global.DELTA_CURRENT_TIME = Math.trunc(global.DELTA_CURRENT_TIME + AvgDelta)
         this.ClearTimeStat()
+        
         SAVE_CONST()
     }
     ClearTimeStat()
@@ -1217,6 +1415,7 @@ module.exports = class CConnect extends require("./connect2")
             Node.Times = undefined
         }
     }
+    
     TimeDevCorrect()
     {
         if(CHECK_DELTA_TIME.bUse)
@@ -1231,16 +1430,19 @@ module.exports = class CConnect extends require("./connect2")
                     CorrectTime = CHECK_DELTA_TIME.DeltaTime
                 else
                     CorrectTime =  - CHECK_DELTA_TIME.DeltaTime
+                
                 global.DELTA_CURRENT_TIME += CorrectTime
                 this.ClearTimeStat()
                 SAVE_CONST(true)
             }
         }
     }
+    
     SetNodePrioritet(Node, Prioritet)
     {
         if(Node.Prioritet === Prioritet)
             return ;
+        
         if(Node.addrArr)
         {
             var Item = this.ActualNodes.find(Node);
@@ -1253,43 +1455,55 @@ module.exports = class CConnect extends require("./connect2")
         }
         Node.Prioritet = Prioritet
     }
+    
     AddNodeToActive(Node)
     {
+        
         if(Node.addrArr)
         {
             if(CompareArr(Node.addrArr, this.addrArr) === 0)
             {
                 return ;
             }
+            
             this.CheckNodeMap(Node)
+            
             this.ActualNodes.insert(Node)
         }
+        
         Node.ResetNode()
         Node.Active = true
         Node.NextConnectDelta = 1000
+        
         if(!Node.FirstTime)
         {
             Node.FirstTime = GetCurrentTime() - 0
             Node.FirstTimeStr = "" + GetStrTimeUTC()
         }
+        
         ADD_TO_STAT("AddToActive")
     }
+    
     DeleteNodeFromActive(Node)
     {
         Node.Active = false
         if(Node.Hot)
             this.StartDisconnectHot(Node, "NotActive", 1)
         Node.Hot = false
+        
         this.ActualNodes.remove(Node)
+        
         CloseSocket(Node.Socket, "DeleteNodeFromActive")
         CloseSocket(Node.Socket2, "DeleteNodeFromActive")
         Node.ResetNode()
         Node.Socket = undefined
         Node.Socket2 = undefined
     }
+    
     StartReconnect()
     {
         return ;
+        
         var arr = this.GetActualNodes();
         for(var i = 0; i < arr.length; i++)
         {
@@ -1307,6 +1521,7 @@ module.exports = class CConnect extends require("./connect2")
             }
         }
     }
+    
     IsLocalIP(addr)
     {
         if(addr.substr(0, 7) === "192.168" || addr.substr(0, 3) === "10.")
@@ -1314,6 +1529,7 @@ module.exports = class CConnect extends require("./connect2")
         else
             return 0;
     }
+    
     GetActualsServerIP(bFlag)
     {
         var arr = this.GetActualNodes();
@@ -1328,8 +1544,10 @@ module.exports = class CConnect extends require("./connect2")
                 else
                     return 0;
         })
+        
         if(bFlag)
             return arr;
+        
         for(var i = 0; i < arr.length; i++)
         {
             Str += arr[i].ip + ", "
@@ -1340,8 +1558,10 @@ module.exports = class CConnect extends require("./connect2")
     {
         if(Node.GrayConnect)
             return MAX_LEVEL_SPECIALIZATION - 1;
+        
         return AddrLevelArr(this.addrArr, Node.addrArr);
     }
+    
     GetNodesLevelCount()
     {
         var Count = 0;
@@ -1357,6 +1577,7 @@ module.exports = class CConnect extends require("./connect2")
         }
         return Count;
     }
+    
     GetHotNodes()
     {
         var ArrNodes = [];
@@ -1370,6 +1591,7 @@ module.exports = class CConnect extends require("./connect2")
         }
         return ArrNodes;
     }
+    
     DeleteNodeFromHot(Node)
     {
         if(Node.Hot)
@@ -1384,12 +1606,14 @@ module.exports = class CConnect extends require("./connect2")
                 if(arr[n] === Node)
                 {
                     arr.splice(n, 1)
+                    
                     ADD_TO_STAT("DeleteLevelConnect")
                     ADD_TO_STAT("NETCONFIGURATION")
                     break;
                 }
         }
     }
+    
     DeleteAllNodesFromHot(Str)
     {
         for(var i = 0; i < this.LevelNodes.length; i++)
@@ -1434,18 +1658,24 @@ module.exports = class CConnect extends require("./connect2")
                 continue;
             if(!this.IsCanConnect(Node))
                 continue;
+            
             Node.Level = this.AddrLevelNode(Node)
             if(!HotArr[Node.Level])
                 HotArr[Node.Level] = []
+            
             HotArr[Node.Level].push(Node)
         }
+        
         return HotArr;
     }
+    
     DetectGrayMode()
     {
         if(global.NET_WORK_MODE)
             return ;
+        
         var CurTime = Date.now();
+        
         var CountNodes = this.ActualNodes.size;
         if(CountNodes || this.StopDetectGrayMode)
         {
@@ -1453,6 +1683,7 @@ module.exports = class CConnect extends require("./connect2")
             this.StopDetectGrayMode = 1
             return ;
         }
+        
         if(!this.LastNotZeroNodesTime)
             this.LastNotZeroNodesTime = CurTime
         var DeltaTime = CurTime - this.LastNotZeroNodesTime;
@@ -1490,6 +1721,7 @@ module.exports = class CConnect extends require("./connect2")
         var ArrTree = this.GetTransferTree();
         this.TransferTree = ArrTree
         var CurTime = Date.now();
+        
         if(GrayConnect())
         {
             var MustCount = GetGrayServerConnections();
@@ -1497,6 +1729,7 @@ module.exports = class CConnect extends require("./connect2")
             {
                 PrepareBlockProcessSort(this.NodesArr)
                 this.NodesArr.sort(SortNodeBlockProcessCountGray)
+                
                 var WasDoConnect = 0;
                 var arr = this.NodesArr;
                 for(var n = 0; arr && n < arr.length; n++)
@@ -1506,6 +1739,7 @@ module.exports = class CConnect extends require("./connect2")
                         continue;
                     if(!this.IsCanConnect(Node))
                         continue;
+                    
                     var DeltaTime = CurTime - Node.StartTimeConnect;
                     if(!Node.Active && WasDoConnect < 5 && !Node.WasAddToConnect && DeltaTime >= Node.NextConnectDelta)
                     {
@@ -1531,6 +1765,7 @@ module.exports = class CConnect extends require("./connect2")
                     continue;
                 PrepareBlockProcessSort(arr)
                 arr.sort(SortNodeBlockProcessCount)
+                
                 var WasDoConnect = 0;
                 var WasDoHot = 0;
                 var length = Math.min(arr.length, 10);
@@ -1543,9 +1778,11 @@ module.exports = class CConnect extends require("./connect2")
                         this.AddToConnect(Node)
                         WasDoConnect++
                     }
+                    
                     DeltaTime = CurTime - Node.StartTimeHot
                     if(Node.Active && !Node.Hot && WasDoHot < MIN_CONNECT_CHILD && DeltaTime > Node.NextHotDelta && !Node.GrayConnect)
                     {
+                        
                         AddNodeInfo(Node, "To hot level")
                         this.StartAddLevelConnect(Node)
                         Node.StartTimeHot = CurTime
@@ -1573,6 +1810,7 @@ module.exports = class CConnect extends require("./connect2")
         return Str;
     }
 };
+
 function PrepareBlockProcessSort(Arr)
 {
     for(var i = 0; i < Arr.length; i++)
@@ -1588,37 +1826,46 @@ function PrepareBlockProcessSort(Arr)
                 Item.BlockProcessCountLg = 1 + Math.floor(Math.log10(BlockProcessCount));
     }
 }
+
 function SortNodeBlockProcessCount(a,b)
 {
     var BlockProcessCount1 = a.BlockProcessCountLg;
     var BlockProcessCount2 = b.BlockProcessCountLg;
+    
     if(BlockProcessCount2 !== BlockProcessCount1)
         return BlockProcessCount2 - BlockProcessCount1;
+    
     if(a.DeltaTime !== b.DeltaTime)
         return a.DeltaTime - b.DeltaTime;
+    
     return a.id - b.id;
 }
 function SortNodeBlockProcessCountGray(a,b)
 {
     if(a.StartFindList !== b.StartFindList)
         return a.StartFindList - b.StartFindList;
+    
     return SortNodeBlockProcessCount(a, b);
 }
+
 function GetGrayServerConnections()
 {
     var Count = MAX_GRAY_CONNECTIONS_TO_SERVER;
     if(SERVER.LoadHistoryMode && SERVER.LoadHistoryMessage)
         Count = Count * 10;
+    
     return Count;
 }
 global.GetGrayServerConnections = GetGrayServerConnections;
 global.PrepareBlockProcessSort = PrepareBlockProcessSort;
 global.SortNodeBlockProcessCount = SortNodeBlockProcessCount;
+
 function CompareNodeIPPort(node1,node2)
 {
     if(node1.ip < node2.ip)
         return  - 1;
     if(node1.ip > node2.ip)
         return 1;
+    
     return node1.port - node2.port;
 }

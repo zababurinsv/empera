@@ -8,6 +8,8 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
+
 var LOC_ADD_NAME = "$";
 module.exports = function ()
 {
@@ -23,6 +25,7 @@ module.exports = function ()
     {
         this.ExternMap = {};
         this.FunctionMap = {};
+        
         this.WasPlus = 0;
         this.buf = "";
         this.stream = "";
@@ -44,19 +47,24 @@ module.exports = function ()
         this.IgnoreCodeLevel = false;
         this.AddToStream = this.AddToStreamAddTab;
     };
+    
     this.AllowedWords = {true:1, false:1, undefined:1, Infinity:1, NaN:1, null:1, context:5, this:5, arguments:5, };
+    
     var mapKeys = {break:1, return:1, case:1, do:1, if:1, switch:1, var:1, throw:1, while:1, default:1, for:1, try:1, continue:1,
         with:1, function:3, void:3, new:3, delete:3, typeof:3, finally:5, catch:5, else:5, instanceof:4, in:4, };
     this.KeyWords = Object.assign(Object.create(null), mapKeys);
     this.KeyWords["__proto__"] = 100;
     this.KeyWords["prototype"] = 100;
     this.KeyWords["constructor"] = 100;
+    
     this.KeyWords["__count__"] = 100;
     this.KeyWords["__noSuchMethod__"] = 100;
     this.KeyWords["__parent__"] = 100;
+    
     this.ProcessWords = {break:"break", return:"return", case:"case", do:"do", if:"if", switch:"switch", var:"var", throw:"throw",
         with:"with", while:"while", default:"default", for:"for", try:"try", continue:"continue", function:"function", void:"void",
         new:"new", delete:"delete", typeof:"typeof", finally:"finally", catch:"catch", else:"else", };
+    
     this.enIndenifier = "1";
     this.enString = "2";
     this.enNumber = "3";
@@ -143,6 +151,7 @@ module.exports = function ()
         };
     };
     this.Init();
+    
     function LANG(Str)
     {
         for(var i = 1; i < arguments.length; i++)
@@ -172,6 +181,7 @@ module.exports = function ()
             {
                 line++;
             }
+        
         var col = this.start + 1 - begin;
         var Dots1 = "";
         var Dots2 = "";
@@ -315,6 +325,7 @@ module.exports = function ()
     {
         this.Error("RegExp not support");
         return ;
+        
         var separator = "/";
         this.pos++;
         while(this.pos < this.buf.length)
@@ -351,6 +362,7 @@ module.exports = function ()
         }
         this.Error("Found end of file during calculate regexp");
     };
+    
     this.PosCurrentType = function (TypeArray)
     {
         while(this.pos < this.buf.length)
@@ -446,6 +458,7 @@ module.exports = function ()
             this.pos++;
         }
     };
+    
     this.BackPos = function ()
     {
         if(this.type != this.enEndFile)
@@ -499,10 +512,12 @@ module.exports = function ()
                 {
                     return this.value;
                 }
+                
                 if(this.KeyWords[this.value] === 100)
                 {
                     this.Error("Not allow Identifier '" + this.value + "'");
                 }
+                
                 return this.enIndenifier;
             case "N":
                 this.PosNumber();
@@ -696,6 +711,7 @@ module.exports = function ()
         }
         return AllStr;
     };
+    
     this.ParseLexem2 = function (Code)
     {
         this.Clear();
@@ -729,16 +745,20 @@ module.exports = function ()
             var type = this.PosNextToken();
             if(type === this.enEndFile)
                 break;
+            
             if(type === this.enString && this.value === '"public"')
             {
                 bPublic = 1;
                 continue;
             }
+            
             if(this.value === "function")
             {
                 var FuncName = this.Parse_function(0, 1);
+                
                 if(bPublic)
                     this.ExternMap[FuncName] = bPublic;
+                
                 bPublic = 0;
                 this.AddNewLineToStream(";\n");
             }
@@ -753,6 +773,7 @@ module.exports = function ()
         if(!bOneIteration)
             this.BlockLevel++;
         var WasIgnoreCodeLevel = this.IgnoreCodeLevel;
+        
         var type;
         var bWasLabel = false;
         this.beforeRegExp = 61;
@@ -761,6 +782,7 @@ module.exports = function ()
         {
             var posSave = this.pos;
             type = this.PosNextToken();
+            
             if(!bNotCheck && !bSimpleMode && !bWasLabel)
             {
                 switch(type)
@@ -810,6 +832,7 @@ module.exports = function ()
                         break;
                     }
                 default:
+                    
                     this.pos = posSave;
                     type = this.ParseExpressionWithComma(false, false, true);
                     if(type === ":")
@@ -908,18 +931,24 @@ module.exports = function ()
         }
         return type;
     };
+    
     this.ParseExpression = function (sConditions,bCanEmpty,bCanLabel)
     {
         var WasPlus2 = this.WasPlus;
         var stream2 = this.stream;
+        
         this.WasPlus = 0;
         this.stream = "";
+        
         var type = this.ParseExpression0(sConditions, bCanEmpty, bCanLabel);
+        
         if(this.WasPlus)
             this.stream = stream2 + "CHKL(" + this.stream + ")";
         else
             this.stream = stream2 + this.stream;
+        
         this.WasPlus = WasPlus2;
+        
         return type;
     };
     this.ParseExpression0 = function (sConditions,bCanEmpty,bCanLabel)
@@ -927,6 +956,7 @@ module.exports = function ()
         var bWasExpr = false;
         var bCanDot = false;
         var bCanLeftSide = false;
+        
         var type;
         var Name;
         this.beforeRegExp = 61;
@@ -934,6 +964,7 @@ module.exports = function ()
         while(true)
         {
             type = this.PosNextItem();
+            
             switch(type)
             {
                 case this.enSpaces:
@@ -951,11 +982,13 @@ module.exports = function ()
                     if(bWasExpr)
                         break Main;
             }
+            
             switch(type)
             {
                 case this.enIndenifier:
                     Name = this.value;
                     var key = this.KeyWords[Name];
+                    
                     if(key == 3)
                     {
                         this["Parse_" + this.ProcessWords[Name]]();
@@ -1049,6 +1082,7 @@ module.exports = function ()
                     bCanDot = false;
                     bWasExpr = true;
                     break;
+                    
                 case "=":
                 case "+=":
                     if(type === "+=")
@@ -1057,10 +1091,12 @@ module.exports = function ()
                         this.Error("Unexpected token: '%1'", type);
                     this.AddToStream(" " + type + " ");
                     var type2 = this.ParseExpression(undefined, false, false);
+                    
                     bCanLeftSide = false;
                     bCanDot = false;
                     bWasExpr = true;
                     break;
+                    
                 case "-=":
                 case "*=":
                 case "/=":
@@ -1074,6 +1110,7 @@ module.exports = function ()
                     if(!bCanLeftSide)
                         this.Error("Unexpected token: '%1'", type);
                     this.AddToStream(" " + type + " ");
+                    
                     bCanLeftSide = false;
                     bCanDot = false;
                     bWasExpr = false;
@@ -1135,10 +1172,12 @@ module.exports = function ()
                     if(bWasExpr)
                         if(!bCanDot)
                             this.Error("Invalid left-side argument before token: '%1'", type);
+                    
                     this.AddToStream(type);
                     bCanLeftSide = false;
                     bCanDot = false;
                     break;
+                    
                 case "in":
                 case "of":
                 case "instanceof":
@@ -1223,6 +1262,7 @@ module.exports = function ()
         if(type != sFind)
             this.Error("Require token: '%1'", sFind);
     };
+    
     this.RequireIndenifier = function (Name,DopStr)
     {
         var type = this.PosNextToken();
@@ -1325,10 +1365,13 @@ module.exports = function ()
                 break;
             this.Error("Require indenifier");
         }
+        
         if(FuncName && bFindExternal)
         {
             this.FunctionMap[FuncName] = 1;
+            
             type = this.PosNextToken();
+            
             if(this.value === 'public')
             {
                 this.ExternMap[FuncName] = 1;
@@ -1338,24 +1381,30 @@ module.exports = function ()
                 this.BackPos();
             }
         }
+        
         this.RequireChar("{");
         this.AddNewLineToStream(")\n", true);
         this.AddNewLineToStream("{\n", true);
+        
         if(this.InjectCheck)
         {
             this.AddCheckLineToStream(30);
         }
+        
         this.ParseBlock("}", false, false, false);
         this.AddNewLineToStream("\n");
         this.AddToStream("}", "} ");
+        
         return FuncName;
     };
+    
     this.ParseFunctionCall = function (bCanEmpty)
     {
         this.AddToStream("(");
         this.ParseExpressionWithComma(")", true);
         this.AddToStream(")");
     };
+    
     this.Parse_void = function ()
     {
         this.AddToStream("void ");
@@ -1363,6 +1412,7 @@ module.exports = function ()
     };
     this.Parse_new = function ()
     {
+        
         this.AddToStream("new ");
         var type = this.ParseExpression();
     };
@@ -1493,6 +1543,7 @@ module.exports = function ()
                     bForInMode = true;
             }
         }
+        
         if(bForInMode)
         {
             if(bWasVar)
@@ -1585,10 +1636,12 @@ module.exports = function ()
         this.AddToStream(")");
         this.ParseOneBlock();
     };
+    
     this.Parse_try = function ()
     {
         this.Error("try-catch not support");
         return ;
+        
         this.RequireChar("{");
         this.AddToStream("try\n");
         this.AddNewLineToStream("{\n", true);
@@ -1603,11 +1656,13 @@ module.exports = function ()
             this.RequireChar(")");
             this.AddNewLineToStream(")\n", true);
             this.AddNewLineToStream("{\n", true);
+            
             this.RequireChar("{");
             this.ParseBlock("}");
             this.AddToStream("}");
             type = this.PosNextToken();
         }
+        
         if(type == this.enIndenifier && this.ProcessWords[this.value] == "finally")
         {
             this.RequireChar("{");
@@ -1622,6 +1677,7 @@ module.exports = function ()
             this.BackPos();
         }
     };
+    
     this.Parse_throw = function ()
     {
         this.AddToStream("throw ");
@@ -1646,6 +1702,7 @@ module.exports = function ()
                 this.LineNumber++;
         this.posLineNumber = this.pos;
     };
+    
     this.CalculateLineNumber0 = function (str)
     {
         for(var i = 0; i < str.length; i++)
@@ -1659,6 +1716,7 @@ module.exports = function ()
             this.AddToStream(str);
         }
     };
+    
     this.AddToStreamSimple = function (str,strMustLast)
     {
         if(strMustLast)

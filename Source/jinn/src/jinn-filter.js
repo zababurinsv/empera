@@ -14,6 +14,9 @@
 **/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
+
+//Engine context
+
 function InitClass(Engine)
 {
 }

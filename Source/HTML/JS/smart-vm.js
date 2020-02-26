@@ -8,25 +8,33 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 "use strict";
+
+
 var LOC_ADD_NAME = "$";
+
 const MAX_LENGTH_STRING = 5000;
 const $Math = {};
 const $JSON = {};
 var ListF = {};
 ListF.$Math = $Math;
 ListF.$JSON = $JSON;
+
 var TickCounter = 0;
 global.SetTickCounter = function (Value)
 {
     TickCounter = Value;
 }
+
+
 function DO(Count)
 {
     TickCounter -= Count;
     if(TickCounter < 0)
         throw new Error("Stop the execution code. The limit of ticks is over.");
 }
+
 var Map404 = Object.assign(Object.create(null), {});
 Map404["prototype"] = 100;
 Map404["constructor"] = 100;
@@ -34,6 +42,7 @@ Map404["__proto__"] = 100;
 Map404["__count__"] = 100;
 Map404["__noSuchMethod__"] = 100;
 Map404["__parent__"] = 100;
+
 function CHK404(Name)
 {
     if(Map404[Name])
@@ -42,15 +51,18 @@ function CHK404(Name)
     }
     return Name;
 }
+
 function CHKL(Str)
 {
     if(typeof Str === "string" && Str.length > MAX_LENGTH_STRING)
         throw new Error("Invalid string length:" + Str.length);
     return Str;
 }
+
 ListF.DO = DO;
 ListF.CHK404 = CHK404;
 ListF.CHKL = CHKL;
+
 function GET_ACCOUNT(Obj)
 {
     let Data = Obj;
@@ -147,6 +159,7 @@ function GET_SMART(Obj)
         }, };
     return GET_PROP;
 }
+
 function InitMathObject()
 {
     $Math.abs = function (x)
@@ -294,8 +307,10 @@ function InitMathObject()
         DO(6);
         return Math.trunc(x);
     };
+    
     $Math.pow = function (x,y)
     {
+        
         DO(40);
         return Math.pow(x, y);
     };
@@ -304,8 +319,10 @@ function InitMathObject()
         DO(3);
         return Math.imul(x, y);
     };
+    
     $Math.hypot = function ()
     {
+        
         DO(56);
         return Math.hypot.apply(Math, arguments);
     };
@@ -319,14 +336,18 @@ function InitMathObject()
         DO(6);
         return Math.min.apply(Math, arguments);
     };
+    
     $Math.random = function ()
     {
+        
         DO(1);
         return 0;
     };
+    
     FreezeObjectChilds($Math);
     Object.freeze($Math);
 }
+
 function InitJSONObject()
 {
     $JSON.stringify = function (Obj)
@@ -342,9 +363,11 @@ function InitJSONObject()
         DO(1000);
         return JSON.parse(Str);
     };
+    
     FreezeObjectChilds($JSON);
     Object.freeze($JSON);
 }
+
 function InitEval()
 {
     InitMathObject();
@@ -362,12 +385,14 @@ function InitEval()
     Object.freeze(Obj.call);
     Object.freeze(Obj.toString);
     Object.freeze(Obj.constructor);
+    
     for(var key in ListF)
     {
         Object.freeze(ListF[key]);
         FreezeObjectChilds(ListF[key]);
     }
 }
+
 function FreezeObjectChilds(Value)
 {
     var arr = Object.getOwnPropertyNames(Value);
@@ -376,6 +401,7 @@ function FreezeObjectChilds(Value)
         Object.freeze(Value[name]);
     }
 }
+
 function InnerChangeObjects()
 {
     ClearPrototype(Function.prototype, {"call":1, "apply":1, "bind":1, "name":1});
@@ -386,7 +412,9 @@ function InnerChangeObjects()
         "replace":1, "split":1, "trim":1});
     ClearPrototype(Number.prototype, {"toFixed":1, "toPrecision":1});
     ClearPrototype(Boolean.prototype, {});
+    
     InitStringObject(String.prototype);
+    
     function InitStringObject(Proto)
     {
         let indexOf = Proto.indexOf;
@@ -394,11 +422,13 @@ function InnerChangeObjects()
         {
             return indexOf.call(this, x, y);
         };
+        
         let substr = Proto.substr;
         String.prototype.substr = function (x,y)
         {
             return substr.call(this, x, y);
         };
+        
         let toLowerCase = Proto.toLowerCase;
         String.prototype.toLowerCase = function ()
         {
@@ -419,22 +449,26 @@ function InnerChangeObjects()
         {
             return charCodeAt.call(this, x);
         };
+        
         let replace = Proto.replace;
         String.prototype.replace = function (x,y)
         {
             return replace.call(this, x, y);
         };
+        
         let split = Proto.split;
         String.prototype.split = function (x,y)
         {
             return split.call(this, x, y);
         };
+        
         let trim = Proto.trim;
         String.prototype.trim = function ()
         {
             return trim.call(this);
         };
     };
+    
     function ClearPrototype(Obj,NMap)
     {
         var arr = Object.getOwnPropertyNames(Obj);
@@ -446,6 +480,7 @@ function InnerChangeObjects()
         Obj.constructor = undefined;
         Obj.toString = undefined;
         Obj.toLocaleString = undefined;
+        
         arr = Object.getOwnPropertyNames(Obj);
         for(var name of arr)
         {
@@ -453,29 +488,37 @@ function InnerChangeObjects()
         }
     };
 }
+
 global.CodeInnerChangeObjects = InnerChangeObjects.toString();
+
 ListF.$SetValue = function (ID,CoinSum)
 {
     DO(3000);
     ID = ParseNum(ID);
+    
     if(!RunContext.Smart.TokenGenerate)
     {
         throw "The smart-contract is not token generate, access to change values is denied";
     }
+    
     var ToData = DApps.Accounts.ReadStateTR(ID);
     if(!ToData)
     {
         throw "Account does not exist.Error id number: " + ID;
     }
+    
     if(ToData.Currency !== RunContext.Smart.Num)
     {
         throw "The account currency does not belong to the smart-contract, access to change values is denied";
     }
+    
     if(typeof CoinSum === "number")
     {
         CoinSum = COIN_FROM_FLOAT(CoinSum);
     }
+    
     CHECKSUM(CoinSum);
+    
     if(CoinSum.SumCENT >= 1e9)
     {
         throw "ERROR SumCENT>=1e9";
@@ -484,18 +527,24 @@ ListF.$SetValue = function (ID,CoinSum)
     {
         throw "ERROR Sum<0";
     }
+    
     ToData.Value.SumCOIN = Math.trunc(CoinSum.SumCOIN);
     ToData.Value.SumCENT = Math.trunc(CoinSum.SumCENT);
     DApps.Accounts.WriteStateTR(ToData, RunContext.TrNum);
+    
     return true;
 }
+
 ListF.$Send = function (ToID,CoinSum,Description)
 {
     DO(3000);
     ToID = ParseNum(ToID);
+    
     if(typeof CoinSum === "number")
         CoinSum = COIN_FROM_FLOAT(CoinSum);
+    
     CHECKSUM(CoinSum);
+    
     if(CoinSum.SumCENT >= 1e9)
     {
         throw "ERROR SumCENT>=1e9";
@@ -504,6 +553,7 @@ ListF.$Send = function (ToID,CoinSum,Description)
     {
         throw "ERROR Sum<0";
     }
+    
     var ToData = DApps.Accounts.ReadStateTR(ToID);
     if(!ToData)
     {
@@ -513,14 +563,17 @@ ListF.$Send = function (ToID,CoinSum,Description)
     {
         throw "Different currencies. Accounts: " + RunContext.Account.Num + " and " + ToID;
     }
+    
     DApps.Accounts.SendMoneyTR(RunContext.Block, RunContext.Account.Num, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum,
     Description, Description, 1, 1);
 }
+
 ListF.$Move = function (FromID,ToID,CoinSum,Description)
 {
     DO(3000);
     FromID = ParseNum(FromID);
     ToID = ParseNum(ToID);
+    
     var FromData = DApps.Accounts.ReadStateTR(FromID);
     if(!FromData)
     {
@@ -535,15 +588,19 @@ ListF.$Move = function (FromID,ToID,CoinSum,Description)
     {
         throw "Different currencies. Accounts: " + FromID + " and " + ToID;
     }
+    
     if(FromData.Value.Smart !== RunContext.Smart.Num)
     {
         throw "The account: " + FromID + " does not belong to the smart-contract: " + RunContext.Smart.Num + ", access is denied";
     }
+    
     if(typeof CoinSum === "number")
     {
         CoinSum = COIN_FROM_FLOAT(CoinSum);
     }
+    
     CHECKSUM(CoinSum);
+    
     if(CoinSum.SumCENT >= 1e9)
     {
         throw "ERROR SumCENT>=1e9";
@@ -552,23 +609,29 @@ ListF.$Move = function (FromID,ToID,CoinSum,Description)
     {
         throw "ERROR Sum<0";
     }
+    
     CoinSum.SumCOIN = Math.trunc(CoinSum.SumCOIN);
     CoinSum.SumCENT = Math.trunc(CoinSum.SumCENT);
+    
     DApps.Accounts.SendMoneyTR(RunContext.Block, FromID, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum, Description, Description,
     1, 1);
 }
+
 ListF.$Event = function (Description)
 {
     DO(50);
     DApps.Accounts.DBChanges.TREvent.push({Description:Description, Smart:RunContext.Smart.Num, Account:RunContext.Account.Num,
         BlockNum:RunContext.BlockNum, TrNum:RunContext.TrNum});
+    
     if(global.DebugEvent)
         DebugEvent(Description);
+    
     if(global.CurTrItem)
     {
         ToLogClient(Description, global.CurTrItem, false);
     }
 }
+
 ListF.$ReadAccount = function (ID)
 {
     DO(900);
@@ -578,19 +641,23 @@ ListF.$ReadAccount = function (ID)
         throw "Error read account Num: " + ID;
     return GET_ACCOUNT(Account);
 }
+
 ListF.$ReadSmart = function (ID)
 {
     if(RunContext.BlockNum < global.UPDATE_CODE_2)
     {
         throw "Method call not available";
     }
+    
     DO(900);
     ID = ParseNum(ID);
     var Smart = DApps.Smart.ReadSmart(ID);
     if(!Smart)
         throw "Error smart ID: " + ID;
+    
     return GET_SMART(Smart);
 }
+
 ListF.$ReadState = function (ID)
 {
     DO(900);
@@ -598,6 +665,7 @@ ListF.$ReadState = function (ID)
     var Account = DApps.Accounts.ReadStateTR(ID);
     if(!Account)
         throw "Error read state account Num: " + ID;
+    
     var Smart;
     if(Account.Value.Smart === RunContext.Smart.Num)
     {
@@ -612,37 +680,45 @@ ListF.$ReadState = function (ID)
             throw "Error smart ID: " + Account.Value.Smart;
         }
     }
+    
     var Data;
     if(Smart.StateFormat)
         Data = BufLib.GetObjectFromBuffer(Account.Value.Data, Smart.StateFormat, Smart.WorkStruct, 1);
     else
         Data = {};
+    
     if(typeof Data === "object")
         Data.Num = ID;
     return Data;
 }
+
 ListF.$WriteState = function (Obj,ID)
 {
     DO(3000);
     if(ID === undefined)
         ID = Obj.Num;
     ID = ParseNum(ID);
+    
     var Account = DApps.Accounts.ReadStateTR(ID);
     if(!Account)
         throw "Error write account Num: " + ID;
+    
     var Smart = RunContext.Smart;
     if(Account.Value.Smart !== Smart.Num)
     {
         throw "The account: " + ID + " does not belong to the smart-contract: " + Smart.Num + ", access to change state is denied";
     }
+    
     Account.Value.Data = BufLib.GetBufferFromObject(Obj, Smart.StateFormat, 80, Smart.WorkStruct, 1);
     DApps.Accounts.WriteStateTR(Account, RunContext.TrNum);
 }
+
 ListF.$GetMaxAccount = function ()
 {
     DO(20);
     return DApps.Accounts.DBChanges.TRMaxAccount;
 }
+
 ListF.$ADD = function (Coin,Value2)
 {
     DO(5);
@@ -653,6 +729,7 @@ ListF.$SUB = function (Coin,Value2)
     DO(5);
     return SUB(Coin, Value2);
 }
+
 ListF.$ISZERO = function (Coin)
 {
     DO(5);
@@ -661,6 +738,7 @@ ListF.$ISZERO = function (Coin)
     else
         return false;
 }
+
 ListF.$FLOAT_FROM_COIN = function (Coin)
 {
     DO(5);
@@ -676,34 +754,43 @@ ListF.$COIN_FROM_STRING = function (Sum)
     DO(20);
     return COIN_FROM_STRING(Sum);
 }
+
 ListF.$require = function (SmartNum)
 {
     DO(2000);
     SmartNum = ParseNum(SmartNum);
+    
     var Smart = DApps.Smart.ReadSmart(SmartNum);
     if(!Smart)
     {
         throw "Smart does not exist. Error id number: " + SmartNum;
     }
+    
     var EvalContext = GetSmartEvalContext(Smart);
+    
     EvalContext.funclist.SetContext(RunContext.context);
+    
     return EvalContext.publist;
 }
+
 ListF.$GetHexFromArr = function (Arr)
 {
     DO(20);
     return GetHexFromArr(Arr);
 }
+
 ListF.$GetArrFromHex = function (Str)
 {
     DO(20);
     return GetArrFromHex(Str);
 }
+
 ListF.$sha = function (Str)
 {
     DO(1000);
     return shaarr(Str);
 }
+
 ListF.$isFinite = function (a)
 {
     DO(5);
@@ -724,6 +811,7 @@ ListF.$parseFloat = function (a)
         Num = 0;
     return Num;
 }
+
 ListF.$parseInt = function (a)
 {
     DO(10);
@@ -739,6 +827,7 @@ ListF.$parseUint = function (a)
     DO(10);
     return ParseNum(a);
 }
+
 ListF.$String = function (a)
 {
     DO(5);
@@ -754,6 +843,7 @@ ListF.$Boolean = function (a)
     DO(5);
     return Boolean(a);
 }
+
 function GetParsing(Str)
 {
     LexerJS.ParseCode(Str);
@@ -766,15 +856,18 @@ function GetParsing(Str)
     {
         Code += ";\npublist." + key + "=" + LOC_ADD_NAME + key;
     }
+    
     Code += "\n\
     var context;\
     funclist.SetContext=function(cont){context=cont;};\
     ";
     return Code;
 }
+
 function GetSmartEvalContext(Smart)
 {
     var EvalContext = DApps.Smart.DBSmart.GetMap("EVAL" + Smart.Num);
+    
     if(!EvalContext)
     {
         EvalContext = CreateSmartEvalContext(Smart.Code);
@@ -785,6 +878,7 @@ function GetSmartEvalContext(Smart)
 function CreateSmartEvalContext(Code)
 {
     var CodeLex = GetParsing(Code);
+    
     var EvalContext = {};
     RunSmartEvalContext(CodeLex, EvalContext, global.CodeInnerChangeObjects);
     for(var key in ListF)
@@ -802,15 +896,18 @@ function CreateSmartEvalContext(Code)
     }
     Object.freeze(EvalContext.funclist);
     Object.freeze(EvalContext.publist);
+    
     return EvalContext;
 }
 global.CreateSmartEvalContext = CreateSmartEvalContext;
+
 var RunContext = undefined;
 function SetRunContext(Set)
 {
     RunContext = Set;
 }
 global.SetRunContext = SetRunContext;
+
 global.RunSmartMethod = RunSmartMethod;
 function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,MethodName,Params,bPublic,SmartCode)
 {
@@ -826,11 +923,13 @@ function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,M
                 return ;
         }
     }
+    
     var EvalContext;
     if(typeof SmartCode === "string")
         EvalContext = CreateSmartEvalContext(SmartCode);
     else
         EvalContext = GetSmartEvalContext(Smart);
+    
     if(!EvalContext.funclist[MethodName] || (bPublic && !EvalContext.publist[MethodName]))
     {
         if(bPublic)
@@ -838,36 +937,45 @@ function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,M
         else
             return ;
     }
+    
     var context = {};
     if(BlockNum >= global.UPDATE_CODE_1 && !PayContext)
     {
         PayContext = {FromID:0, ToID:Account.Num, Description:"", Value:{SumCOIN:0, SumCENT:0}};
     }
+    
     if(PayContext)
     {
         context.BlockNum = BlockNum;
         context.BlockHash = CopyArr(Block.Hash);
         context.BlockAddrHash = CopyArr(Block.AddrHash);
+        
         context.TrNum = TrNum;
         context.Account = GET_ACCOUNT(Account);
         context.Smart = GET_SMART(Smart);
+        
         context.FromNum = PayContext.FromID;
         context.ToNum = PayContext.ToID;
         context.Description = PayContext.Description;
         if(PayContext.Value)
             context.Value = {SumCOIN:PayContext.Value.SumCOIN, SumCENT:PayContext.Value.SumCENT};
     }
+    
     if(Block.BlockNum === 0)
     {
         context.GetBlockHeader = StaticGetBlockHeader;
         context.GetBlockNumDB = StaticGetBlockNumDB;
         context.GetSmart = StaticGetSmart;
     }
+    
     var LocalRunContext = {Block:Block, Smart:Smart, Account:Account, BlockNum:BlockNum, TrNum:TrNum, context:context};
+    
     var RetValue;
     var _RunContext = RunContext;
     RunContext = LocalRunContext;
+    
     EvalContext.funclist.SetContext(RunContext.context);
+    
     try
     {
         RetValue = EvalContext.funclist[MethodName](Params);
@@ -880,22 +988,29 @@ function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,M
     {
         RunContext = _RunContext;
     }
+    
     return RetValue;
 }
+
+
 var glBlock0;
 global.RunStaticSmartMethod = RunStaticSmartMethod;
 function RunStaticSmartMethod(AccountNum,MethodName,Params)
 {
+    
     DApps.Accounts.BeginBlock();
     DApps.Accounts.BeginTransaction();
     SetTickCounter(100000);
+    
     var Account = DApps.Accounts.ReadStateTR(AccountNum);
     if(!Account)
     {
         return {result:0, RetValue:"Error account Num: " + AccountNum};
     }
+    
     if(!glBlock0)
         glBlock0 = SERVER.ReadBlockHeaderDB(0);
+    
     try
     {
         var BlockNum = GetCurrentBlockNumByTime();
@@ -907,6 +1022,7 @@ function RunStaticSmartMethod(AccountNum,MethodName,Params)
         return {result:0, RetValue:"" + e};
     }
 }
+
 function StaticGetBlockHeader(BlockNum)
 {
     DO(100);
@@ -922,4 +1038,5 @@ function StaticGetSmart(Num)
     var Smart = DApps.Smart.ReadSmart(Num);
     return GET_SMART(Smart);
 }
+
 InitEval();

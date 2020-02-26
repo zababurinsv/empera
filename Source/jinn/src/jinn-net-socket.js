@@ -11,12 +11,19 @@
  * Working with network sockets, creating a network server
  *
 **/
+
 'use strict';
+
 const net = require("net");
+
 global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
+
+//Engine context
+
 function InitClass(Engine)
 {
     Engine.BAN_IP = {};
+    
     Engine.CreateServer = function ()
     {
         Engine.Server = net.createServer(function (Socket)
@@ -26,15 +33,18 @@ function InitClass(Engine)
                 Engine.CloseSocket(Socket, "WAS BAN", true);
                 return ;
             }
+            
             var Child = Engine.RetNewConnectByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
             if(Child)
                 Engine.SetEventsProcessing(Socket, Child, "Client");
             else
                 Engine.CloseSocket(Socket, "Error child");
         });
+        
         Engine.Server.on('close', function ()
         {
         });
+        
         Engine.Server.on('error', function (err)
         {
             if(err.code === 'EADDRINUSE')
@@ -48,12 +58,15 @@ function InitClass(Engine)
                 }, 5000);
             }
         });
+        
         Engine.RunListenServer();
     };
+    
     Engine.RunListenServer = function ()
     {
         if(!Engine.port || typeof Engine.port !== "number")
             throw "Error port number = " + Engine.port;
+        
         var LISTEN_IP = "0.0.0.0";
         Engine.ToDebug("Prepare to run TCP server on " + LISTEN_IP + ":" + Engine.port);
         Engine.Server.listen(Engine.port, LISTEN_IP, function ()
@@ -62,6 +75,7 @@ function InitClass(Engine)
             Engine.ToLog("Run JINN TCP server on " + AddObj.family + " " + AddObj.address + ":" + AddObj.port);
         });
     };
+    
     Engine.SetEventsProcessing = function (SOCKET,Child,StrConnect)
     {
         Engine.LinkSocketToChild(SOCKET, Child, StrConnect);
@@ -83,42 +97,51 @@ function InitClass(Engine)
                 }
             }
         });
+        
         SOCKET.on('close', function (err)
         {
             Engine.ClearSocket(SOCKET);
         });
+        
         SOCKET.on('error', function (err)
         {
             Engine.CloseSocket(SOCKET, "ERRORS");
         });
+        
         SOCKET.on('end', function ()
         {
         });
     };
+    
     Engine.CloseSocket = function (Socket,StrError)
     {
         if(!Socket || Socket.WasClose)
             return ;
-        Engine.ToDebug("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError);
+        
+        Engine.ToLog("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError, 3);
         Engine.ClearSocket(Socket);
         Socket.end();
     };
+    
     Engine.ClearSocket = function (Socket)
     {
         var Child = Socket.Child;
         if(Child)
         {
             Child.Socket = undefined;
-            Engine.OnDeleteConnect(Child);
+            Engine.OnDeleteConnect(Child, "ClearSocket");
         }
+        
         Socket.WasClose = 1;
         SetSocketStatus(Socket, 0);
         Socket.Child = undefined;
     };
+    
     Engine.WasBanIP = function (rinfo)
     {
         if(!rinfo || !rinfo.address)
             return 0;
+        
         var Key = "" + rinfo.address.trim();
         var Stat = Engine.BAN_IP[Key];
         if(Stat)
@@ -126,29 +149,36 @@ function InitClass(Engine)
             if(Stat.TimeTo > Date.now())
                 return 1;
         }
+        
         return 0;
     };
+    
     Engine.LinkSocketToChild = function (Socket,Child,ConnectType)
     {
         if(Socket.Child)
             throw "Error LinkSocketToChild was Linked";
+        
         Child.ConnectType = ConnectType;
         Socket.Child = Child;
         Child.Socket = Socket;
         Child.DirectIP = (ConnectType === "Server");
         SetSocketStatus(Socket, 100);
     };
-    Engine.OnDeleteConnectNext = function (Child)
+    
+    Engine.OnDeleteConnectNext = function (Child,StrError)
     {
         if(Child.Socket)
-            Engine.CloseSocket(Child.Socket);
+            Engine.CloseSocket(Child.Socket, StrError);
     };
 }
+
 function InitAfter(Engine)
 {
     Engine.CreateServer();
+    
     Engine.CreateConnectionToChild = function (Child,F)
     {
+        
         var State = Engine.GetSocketStatus(Child);
         if(State === 100)
         {
@@ -158,13 +188,14 @@ function InitAfter(Engine)
         {
             if(State === 0)
             {
-                Child.ToDebug("Connect to " + Child.ip + ":" + Child.port);
+                Child.ToLog("Connect to " + Child.Name(), 3);
                 Child.Socket = net.createConnection(Child.port, Child.ip, function ()
                 {
                     if(Child.Socket)
                     {
                         Engine.SetEventsProcessing(Child.Socket, Child, "Server");
                     }
+                    
                     F(!!Child.Socket);
                 });
                 SetSocketStatus(Child.Socket, 1);
@@ -175,6 +206,7 @@ function InitAfter(Engine)
             }
         }
     };
+    
     Engine.CloseConnectionToChild = function (Child)
     {
         if(Child.Close)
@@ -187,8 +219,10 @@ function InitAfter(Engine)
             Engine.ToError(Child, "Socket not was opened", "t");
             return ;
         }
+        
         Engine.CloseSocket(Child.Socket, "Close");
     };
+    
     Engine.SENDTONETWORK = function (Child,Data)
     {
         var State = Engine.GetSocketStatus(Child);
@@ -201,10 +235,12 @@ function InitAfter(Engine)
             Child.ToLog("ERROR SEND - NOT WAS CONNECT: State=" + State);
         }
     };
+    
     Engine.GetSocketStatus = function (Child)
     {
         if(!Child)
             return 0;
+        
         var Socket = Child.Socket;
         if(Socket && Socket.SocketStatus)
         {
@@ -224,13 +260,16 @@ function InitAfter(Engine)
         }
     };
 }
+
 function SetSocketStatus(Socket,Status)
 {
     if(Socket && Socket.SocketStatus !== Status)
     {
         if(Status === 100 && Socket.Child)
             Socket.Child.LastTime = Date.now();
+        
         Socket.SocketStatus = Status;
         Socket.TimeStatus = Date.now();
     }
 }
+

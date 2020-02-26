@@ -7,6 +7,8 @@
 */
 
 'use strict';
+
+
 function GetVoteArr()
 {
     var Arr = [];
@@ -16,6 +18,7 @@ function GetVoteArr()
             var VoteForYes = Math.floor((VoteHold + 100 * VN) / (1 + VN) * 1) / 1;
             Arr.push({VN: - VN, VoteHold:VoteHold, A1:VoteForYes, A2:100 - VoteForYes});
         }
+    
     return Arr;
 }
 var Arr = GetVoteArr();

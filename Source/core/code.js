@@ -9,18 +9,24 @@
 */
 
 "use strict";
+
 var fs = require("fs");
+
 const FORMAT_EVAL_SEND = "{MaxBlockNum:uint,Code:str,Sign:arr64}";
+
 module.exports = class CCode extends require("./base")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
+        
         if(!global.ADDRLIST_MODE && !this.VirtualMode)
         {
             setInterval(this.CheckLoadCodeTime.bind(this), 10 * 1000)
         }
+        
         this.LastEvalCodeNum = 0
+        
         CheckCreateDir(GetDataPath("Update"))
     }
     CheckLoadCodeTime()
@@ -41,29 +47,38 @@ module.exports = class CCode extends require("./base")
         START_LOAD_CODE.StartLoadVersionNum = 0
         START_LOAD_CODE.StartLoadVersionNumTime = 0
     }
+    
     StartLoadCode(Node, CodeVersion)
     {
+        
         var VersionNum = CodeVersion.VersionNum;
+        
         START_LOAD_CODE.StartLoad = CodeVersion
         START_LOAD_CODE.StartLoadNode = Node
         START_LOAD_CODE.StartLoadVersionNum = VersionNum
         START_LOAD_CODE.StartLoadVersionNumTime = new Date()
+        
         var fname = GetDataPath("Update/wallet-" + VersionNum + ".zip");
         if(fs.existsSync(fname))
         {
             this.UseCode(VersionNum, false)
             return ;
         }
+        
         var Context = {"VersionNum":VersionNum};
         this.SendF(Node, {"Method":"GETCODE", "Context":Context, "Data":VersionNum})
     }
+    
     static
+    
     GETCODE_F()
     {
         return "uint";
     }
+    
     RETCODE(Info)
     {
+        
         var VersionNum = Info.Context.VersionNum;
         if(!VersionNum || !START_LOAD_CODE.StartLoad)
             return ;
@@ -76,6 +91,7 @@ module.exports = class CCode extends require("./base")
                 var file_handle = fs.openSync(fname, "w");
                 fs.writeSync(file_handle, Info.Data, 0, Info.Data.length)
                 fs.closeSync(file_handle)
+                
                 this.UseCode(VersionNum, global.USE_AUTO_UPDATE)
             }
             else
@@ -86,20 +102,24 @@ module.exports = class CCode extends require("./base")
             }
         }
     }
+    
     UseCode(VersionNum, bUpdate)
     {
         if(bUpdate)
         {
             UpdateCodeFiles(VersionNum)
         }
+        
         if(global.START_LOAD_CODE.StartLoad)
         {
             global.CODE_VERSION = START_LOAD_CODE.StartLoad
             this.ClearLoadCode()
         }
     }
+    
     SetNewCodeVersion(Data, PrivateKey)
     {
+        
         var fname = GetDataPath("ToUpdate/wallet.zip");
         if(fs.existsSync(fname))
         {
@@ -108,11 +128,14 @@ module.exports = class CCode extends require("./base")
             {
                 fs.unlinkSync(fname2)
             }
+            
             var data = fs.readFileSync(fname);
             var Hash = shaarr(data);
+            
             var file_handle = fs.openSync(fname2, "w");
             fs.writeSync(file_handle, data, 0, data.length)
             fs.closeSync(file_handle)
+            
             var SignArr = arr2(Hash, GetArrFromValue(Data.VersionNum));
             var Sign = secp256k1.sign(SHA3BUF(SignArr), PrivateKey).signature;
             global.CODE_VERSION = Data
@@ -126,11 +149,13 @@ module.exports = class CCode extends require("./base")
         }
     }
 };
+
 function UpdateCodeFiles(StartNum)
 {
     var fname = GetDataPath("Update");
     if(!fs.existsSync(fname))
         return 0;
+    
     var arr = fs.readdirSync(fname);
     var arr2 = [];
     for(var i = 0; i < arr.length; i++)
@@ -144,18 +169,22 @@ function UpdateCodeFiles(StartNum)
     {
         return a - b;
     });
+    
     for(var i = 0; i < arr2.length; i++)
     {
         var Num = arr2[i];
         var Name = "wallet-" + Num + ".zip";
         var Path = fname + "/" + Name;
+        
         ToLog("Check file:" + Name);
+        
         if(fs.existsSync(Path))
         {
             if(StartNum === Num)
             {
                 ToLog("UnpackCodeFile:" + Name);
                 UnpackCodeFile(Path);
+                
                 if(StartNum % 2 === 0)
                 {
                     global.RestartNode(1);
@@ -163,6 +192,7 @@ function UpdateCodeFiles(StartNum)
                 else
                 {
                 }
+                
                 return 1;
             }
             else
@@ -172,21 +202,28 @@ function UpdateCodeFiles(StartNum)
             }
         }
     }
+    
     return 0;
 }
+
 global.UnpackCodeFile = UnpackCodeFile;
 function UnpackCodeFile(fname)
 {
+    
     var data = fs.readFileSync(fname);
     var reader = ZIP.Reader(data);
+    
     reader.forEach(function (entry)
     {
         var Name = entry.getName();
         var Path = GetCodePath(Name);
+        
         if(entry.isFile())
         {
+            
             var buf = entry.getData();
             CheckCreateDir(Path, true, true);
+            
             var file_handle = fs.openSync(Path, "w");
             fs.writeSync(file_handle, buf, 0, buf.length);
             fs.closeSync(file_handle);
@@ -197,10 +234,12 @@ function UnpackCodeFile(fname)
     });
     reader.close();
 }
+
 global.RestartNode = function RestartNode(bForce)
 {
     global.NeedRestart = 1;
     setTimeout(DoExit, 5000);
+    
     if(global.nw || global.NWMODE)
     {
     }
@@ -210,6 +249,7 @@ global.RestartNode = function RestartNode(bForce)
         ToLog("********************************** FORCE RESTART!!!");
         return ;
     }
+    
     if(this.ActualNodes)
     {
         var it = this.ActualNodes.iterator(), Node;
@@ -219,27 +259,34 @@ global.RestartNode = function RestartNode(bForce)
                 CloseSocket(Node.Socket, "Restart");
         }
     }
+    
     SERVER.StopServer();
     SERVER.StopNode();
     StopChildProcess();
+    
     ToLog("****************************************** RESTART!!!");
     ToLog("EXIT 1");
 }
+
 function DoExit()
 {
     ToLog("EXIT 2");
     if(global.nw || global.NWMODE)
     {
         ToLog("RESTART NW");
+        
         var StrRun = '"' + process.argv[0] + '" --user-data-dir="..\\DATA\\Local" .\n';
         StrRun += StrRun;
         SaveToFile("run-next.bat", StrRun);
+        
         const child_process = require('child_process');
         child_process.exec("run-next.bat", {shell:true});
     }
+    
     ToLog("EXIT 3");
     process.exit(0);
 }
+
 function GetRunLine()
 {
     var StrRun = "";

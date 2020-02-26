@@ -8,10 +8,12 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 var DELTA_LONG_MINING = 5000;
 var BLOCKNUM_ALGO2 = 6560000;
 var BLOCKNUM_HASH_NEW = 10195000;
 var BLOCKNUM_TICKET_ALGO = 16070000;
+
 if(typeof global === "object")
 {
     global.GetHashFromSeqAddr = GetHashFromSeqAddr;
@@ -20,10 +22,12 @@ if(typeof global === "object")
     global.GetHashFromNum3 = GetHashFromNum3;
     global.GetHashFromArrNum2 = GetHashFromArrNum2;
     global.XORArr = XORArr;
+    
     global.GetHash = GetHash;
     if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE)
     {
         BLOCKNUM_ALGO2 = 0;
+        
         if(global.TEST_NETWORK)
         {
             BLOCKNUM_HASH_NEW = 100;
@@ -36,6 +40,7 @@ if(typeof global === "object")
         }
     }
 }
+
 function GetHashFromSeqAddr(SeqHash,AddrHash,BlockNum,PrevHash,MiningVer)
 {
     if(BlockNum < BLOCKNUM_ALGO2)
@@ -43,10 +48,12 @@ function GetHashFromSeqAddr(SeqHash,AddrHash,BlockNum,PrevHash,MiningVer)
         var Hash = shaarrblock2(SeqHash, AddrHash, BlockNum);
         return {Hash:Hash, PowHash:Hash, Hash1:Hash, Hash2:Hash};
     }
+    
     var MinerID = ReadUintFromArr(AddrHash, 0);
     var Nonce0 = ReadUintFromArr(AddrHash, 6);
     var Nonce1 = ReadUintFromArr(AddrHash, 12);
     var Nonce2 = ReadUintFromArr(AddrHash, 18);
+    
     var DeltaNum1 = ReadUint16FromArr(AddrHash, 24);
     var DeltaNum2 = ReadUint16FromArr(AddrHash, 26);
     var PrevHashNum;
@@ -58,7 +65,9 @@ function GetHashFromSeqAddr(SeqHash,AddrHash,BlockNum,PrevHash,MiningVer)
     {
         PrevHashNum = ReadUint32FromArr(AddrHash, 28);
     }
+    
     var Data = GetHash(SeqHash, PrevHashNum, BlockNum, MinerID, Nonce0, Nonce1, Nonce2, DeltaNum1, DeltaNum2);
+    
     if(MiningVer)
     {
         if(AddrHash[17] !== MiningVer || AddrHash[23] !== MiningVer)
@@ -69,8 +78,10 @@ function GetHashFromSeqAddr(SeqHash,AddrHash,BlockNum,PrevHash,MiningVer)
     }
     return Data;
 }
+
 function GetHash(BlockHash,PrevHashNum,BlockNum,Miner,Nonce0,Nonce1,Nonce2,DeltaNum1,DeltaNum2)
 {
+    
     if(DeltaNum1 > DELTA_LONG_MINING)
         DeltaNum1 = 0;
     if(DeltaNum2 > DELTA_LONG_MINING)
@@ -90,6 +101,7 @@ function GetHash(BlockHash,PrevHashNum,BlockNum,Miner,Nonce0,Nonce1,Nonce2,Delta
     {
         Ret.PowHash = Hash2;
     }
+    
     if(BlockNum >= BLOCKNUM_HASH_NEW)
     {
         if(BlockNum >= BLOCKNUM_TICKET_ALGO)
@@ -97,14 +109,18 @@ function GetHash(BlockHash,PrevHashNum,BlockNum,Miner,Nonce0,Nonce1,Nonce2,Delta
         else
             Ret.Hash = shaarr2(Hash1, Hash2);
     }
+    
     return Ret;
 }
+
 function CalcHashBlockFromSeqAddr(Block,PrevHash,MiningVer)
 {
     var Value = GetHashFromSeqAddr(Block.SeqHash, Block.AddrHash, Block.BlockNum, PrevHash, MiningVer);
     Block.Hash = Value.Hash;
     Block.PowHash = Value.PowHash;
 }
+
+
 function XORArr(Arr1,Arr2)
 {
     var Ret = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -114,6 +130,7 @@ function XORArr(Arr1,Arr2)
     }
     return Ret;
 }
+
 function GetHashFromNum2(Value1,Value2)
 {
     var MeshArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -121,6 +138,7 @@ function GetHashFromNum2(Value1,Value2)
     WriteUintToArrOnPos(MeshArr, Value2, 6);
     return sha3(MeshArr);
 }
+
 function GetHashFromArrNum2(Arr,Value1,Value2)
 {
     var MeshArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -130,14 +148,18 @@ function GetHashFromArrNum2(Arr,Value1,Value2)
     WriteUintToArrOnPos(MeshArr, Value2, 38);
     return sha3(MeshArr);
 }
+
 function GetHashFromNum3(Value1,Value2,Value3)
 {
     var MeshArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     WriteUintToArrOnPos(MeshArr, Value1, 0);
     WriteUintToArrOnPos(MeshArr, Value2, 6);
     WriteUintToArrOnPos(MeshArr, Value3, 12);
+    
     return sha3(MeshArr);
 }
+
+
 function ReadUintFromArr(arr,len)
 {
     if(len === undefined)
@@ -145,11 +167,13 @@ function ReadUintFromArr(arr,len)
         len = arr.len;
         arr.len += 6;
     }
+    
     var value = (arr[len + 5] << 23) * 2 + (arr[len + 4] << 16) + (arr[len + 3] << 8) + arr[len + 2];
     value = value * 256 + arr[len + 1];
     value = value * 256 + arr[len];
     return value;
 }
+
 function ReadUint32FromArr(arr,len)
 {
     if(len === undefined)
@@ -157,9 +181,11 @@ function ReadUint32FromArr(arr,len)
         len = arr.len;
         arr.len += 4;
     }
+    
     var value = (arr[len + 3] << 23) * 2 + (arr[len + 2] << 16) + (arr[len + 1] << 8) + arr[len];
     return value;
 }
+
 function ReadUint16FromArr(arr,len)
 {
     if(len === undefined)
@@ -167,9 +193,11 @@ function ReadUint16FromArr(arr,len)
         len = arr.len;
         arr.len += 2;
     }
+    
     var value = (arr[len + 1] << 8) + arr[len];
     return value;
 }
+
 function ReadArrFromArr(arr,length)
 {
     var Ret = [];
@@ -181,6 +209,7 @@ function ReadArrFromArr(arr,length)
     arr.len += length;
     return Ret;
 }
+
 function WriteUintToArr(arr,Num)
 {
     var len = arr.length;
@@ -188,26 +217,31 @@ function WriteUintToArr(arr,Num)
     arr[len + 1] = (Num >>> 8) & 0xFF;
     arr[len + 2] = (Num >>> 16) & 0xFF;
     arr[len + 3] = (Num >>> 24) & 0xFF;
+    
     var NumH = Math.floor(Num / 4294967296);
     arr[len + 4] = NumH & 0xFF;
     arr[len + 5] = (NumH >>> 8) & 0xFF;
 }
+
 function WriteUintToArrOnPos(arr,Num,Pos)
 {
     arr[Pos] = Num & 0xFF;
     arr[Pos + 1] = (Num >>> 8) & 0xFF;
     arr[Pos + 2] = (Num >>> 16) & 0xFF;
     arr[Pos + 3] = (Num >>> 24) & 0xFF;
+    
     var NumH = Math.floor(Num / 4294967296);
     arr[Pos + 4] = NumH & 0xFF;
     arr[Pos + 5] = (NumH >>> 8) & 0xFF;
 }
+
 function WriteUint16ToArr(arr,Num)
 {
     var len = arr.length;
     arr[len] = Num & 0xFF;
     arr[len + 1] = (Num >>> 8) & 0xFF;
 }
+
 function WriteUint32ToArr(arr,Num)
 {
     var len = arr.length;
@@ -228,6 +262,7 @@ function WriteUint16ToArrOnPos(arr,Num,Pos)
     arr[Pos] = Num & 0xFF;
     arr[Pos + 1] = (Num >>> 8) & 0xFF;
 }
+
 function WriteArrToArr(arr,arr2,ConstLength)
 {
     var len = arr.length;
@@ -250,6 +285,7 @@ function WriteArrToArrHOnPos(arr,arr2,Pos,ConstLength)
         arr[Pos + i] |= (arr2[i] << 8);
     }
 }
+
 function ConvertBufferToStr(Data)
 {
     for(var key in Data)
@@ -264,16 +300,19 @@ function ConvertBufferToStr(Data)
                 ConvertBufferToStr(item);
     }
 }
+
 function CopyObjValue(obj,num)
 {
     if(num && num > 5)
         return obj;
+    
     var ret = {};
     for(var key in obj)
     {
         var val = obj[key];
         if((typeof val === "object") && !(val instanceof Buffer) && !(val instanceof ArrayBuffer) && !(val instanceof Array))
             val = CopyObjValue(val, num + 1);
+        
         ret[key] = val;
     }
     return ret;
@@ -286,6 +325,7 @@ function CopyArr(arr1)
             arr2[i] = arr1[i];
     return arr2;
 }
+
 function ParseNum(a)
 {
     var Num = parseInt(a);
@@ -297,6 +337,7 @@ function ParseNum(a)
         Num = 0;
     return Num;
 }
+
 function CompareArr(a,b)
 {
     for(var i = 0; i < a.length; i++)
@@ -310,6 +351,7 @@ function CompareArrL(a,b)
 {
     if(a.length !== b.length)
         return a.length - b.length;
+    
     for(var i = 0; i < a.length; i++)
     {
         if(a[i] !== b[i])
@@ -327,21 +369,27 @@ function IsEqArr(a,b)
         return 0;
     return (CompareArr(a, b) === 0) ? 1 : 0;
 }
+
 function GetSeqHash(BlockNum,PrevHash,TreeHash)
 {
     var arr = [GetArrFromValue(BlockNum), PrevHash, TreeHash];
     var SeqHash = CalcHashFromArray(arr, true);
     return SeqHash;
 }
+
 function arr2(Value1,Value2)
 {
     var Buf = [];
+    
     for(var n = 0; n < Value1.length; n++)
         Buf.push(Value1[n]);
+    
     for(var n = 0; n < Value2.length; n++)
         Buf.push(Value2[n]);
+    
     return Buf;
 }
+
 function shaarr2(Value1,Value2)
 {
     return shaarr(arr2(Value1, Value2));
@@ -350,10 +398,13 @@ function sha3arr2(Value1,Value2)
 {
     return sha3(arr2(Value1, Value2));
 }
+
 function GetBlockArrFromBuffer(BufRead,Info)
 {
+    
     if(!BufRead || BufRead.length < 10)
         return [];
+    
     var BLOCK_PROCESSING_LENGTH = 8;
     var BLOCK_PROCESSING_LENGTH2 = BLOCK_PROCESSING_LENGTH * 2;
     BufRead.len = 0;
@@ -364,12 +415,14 @@ function GetBlockArrFromBuffer(BufRead,Info)
     {
         return [];
     }
+    
     var PrevBlock;
     var BlockArr = [];
     for(var i = 0; i < CountLoad + BLOCK_PROCESSING_LENGTH2; i++)
     {
         var Block = {};
         Block.BlockNum = StartNum + i;
+        
         if(i < BLOCK_PROCESSING_LENGTH2)
         {
             Block.Hash = ReadArrFromArr(BufRead, 32);
@@ -381,6 +434,7 @@ function GetBlockArrFromBuffer(BufRead,Info)
                 Block.SumHash = ReadArrFromArr(BufRead, 32);
                 Block.SumPow = ReadUintFromArr(BufRead);
             }
+            
             Block.TreeHash = ReadArrFromArr(BufRead, 32);
             Block.AddrHash = ReadArrFromArr(BufRead, 32);
             var arr = [];
@@ -405,17 +459,21 @@ function GetBlockArrFromBuffer(BufRead,Info)
                 }
                 return [];
             }
+            
             CalcHashBlockFromSeqAddr(Block, Block.PrevHash);
+            
             Block.Power = GetPowPower(Block.PowHash);
             if(PrevBlock)
             {
                 Block.SumHash = shaarr2(PrevBlock.SumHash, Block.Hash);
             }
+            
             PrevBlock = Block;
         }
         Block.TrCount = 0;
         Block.TrDataPos = 0;
         Block.TrDataLen = 0;
+        
         BlockArr.push(Block);
     }
     for(var i = BlockArr.length - 1; i >= 0; i--)
@@ -429,10 +487,12 @@ function GetBlockArrFromBuffer(BufRead,Info)
     }
     return BlockArr;
 }
+
 function shaarrblock2(Value1,Value2,BlockNum)
 {
     return shaarrblock(arr2(Value1, Value2), BlockNum);
 }
+
 if(typeof global === "object")
 {
     global.ReadUint32FromArr = ReadUint32FromArr;
@@ -442,6 +502,7 @@ if(typeof global === "object")
     global.WriteUint32ToArr = WriteUint32ToArr;
     global.WriteUint32ToArrOnPos = WriteUint32ToArrOnPos;
     global.WriteUint16ToArrOnPos = WriteUint16ToArrOnPos;
+    
     global.WriteUintToArrOnPos = WriteUintToArrOnPos;
     global.WriteArrToArr = WriteArrToArr;
     global.WriteArrToArrOnPos = WriteArrToArrOnPos;
@@ -449,13 +510,16 @@ if(typeof global === "object")
     global.ConvertBufferToStr = ConvertBufferToStr;
     global.CopyObjValue = CopyObjValue;
     global.CopyArr = CopyArr;
+    
     global.ParseNum = ParseNum;
     global.CompareArr = CompareArr;
     global.CompareArrL = CompareArrL;
     global.IsEqArr = IsEqArr;
+    
     global.shaarr2 = shaarr2;
     global.sha3arr2 = sha3arr2;
     global.arr2 = arr2;
+    
     global.GetBlockArrFromBuffer = GetBlockArrFromBuffer;
     global.shaarrblock2 = shaarrblock2;
 }

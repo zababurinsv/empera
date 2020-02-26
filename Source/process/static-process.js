@@ -8,19 +8,28 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 global.PROCESS_NAME = "STATIC";
+
 const crypto = require('crypto');
 const fs = require('fs');
+
 require("../core/constant");
 require('../core/block-loader-const');
 require('../core/rest_tables.js');
 require('../system/accounts.js');
 require('../system/smart.js');
+
 global.DATA_PATH = GetNormalPathString(global.DATA_PATH);
 global.CODE_PATH = GetNormalPathString(global.CODE_PATH);
 require("../core/library");
+
+
+
 global.READ_ONLY_DB = 1;
+
 require("./child-process");
+
 process.on('message', function (msg)
 {
     switch(msg.cmd)
@@ -31,50 +40,64 @@ process.on('message', function (msg)
         case "GETBLOCKHEADER100":
             GETBLOCKHEADER100(msg);
             break;
+            
         case "GETBLOCK":
             GETBLOCK(msg);
             break;
         case "GETCODE":
             GETCODE(msg);
             break;
+            
         case "GETREST":
             GETREST(msg);
             break;
+            
         case "GETSMART":
             GETSMART(msg);
             break;
     }
 }
 );
+
 var CServerDB = require("../core/db/block-db");
 var KeyPair = crypto.createECDH('secp256k1');
 KeyPair.setPrivateKey(Buffer.from([77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77,
 77, 77, 77, 77, 77, 77, 77, 77, 77, 77]));
 global.SERVER = new CServerDB(KeyPair, undefined, undefined, false, true);
+
 global.HTTP_PORT_NUMBER = 0;
+
+
 setInterval(function ()
 {
     if(SERVER)
         SERVER.Close();
+    
     DApps.Accounts.Close();
     DApps.Smart.DBSmart.Close();
 }
 , 1000);
+
 function GETBLOCKHEADER100(msg)
 {
     return ;
+    
     var Data = msg.Data;
     var BlockNum = Data.BlockNum;
     if(BlockNum % 100 !== 0)
         return ;
     var EndNum100 = BlockNum / 100;
+    
     var LoadHash100 = Data.Hash;
     var Hash100;
+    
     var Count = Data.Count;
     if(!Count || Count < 0 || !EndNum100)
         return ;
+    
     if(Count > COUNT_BLOCKS_FOR_LOAD)
         Count = COUNT_BLOCKS_FOR_LOAD;
+    
     var Arr = [];
     var Data100 = SERVER.DBHeader100.Read(EndNum100);
     if(Data100 && CompareArr(Data100.Hash100, LoadHash100) === 0)
@@ -90,14 +113,19 @@ function GETBLOCKHEADER100(msg)
             Arr.push(Data100.Hash);
         }
     }
+    
     var BufWrite = BufLib.GetBufferFromObject(Arr, "[hash]", MAX_PACKET_LENGTH, {});
+    
     ToLog("GETBLOCKHEADER100 Send Arr=" + Arr.length + " - " + BlockNum);
+    
     process.send({cmd:"Send", addrStr:msg.addrStr, Method:"RETBLOCKHEADER100", Context:msg.Context, Data:BufWrite});
 }
+
 function GETBLOCKHEADER(msg)
 {
     var Data = msg.Data;
     var StartNum = undefined;
+    
     var BlockNum;
     var LoadHash = Data.Hash;
     var Foward = Data.Foward;
@@ -121,10 +149,13 @@ function GETBLOCKHEADER(msg)
         var Count = Data.Count;
         if(!Count || Count < 0 || BlockNum < 0)
             return ;
+        
         if(Count > COUNT_BLOCKS_FOR_LOAD)
             Count = COUNT_BLOCKS_FOR_LOAD;
         Count += BLOCK_PROCESSING_LENGTH2;
+        
         var BlockDB = SERVER.ReadBlockHeaderDB(BlockNum);
+        
         if(BlockDB && (BlockDB.Prepared && (!IsSum) && BlockDB.Hash && CompareArr(BlockDB.Hash, LoadHash) === 0 || BlockDB.bSave && IsSum && BlockDB.SumHash && CompareArr(BlockDB.SumHash,
         LoadHash) === 0))
         {
@@ -133,26 +164,32 @@ function GETBLOCKHEADER(msg)
                 StartNum = 0;
         }
     }
+    
     var BufWrite = SERVER.BlockChainToBuf(StartNum, StartNum, BlockNum);
     process.send({cmd:"Send", addrStr:msg.addrStr, Method:"RETBLOCKHEADER", Context:msg.Context, Data:BufWrite});
 }
+
 function GETBLOCK(msg)
 {
     var Data = msg.Data;
     var BlockNum = Data.BlockNum;
     var TreeHash = Data.TreeHash;
+    
     if(msg.Context.SendCount)
     {
         return ;
     }
+    
     var BufWrite;
     var BlockDB = SERVER.ReadBlockDB(BlockNum);
+    
     var StrSend;
     if(BlockDB && (CompareArr(BlockDB.TreeHash, TreeHash) === 0 || IsZeroArr(TreeHash)))
     {
         var BufWrite = BufLib.GetBufferFromObject(BlockDB, FORMAT_BLOCK_TRANSFER, MAX_PACKET_LENGTH, WRK_BLOCK_TRANSFER);
         StrSend = "OK";
     }
+    
     if(StrSend === "OK")
     {
         ADD_TO_STAT("BLOCK_SEND");
@@ -162,18 +199,22 @@ function GETBLOCK(msg)
         BufWrite = BufLib.GetNewBuffer(100);
         StrSend = "NO";
     }
+    
     process.send({cmd:"Send", addrStr:msg.addrStr, Method:"RETGETBLOCK", Context:msg.Context, Data:BufWrite});
 }
+
 function GETCODE(msg)
 {
     var VersionNum = msg.Data;
     var fname = GetDataPath("Update/wallet-" + VersionNum + ".zip");
     if(fs.existsSync(fname))
     {
+        
         var data = fs.readFileSync(fname);
         process.send({cmd:"Send", addrStr:msg.addrStr, Method:"RETCODE", Context:msg.Context, Data:data});
     }
 }
+
 function GETREST(msg)
 {
     var Data = msg.Data;
@@ -183,12 +224,15 @@ function GETREST(msg)
     {
         return ;
     }
+    
     var BlockNumRest = Data.BlockNum;
+    
     var BlockDB = SERVER.ReadBlockHeaderDB(BlockNumRest);
     if(!BlockDB)
     {
         return ;
     }
+    
     var RestIndexArr = GetCurrentRestArr();
     var nResult = 0;
     for(var i = 0; i < RestIndexArr.length; i++)
@@ -199,6 +243,7 @@ function GETREST(msg)
             break;
         }
     }
+    
     var BufLength = 1000;
     var ProofHash = [];
     var ProofArrL = [];
@@ -210,13 +255,16 @@ function GETREST(msg)
         var WorkFormat = DApps.Accounts.FORMAT_ACCOUNT_ROW;
         var WorkFormatLength = DApps.Accounts.SIZE_ACCOUNT_ROW;
         var Max = DApps.Accounts.DBState.GetMaxNum();
+        
         var LengthAccount = Data.Count;
         if(LengthAccount > MAX_ACCOUNTS_TRANSFER)
             LengthAccount = MAX_ACCOUNTS_TRANSFER;
+        
         var StartAccount = Data.AccNum;
         var EndAccount = StartAccount + LengthAccount - 1;
         if(EndAccount > Max)
             EndAccount = Max;
+        
         var Tree = GetRestMerkleTree(BlockNumRest, RestIndexArr);
         if(CompareArr(Data.AccHash, Tree.Root) !== 0)
         {
@@ -232,6 +280,7 @@ function GETREST(msg)
             var RetProof = GetMerkleProof(Tree.LevelsHash, StartAccount, EndAccount);
             ProofArrL = RetProof.ArrL;
             ProofArrR = RetProof.ArrR;
+            
             BufLength = 1000 + ArrRest.length * WorkFormatLength;
             BufLength += ProofArrL.length * 32 + ProofArrR.length * 32 + 32;
         }
@@ -240,11 +289,13 @@ function GETREST(msg)
     var BufWrite = BufLib.GetBufferFromObject(Data2, FORMAT_REST_TRANSFER, BufLength, {});
     process.send({cmd:"Send", addrStr:msg.addrStr, Method:"RETREST", Context:msg.Context, Data:BufWrite});
 }
+
 function GETSMART(msg)
 {
     var Data = msg.Data;
     if(!Data.Count)
         return ;
+    
     var BufLength = 1000;
     var SizeForSend = 200 * 1024;
     var Arr = [];
@@ -253,16 +304,20 @@ function GETSMART(msg)
         var BufSmart = DApps.Smart.DBSmart.Read(Num, 1);
         if(!BufSmart)
             break;
+        
         SizeForSend = SizeForSend - BufSmart.length;
         if(SizeForSend < 0)
             break;
+        
         BufLength += BufSmart.length;
         Arr.push(BufSmart);
     }
+    
     var Data2 = {Result:Arr.length ? 1 : 0, Arr:Arr};
     var BufWrite = BufLib.GetBufferFromObject(Data2, FORMAT_SMART_TRANSFER, BufLength, {});
     process.send({cmd:"Send", addrStr:msg.addrStr, Method:"RETSMART", Context:msg.Context, Data:BufWrite});
 }
+
 var glMapForHash = {};
 function GetArrRest(BlockNumRest,StartAccount,EndAccount,bHashOnly)
 {
@@ -270,10 +325,12 @@ function GetArrRest(BlockNumRest,StartAccount,EndAccount,bHashOnly)
     var WorkStruct = {};
     var WorkFormat = DApps.Accounts.FORMAT_ACCOUNT_ROW;
     var WorkFormatLength = DApps.Accounts.SIZE_ACCOUNT_ROW;
+    
     for(var Num = StartAccount; Num <= EndAccount; Num++)
     {
         var FindItem = undefined;
         var RestData = DApps.Accounts.ReadRest(Num);
+        
         var CountZero = 0;
         for(var i = RestData.Arr.length - 1; i >= 0; i--)
         {
@@ -283,6 +340,7 @@ function GetArrRest(BlockNumRest,StartAccount,EndAccount,bHashOnly)
                 CountZero++;
                 continue;
             }
+            
             if(Item.BlockNum <= BlockNumRest)
             {
                 if(!FindItem || Item.BlockNum > FindItem.BlockNum)
@@ -291,6 +349,7 @@ function GetArrRest(BlockNumRest,StartAccount,EndAccount,bHashOnly)
                 }
             }
         }
+        
         var BlocNumMap = 0;
         var StateDataValue = undefined;
         if(FindItem)
@@ -303,11 +362,13 @@ function GetArrRest(BlockNumRest,StartAccount,EndAccount,bHashOnly)
             if(CountZero !== RestData.Arr.length)
                 continue;
         }
+        
         var StateData = DApps.Accounts.DBState.Read(Num);
         if(!StateData)
             break;
         if(StateDataValue)
             StateData.Value = StateDataValue;
+        
         if(bHashOnly)
         {
             var key = "" + Num + "-" + BlocNumMap;
@@ -326,8 +387,10 @@ function GetArrRest(BlockNumRest,StartAccount,EndAccount,bHashOnly)
             ArrRest.push(Buf);
         }
     }
+    
     return ArrRest;
 }
+
 var glMapRest = {};
 function GetRestMerkleTree(BlockNumRest,RestIndexArr)
 {
@@ -335,18 +398,25 @@ function GetRestMerkleTree(BlockNumRest,RestIndexArr)
     if(!MerkleTree)
     {
         ToLog("Create new glMapRest key: " + BlockNumRest, 2);
+        
         var startTime = process.hrtime();
+        
         var EndAccount = DApps.Accounts.DBState.GetMaxNum();
         var ArrHash = GetArrRest(BlockNumRest, 0, EndAccount, 1);
+        
         var Time1 = process.hrtime(startTime);
+        
         var MerkleCalc = {};
         MerkleTree = {LevelsHash:[ArrHash], RecalcCount:0};
+        
         for(var Num = 0; Num < ArrHash.length; Num++)
         {
             MerkleCalc[Num] = 1;
         }
+        
         UpdateMerklTree(MerkleTree, MerkleCalc, 0);
         glMapRest[BlockNumRest] = MerkleTree;
+        
         var Time2 = process.hrtime(startTime);
         var deltaTime1 = (Time1[0] * 1000 + Time1[1] / 1e6) / 1000;
         var deltaTime2 = (Time2[0] * 1000 + Time2[1] / 1e6) / 1000;
@@ -365,5 +435,6 @@ function GetRestMerkleTree(BlockNumRest,RestIndexArr)
             }
         }
     }
+    
     return MerkleTree;
 }

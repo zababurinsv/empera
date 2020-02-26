@@ -12,21 +12,29 @@ var PayList = [];
 var AttachItem;
 var MapAccounts = {};
 var LoadMapAfter = {};
+
 var MapCheckTransaction = {};
 var CanSendTransaction = 1;
 var CurrentTR = {};
+
 var MaxBlockNum = 0;
+
 var DelList = {};
+
+
 var WasAccountsDataStr;
 function SetAccountsData(Data,AccountsDataStr)
 {
     if(!Data || !Data.result)
         return ;
+    
     if($("idBtRun"))
         $("idBtRun").style.display = (Data.arr.length ? '' : 'none');
+    
     if(AccountsDataStr === WasAccountsDataStr)
         return ;
     WasAccountsDataStr = AccountsDataStr;
+    
     var arr = Data.arr;
     var Select = $("idAccount");
     if(arr.length !== Select.options.length)
@@ -34,16 +42,20 @@ function SetAccountsData(Data,AccountsDataStr)
         var options = Select.options;
         options.length = arr.length;
     }
+    
     MaxBlockNum = GetCurrentBlockNumByTime();
+    
     SetGridData(arr, "grid_accounts", "idMyTotalSum");
     for(var i = 0; arr && i < arr.length; i++)
     {
         var Item = arr[i];
         Item.MyAccount = true;
+        
         var Num = ParseNum(Item.Num);
         if(!MapAccounts[Num])
             MapAccounts[Num] = {};
         CopyObjKeys(MapAccounts[Num], Item);
+        
         var option = Select.options[i];
         var StrText = GetAccountText(Item, Num, 1);
         if(option.text !== StrText)
@@ -51,26 +63,31 @@ function SetAccountsData(Data,AccountsDataStr)
         option.value = Num;
         option.text = StrText;
     }
+    
     var CurentValue = LoadMapAfter["idAccount"];
     if(CurentValue)
     {
         Select.value = CurentValue;
         delete LoadMapAfter["idAccount"];
     }
+    
     SetCurCurencyName();
 }
+
 function CurTransactionToForm(bForce)
 {
     var Item = $("idTransaction");
     if(Item && (Item.className === "" || bForce))
         Item.value = GetJSONFromTransaction(CurrentTR);
 }
+
 function CheckNameAccTo()
 {
     MaxBlockNum = GetCurrentBlockNumByTime();
     var ToID = ParseNum($("idTo").value);
     if(!MapAccounts[ToID] || (MapAccounts[ToID].MustUpdate && MapAccounts[ToID].MustUpdate >= MaxBlockNum))
     {
+        
         GetData("GetAccountList", {StartNum:ToID}, function (Data)
         {
             if(Data && Data.result === 1 && Data.arr.length)
@@ -84,12 +101,14 @@ function CheckNameAccTo()
     }
     SetNameAccTo();
 }
+
 function SetNameAccTo()
 {
     var Str = "";
     var ToID = $("idTo").value.trim();
     var Item = MapAccounts[ToID];
     var StrTo = GetAccountText(Item, ToID, 1);
+    
     var element = $("idNameTo");
     if(!element)
     {
@@ -99,11 +118,13 @@ function SetNameAccTo()
     {
         StrTo = "To: " + StrTo;
     }
+    
     if(!ToID || ToID === "0")
     {
         element.innerText = "";
         return ;
     }
+    
     if(element && element.innerText !== StrTo)
     {
         element.innerText = StrTo;
@@ -113,6 +134,7 @@ function SetNameAccTo()
             element.className = "";
     }
 }
+
 function GetAccountText(Item,Num,bGetSum)
 {
     if(Item)
@@ -127,6 +149,7 @@ function GetAccountText(Item,Num,bGetSum)
             var StrSum = SUM_TO_STRING(Item.Value, Item.Currency, 1);
             text += " : " + StrSum;
         }
+        
         return text;
     }
     else
@@ -137,6 +160,7 @@ function GetAccountText(Item,Num,bGetSum)
             return "<Error address>";
     }
 }
+
 function OnEditIdTo()
 {
     CheckNameAccTo();
@@ -154,6 +178,7 @@ function SetCurCurencyName()
     var idCoin = $("idCoinName");
     if(!idCoin)
         return ;
+    
     var Num = ParseNum($("idAccount").value);
     var Item = MapAccounts[Num];
     if(Item)
@@ -161,6 +186,7 @@ function SetCurCurencyName()
         idCoin.innerText = CurrencyName(Item.Currency);
     }
 }
+
 function IsPublicAddr(StrTo)
 {
     if(StrTo.length === 66 && (StrTo.substr(0, 2) === "02" || StrTo.substr(0, 2) === "03") && IsHexStr(StrTo))
@@ -168,16 +194,20 @@ function IsPublicAddr(StrTo)
     else
         return 0;
 }
+
 function CreateTransaction(F,CheckErr,Run)
 {
     CheckNameAccTo();
     CheckSending();
+    
     var FromID = ParseNum($("idAccount").value);
+    
     if(CheckErr && FromID === 0)
     {
         SetError("Select valid 'From account'");
         return ;
     }
+    
     var StrTo = $("idTo").value.trim();
     var bFindAcc = 0;
     var ToPubKey = "";
@@ -198,13 +228,17 @@ function CreateTransaction(F,CheckErr,Run)
             return ;
         }
     }
+    
     if(CheckErr && ToID <= 0 && ToPubKey === "" && !AttachItem)
     {
         SetError("Valid 'Pay to' - required!");
         return ;
     }
+    
     var Description = $("idDescription").value.substr(0, 200);
+    
     var StrSum = $("idSumSend").value;
+    
     var indDot = StrSum.indexOf(".");
     if(indDot >= 0)
     {
@@ -218,12 +252,14 @@ function CreateTransaction(F,CheckErr,Run)
     }
     StrCENT = StrCENT + "000000000";
     var Coin = {SumCOIN:ParseNum(StrTER), SumCENT:ParseNum(StrCENT.substr(0, 9))};
+    
     var OperationID = 0;
     var Item = MapAccounts[FromID];
     if(Item)
     {
         OperationID = Item.Value.OperationID;
     }
+    
     var AttachBody = [];
     if(AttachItem)
     {
@@ -234,17 +270,21 @@ function CreateTransaction(F,CheckErr,Run)
     var ToPubKeyArr = [];
     if(ToPubKey)
         ToPubKeyArr = GetArrFromHex(ToPubKey);
+    
     var TR = {Type:111, Version:3, Reserve:0, FromID:FromID, OperationID:OperationID, To:[{PubKey:ToPubKeyArr, ID:ToID, SumCOIN:Coin.SumCOIN,
             SumCENT:Coin.SumCENT}], Description:Description, Body:AttachBody, Sign:CurrentTR.Sign, };
     Object.defineProperties(TR, {bFindAcc:{configurable:true, writable:true, enumerable:false, value:bFindAcc}});
     Object.defineProperties(TR, {Run:{configurable:true, writable:true, enumerable:false, value:Run}});
+    
     if(JSON.stringify(TR) === JSON.stringify(CurrentTR))
     {
         if(F)
             F(CurrentTR);
         return ;
     }
+    
     CurrentTR = TR;
+    
     GetSignTransaction(TR, "", function (TR)
     {
         CurTransactionToForm(true);
@@ -256,10 +296,12 @@ function SignJSON(F)
 {
     if($("idSignJSON").disabled)
         return ;
+    
     var TR = GetTransactionFromJSON();
     if(!TR)
         return ;
     CurrentTR = TR;
+    
     GetSignTransaction(TR, "", function (TR)
     {
         CurTransactionToForm(true);
@@ -267,6 +309,7 @@ function SignJSON(F)
             F();
     });
 }
+
 function CheckSending(bToStatus)
 {
     MaxBlockNum = GetCurrentBlockNumByTime();
@@ -278,6 +321,7 @@ function CheckSending(bToStatus)
         StrButton = " ";
         StrButtonSign = " ";
     }
+    
     if(CanSend)
     {
         var FromID = ParseNum($("idAccount").value);
@@ -286,16 +330,21 @@ function CheckSending(bToStatus)
         {
             if(bToStatus)
                 SetStatus("Transaction was sending. Wait... (" + Item.LastTransactionText + ")");
+            
             CanSend = false;
             StrButton = "Wait...";
         }
     }
+    
     $("idSendButton").disabled = (!CanSend);
     $("idSendButton").value = StrButton;
+    
     $("idSignJSON").disabled = (!CanSend);
     $("idSignJSON").value = StrButtonSign;
+    
     return CanSend;
 }
+
 function AddWhiteList()
 {
     var ToID = ParseNum($("idTo").value);
@@ -306,6 +355,7 @@ function SendMoneyBefore()
 {
     if($("idSendButton").disabled)
         return ;
+    
     var ToID = ParseNum($("idTo").value);
     var Item = MapAccounts[ToID];
     if(Storage.getItem("White:" + ToID) || !$("idSumSend").value || Item && Item.MyAccount)
@@ -318,10 +368,12 @@ function SendMoneyBefore()
         var StrTo = " to " + GetAccountText(Item, ToID);
         $("idWhiteOnSend").checked = 0;
         $("idOnSendText").innerHTML = "<B style='color:#ff4534'>" + STRING_FROM_COIN(CoinAmount) + "</B> " + $("idCoinName").innerText + StrTo;
+        
         if($("idSumSend").value >= 100000)
         {
             $("idOnSendText").innerHTML += "<BR><DIV style='color: yellow;'>WARNING: You are about to send a very large amount!</DIV>";
         }
+        
         SetVisibleBlock("idBlockOnSend", 1);
         SetImg(this, 'idBlockOnSend');
     }
@@ -338,24 +390,31 @@ function SendMoney(F)
         SetError("Can't Send transaction");
         return ;
     }
+    
     CheckSending(true);
     if($("idSendButton").disabled)
         return ;
+    
     SetVisibleBlock("idBlockOnSend", 0);
+    
     if(!F)
         F = ClearAttach;
     CreateTransaction(SendMoneyTR, true, F);
 }
+
 function GetJSONFromTransaction(TR)
 {
     var TR2 = JSON.parse(JSON.stringify(TR));
     for(var i = 0; i < TR2.To.length; i++)
     {
         var Item = TR2.To[i];
+        
         Item.PubKey = GetHexFromArr(Item.PubKey);
     }
+    
     TR2.Body = GetHexFromArr(TR2.Body);
     TR2.Sign = GetHexFromArr(TR2.Sign);
+    
     var Str = JSON.stringify(TR2, "", 4);
     return Str;
 }
@@ -371,6 +430,7 @@ function GetTransactionFromJSON()
         SetError(e);
         return undefined;
     }
+    
     for(var i = 0; i < TR.To.length; i++)
     {
         var Item = TR.To[i];
@@ -381,10 +441,13 @@ function GetTransactionFromJSON()
             delete Item.SumTER;
         }
     }
+    
     TR.Body = GetArrFromHex(TR.Body);
     TR.Sign = GetArrFromHex(TR.Sign);
+    
     return TR;
 }
+
 function SendMoneyJSON()
 {
     if(!CanSendTransaction)
@@ -392,15 +455,18 @@ function SendMoneyJSON()
         SetError("Can't Send transaction");
         return ;
     }
+    
     var TR = GetTransactionFromJSON();
     if(!TR)
         return ;
+    
     SendMoneyTR(TR);
 }
 function SignAndSendFromJSON()
 {
     SignJSON(SendMoneyJSON);
 }
+
 function GetTransactionText(TR,key)
 {
     var Str;
@@ -415,13 +481,16 @@ function GetTransactionText(TR,key)
             {
                 var MapItem = {};
                 var ValueTotal = {SumCOIN:0, SumCENT:0};
+                
                 Str = "" + TR.FromID + "/" + TR.OperationID + " to ";
                 for(var i = 0; i < TR.To.length; i++)
                 {
                     var Item = TR.To[i];
+                    
                     if(Item.ID === TR.FromID || MapItem[Item.ID])
                         continue;
                     MapItem[Item.ID] = 1;
+                    
                     ADD(ValueTotal, Item);
                     if(i === 0)
                         Str += "[";
@@ -451,11 +520,14 @@ function GetTransactionText(TR,key)
     }
     return Str;
 }
+
 function SendMoneyTR(TR)
 {
     var Body = GetArrFromTR(TR);
     WriteArr(Body, TR.Sign, 64);
+    
     Body.length += 12;
+    
     SendTransaction(Body, TR, undefined, function (Err,TR,Body)
     {
         if(Err)
@@ -472,11 +544,13 @@ function SendMoneyTR(TR)
         }
     });
 }
+
 function ClearTransaction()
 {
     PayList = [];
     ClearAttach();
     CheckSendList(1);
+    
     var arr = ["idAccount", "idTo", "idSumSend", "idDescription"];
     for(var i = 0; i < arr.length; i++)
     {
@@ -485,14 +559,17 @@ function ClearTransaction()
     SaveValues();
     CreateTransaction();
 }
+
 function StartEditTransactionJSON()
 {
     var Item = $("idTransaction");
     Item.className = "smallbold";
 }
+
 function EditJSONTransaction()
 {
     var name = "edit_transaction";
+    
     var Item = $("idTransaction");
     if(IsVisibleBlock(name))
     {
@@ -506,6 +583,8 @@ function EditJSONTransaction()
         Item.className = "";
     }
 }
+
+
 var glNumPayCount = 0;
 function GetInvoiceHTML(item,onclick,classstr)
 {
@@ -520,25 +599,31 @@ function GetInvoiceHTML(item,onclick,classstr)
         value += "<B>" + escapeHtml(item.Data.Amount) + "</B> Tera";
     else
         value += "<B style='color:green'>No pay</B>";
+    
     value += "&#x00A;" + item.num + ". " + escapeHtml(item.Data.name);
     return "<button id='" + idname + "' onclick='" + onclick + "' class='" + classstr + "'>" + value + "</button>";
 }
+
 function AddSendList(item)
 {
     PayList.push({Data:item});
 }
+
 function CheckSendList(bRedraw)
 {
     TitleWarning = PayList.length;
     if(AttachItem)
         TitleWarning++;
+    
     var Str = Storage.getItem("InvoiceList");
     if(!Str && !bRedraw)
         return ;
+    
     if(!bRedraw)
     {
         SelectTab("TabSend");
     }
+    
     if(Str)
     {
         var arr = JSON.parse(Str);
@@ -548,6 +633,7 @@ function CheckSendList(bRedraw)
         }
         Storage.setItem("InvoiceList", "");
     }
+    
     var idList = $("idSendList");
     if(PayList.length)
     {
@@ -557,6 +643,7 @@ function CheckSendList(bRedraw)
             var item = PayList[i];
             idList.innerHTML += GetInvoiceHTML(item, "UseInvoice(" + i + ")", "btinvoice");
         }
+        
         if(AttachItem === undefined)
             UseInvoice(0);
     }
@@ -566,25 +653,32 @@ function CheckSendList(bRedraw)
     }
 }
 setInterval(CheckSendList, 200);
+
 function UseInvoice(Num)
 {
     var item = PayList[Num];
     if(item.Data.From)
         $("idAccount").value = item.Data.From;
+    
     $("idTo").value = item.Data.To;
     $("idSumSend").value = item.Data.Amount;
     $("idDescription").value = item.Data.Description;
+    
     PayList.splice(Num, 1);
+    
     AttachItem = item;
     $("idAttach").innerHTML = GetInvoiceHTML(AttachItem, "OpenAttach()", "btinvoice btinvoice_use");
+    
     CheckSendList(1);
 }
+
 function ClearAttach()
 {
     AttachItem = undefined;
     if($("idAttach"))
         $("idAttach").innerHTML = "";
 }
+
 function OpenAttach()
 {
     if(AttachItem)
@@ -596,6 +690,7 @@ function OpenAttach()
         alert("DATA:\n" + JSON.stringify(Data2, "", 4));
     }
 }
+
 var CURRENCY, PUBKEY, NAME, SMART;
 function SendTrCreateAccWait(Currency,PubKey,Name,Smart)
 {
@@ -608,11 +703,13 @@ function SendTrCreateAccWait(Currency,PubKey,Name,Smart)
         SendTrCreateAcc(CURRENCY, PUBKEY, NAME, 0, SMART, 0, 0);
     }, 50);
 }
+
 function SendTrCreateAcc(Currency,PubKey,Description,Adviser,Smart,bFindAcc,bAddToPay)
 {
     var TR = GetTrCreateAcc(Currency, PubKey, Description, Adviser, Smart);
     var Body = GetBodyCreateAcc(TR);
     TR.bFindAcc = 1;
+    
     if(bAddToPay)
     {
         var Item = {name:Description, To:0, Amount:CONFIG_DATA.PRICE_DAO.NewAccount, Description:"Create acc: " + Description, Body:Body,
@@ -623,9 +720,11 @@ function SendTrCreateAcc(Currency,PubKey,Description,Adviser,Smart,bFindAcc,bAdd
     {
         SendTransaction(Body, TR);
     }
+    
     $("idAccountName").value = "";
     CancelCreateAccount();
 }
+
 function DoChangeSmart(NumAccount,WasSmart,SmartNum)
 {
     if(SmartNum !== null && SmartNum != WasSmart)
@@ -658,9 +757,11 @@ function ChangeSmart(NumAccount,WasSmart)
         SetError("Pls, open wallet");
         return 0;
     }
+    
     var SmartNum = prompt("Enter smart number:", WasSmart);
     DoChangeSmart(NumAccount, WasSmart, SmartNum);
 }
+
 function SetSmartToAccount(NumAccount,Smart)
 {
     var OperationID = 0;
@@ -670,7 +771,9 @@ function SetSmartToAccount(NumAccount,Smart)
         OperationID = Item.Value.OperationID;
     }
     OperationID++;
+    
     var TR = {Type:140, Account:NumAccount, Smart:Smart, FromNum:NumAccount, Reserve:[], OperationID:OperationID, Sign:"", };
+    
     var Body = [];
     WriteByte(Body, TR.Type);
     WriteUint(Body, TR.Account);
@@ -678,8 +781,10 @@ function SetSmartToAccount(NumAccount,Smart)
     WriteArr(Body, TR.Reserve, 10);
     WriteUint(Body, TR.FromNum);
     WriteUint(Body, TR.OperationID);
+    
     SendTrArrayWithSign(Body, TR.Account, TR);
 }
+
 function CheckLengthAccDesription(name,Length)
 {
     var Str = $(name).value.substr(0, Length + 1);

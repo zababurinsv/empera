@@ -6,6 +6,7 @@
  * Telegram:  https://t.me/progr76
 */
 
+
 /*
  usage:
  require("./terabuf.js");
@@ -33,17 +34,24 @@
  {Type:"byte",Account:"uint",SumCOIN:"uint",SumCENT:"uint32", arr:["uint"]}
 
 */
+
+
 'use strict';
+
 global.SerializeLib = {};
 var exports = global.SerializeLib;
 exports.Write = Write;
 exports.Read = Read;
+
 exports.GetObjectFromBuffer = GetObjectFromBuffer;
 exports.GetBufferFromObject = GetBufferFromObject;
 exports.GetFormatFromObject = GetFormatFromObject;
+
 var glError = 1;
+
 function Write(buf,data,StringFormat,ParamValue,WorkStruct)
 {
+    
     if(typeof StringFormat === "number")
     {
         ToLogTrace("ERRR StringFormat ");
@@ -52,6 +60,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
     else
     {
         var format = StringFormat;
+        
         if(format.substr(0, 6) === "buffer" && format.length > 6)
         {
             ParamValue = parseInt(format.substr(6));
@@ -66,10 +75,13 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
             else
                 if(format.substr(0, 3) === "str" && format.length > 3)
                 {
+                    
                     var length = parseInt(format.substr(3));
                     WriteStr(buf, data, length);
+                    
                     return ;
                 }
+        
         switch(format)
         {
             case "str":
@@ -77,9 +89,11 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     WriteStr(buf, data);
                     break;
                 }
+                
             case "byte":
                 {
                     WriteByte(buf, data);
+                    
                     break;
                 }
             case "uint":
@@ -88,7 +102,9 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                         data = 0;
                     if(data >= 281474976710655)
                         data = 0;
+                    
                     WriteUint(buf, data);
+                    
                     break;
                 }
             case "uint16":
@@ -103,15 +119,20 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     if(!data || data < 0)
                         data = 0;
                     data = data >>> 0;
+                    
                     WriteUint32(buf, data);
+                    
                     break;
                 }
             case "time":
                 {
                     var Time = data.valueOf();
+                    
                     WriteUint(buf, Time);
+                    
                     break;
                 }
+                
             case "zhash":
                 ZCheck:
                 {
@@ -123,38 +144,28 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     WriteByte(buf, 0);
                     break;
                 }
+                
                 WriteByte(buf, 1);
                 WriteArr(buf, data, 32);
                 break;
-            case "addres":
             case "hash":
                 {
                     WriteArr(buf, data, 32);
                     break;
                 }
             case "buffer":
-                {
-                    var length;
-                    if(!data)
-                        length = 0;
-                    else
-                        if(ParamValue === undefined)
-                            length = data.length;
-                        else
-                            length = Math.min(ParamValue, data.length);
-                    WriteArr(buf, data, length);
-                    break;
-                }
             case "arr":
                 {
                     var length;
-                    if(data)
-                        length = Math.min(ParamValue, data.length);
+                    if(ParamValue === undefined)
+                        length = (data ? data.length : 0);
                     else
-                        length = 0;
+                        length = ParamValue;
+                    
                     WriteArr(buf, data, length);
                     break;
                 }
+                
             case "tr":
                 {
                     var length;
@@ -164,10 +175,13 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                         data = 0;
                     if(length > 65535)
                         length = 65535;
+                    
                     WriteUint16(buf, length);
                     WriteArr(buf, data, length);
+                    
                     break;
                 }
+                
             case "data":
                 {
                     var length;
@@ -177,6 +191,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                         data = 0;
                     WriteUint32(buf, length);
                     WriteArr(buf, data, length);
+                    
                     break;
                 }
             case "hashSTR":
@@ -194,6 +209,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
             default:
                 {
                     WorkStruct = WorkStruct || {};
+                    
                     var CurFormat = StringFormat.substr(0, 1);
                     if(CurFormat === "[")
                     {
@@ -201,6 +217,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                         if(data)
                             length = data.length;
                         var formatNext = GetMiddleString(format);
+                        
                         WriteUint32(buf, length);
                         for(var i = 0; i < length; i++)
                         {
@@ -226,17 +243,20 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                                     Write(buf, data[i], formatNext, undefined, WorkStruct);
                                 }
                             }
+                            
                             WriteUint32AtPos(buf, IndexCount, IndexCountPos);
                         }
                         else
                             if(CurFormat === "{")
                             {
+                                
                                 var attrs = WorkStruct[format];
                                 if(!attrs)
                                 {
                                     attrs = GetAttributes(GetMiddleString(format));
                                     WorkStruct[format] = attrs;
                                 }
+                                
                                 for(var i = 0; i < attrs.length; i++)
                                 {
                                     var type = attrs[i];
@@ -251,8 +271,10 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
         }
     }
 }
+
 function Read(buf,StringFormat,ParamValue,WorkStruct)
 {
+    
     var ret;
     if(typeof StringFormat === "number")
     {
@@ -301,6 +323,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                         ParamValue = 0;
                     }
                 }
+        
         switch(format)
         {
             case "str":
@@ -342,12 +365,12 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                         ret = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
                     break;
                 }
-            case "addres":
             case "hash":
                 {
                     ret = ReadArr(buf, 32);
                     break;
                 }
+                
             case "buffer":
             case "arr":
                 {
@@ -369,6 +392,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                         ret = undefined;
                         break;
                     }
+                    
                     var length = buf[buf.len] + buf[buf.len + 1] * 256;
                     buf.len += 2;
                     ret = buf.slice(buf.len, buf.len + length);
@@ -383,6 +407,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                     ret = ReadArr(buf, length);
                     break;
                 }
+                
             case "hashSTR":
                 {
                     var Str = ReadStrConstL(buf, 64);
@@ -395,13 +420,16 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                     ret = parseInt(Str);
                     break;
                 }
+                
             default:
                 {
                     WorkStruct = WorkStruct || {};
+                    
                     var LStr = format.substr(0, 1);
                     if(LStr === "[" || LStr === "<")
                     {
                         var bIndexArr = (LStr === "<");
+                        
                         ret = [];
                         var formatNext = GetMiddleString(format);
                         var length = Read(buf, "uint32");
@@ -426,12 +454,14 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                     else
                         if(LStr === "{")
                         {
+                            
                             var attrs = WorkStruct[format];
                             if(!attrs)
                             {
                                 attrs = GetAttributes(GetMiddleString(format));
                                 WorkStruct[format] = attrs;
                             }
+                            
                             ret = {};
                             for(var i = 0; i < attrs.length; i++)
                             {
@@ -448,24 +478,32 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
     }
     return ret;
 }
+
+
 function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
 {
+    
     var Arr = buffer;
     Arr.len = 0;
+    
     if(typeof format === "object")
     {
         if(!WorkStruct.FromObject)
             WorkStruct.FromObject = GetFormatFromObject(format);
         format = WorkStruct.FromObject;
     }
+    
     var Data = Read(Arr, format, undefined, WorkStruct);
+    
     if(!bNoSizeControl && glError && Arr.len !== Arr.length)
     {
         ToLog("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
     }
+    
     return Data;
 }
-function GetBufferFromObject(data,format,WorkStruct)
+
+function GetBufferFromObject(data,format,WorkStruct,bGetAsBuffer)
 {
     if(typeof format === "object")
     {
@@ -473,11 +511,17 @@ function GetBufferFromObject(data,format,WorkStruct)
             WorkStruct.FromObject = GetFormatFromObject(format);
         format = WorkStruct.FromObject;
     }
+    
     var Arr = [];
     Arr.len = 0;
     Write(Arr, data, format, undefined, WorkStruct);
+    
+    if(bGetAsBuffer)
+        Arr = Buffer.from(Arr);
+    
     return Arr;
 }
+
 function GetFormatFromObject(Obj)
 {
     var Str = "{";
@@ -498,9 +542,11 @@ function GetFormatFromObject(Obj)
                         Str = "[" + GetFormatFromObject(Obj[0]) + "]";
                         break LType;
                     }
+                    
                     Str = "{";
                     bFirst = 0;
                 }
+                
                 Str += key + ":" + GetFormatFromObject(Obj[key]);
             }
             Str += "}";
@@ -509,6 +555,7 @@ function GetFormatFromObject(Obj)
             {
                 if(Obj.length === 0)
                     throw "Error format array length";
+                
                 Str = "[" + GetFormatFromObject(Obj[0]) + "]";
                 break;
             }
@@ -518,10 +565,12 @@ function GetFormatFromObject(Obj)
     }
     return Str;
 }
+
 function GetMiddleString(Str)
 {
     return Str.substr(1, Str.length - 2);
 }
+
 function GetMiddleString2(Str,FromStr,ToStr)
 {
     var Count = 0;
@@ -548,6 +597,7 @@ function GetMiddleString2(Str,FromStr,ToStr)
         if(Count)
             Result = Result + FStr;
     }
+    
     return Result;
 }
 function GetAttributeStrings(Str)
@@ -580,10 +630,13 @@ function GetAttributeStrings(Str)
                         continue;
         Element = Element + FStr;
     }
+    
     if(Element.length > 0)
         Result.push(Element);
+    
     return Result;
 }
+
 function GetKeyValueStrings(Str)
 {
     var Key = "";
@@ -601,8 +654,10 @@ function GetKeyValueStrings(Str)
         }
         Key = Key + FStr;
     }
+    
     throw "Error format Key:Value = " + Str;
 }
+
 function GetAttributes(Str)
 {
     var arr = [];
@@ -614,6 +669,8 @@ function GetAttributes(Str)
     }
     return arr;
 }
+
+
 function toUTF8Array(str)
 {
     var utf8 = [];
@@ -641,10 +698,12 @@ function toUTF8Array(str)
     }
     return utf8;
 }
+
 function Utf8ArrayToStr(array)
 {
     var out, i, len, c;
     var char2, char3;
+    
     out = "";
     len = array.length;
     i = 0;
@@ -675,6 +734,7 @@ function Utf8ArrayToStr(array)
                 break;
         }
     }
+    
     for(var i = 0; i < out.length; i++)
     {
         if(out.charCodeAt(i) === 0)
@@ -685,10 +745,12 @@ function Utf8ArrayToStr(array)
     }
     return out;
 }
+
 function GetArr32FromStr(Str)
 {
     return GetArrFromStr(Str, 32);
 }
+
 function GetArrFromStr(Str,Len)
 {
     var arr = toUTF8Array(Str);
@@ -698,6 +760,7 @@ function GetArrFromStr(Str,Len)
     }
     return arr.slice(0, Len);
 }
+
 function WriteByte(arr,Num)
 {
     if(!Num)
@@ -713,6 +776,7 @@ function WriteUint(arr,Num)
     arr[len + 1] = (Num >>> 8) & 0xFF;
     arr[len + 2] = (Num >>> 16) & 0xFF;
     arr[len + 3] = (Num >>> 24) & 0xFF;
+    
     var NumH = Math.floor(Num / 4294967296);
     arr[len + 4] = NumH & 0xFF;
     arr[len + 5] = (NumH >>> 8) & 0xFF;
@@ -725,6 +789,7 @@ function WriteUint16(arr,Num)
     arr[len] = Num & 0xFF;
     arr[len + 1] = (Num >>> 8) & 0xFF;
 }
+
 function WriteUint32(arr,Num)
 {
     if(!Num)
@@ -735,10 +800,12 @@ function WriteUint32(arr,Num)
     arr[len + 2] = (Num >>> 16) & 0xFF;
     arr[len + 3] = (Num >>> 24) & 0xFF;
 }
+
 function WriteUint32AtPos(arr,Num,Pos)
 {
     if(!Num)
         Num = 0;
+    
     arr[Pos] = Num & 0xFF;
     arr[Pos + 1] = (Num >>> 8) & 0xFF;
     arr[Pos + 2] = (Num >>> 16) & 0xFF;
@@ -749,8 +816,10 @@ function WriteStr(arr,Str,ConstLength)
     if(!Str)
         Str = "";
     var arrStr = toUTF8Array(Str);
+    
     var length;
     var len = arr.length;
+    
     if(ConstLength)
     {
         length = ConstLength;
@@ -760,15 +829,18 @@ function WriteStr(arr,Str,ConstLength)
         length = arrStr.length;
         if(length > 65535)
             length = 65535;
+        
         arr[len] = length & 0xFF;
         arr[len + 1] = (length >>> 8) & 0xFF;
         len += 2;
     }
+    
     for(var i = 0; i < length; i++)
     {
         arr[len + i] = arrStr[i];
     }
 }
+
 function WriteArr(arr,arr2,ConstLength)
 {
     var length;
@@ -776,10 +848,12 @@ function WriteArr(arr,arr2,ConstLength)
         length = Math.min(ConstLength, arr2.length);
     else
         length = 0;
+    
     for(var i = 0; i < length; i++)
     {
         arr[arr.length] = arr2[i];
     }
+    
     for(var i = length; i < ConstLength; i++)
     {
         arr[arr.length] = 0;
@@ -792,16 +866,19 @@ function ReadUintFromArr(arr,len)
         len = arr.len;
         arr.len += 6;
     }
+    
     if(glError && arr.len > arr.length)
     {
         ToLog("**********Error Uint buf len: " + arr.len + "/" + arr.length);
         return 0;
     }
+    
     var value = (arr[len + 5] << 23) * 2 + (arr[len + 4] << 16) + (arr[len + 3] << 8) + arr[len + 2];
     value = value * 256 + arr[len + 1];
     value = value * 256 + arr[len];
     return value;
 }
+
 function ReadUint32FromArr(arr,len)
 {
     if(len === undefined)
@@ -809,11 +886,13 @@ function ReadUint32FromArr(arr,len)
         len = arr.len;
         arr.len += 4;
     }
+    
     if(glError && arr.len > arr.length)
     {
         ToLog("**********Error Uint32 buf len: " + arr.len + "/" + arr.length);
         return 0;
     }
+    
     return (arr[len + 3] << 23) * 2 + (arr[len + 2] << 16) + (arr[len + 1] << 8) + arr[len];
 }
 function ReadUint16FromArr(arr,len)
@@ -823,11 +902,13 @@ function ReadUint16FromArr(arr,len)
         len = arr.len;
         arr.len += 2;
     }
+    
     if(glError && arr.len > arr.length)
     {
         ToLog("**********Error Uint16 buf len: " + arr.len + "/" + arr.length);
         return 0;
     }
+    
     return (arr[len + 1] << 8) + arr[len];
 }
 function ReadByte(arr,len)
@@ -837,13 +918,16 @@ function ReadByte(arr,len)
         len = arr.len;
         arr.len += 1;
     }
+    
     if(glError && arr.len > arr.length)
     {
         ToLog("**********Error Uint8 buf len: " + arr.len + "/" + arr.length);
         return 0;
     }
+    
     return arr[len];
 }
+
 function ReadArr(arr,length)
 {
     var Ret = [];
@@ -861,6 +945,7 @@ function ReadStr(arr)
     arr.len += 2;
     return ReadStrConstL(arr, length);
 }
+
 function ReadStrConstL(arr,length)
 {
     var arr2 = arr.slice(arr.len, arr.len + length);
@@ -868,6 +953,8 @@ function ReadStrConstL(arr,length)
     arr.len += length;
     return Str;
 }
+
+
 function GetArrFromHex(Str)
 {
     var array = [];
@@ -877,6 +964,9 @@ function GetArrFromHex(Str)
     }
     return array;
 }
+
+
+
 var ErrorCount = 0;
 var TestMapValue = {};
 var TestMapFormat = {};
@@ -887,10 +977,12 @@ function TestValue(Value,Format,bLog)
     var Value2 = GetObjectFromBuffer(Buf, Format, {});
     var Str1 = JSON.stringify(Value);
     var Str2 = JSON.stringify(Value2);
+    
     if(typeof Format === "object")
     {
         Format = GetFormatFromObject(Format);
     }
+    
     if(Str1 !== Str2)
     {
         ToLog("Error format: " + Format + " <--------------------------------------------------");
@@ -908,6 +1000,7 @@ function TestValue(Value,Format,bLog)
             ToLog(Value);
             ToLog(Value2);
         }
+        
         glTestCount++;
         var Key = "T" + glTestCount;
         TestMapValue[Key] = Value;
@@ -915,10 +1008,13 @@ function TestValue(Value,Format,bLog)
         return 1;
     }
 }
+
 global.WriteUint32AtPos = WriteUint32AtPos;
 global.WriteUint32 = WriteUint32;
 global.ReadUint32FromArr = ReadUint32FromArr;
+
 glError = 1;
+
 if(!global.ToLog)
     global.ToLog = function (Str)
     {

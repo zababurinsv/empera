@@ -9,10 +9,14 @@
 */
 
 window.CLIENT_VERSION = 16;
+
 function $(id)
 {
     return document.getElementById(id);
 }
+
+
+
 window.Storage = {};
 window.Storage.setItem = function (Key,Value)
 {
@@ -24,15 +28,20 @@ window.Storage.getItem = function (Key)
     if(window.localStorage)
         return localStorage.getItem(Key);
 }
+
 var WALLET_KEY_NAME = "WALLET_KEY";
 var WALLET_PUB_KEY_NAME = "WALLET_PUB_KEY";
 var WALLET_PUB_KEY_MAIN = "WALLET_PUB_KEY_MAIN";
+
 var WALLET_KEY_LOGIN = "WALLET_LOGIN";
 var WALLET_KEY_EXIT = "WALLET_EXIT";
+
+
 window.onstorage = function (event)
 {
     if(!window.sessionStorage)
         return ;
+    
     var Value = event.newValue;
     switch(event.key)
     {
@@ -55,6 +64,7 @@ window.onstorage = function (event)
             break;
     }
 }
+
 if(!Math.log2)
     Math.log2 = Math.log2 || function (x)
     {
@@ -89,13 +99,16 @@ if(!String.prototype.padStart)
         }
     };
 }
+
 window.IsLocalClient = function ()
 {
     return (window.location.protocol.substr(0, 4) !== "http");
 }
+
 var glSession;
 var ServerHTTP;
 var MainServer;
+
 if(window.nw)
 {
     window.Open = function (path,iconname,width,height)
@@ -105,18 +118,22 @@ if(window.nw)
         var params = {width:width, height:height};
         if(iconname)
             params.icon = "../HTML/PIC/" + iconname + ".png";
+        
         window.nw.Window.open(path, params, function (win)
         {
         });
     };
+    
     window.GetData = function (Method,ObjPost,Func)
     {
         window.nw.global.RunRPC({path:Method, obj:ObjPost}, Func);
     };
+    
     global.RunRPC = function (message,Func)
     {
         if(!ServerHTTP)
             ServerHTTP = require('../core/html-server');
+        
         var reply = ServerHTTP.SendData(message);
         if(Func)
         {
@@ -127,6 +144,7 @@ if(window.nw)
 else
 {
     global = window;
+    
     window.Open = function (path,iconname,width,height)
     {
         if(!window.NWMODE)
@@ -144,12 +162,16 @@ else
             var win = window.open(path, undefined, params);
         }
     };
+    
     window.GetData = function (Method,ObjPost,Func)
     {
+        
         if(Method.substr(0, 4) !== "http")
         {
+            
             if(Method.substr(0, 1) !== "/")
                 Method = "/" + Method;
+            
             if(MainServer)
             {
                 Method = GetProtocolServerPath(MainServer) + Method;
@@ -160,6 +182,7 @@ else
                     return ;
             }
         }
+        
         var StrPost;
         var serv = new XMLHttpRequest();
         if(ObjPost !== undefined)
@@ -174,6 +197,7 @@ else
             {
                 serv.open("GET", Method, 0);
                 CheckTokenHash(serv);
+                
                 serv.send();
                 if(serv.status != 200)
                 {
@@ -185,10 +209,12 @@ else
                     return serv.responseText;
                 }
             }
+            
             var STACK = "" + new Error().stack;
             console.log(STACK);
             throw "ERROR GET-TYPE";
         }
+        
         var STACK = "" + new Error().stack;
         serv.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         serv.onreadystatechange = function ()
@@ -226,15 +252,18 @@ else
                     }
             }
         };
+        
         serv.send(StrPost);
     };
 }
+
 function CheckTokenHash(serv)
 {
     var TokenHash = sessionStorage["TOKEN-HASH"];
     if(TokenHash)
         serv.setRequestHeader("tokenhash", TokenHash);
 }
+
 function IsIPAddres(Str)
 {
     var arr = Str.split(".");
@@ -255,6 +284,7 @@ function GetProtocolServerPath(Item)
         else
             return "http://" + Item.ip + ":" + Item.port;
 }
+
 function ToFixed(Sum,Currency,bNoZero)
 {
     var Fixed = GetCurrencyFixed(Currency);
@@ -279,10 +309,12 @@ function ToFixed(Sum,Currency,bNoZero)
     }
     return Str;
 }
+
 function SUM_TO_STRING(Value,Currency,bFloat,bLocal)
 {
     if(Value.SumCOIN >= 1e12)
         return "UNIT:" + Value.SumCOIN;
+    
     var Str;
     if(Value.SumCOIN || Value.SumCENT)
     {
@@ -300,14 +332,18 @@ function SUM_TO_STRING(Value,Currency,bFloat,bLocal)
     }
     else
         Str = "";
+    
     if(Currency !== undefined)
     {
         if(Str === "")
             Str = "0";
+        
         Str += " " + CurrencyName(Currency);
     }
     return Str;
 }
+
+
 function GetArrFromHex(Str)
 {
     var array = [];
@@ -317,11 +353,13 @@ function GetArrFromHex(Str)
     }
     return array;
 }
+
 var HexStr = "0123456789ABCDEF";
 function GetHexFromArr(arr)
 {
     if(!(arr instanceof Array) && arr.data)
         arr = arr.data;
+    
     var Str = "";
     if(arr)
     {
@@ -341,10 +379,12 @@ function GetHexFromArr(arr)
     }
     return Str;
 }
+
 function GetStrFromAddr(arr)
 {
     return GetHexFromArr(arr);
 }
+
 function GetHexFromArrBlock(Arr,LenBlock)
 {
     var Str = "";
@@ -362,8 +402,10 @@ function GetHexFromArrBlock(Arr,LenBlock)
     {
         Str += GetHexFromArr(Arr2);
     }
+    
     return Str;
 }
+
 function Rigth(Str,Count)
 {
     if(Str.length < Count)
@@ -371,6 +413,7 @@ function Rigth(Str,Count)
     else
         return Str.substr(Str.length - Count);
 }
+
 function toUTF8Array(str)
 {
     var utf8 = [];
@@ -398,10 +441,12 @@ function toUTF8Array(str)
     }
     return utf8;
 }
+
 function Utf8ArrayToStr(array)
 {
     var out, i, len, c;
     var char2, char3;
+    
     out = "";
     len = array.length;
     i = 0;
@@ -432,6 +477,7 @@ function Utf8ArrayToStr(array)
                 break;
         }
     }
+    
     for(var i = 0; i < out.length; i++)
     {
         if(out.charCodeAt(i) === 0)
@@ -442,10 +488,12 @@ function Utf8ArrayToStr(array)
     }
     return out;
 }
+
 function GetArr32FromStr(Str)
 {
     return GetArrFromStr(Str, 32);
 }
+
 function GetArrFromStr(Str,Len)
 {
     var arr = toUTF8Array(Str);
@@ -455,6 +503,7 @@ function GetArrFromStr(Str,Len)
     }
     return arr.slice(0, Len);
 }
+
 function WriteByte(arr,Num)
 {
     arr[arr.length] = Num & 0xFF;
@@ -466,6 +515,7 @@ function WriteUint(arr,Num)
     arr[len + 1] = (Num >>> 8) & 0xFF;
     arr[len + 2] = (Num >>> 16) & 0xFF;
     arr[len + 3] = (Num >>> 24) & 0xFF;
+    
     var NumH = Math.floor(Num / 4294967296);
     arr[len + 4] = NumH & 0xFF;
     arr[len + 5] = (NumH >>> 8) & 0xFF;
@@ -476,6 +526,7 @@ function WriteUint16(arr,Num)
     arr[len] = Num & 0xFF;
     arr[len + 1] = (Num >>> 8) & 0xFF;
 }
+
 function WriteUint32(arr,Num)
 {
     var len = arr.length;
@@ -489,8 +540,10 @@ function WriteStr(arr,Str,ConstLength)
     if(!Str)
         Str = "";
     var arrStr = toUTF8Array(Str);
+    
     var length;
     var len = arr.length;
+    
     if(ConstLength)
     {
         length = ConstLength;
@@ -500,15 +553,18 @@ function WriteStr(arr,Str,ConstLength)
         length = arrStr.length;
         if(length > 65535)
             length = 65535;
+        
         arr[len] = length & 0xFF;
         arr[len + 1] = (length >>> 8) & 0xFF;
         len += 2;
     }
+    
     for(var i = 0; i < length; i++)
     {
         arr[len + i] = arrStr[i];
     }
 }
+
 function WriteArr(arr,arr2,ConstLength)
 {
     var len = arr.length;
@@ -517,6 +573,7 @@ function WriteArr(arr,arr2,ConstLength)
         arr[len + i] = arr2[i];
     }
 }
+
 function WriteTr(arr,arr2)
 {
     var len2 = arr2.length;
@@ -524,11 +581,13 @@ function WriteTr(arr,arr2)
     arr[len] = len2 & 0xFF;
     arr[len + 1] = (len2 >>> 8) & 0xFF;
     len += 2;
+    
     for(var i = 0; i < len2; i++)
     {
         arr[len + i] = arr2[i];
     }
 }
+
 function ReadUintFromArr(arr,len)
 {
     if(len === undefined)
@@ -536,6 +595,7 @@ function ReadUintFromArr(arr,len)
         len = arr.len;
         arr.len += 6;
     }
+    
     var value = (arr[len + 5] << 23) * 2 + (arr[len + 4] << 16) + (arr[len + 3] << 8) + arr[len + 2];
     value = value * 256 + arr[len + 1];
     value = value * 256 + arr[len];
@@ -548,9 +608,11 @@ function ReadUint32FromArr(arr,len)
         len = arr.len;
         arr.len += 4;
     }
+    
     var value = (arr[len + 3] << 23) * 2 + (arr[len + 2] << 16) + (arr[len + 1] << 8) + arr[len];
     return value;
 }
+
 function ReadArr(arr,length)
 {
     var Ret = [];
@@ -593,6 +655,7 @@ function parseUint(Str)
         Res = 0;
     return Res;
 }
+
 function CopyObjKeys(dest,src)
 {
     for(var key in src)
@@ -600,6 +663,7 @@ function CopyObjKeys(dest,src)
         dest[key] = src[key];
     }
 }
+
 function SaveToArr(Arr,Obj)
 {
     for(var key in Obj)
@@ -632,6 +696,7 @@ function LoadFromArr(Arr,Obj)
 {
     if(!Arr.length)
         return false;
+    
     var Count = Arr[0];
     Arr.len = 1;
     for(var key in Obj)
@@ -639,12 +704,14 @@ function LoadFromArr(Arr,Obj)
         if(!Count)
             break;
         Count--;
+        
         var Type = Arr[Arr.len];
         Arr.len++;
         switch(Type)
         {
             case 241:
                 Obj[key] = ReadUintFromArr(Arr);
+                
                 break;
             case 242:
                 Obj[key] = ReadStr(Arr);
@@ -667,17 +734,21 @@ function LoadFromArr(Arr,Obj)
     else
         return false;
 }
+
 var entityMap = {"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':'&quot;', "'":'&#39;', "/":'&#x2F;', "\n":'<BR>', " ":'&nbsp;', };
 function escapeHtml(string)
 {
     string = String(string);
+    
     string = string.replace(/\\n/g, "\n");
     string = string.replace(/\\"/g, "\"");
+    
     return string.replace(/[\s\n&<>"'\/]/g, function (s)
     {
         return entityMap[s];
     });
 }
+
 function InsertAfter(elem,refElem)
 {
     var parent = refElem.parentNode;
@@ -703,6 +774,7 @@ function MoveUp(elem)
         }
     }
 }
+
 function ViewGrid(APIName,Params,nameid,bClear,TotalSum)
 {
     GetData(APIName, Params, function (Data)
@@ -712,6 +784,7 @@ function ViewGrid(APIName,Params,nameid,bClear,TotalSum)
         SetGridData(Data.arr, nameid, TotalSum, bClear);
     });
 }
+
 function CheckNewSearch(Def)
 {
     var Str = $(Def.FilterName).value;
@@ -720,6 +793,7 @@ function CheckNewSearch(Def)
         $(Def.NumName).value = "0";
     }
 }
+
 function ViewCurrent(Def,flag,This)
 {
     if(Def.BlockName)
@@ -743,9 +817,11 @@ function ViewCurrent(Def,flag,This)
             if(ResVisible)
                 This.className += " btpress";
         }
+        
         if(!ResVisible)
             return ;
     }
+    
     var item = $(Def.NumName);
     var Filter = "", Filter2 = "";
     if(Def.FilterName)
@@ -758,12 +834,15 @@ function ViewCurrent(Def,flag,This)
     }
     if(!Def.Param3)
         Def.Param3 = "";
+    
     ViewGrid(Def.APIName, {StartNum:ParseNum(item.value), CountNum:GetCountViewRows(Def), Param3:Def.Param3, Filter:Filter, Filter2:Filter2,
     }, Def.TabName, 1, Def.TotalSum);
     SaveValues();
+    
     if(This)
         SetImg(This, Def.BlockName);
 }
+
 function ViewPrev(Def)
 {
     var item = document.getElementById(Def.NumName);
@@ -772,6 +851,7 @@ function ViewPrev(Def)
     if(Num < 0)
         Num = 0;
     item.value = Num;
+    
     ViewCurrent(Def);
 }
 function ViewNext(Def,MaxNum)
@@ -779,6 +859,7 @@ function ViewNext(Def,MaxNum)
     var item = document.getElementById(Def.NumName);
     var Num = ParseNum(item.value);
     Num += GetCountViewRows(Def);
+    
     if(Def.FilterName)
     {
         if(document.getElementById(Def.FilterName).value)
@@ -786,6 +867,7 @@ function ViewNext(Def,MaxNum)
             Num = document.getElementById(Def.TabName).MaxNum + 1;
         }
     }
+    
     if(Num < MaxNum)
     {
         item.value = Num;
@@ -815,17 +897,21 @@ function GetCountViewRows(Def)
     else
         return CountViewRows;
 }
+
 function DoStableScroll()
 {
     var item = $("idStableScroll");
     if(!item)
         return ;
+    
     var scrollHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight,
     document.documentElement.offsetHeight, document.body.clientHeight, document.documentElement.clientHeight);
+    
     var itemlHeight = Math.max(item.scrollHeight, item.offsetHeight, item.clientHeight);
     scrollHeight = scrollHeight - itemlHeight;
     item.style.top = "" + scrollHeight + "px";
 }
+
 var glEvalMap = {};
 function CreateEval(formula,StrParams)
 {
@@ -837,26 +923,33 @@ function CreateEval(formula,StrParams)
     }
     return Ret;
 }
+
 var glWorkNum = 0;
 var CUR_ROW;
 function SetGridData(arr,id_name,TotalSum,bclear,revert)
 {
+    
     var htmlTable = document.getElementById(id_name);
     if(!htmlTable)
     {
         console.log("Error id_name: " + id_name);
         return ;
     }
+    
     if(bclear)
         ClearTable(htmlTable);
+    
     if(!htmlTable.ItemsMap)
     {
         htmlTable.ItemsMap = {};
         htmlTable.RowCount = 0;
     }
+    
     var map = htmlTable.ItemsMap;
+    
     glWorkNum++;
     var ValueTotal = {SumCOIN:0, SumCENT:0};
+    
     var row0 = htmlTable.rows[0];
     var row0cells = row0.cells;
     var colcount = row0cells.length;
@@ -865,6 +958,7 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
         var Item = arr[i];
         var ID = Item.Num;
         htmlTable.MaxNum = Item.Num;
+        
         var row = map[ID];
         if(!row)
         {
@@ -879,9 +973,11 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
                 var cell0 = row0cells[n];
                 if(cell0.innerText == "")
                     continue;
+                
                 cell0.F = CreateEval(cell0.id, "Item");
                 if(cell0.id.substr(0, 1) === "(")
                     cell0.H = 1;
+                
                 var cell = row.insertCell(n);
                 cell.className = cell0.className;
             }
@@ -893,7 +989,9 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
             var cell = row.cells[n];
             if(!cell)
                 continue;
+            
             var cell0 = row0cells[n];
+            
             if(cell0.H)
             {
                 var text = "" + cell0.F(Item);
@@ -909,6 +1007,7 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
                     cell.innerText = text;
             }
         }
+        
         if(TotalSum && Item.Currency === 0)
             ADD(ValueTotal, Item.Value);
     }
@@ -932,8 +1031,10 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
                 id.innerText = "";
         }
     }
+    
     DoStableScroll();
 }
+
 function ClearTable(htmlTable)
 {
     for(var i = htmlTable.rows.length - 1; i > 0; i--)
@@ -941,6 +1042,7 @@ function ClearTable(htmlTable)
     htmlTable.ItemsMap = {};
     htmlTable.RowCount = 0;
 }
+
 function RetOpenBlock(BlockNum,bTrDataLen)
 {
     if(BlockNum && bTrDataLen)
@@ -964,21 +1066,25 @@ function RetBool(Value)
     else
         return "";
 }
+
 function RetNumDapp(Item)
 {
     return Item.Num;
 }
+
 function RetIconPath(Item,bCurrency)
 {
     if(bCurrency && MapCurrencyIcon[Item.Num])
     {
         return MapCurrencyIcon[Item.Num];
     }
+    
     var StrPath = "";
     if(MainServer)
     {
         StrPath = GetProtocolServerPath(MainServer);
     }
+    
     if(Item.IconBlockNum)
     {
         return StrPath + '/file/' + Item.IconBlockNum + '/' + Item.IconTrNum;
@@ -986,6 +1092,7 @@ function RetIconPath(Item,bCurrency)
     else
         return StrPath + "/PIC/blank.svg";
 }
+
 function RetIconDapp(Item)
 {
     if(Item.IconBlockNum)
@@ -1000,6 +1107,7 @@ function RetOpenDapps(Item,bNum,AccountNum)
     var Name = escapeHtml(Item.Name);
     if(bNum)
         Name = "" + Item.Num + "." + Name;
+    
     if(Item.HTMLLength > 0)
     {
         var StrText = RetIconDapp(Item) + Name;
@@ -1008,6 +1116,7 @@ function RetOpenDapps(Item,bNum,AccountNum)
     else
         return RetIconDapp(Item) + Name;
 }
+
 function RetDirect(Value)
 {
     if(Value === "-")
@@ -1022,6 +1131,7 @@ function RetDirect(Value)
         else
             return "";
 }
+
 function RetCategory(Item)
 {
     var Str = "";
@@ -1044,6 +1154,7 @@ function RetCategory(Item)
     Str = Str.substr(0, Str.length - 4);
     return Str;
 }
+
 function RetChangeSmart(Item)
 {
     var Name = "";
@@ -1051,6 +1162,7 @@ function RetChangeSmart(Item)
     var bOpen = 0;
     if(Item.SmartObj)
     {
+        
         if(Item.SmartObj.HTMLLength)
         {
             Name = RetOpenDapps(Item.SmartObj, 1, Item.Num);
@@ -1058,14 +1170,17 @@ function RetChangeSmart(Item)
         }
         else
             Name = "" + Item.SmartObj.Num + "." + escapeHtml(Item.SmartObj.Name) + "<BR>";
+        
         if(window.DEBUG_WALLET)
             State = "<BR>State:" + JSON.stringify(Item.SmartState);
     }
+    
     var Height = 20;
     if(bOpen)
         Height = 40;
     return '<DIV style="width: 204px;">' + Name + '<button onclick="ChangeSmart(' + Item.Num + ',' + Item.Value.Smart + ')" class="setsmart" style="height: ' + Height + 'px;min-height: ' + Height + 'px;">Set</button>' + State + '</DIV>';
 }
+
 function RetHistoryAccount(Item,Name)
 {
     var Num;
@@ -1075,17 +1190,20 @@ function RetHistoryAccount(Item,Name)
         Num = Item.Num;
     if(Num < 1)
         return "" + Num;
+    
     var Str;
     if(UseInnerPage() || window.NWMODE)
         Str = "<a class='olink' target='_blank' onclick='OpenHistoryPage(" + Num + ")'>" + Num + "</a>";
     else
         Str = "<a class='olink' target='_blank' href='./history.html#" + Num + "'>" + Num + "</a>";
+    
     return Str;
 }
 function OpenHistoryPage(Num)
 {
     OpenWindow("./history.html#" + Num, 'history', 800, 800);
 }
+
 function RetBaseAccount(Item)
 {
     var Str = RetHistoryAccount(Item, "Account");
@@ -1093,6 +1211,7 @@ function RetBaseAccount(Item)
         Str += "-" + (Item.Account + Item.AccountLength - 1);
     return Str;
 }
+
 function ViewTransaction(BlockNum)
 {
     if(UseInnerPage() || window.NWMODE)
@@ -1104,6 +1223,7 @@ function OpenBlockViewerPage(BlockNum)
 {
     window.Open('./blockviewer.html#' + BlockNum, 'viewer', 800, 800);
 }
+
 function formatDate(now)
 {
     var year = now.getFullYear();
@@ -1129,6 +1249,7 @@ function DateFromBlock(BlockNum)
     }
     return Str;
 }
+
 function SetCheckPoint(BlockNum)
 {
     if(!BlockNum)
@@ -1144,6 +1265,7 @@ function SetCheckPoint(BlockNum)
         }
     });
 }
+
 function AddDiagramToArr(Arr,Item)
 {
     var bWas = 0;
@@ -1157,17 +1279,20 @@ function AddDiagramToArr(Arr,Item)
             break;
         }
     }
+    
     if(!bWas)
     {
         Item.num = Arr.length;
         Arr.push(Item);
     }
 }
+
 function SetVisibleBlock(name,bSet)
 {
     var Item = document.getElementById(name);
     if(!Item)
         return ;
+    
     if(bSet && typeof bSet === "string")
         Item.style.display = bSet;
     else
@@ -1182,6 +1307,7 @@ function SetVisibleBlock(name,bSet)
         }
     return Item;
 }
+
 function IsVisibleBlock(name)
 {
     var Item = document.getElementById(name);
@@ -1190,10 +1316,12 @@ function IsVisibleBlock(name)
     else
         return false;
 }
+
 function SetVisibleClass(Arr,Visible)
 {
     if(typeof Arr === "string")
         Arr = [Arr];
+    
     for(var i = 0; i < Arr.length; i++)
     {
         var item = document.querySelector(Arr[i]);
@@ -1202,6 +1330,7 @@ function SetVisibleClass(Arr,Visible)
             ToLog("Error class name: " + Arr[i]);
             continue;
         }
+        
         if(!Visible)
             item.classList.add("hidden");
         else
@@ -1216,17 +1345,20 @@ function IsVisibleClass(name)
     else
         return 1;
 }
+
 function LoadValuesByArr(Arr,DopStr)
 {
     if(!DopStr)
         DopStr = "";
     if(Storage.getItem("VerSave") !== "3")
         return 0;
+    
     for(var i = 0; i < Arr.length; i++)
     {
         var name = Arr[i];
         var Item = document.getElementById(name);
         var name2 = DopStr + name;
+        
         var value = Storage.getItem(name2);
         if(value === null)
             continue;
@@ -1245,6 +1377,7 @@ function SaveValuesByArr(Arr,DopStr)
 {
     if(!DopStr)
         DopStr = "";
+    
     Storage.setItem("VerSave", "3");
     for(var i = 0; i < Arr.length; i++)
     {
@@ -1259,14 +1392,19 @@ function SaveValuesByArr(Arr,DopStr)
             window.Storage.setItem(name2, Item.value);
     }
 }
+
+
 var MapCurrency = {};
 MapCurrency[0] = "TERA";
 MapCurrency[16] = "BTC";
+
 var bWasCodeSys = 0;
 var MapCurrencyCodeSys = {};
 var MapCurrencyIcon = {};
+
 MapCurrencyIcon[0] = "./PIC/T.svg";
 MapCurrencyIcon[16] = "./PIC/B.svg";
+
 function InitMapCurrency()
 {
     if(window.NETWORK_NAME === "TERA-TEST4")
@@ -1281,6 +1419,7 @@ function InitMapCurrency()
             MapCurrencyCodeSys[MapCurrency[key]] = ParseNum(key);
     bWasCodeSys = 1;
 }
+
 var MapCategory = {};
 MapCategory[0] = "-";
 MapCategory[1] = "Art & Music";
@@ -1321,14 +1460,17 @@ MapCategory[35] = "Supply & Logistics";
 MapCategory[36] = "Trading & Investing";
 MapCategory[37] = "Transport";
 MapCategory[38] = "Travel & Tourisim";
+
 MapCategory[39] = "Bounty";
 MapCategory[40] = "Code-library";
 MapCategory[41] = "Development";
 MapCategory[42] = "Exchanges";
+
 MapCategory[43] = "Security";
 MapCategory[44] = "Governance";
 MapCategory[45] = "Property";
 MapCategory[46] = "Insurance";
+
 function GetTokenName(Num,Name)
 {
     if(!Name)
@@ -1338,6 +1480,7 @@ function GetTokenName(Num,Name)
     else
         return "" + Num + "." + escapeHtml(Name).toLowerCase();
 }
+
 function CurrencyNameItem(Item)
 {
     var Name = MapCurrency[Item.Currency];
@@ -1349,12 +1492,15 @@ function CurrencyNameItem(Item)
         }
         else
             Name = GetTokenName(Item.Currency, "");
+        
         MapCurrency[Item.Currency] = Name;
     }
     if(Item.CurrencyObj && Item.CurrencyObj.TokenDescription)
         Name += " : " + escapeHtml(Item.CurrencyObj.TokenDescription);
+    
     return Name;
 }
+
 function CurrencyName(Num)
 {
     var Name = MapCurrency[Num];
@@ -1365,21 +1511,26 @@ function CurrencyName(Num)
             if(Data && Data.result)
             {
                 var Smart = Data.arr[0];
+                
                 Name = GetTokenName(Smart.Num, Smart.ShortName);
                 MapCurrency[Smart.Num] = Name;
             }
         });
+        
         Name = GetTokenName(Num, "");
     }
     return Name;
 }
+
 function FillCurrencyAsync(IdName,StartNum)
 {
     InitMapCurrency();
+    
     if(!StartNum)
         StartNum = 8;
     FillCurrencyNext(IdName, StartNum);
 }
+
 function FillCurrencyNext(IdName,StartNum)
 {
     var MaxCountViewRows = 10;
@@ -1414,6 +1565,7 @@ function FillDataList(IdName,Map)
 {
     var dataList = $(IdName);
     dataList.innerHTML = "";
+    
     for(var key in Map)
     {
         var name = Map[key];
@@ -1441,16 +1593,20 @@ function GetCurrencyByName(Value)
         return Num;
     return parseInt(Value);
 }
+
 function FillSelect(IdName,arr,bNatural)
 {
     var Select = $(IdName);
     var Value = Select.value;
     var Options = Select.options;
+    
     var strJSON = JSON.stringify(arr);
     if(Select.strJSON === strJSON)
         return ;
     Select.strJSON = strJSON;
+    
     var Value = Select.value;
+    
     if(bNatural)
     {
         Options.length = 0;
@@ -1486,6 +1642,7 @@ function FillSelect(IdName,arr,bNatural)
             }
     }
 }
+
 function GetArrFromSelect(IdName)
 {
     var Select = $(IdName);
@@ -1498,6 +1655,7 @@ function GetArrFromSelect(IdName)
     }
     return arr;
 }
+
 function FillCategory(IdName)
 {
     var arr = [];
@@ -1519,6 +1677,7 @@ function FillCategoryAndSort(IdName,arr)
     });
     FillSelect(IdName, arr);
 }
+
 function AddToInvoiceList(Item)
 {
     var arr;
@@ -1531,18 +1690,22 @@ function AddToInvoiceList(Item)
     {
         arr = [];
     }
+    
     arr.unshift(Item);
     Storage.setItem("InvoiceList", JSON.stringify(arr));
 }
+
 function OpenDapps(Num,AccountNum,HTMLLength)
 {
     if(!Num || !HTMLLength)
         return ;
+    
     var StrPath = '/dapp/' + Num;
     if(IsLocalClient())
     {
         StrPath = "./dapp-frame.html?dapp=" + Num;
     }
+    
     if(AccountNum)
         StrPath += '#' + AccountNum;
     OpenWindow(StrPath);
@@ -1560,11 +1723,13 @@ function OpenWindow(StrPath,bCheck)
             return ;
         }
     }
+    
     if(isOS())
         window.location = StrPath;
     else
         window.Open(StrPath);
 }
+
 function ParseFileName(Str)
 {
     var Ret = {BlockNum:0, TrNum:0};
@@ -1575,8 +1740,11 @@ function ParseFileName(Str)
         Ret.BlockNum = ParseNum(Str.substr(index1 + 5, index2 - index1 - 5));
         Ret.TrNum = ParseNum(Str.substr(index2 + 1));
     }
+    
     return Ret;
 }
+
+
 window.MapSendTransaction = {};
 function SendTransaction(Body,TR,SumPow,F)
 {
@@ -1586,10 +1754,13 @@ function SendTransaction(Body,TR,SumPow,F)
             SetError("Error length transaction =" + Body.length + " (max size=12000)");
         if(F)
             F(1, TR, Body);
+        
         return ;
     }
+    
     if(window.SetStatus)
         SetStatus("Prepare to sending...");
+    
     CreateNonceAndSend(1, 0, 0);
     function CreateNonceAndSend(bCreateNonce,startnonce,NumNext)
     {
@@ -1598,13 +1769,16 @@ function SendTransaction(Body,TR,SumPow,F)
         var nonce = startnonce;
         if(bCreateNonce)
             nonce = CreateHashBodyPOWInnerMinPower(Body, SumPow, startnonce);
+        
         var StrHex = GetHexFromArr(Body);
+        
         if(NumNext > 10)
         {
             if(window.SetError)
                 SetError("Not sending. Cannt calc pow.");
             return ;
         }
+        
         GetData("SendTransactionHex", {Hex:StrHex}, function (Data)
         {
             if(Data)
@@ -1612,6 +1786,7 @@ function SendTransaction(Body,TR,SumPow,F)
                 var key = GetHexFromArr(sha3(Body));
                 if(window.SetStatus)
                     SetStatus("Send '" + key.substr(0, 16) + "' result:" + Data.text);
+                
                 if(Data.text === "Not add")
                 {
                     CreateNonceAndSend(1, nonce + 1, NumNext + 1);
@@ -1642,9 +1817,11 @@ function SendTransaction(Body,TR,SumPow,F)
         });
     };
 }
+
 var MapSendID = {};
 function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
 {
+    
     var TR = {Type:135};
     var Body = [TR.Type];
     WriteUint(Body, Account);
@@ -1667,6 +1844,7 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
                     SetError("Error - The account:" + Account + " does not belong to a smart contract:" + FromSmartNum + " (have: " + Data.Item.Value.Smart + ")");
                 return ;
             }
+            
             GetData("GetAccount", FromNum, function (Data)
             {
                 if(!Data || Data.result !== 1 || !Data.Item)
@@ -1681,6 +1859,7 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
                         SetError("Error read from account number: " + FromNum + " read data=" + Data.Item.Num);
                     return ;
                 }
+                
                 var OperationID;
                 if(!MapSendID[FromNum])
                 {
@@ -1699,8 +1878,10 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
                 OperationID++;
                 MapSendID[FromNum].OperationID = OperationID;
                 MapSendID[FromNum].Date = Date.now();
+                
                 WriteUint(Body, OperationID);
                 Body.length += 10;
+                
                 SendTrArrayWithSign(Body, FromNum, TR);
             });
         });
@@ -1714,6 +1895,7 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
         SendTransaction(Body, TR);
     }
 }
+
 function SendTrArrayWithSign(Body,Account,TR)
 {
     if(MainServer || CanClientSign())
@@ -1739,6 +1921,7 @@ function SendTrArrayWithSign(Body,Account,TR)
         });
     }
 }
+
 function GetTrCreateAcc(Currency,PubKey,Description,Adviser,Smart)
 {
     var TR = {Type:TYPE_TRANSACTION_CREATE, Currency:Currency, PubKey:PubKey, Name:Description, Adviser:Adviser, Smart:Smart, };
@@ -1757,9 +1940,11 @@ function GetBodyCreateAcc(TR)
     Body.length += 12;
     return Body;
 }
+
 function GetArrFromTR(TR)
 {
     MaxBlockNum = GetCurrentBlockNumByTime();
+    
     var Body = [];
     WriteByte(Body, TR.Type);
     WriteByte(Body, TR.Version);
@@ -1774,9 +1959,11 @@ function GetArrFromTR(TR)
         WriteUint(Body, Item.ID);
         WriteUint(Body, Item.SumCOIN);
         WriteUint32(Body, Item.SumCENT);
+        
         if(MapAccounts && MapAccounts[Item.ID])
             MapAccounts[Item.ID].MustUpdate = MaxBlockNum + 10;
     }
+    
     WriteStr(Body, TR.Description);
     WriteUint(Body, TR.OperationID);
     if(TR.Version >= 3)
@@ -1793,6 +1980,7 @@ function GetArrFromTR(TR)
     }
     return Body;
 }
+
 function GetSignTransaction(TR,StrPrivKey,F)
 {
     if(window.SignLib && !Storage.getItem("BIGWALLET"))
@@ -1800,10 +1988,12 @@ function GetSignTransaction(TR,StrPrivKey,F)
         if(TR.Version === 3)
         {
             var Arr = [];
+            
             var GetCount = 0;
             for(var i = 0; i < TR.To.length; i++)
             {
                 var Item = TR.To[i];
+                
                 GetData("GetAccountList", {StartNum:Item.ID}, function (Data)
                 {
                     if(Data && Data.result === 1 && Data.arr.length)
@@ -1813,6 +2003,7 @@ function GetSignTransaction(TR,StrPrivKey,F)
                         var DataPubArr = DataItem.PubKey.data;
                         for(var j = 0; j < 33; j++)
                             Arr[Arr.length] = DataPubArr[j];
+                        
                         if(GetCount === TR.To.length)
                         {
                             var Body = GetArrFromTR(TR);
@@ -1849,14 +2040,17 @@ function GetSignFromArr(Arr,StrPrivKey)
         StrPrivKey = GetPrivKey();
     if(!IsHexStr(StrPrivKey) || StrPrivKey.length !== 64)
         return "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    
     var PrivKey = GetArrFromHex(StrPrivKey);
     var sigObj = SignLib.sign(SHA3BUF(Arr), Buffer.from(PrivKey), null, null);
     return GetHexFromArr(sigObj.signature);
 }
+
 function IsHexStr(Str)
 {
     if(!Str)
         return false;
+    
     var arr = GetArrFromHex(Str);
     var Str2 = GetHexFromArr(arr);
     if(Str2 === Str.toUpperCase())
@@ -1864,16 +2058,20 @@ function IsHexStr(Str)
     else
         return false;
 }
+
 function RetJSON(Item)
 {
     return JSON.stringify(Item);
 }
+
 Number.prototype.toStringF = function ()
 {
     var data = String(this).split(/[eE]/);
     if(data.length == 1)
         return data[0];
+    
     var z = '', sign = this < 0 ? '-' : '', str = data[0].replace('.', ''), mag = Number(data[1]) + 1;
+    
     if(mag < 0)
     {
         z = sign + '0.';
@@ -1886,6 +2084,7 @@ Number.prototype.toStringF = function ()
         z += '0';
     return str + z;
 }
+
 function CanClientSign()
 {
     var StrPrivKey = GetPrivKey();
@@ -1893,16 +2092,20 @@ function CanClientSign()
     {
         return 0;
     }
+    
     return 1;
 }
+
 function random(max)
 {
     return Math.floor(Math.random() * max);
 }
+
 function ToLog(Str)
 {
     console.log(Str);
 }
+
 function InitMainServer()
 {
     var Str = Storage.getItem("MainServer");
@@ -1911,6 +2114,7 @@ function InitMainServer()
         MainServer = JSON.parse(Str);
     }
 }
+
 function IsZeroArr(arr)
 {
     if(arr)
@@ -1921,8 +2125,10 @@ function IsZeroArr(arr)
         }
     return true;
 }
+
 var WALLET_PASSWORD;
 var KeyPasswordMap = {};
+
 function InitWalletKeyName()
 {
     if(!Storage.getItem("WALLET_KEY"))
@@ -1934,12 +2140,14 @@ function InitWalletKeyName()
         Storage.setItem("WALLET_PUB_KEY", Storage.getItem("idPubKey"));
     }
 }
+
 function OpenWalletKey()
 {
     var Key = Storage.getItem(WALLET_KEY_NAME);
     if(Key && Key.substr(0, 1) === "!" && WALLET_PASSWORD)
     {
         Key = Key.substr(1);
+        
         var StrKey = WALLET_PASSWORD + "-" + Key;
         var RetKey = KeyPasswordMap[StrKey];
         if(!RetKey)
@@ -1953,6 +2161,7 @@ function OpenWalletKey()
     {
         RetKey = Key;
     }
+    
     var PubKeyStr;
     if(RetKey && IsHexStr(RetKey) && RetKey.length === 64)
     {
@@ -1963,13 +2172,16 @@ function OpenWalletKey()
     {
         PubKeyStr = "";
     }
+    
     if(window.sessionStorage)
     {
         sessionStorage[WALLET_KEY_NAME] = RetKey;
         sessionStorage[WALLET_PUB_KEY_NAME] = PubKeyStr;
     }
+    
     if(!WALLET_PASSWORD)
         Storage.setItem(WALLET_PUB_KEY_NAME, PubKeyStr);
+    
     return RetKey;
 }
 function IsLockedWallet()
@@ -2001,11 +2213,13 @@ function GetPubKey()
         Key = Storage.getItem(WALLET_PUB_KEY_NAME);
     if(!Key)
         Key = Storage.getItem(WALLET_PUB_KEY_MAIN);
+    
     if(Key && typeof Key === "string" && Key.length >= 66)
         return Key;
     else
         return "";
 }
+
 function SetPrivKey(StrPrivKey)
 {
     var Key;
@@ -2021,30 +2235,36 @@ function SetPrivKey(StrPrivKey)
     }
     var PrivKey = GetArrFromHex(StrPrivKey);
     var StrPubKey = GetHexFromArr(SignLib.publicKeyCreate(PrivKey, 1));
+    
     Storage.setItem(WALLET_KEY_NAME, Key);
     Storage.setItem(WALLET_PUB_KEY_NAME, StrPubKey);
     Storage.setItem(WALLET_PUB_KEY_MAIN, StrPubKey);
+    
     if(window.sessionStorage)
     {
         sessionStorage[WALLET_KEY_NAME] = StrPrivKey;
         sessionStorage[WALLET_PUB_KEY_NAME] = StrPubKey;
     }
 }
+
 function SetWalletPassword(Str)
 {
     WALLET_PASSWORD = Str;
     if(Storage.getItem("idPrivKey"))
         Storage.setItem("idPrivKey", "");
 }
+
 function HashProtect(Str)
 {
     var arr = sha3(Str);
+    
     for(var i = 0; i < 30000; i++)
     {
         arr = sha3(arr);
     }
     return arr;
 }
+
 function XORHash(arr1,arr2,length)
 {
     var arr3 = [];
@@ -2054,6 +2274,7 @@ function XORHash(arr1,arr2,length)
     }
     return arr3;
 }
+
 function Right(Str,count)
 {
     if(Str.length > count)
@@ -2061,6 +2282,7 @@ function Right(Str,count)
     else
         return Str.substr(0, Str.length);
 }
+
 function UseInnerPage()
 {
     if(isMobile() && !IsLocalClient())
@@ -2084,12 +2306,14 @@ function isMobile()
     }
     return false;
 }
+
 function DoNewSession()
 {
     var arr = new Uint8Array(6);
     window.crypto.getRandomValues(arr);
     glSession = GetHexFromArr(arr);
 }
+
 function GetStrFromDiagrArr(Arr)
 {
     var Arr2 = [];
@@ -2103,6 +2327,7 @@ function GetStrFromDiagrArr(Arr)
     }
     return JSON.stringify(Arr2);
 }
+
 function GetWalletLink()
 {
     if(MainServer)
@@ -2113,21 +2338,27 @@ function GetWalletLink()
         else
             return "/web-wallet.html#TabAccounts";
 }
+
 function GetFilePath(Path)
 {
     if(Path.substr(0, 5) === "http:" || Path.substr(0, 6) === "https:")
         return Path;
+    
     if(window.PROTOCOL_SERVER_PATH && Path.indexOf("file/") >= 0)
     {
         if(Path.substr(0, 1) !== "/")
             Path = "/" + Path;
         Path = window.PROTOCOL_SERVER_PATH + Path;
     }
+    
     return Path;
 }
+
+
 var glConfirmF;
 var glWasModal = 0;
 var TEMP_DISABLED_MAP = {};
+
 function openModal(id)
 {
     glWasModal = 1;
@@ -2147,6 +2378,7 @@ function closeModal()
     });
     overlay.style.display = "none";
 }
+
 function DoConfirm(StrTitle,StrText,F,bDirect)
 {
     if(typeof StrTitle === "function")
@@ -2162,6 +2394,7 @@ function DoConfirm(StrTitle,StrText,F,bDirect)
             F = StrText;
             StrText = "";
         }
+    
     if(!bDirect && window.openModal && $("idConfirm"))
     {
         $("idConfirmTitle").innerHTML = StrTitle;
@@ -2184,6 +2417,7 @@ function OnConfirmOK()
         F();
     }
 }
+
 function SetTempDisabled(Id,TimeSec)
 {
     if(!TimeSec)

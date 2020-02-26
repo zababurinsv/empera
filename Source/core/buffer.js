@@ -8,22 +8,30 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
+
 var exports = module.exports;
+
 exports.GetNewBuffer = GetNewBuffer;
+exports.BindBuffer = BindBuffer;
+
 exports.GetReadBuffer = GetReadBuffer;
 exports.alloc = GetNewBuffer;
 exports.from = GetReadBuffer;
 exports.Write = Write;
 exports.Read = Read;
+
 exports.GetObjectFromBuffer = GetObjectFromBuffer;
 exports.GetBufferFromObject = GetBufferFromObject;
 exports.GetFormatFromObject = GetFormatFromObject;
+
 function Write(buf,data,StringFormat,ParamValue,WorkStruct)
 {
     if(buf.len >= buf.length)
     {
         return ;
     }
+    
     if(typeof StringFormat === "number")
     {
         ToLogTrace("ERRR StringFormat ");
@@ -32,6 +40,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
     else
     {
         var format = StringFormat;
+        
         if(format.substr(0, 6) === "buffer" && format.length > 6)
         {
             ParamValue = parseInt(format.substr(6));
@@ -46,12 +55,14 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
             else
                 if(format.substr(0, 3) === "str" && format.length > 3)
                 {
+                    
                     var length = parseInt(format.substr(3));
                     if(data)
                         buf.write(data, buf.len, length);
                     buf.len += length;
                     return ;
                 }
+        
         switch(format)
         {
             case "str":
@@ -70,6 +81,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     buf.len += length;
                     break;
                 }
+                
             case "byte":
                 {
                     if(data < 0)
@@ -108,6 +120,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     if(!data || data < 0)
                         data = 0;
                     data = data >>> 0;
+                    
                     buf.writeUInt32LE(data, buf.len, 4);
                     buf.len += 4;
                     break;
@@ -141,6 +154,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                         length = data.length;
                     else
                         length = Math.min(ParamValue, data.length);
+                    
                     for(var i = 0; i < length; i++)
                     {
                         buf[buf.len + i] = data[i];
@@ -162,6 +176,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     buf.len += ParamValue;
                     break;
                 }
+                
             case "tr":
                 {
                     var length = data.length;
@@ -177,6 +192,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     buf.len += length;
                     break;
                 }
+                
             case "data":
                 {
                     var length = data.length;
@@ -206,6 +222,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
             default:
                 {
                     WorkStruct = WorkStruct || {};
+                    
                     var CurFormat = StringFormat.substr(0, 1);
                     if(CurFormat === "[")
                     {
@@ -228,6 +245,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                             var formatNext = GetMiddleString(format);
                             var IndexCount = 0;
                             var len = buf.len;
+                            
                             buf.len += 4;
                             for(var i = 0; i < length; i++)
                             {
@@ -243,12 +261,14 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                         else
                             if(CurFormat === "{")
                             {
+                                
                                 var attrs = WorkStruct[format];
                                 if(!attrs)
                                 {
                                     attrs = GetAttributes(GetMiddleString(format));
                                     WorkStruct[format] = attrs;
                                 }
+                                
                                 for(var i = 0; i < attrs.length; i++)
                                 {
                                     var type = attrs[i];
@@ -263,8 +283,10 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
         }
     }
 }
+
 function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
 {
+    
     var ret;
     if(typeof StringFormat === "number")
     {
@@ -307,6 +329,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                         var length = parseInt(format.substr(3));
                         ret = buf.toString('utf8', buf.len, buf.len + length);
                         buf.len += length;
+                        
                         var nEnd =  - 1;
                         for(var i = ret.length - 1; i >= 0; i--)
                         {
@@ -320,6 +343,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                             ret = ret.substr(0, i + 1);
                         else
                             ret = "";
+                        
                         return ret;
                     }
                     else
@@ -327,6 +351,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                         ParamValue = 0;
                     }
                 }
+        
         switch(format)
         {
             case "str":
@@ -336,10 +361,12 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                         length = buf[buf.len] + buf[buf.len + 1] * 256;
                     else
                         length = 0;
+                    
                     buf.len += 2;
                     var arr = buf.slice(buf.len, buf.len + length);
                     ret = Utf8ArrayToStr(arr);
                     buf.len += length;
+                    
                     break;
                 }
             case "byte":
@@ -391,6 +418,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                 {
                     if(bDisableTime)
                         throw "Bad read type params: time - DisableTime ON";
+                    
                     if(buf.len + 6 <= buf.length)
                         ret = buf.readUIntLE(buf.len, 6);
                     else
@@ -410,9 +438,11 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                         else
                             ret[i] = 0;
                     }
+                    
                     buf.len += 32;
                     break;
                 }
+                
             case "buffer":
             case "arr":
                 {
@@ -430,6 +460,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                         ret = undefined;
                         break;
                     }
+                    
                     var length = buf[buf.len] + buf[buf.len + 1] * 256;
                     buf.len += 2;
                     ret = buf.slice(buf.len, buf.len + length);
@@ -445,11 +476,13 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                         length = 0;
                     if(length > buf.length - buf.len - 4)
                         length = 0;
+                    
                     buf.len += 4;
                     ret = buf.slice(buf.len, buf.len + length);
                     buf.len += length;
                     break;
                 }
+                
             case "hashSTR":
                 {
                     var Str = buf.toString('utf8', buf.len, buf.len + 64);
@@ -464,13 +497,16 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                     buf.len += 10;
                     break;
                 }
+                
             default:
                 {
                     WorkStruct = WorkStruct || {};
+                    
                     var LStr = format.substr(0, 1);
                     if(LStr === "[" || LStr === "<")
                     {
                         var bIndexArr = (LStr === "<");
+                        
                         ret = [];
                         var formatNext = GetMiddleString(format);
                         var length = Read(buf, "uint32");
@@ -495,12 +531,14 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
                     else
                         if(LStr === "{")
                         {
+                            
                             var attrs = WorkStruct[format];
                             if(!attrs)
                             {
                                 attrs = GetAttributes(GetMiddleString(format));
                                 WorkStruct[format] = attrs;
                             }
+                            
                             ret = {};
                             for(var i = 0; i < attrs.length; i++)
                             {
@@ -517,6 +555,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct,bDisableTime)
     }
     return ret;
 }
+
 function BufWriteByte(value)
 {
     this[this.len] = value;
@@ -530,39 +569,54 @@ function BufRead(StringFormat,ParamValue)
 {
     return Read(this, StringFormat, ParamValue);
 }
-function GetNewBuffer(size)
+
+function BindBuffer(buf)
 {
-    var buf = Buffer.alloc(size);
     buf.Read = BufRead.bind(buf);
     buf.Write = BufWrite.bind(buf);
     buf.len = 0;
+}
+
+function GetNewBuffer(size)
+{
+    var buf = Buffer.alloc(size);
+    BindBuffer(buf);
     return buf;
 }
+
 function GetReadBuffer(buffer)
 {
     var buf = Buffer.from(buffer);
     buf.Read = BufRead.bind(buf);
     buf.Write = BufWrite.bind(buf);
+    
     buf.len = 0;
+    
     return buf;
 }
+
 function GetObjectFromBuffer(buffer,format,WorkStruct,bDisableTime)
 {
     var buf = Buffer.from(buffer);
     buf.len = 0;
+    
     return Read(buf, format, undefined, WorkStruct, bDisableTime);
 }
+
 function GetBufferFromObject(data,format,size,WorkStruct,bNotSlice)
 {
     var buf = Buffer.alloc(size);
     buf.len = 0;
+    
     Write(buf, data, format, undefined, WorkStruct);
+    
     if(!bNotSlice)
     {
         buf = buf.slice(0, buf.len);
     }
     return buf;
 }
+
 function GetFormatFromObject(Obj)
 {
     var Str = "{";
@@ -583,9 +637,11 @@ function GetFormatFromObject(Obj)
                         Str = "[" + GetFormatFromObject(Obj[0]) + "]";
                         break LType;
                     }
+                    
                     Str = "{";
                     bFirst = 0;
                 }
+                
                 Str += key + ":" + GetFormatFromObject(Obj[key]);
             }
             Str += "}";
@@ -594,6 +650,7 @@ function GetFormatFromObject(Obj)
             {
                 if(Obj.length === 0)
                     throw "Error format array length";
+                
                 Str = "[" + GetFormatFromObject(Obj[0]) + "]";
                 break;
             }
@@ -603,10 +660,12 @@ function GetFormatFromObject(Obj)
     }
     return Str;
 }
+
 function GetMiddleString(Str)
 {
     return Str.substr(1, Str.length - 2);
 }
+
 function GetMiddleString2(Str,FromStr,ToStr)
 {
     var Count = 0;
@@ -633,6 +692,7 @@ function GetMiddleString2(Str,FromStr,ToStr)
         if(Count)
             Result = Result + FStr;
     }
+    
     return Result;
 }
 function GetAttributeStrings(Str)
@@ -665,10 +725,13 @@ function GetAttributeStrings(Str)
                         continue;
         Element = Element + FStr;
     }
+    
     if(Element.length > 0)
         Result.push(Element);
+    
     return Result;
 }
+
 function GetKeyValueStrings(Str)
 {
     var Key = "";
@@ -686,8 +749,10 @@ function GetKeyValueStrings(Str)
         }
         Key = Key + FStr;
     }
+    
     throw "Error format Key:Value = " + Str;
 }
+
 function GetAttributes(Str)
 {
     var arr = [];

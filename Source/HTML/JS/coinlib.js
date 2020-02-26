@@ -8,8 +8,10 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 var MAX_SUM_TER = 1e9;
 var MAX_SUM_CENT = 1e9;
+
 function CHECKSUM(Coin)
 {
     if(!Coin.SumCOIN)
@@ -17,17 +19,21 @@ function CHECKSUM(Coin)
     if(!Coin.SumCENT)
         Coin.SumCENT = 0;
 }
+
 function ADD(Coin,Value2)
 {
     Coin.SumCOIN += Value2.SumCOIN;
     Coin.SumCENT += Value2.SumCENT;
+    
     if(Coin.SumCENT >= MAX_SUM_CENT)
     {
         Coin.SumCENT -= MAX_SUM_CENT;
         Coin.SumCOIN++;
     }
+    
     return true;
 }
+
 function SUB(Coin,Value2)
 {
     Coin.SumCOIN -= Value2.SumCOIN;
@@ -46,14 +52,18 @@ function SUB(Coin,Value2)
     }
     return true;
 }
+
 function DIV(Coin,Value)
 {
     Coin.SumCOIN = Coin.SumCOIN / Value;
     Coin.SumCENT = Math.floor(Coin.SumCENT / Value);
+    
     var SumCOIN = Math.floor(Coin.SumCOIN);
     var SumCENT = Math.floor((Coin.SumCOIN - SumCOIN) * MAX_SUM_CENT);
+    
     Coin.SumCOIN = SumCOIN;
     Coin.SumCENT = Coin.SumCENT + SumCENT;
+    
     if(Coin.SumCENT >= MAX_SUM_CENT)
     {
         Coin.SumCENT -= MAX_SUM_CENT;
@@ -61,16 +71,19 @@ function DIV(Coin,Value)
     }
     return true;
 }
+
 function FLOAT_FROM_COIN(Coin)
 {
     var Sum = Coin.SumCOIN + Coin.SumCENT / MAX_SUM_CENT;
     return Sum;
 }
+
 function STRING_FROM_COIN(Coin)
 {
     var Sum = FLOAT_FROM_COIN(Coin);
     return Sum.toLocaleString(undefined, {useGrouping:true, style:'decimal', maximumFractionDigits:9});
 }
+
 function COIN_FROM_FLOAT(Sum)
 {
     var SumCOIN = Math.floor(Sum);
@@ -78,6 +91,7 @@ function COIN_FROM_FLOAT(Sum)
     var Coin = {SumCOIN:SumCOIN, SumCENT:SumCENT};
     return Coin;
 }
+
 function COIN_FROM_FLOAT2(Sum)
 {
     var SumCOIN = Math.floor(Sum);
@@ -87,6 +101,7 @@ function COIN_FROM_FLOAT2(Sum)
 }
 if(typeof window === "object")
     window.COIN_FROM_FLOAT = COIN_FROM_FLOAT2;
+
 function ISZERO(Coin)
 {
     if(Coin.SumCOIN === 0 && Coin.SumCENT === 0)
@@ -94,10 +109,12 @@ function ISZERO(Coin)
     else
         return false;
 }
+
 function COIN_FROM_STRING(Str)
 {
     throw "TODO: COIN_FROM_STRING";
 }
+
 function GetCurrencyFixed(Currency)
 {
     var Fixed = 9;
@@ -106,6 +123,7 @@ function GetCurrencyFixed(Currency)
         Fixed = 8;
     return Fixed;
 }
+
 if(typeof global === "object")
 {
     global.CHECKSUM = CHECKSUM;

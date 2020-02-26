@@ -11,22 +11,33 @@
  * Logs for debugging
  *
 **/
+
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Log"});
+
+//Engine context
+
 function InitClass(Engine)
 {
+    
     Engine.ErrorCount = 0;
-    Engine.ToLog = function (Str)
+    
+    Engine.ToLog = function (Str,StartLevel)
     {
+        if(StartLevel)
+            return Engine.ToWarning(Str, StartLevel);
+        
         var Time;
         Time = "";
         var ID = GetNodeID(Engine);
+        
         var Type = Str.substr(0, 2);
         if(Type === "<-" || Type === "->")
             ToLog("" + Time + ID + Str);
         else
             ToLog("" + Time + ID + "." + Str);
     };
+    
     Engine.ToLog1 = function (Str)
     {
         Engine.ToWarning(Str, 1);
@@ -47,18 +58,22 @@ function InitClass(Engine)
     {
         Engine.ToWarning(Str, 5);
     };
+    
     Engine.ToWarning = function (Str,StartLevel)
     {
         if(global.JINN_WARNING >= StartLevel || Engine.ID === global.DEBUG_ID)
             Engine.ToLog(Str);
     };
+    
     Engine.ToDebug = function (Str)
     {
         if(global.DEBUG_ID !== "ALL")
             if(Engine.ID !== global.DEBUG_ID)
                 return ;
+        
         Engine.ToLog(Str);
     };
+    
     Engine.ToError = function (Child,Str,WarningLevel)
     {
         Engine.ErrorCount++;
@@ -77,14 +92,21 @@ function InitClass(Engine)
         ToLogTrace("" + Engine.ID + ". " + Str);
     };
 }
+
 if(!global.ToLogTrace)
     global.ToLogTrace = function (Str)
     {
-        var Err = new Error();
-        ToLog("" + Str + ":" + Err.stack);
+        var Data = new Error().stack;
+        var index = Data.indexOf("\n");
+        index = Data.indexOf("\n", index + 1);
+        Data = Data.substr(index);
+        
+        ToLog("" + Str + ":" + Data);
     };
+
 global.GetNodeID = function (Node)
 {
     var ID = Node.ID;
+    
     return ID;
 }

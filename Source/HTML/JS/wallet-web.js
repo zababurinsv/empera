@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 var MIN_VERSION = 1114;
 var COUNT_BLOCK_PROOF = 300;
 var MIN_SUM_POWER = 0;
@@ -27,6 +28,7 @@ var ServerMainMap = {"127.0.0.1":{"ip":"127.0.0.1", "port":80, "Name":"LOCAL"}, 
         "System":1}, };
 var ServerTestMap = {"127.0.0.1":{"ip":"127.0.0.1", "port":80, "Name":"LOCAL"}, "dappsgate.com":{"ip":"dappsgate.com", "port":88,
         "Name":"SUPPORT1", "System":1}, };
+
 function StartWebWallet()
 {
     if(NETWORK_NAME === "TERA-TEST4")
@@ -39,6 +41,7 @@ function StartWebWallet()
         MIN_SUM_POWER = COUNT_BLOCK_PROOF * 35;
         ServerMap = ServerMainMap;
     }
+    
     $("idNetwork").innerText = NETWORK_NAME;
     OnInitWebWallet();
     ConnectWebWallet();
@@ -54,6 +57,7 @@ function OnInitWebWallet()
             var Item = ServerMap[arr[i].ip];
             if(Item && Item.System)
                 continue;
+            
             ServerMap[arr[i].ip] = arr[i];
         }
     }
@@ -68,14 +72,17 @@ function SaveServerMap()
         else
             return b.SumPower - a.SumPower;
     });
+    
     var Arr2 = [];
     for(var i = 0; i < Math.min(Arr.length, MaxConnectedCount); i++)
     {
         var Item = Arr[i];
         Arr2.push({ip:Item.ip, port:Item.port, Stat:Item.Stat, t:Item.DeltaTime});
     }
+    
     Storage.setItem(NETWORK_NAME + "NodesArrayList", JSON.stringify(Arr2));
 }
+
 function SetStatus(Str)
 {
     var id = $("idStatus");
@@ -83,10 +90,12 @@ function SetStatus(Str)
     if(Str)
         console.log(id.innerText);
 }
+
 function SetError(Str,bNoSound)
 {
     SetStatus("<DIV  align='left' style='color:red'><B>" + Str + "</B></DIV>");
 }
+
 var CountConnect = 0;
 var CountWallet = 0;
 function ConnectWebWallet()
@@ -98,41 +107,50 @@ function ConnectWebWallet()
         var Item = ServerMap[key];
         Item.SendHandShake = 0;
     }
+    
     if(window.BrowserIE && !IsLocalClient())
     {
         MainServer = undefined;
         return ;
     }
+    
     CountConnect = 0;
     CountWallet = 0;
     SetStatus("Connecting...");
     LoopHandShake();
     setTimeout(LoopWalletInfo, 1500);
 }
+
 var Stage = 0;
 var PreparingStartLoopHandShake = 0;
 function LoopHandShake()
 {
     PreparingStartLoopHandShake = 0;
+    
     Stage++;
     SetStatus("Connecting: " + Stage + "...");
+    
     for(var key in ServerMap)
     {
         var Item = ServerMap[key];
         if(Item.SendHandShake || !Item.port)
             continue;
+        
         CountConnect++;
         if(window.BrowserIE && CountConnect > 4)
             break;
+        
         DoNodeList(Item);
     }
 }
 function DoNodeList(Item)
 {
+    
     if(window.location.protocol === "https:" && Item.port !== 443)
         return ;
     if(Item.port === 443 && IsIPAddres(Item.ip))
         return ;
+    
     Item.SendHandShake = 1;
     Item.StartTime = Date.now();
     GetData(GetProtocolServerPath(Item) + "/GetNodeList", {}, function (Data)
@@ -142,7 +160,9 @@ function DoNodeList(Item)
             ConnectedCount++;
             Item.GetHandShake = 1;
             Item.BlockChain = Data.BlockChain;
+            
             Item.DeltaTime = Date.now() - Item.StartTime;
+            
             var bWas = 0;
             for(var i = 0; i < Data.arr.length; i++)
             {
@@ -153,6 +173,7 @@ function DoNodeList(Item)
                     bWas = 1;
                 }
             }
+            
             var DeltaAll = Date.now() - StartTimeConnecting;
             if(!PreparingStartLoopHandShake && bWas && ConnectedCount < MaxConnectedCount && DeltaAll < TIME_LENGTH_CONNECT_ALL)
             {
@@ -181,6 +202,7 @@ function GetArrFromServerMap()
     }
     return Arr;
 }
+
 var idTimeFindLider = 0;
 var CountDoWalletInfoAll = 0;
 var CountDoWalletInfoGet = 0;
@@ -188,18 +210,22 @@ function LoopWalletInfo()
 {
     CountDoWalletInfoAll = 0;
     CountDoWalletInfoGet = 0;
+    
     var Arr = GetArrFromServerMap();
     Arr.sort(function (a,b)
     {
         a.DeltaTime - b.DeltaTime;
     });
+    
     CountWallet = Math.min(Arr.length, 8);
     if(window.BrowserIE && CountWallet > 4)
         CountWallet = 4;
+    
     for(var i = 0; i < CountWallet; i++)
     {
         DoWalletInfo(Arr[i]);
     }
+    
     idTimeFindLider = setTimeout(FindLider, 2500);
 }
 function DoWalletInfo(Item)
@@ -208,6 +234,7 @@ function DoWalletInfo(Item)
         return ;
     if(Item.port === 443 && IsIPAddres(Item.ip))
         return ;
+    
     CountDoWalletInfoAll++;
     Item.StartTime = Date.now();
     Item.SendWalletInfo = 1;
@@ -215,6 +242,7 @@ function DoWalletInfo(Item)
     {
         if(!idTimeFindLider)
             return ;
+        
         if(Data && Data.result && Data.BlockChain && Data.NETWORK === NETWORK_NAME)
         {
             Item.Name = Data.NODES_NAME;
@@ -222,20 +250,25 @@ function DoWalletInfo(Item)
             Item.DeltaTime2 = Date.now() - Item.StartTime;
             Item.BlockChain = Data.BlockChain;
             Item.MaxNumBlockDB = Data.MaxNumBlockDB;
+            
             SetStatus("Get: " + Item.ip + ":" + Item.port + " t:" + Item.DeltaTime2);
             CountDoWalletInfoGet++;
+            
             if(idTimeFindLider && CountDoWalletInfoAll && CountDoWalletInfoGet >= 2 && CountDoWalletInfoGet / CountDoWalletInfoAll > 0.7)
             {
                 clearTimeout(idTimeFindLider);
                 idTimeFindLider = 0;
+                
                 FindLider();
             }
         }
     });
 }
+
 function FindLider()
 {
     MainServer = undefined;
+    
     var Arr = [];
     var MapSumPower = {};
     for(var key in ServerMap)
@@ -276,6 +309,7 @@ function FindLider()
         if(Item.SumPower === MaxKey)
         {
             Item.Stat++;
+            
             SetStatus("Find " + Item.ip + ":" + Item.port + " pow=" + Item.SumPower + "  t:" + Item.DeltaTime2 + " ms");
             MainServer = Item;
             SaveServerMap();
@@ -284,6 +318,7 @@ function FindLider()
     }
     OnFindServer();
 }
+
 function CalcPowFromBlockChain(BufRead)
 {
     var Sum = 0;
@@ -297,6 +332,7 @@ function CalcPowFromBlockChain(BufRead)
     }
     return Sum;
 }
+
 function SetAllSum()
 {
     var Item = MapAccounts[$("idAccount").value];

@@ -8,14 +8,19 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
+
+
 global.GlobalRunID = 0;
 global.GlobalRunMap = {};
+
 var LastAlive = Date.now();
 setTimeout(function ()
 {
     setInterval(CheckAlive, 1000);
 }
 , 20000);
+
 if(process.send)
 {
     setInterval(function ()
@@ -23,20 +28,24 @@ if(process.send)
         process.send({cmd:"Alive"});
     }, 1000);
     process.send({cmd:"online", message:"OK"});
+    
     setInterval(function ()
     {
         process.send({cmd:"Alive"});
     }, 1000);
+    
     global.ToLogClient = function (Str,StrKey,bFinal)
     {
         if(typeof Str === "string")
             process.send({cmd:"ToLogClient", Str:"" + Str, StrKey:StrKey, bFinal:bFinal});
     };
 }
+
 function CheckAlive()
 {
     if(global.NOALIVE)
         return ;
+    
     var Delta = Date.now() - LastAlive;
     if(Delta > CHECK_STOP_CHILD_PROCESS)
     {
@@ -45,8 +54,10 @@ function CheckAlive()
         return ;
     }
 }
+
 process.on('message', function (msg)
 {
+    
     LastAlive = Date.now();
     switch(msg.cmd)
     {
@@ -56,6 +67,7 @@ process.on('message', function (msg)
         case "Exit":
             Exit();
             break;
+            
         case "call":
             var Err = 0;
             var Ret;
@@ -68,9 +80,11 @@ process.on('message', function (msg)
                 Err = 1;
                 Ret = "" + e;
             }
+            
             if(msg.id)
                 process.send({cmd:"retcall", id:msg.id, Err:Err, Params:Ret});
             break;
+            
         case "retcall":
             var F = GlobalRunMap[msg.id];
             if(F)
@@ -79,28 +93,36 @@ process.on('message', function (msg)
                 F(msg.Err, msg.Params);
             }
             break;
+            
         case "ToLogClient":
             {
                 ToLogClient0(msg.Str, msg.StrKey, msg.bFinal);
                 break;
             }
+            
         case "Eval":
             EvalCode(msg.Code);
             break;
     }
 }
 );
+
 function Exit()
 {
     if(global.OnExit)
         global.OnExit();
+    
     process.exit(0);
 }
+
+
+
 process.RunRPC = function (Name,Params,F)
 {
     if(F)
     {
         GlobalRunID++;
+        
         try
         {
             process.send({cmd:"call", id:GlobalRunID, Name:Name, Params:Params});
@@ -115,6 +137,7 @@ process.RunRPC = function (Name,Params,F)
         process.send({cmd:"call", id:0, Name:Name, Params:Params});
     }
 }
+
 global.EvalCode = function (Code)
 {
     var Result;
@@ -129,6 +152,8 @@ global.EvalCode = function (Code)
     }
     return Result;
 }
+
+
 process.on('uncaughtException', function (err)
 {
     ToError(err.stack);
@@ -138,6 +163,7 @@ process.on('uncaughtException', function (err)
     process.exit();
 }
 );
+
 process.on('error', function (err)
 {
     ToError(global.PROCESS_NAME + ":\n" + err.stack);

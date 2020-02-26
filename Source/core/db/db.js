@@ -8,24 +8,32 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 "use strict";
+
 const fs = require('fs');
+
+const DBFileMap = {};
+const DBMapCheckProcess = {};
+
 module.exports = class 
 {
     constructor()
     {
-        this.DBMap = {}
     }
+    
     CheckPathDB()
     {
         var Path = GetDataPath("DB");
         CheckCreateDir(Path)
     }
+    
     CloseDBFile(name, bdelete)
     {
         this.LastHash = undefined
         this.WasUpdate = 1
-        var Item = this.DBMap[name];
+        
+        var Item = DBFileMap[name];
         if(Item)
         {
             let bDelete = bdelete;
@@ -49,7 +57,7 @@ module.exports = class
                     ToLog(err)
                 }
             })
-            delete this.DBMap[name]
+            delete DBFileMap[name]
         }
     }
     OpenDBFile(name, bWrite, bExist)
@@ -61,45 +69,57 @@ module.exports = class
         }
         if(bWrite)
             CheckStartOneProcess(name + "-run")
+        
         this.LastHash = undefined
         this.WasUpdate = 1
-        var Item = this.DBMap[name];
+        
+        var Item = DBFileMap[name];
         if(Item === undefined)
         {
+            
             if(!this.WasCheckPathDB)
             {
                 this.CheckPathDB()
                 this.WasCheckPathDB = true
             }
+            
             var fname = GetDataPath("DB/" + name);
+            
             if(!fs.existsSync(fname))
             {
                 if(bExist)
                 {
-                    this.DBMap[name] = null
+                    DBFileMap[name] = null
                     return null;
                 }
                 var fd = fs.openSync(fname, "w+");
                 fs.closeSync(fd)
             }
+            
             var fd = fs.openSync(fname, "r+");
+            
             var stat = fs.statSync(fname);
             var size = stat.size;
+            
             Item = {name:name, fname:fname, fd:fd, size:size, FillRows:0, CountRows:0, }
-            this.DBMap[name] = Item
+            
+            DBFileMap[name] = Item
         }
+        
         return Item;
     }
 };
-var MapCheckProcess = {};
-var BlockDB = new module.exports();
+
+const DBFile = new module.exports();
+
 function CheckStartOneProcess(Name)
 {
     if(global.UpdateMode)
         return ;
-    if(global.READ_ONLY_DB || MapCheckProcess[Name])
+    if(global.READ_ONLY_DB || DBMapCheckProcess[Name])
         return ;
-    MapCheckProcess[Name] = 1;
+    DBMapCheckProcess[Name] = 1;
+    
     var path = GetDataPath("DB/" + Name);
     if(fs.existsSync(path))
     {
@@ -107,7 +127,7 @@ function CheckStartOneProcess(Name)
     }
     try
     {
-        BlockDB.OpenDBFile(Name);
+        DBFile.OpenDBFile(Name);
     }
     catch(e)
     {

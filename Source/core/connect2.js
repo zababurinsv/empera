@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 module.exports = class CConnect2 extends require("./transfer-msg")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
@@ -23,8 +24,10 @@ module.exports = class CConnect2 extends require("./transfer-msg")
             if(arr && arr.length)
                 Maska |= 1 << i
         }
+        
         return Maska;
     }
+    
     OnSetProtocolMode()
     {
         if(global.PROTOCOL_VER === 2)
@@ -38,6 +41,7 @@ module.exports = class CConnect2 extends require("./transfer-msg")
             global.MAX_CONNECT_CHILD = 7
         }
     }
+    
     GetMaxConnectChilds()
     {
         var Count = global.MAX_CONNECT_CHILD;
@@ -46,6 +50,7 @@ module.exports = class CConnect2 extends require("./transfer-msg")
             if(this.NodesArr.length <= MIN_NODES_FOR_DOUBLE_MODE)
                 Count++
         }
+        
         return Count;
     }
 };

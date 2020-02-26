@@ -9,7 +9,9 @@
 */
 
 "use strict";
+
 const fs = require('fs');
+
 class DApp
 {
     constructor()
@@ -27,16 +29,19 @@ class DApp
     {
         SERVER.AddTransaction(Tr)
     }
+    
     GetFormatTransaction()
     {
         return "";
     }
+    
     GetObjectTransaction(Body)
     {
         var Type = Body[0];
         var format = GetFormatTransactionCommon(Type);
         if(!format)
             return {"Type":Type, Data:GetHexFromArr(Body)};
+        
         var TR;
         try
         {
@@ -47,13 +52,16 @@ class DApp
         }
         return TR;
     }
+    
     GetScriptTransaction(Body)
     {
         var Type = Body[0];
         var format = GetFormatTransactionCommon(Type);
         if(!format)
             return GetHexFromArr(Body);
+        
         var TR = BufLib.GetObjectFromBuffer(Body, format, {});
+        
         if(Type === 111 && TR.Body && TR.Body.length)
         {
             var App = DAppByType[TR.Body[0]];
@@ -62,13 +70,16 @@ class DApp
                 TR.Body = JSON.parse(App.GetScriptTransaction(TR.Body))
             }
         }
+        
         ConvertBufferToStr(TR)
         return JSON.stringify(TR, "", 2);
     }
+    
     GetVerifyTransaction(Block, BlockNum, TrNum, Body)
     {
         return 1;
     }
+    
     ClearDataBase()
     {
     }
@@ -93,6 +104,7 @@ class DApp
     }
 };
 module.exports = DApp;
+
 function GetFormatTransactionCommon(Type)
 {
     var App = DAppByType[Type];
@@ -101,6 +113,7 @@ function GetFormatTransactionCommon(Type)
     else
         return "";
 }
+
 function ReqDir(Path)
 {
     if(fs.existsSync(Path))
@@ -115,5 +128,8 @@ function ReqDir(Path)
         }
     }
 }
+
+
 global.DApps = {};
 global.DAppByType = {};
+

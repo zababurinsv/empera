@@ -8,27 +8,38 @@
 
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
+
+
+//Engine context
+
+
+
 global.glUseBlockCache = 1;
 global.glUsePackMaxHash = 1;
+
 function InitClass(Engine)
 {
     Engine.ProcessBlockOnSend = function (Child,Block)
     {
         if(!global.glUseBlockCache)
             return Block.TxData.length;
+        
         var BlockNum = Block.BlockNum;
         var DeltaBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - BlockNum;
         Block.TxTransfer = [];
         Block.TTTransfer = [];
         var TxReceive = [];
         var TxSend = [];
+        
         var TreeTX = Engine.ListTreeTx[BlockNum];
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var DeltaTime = Date.now() - Child.CreateCacheTime;
+        
         for(var i = 0; i < Block.TxData.length; i++)
         {
             var Tx = Block.TxData[i];
             CheckTx("ProcessBlockOnSend", Tx, BlockNum);
+            
             var TxIndexSend = Child.SendTxMap[Tx.KEY];
             if(TxIndexSend !== undefined)
                 TxSend.push(TxIndexSend);
@@ -53,6 +64,7 @@ function InitClass(Engine)
         }
         Block.TxReceive = Engine.GetPackedArray(TxReceive);
         Block.TxSend = Engine.GetPackedArray(TxSend);
+        
         if(global.JINN_WARNING >= 3)
         {
             var Arr2 = Engine.GetUnpackedArray(Block.TxReceive);
@@ -62,13 +74,17 @@ function InitClass(Engine)
             if(!IsEqArr(Arr3, TxSend))
                 throw "Error PackedArray TxSend";
         }
+        
         delete Block.TxData;
+        
         return Block.TxTransfer.length;
     };
+    
     Engine.ProcessBlockOnReceive = function (Child,Block)
     {
         if(!global.glUseBlockCache)
             return 1;
+        
         Block.TxData = [];
         var BlockNum = Block.BlockNum;
         for(var i = 0; i < Block.TxTransfer.length; i++)
@@ -76,7 +92,9 @@ function InitClass(Engine)
             var Value = Block.TxTransfer[i];
             var Tx = Engine.GetTx(Value.body);
             Tx.Index = Value.Index;
+            
             CheckTx("" + Engine.ID + ". #1 ProcessBlockOnReceive", Tx, BlockNum);
+            
             Block.TxData.push(Tx);
             Engine.AddTxToReceiveCache(Child, BlockNum, Tx, 1);
         }
@@ -89,11 +107,13 @@ function InitClass(Engine)
             {
                 var HashTicket = Block.TTTransfer[i];
                 var KeyTicket = GetHexFromArr(HashTicket);
+                
                 var Tt = Engine.GetTicket(HashTicket, KeyTicket, BlockNum);
                 if(TreeTX)
                     Tx = TreeTX.find(Tt);
                 else
                     Tx = undefined;
+                
                 if(!Tx || !CheckTx("" + Engine.ID + ". #2 ProcessBlockOnReceive", Tx, BlockNum, 1))
                 {
                     if(global.JINN_WARNING >= 3)
@@ -105,6 +125,7 @@ function InitClass(Engine)
                 Block.TxData.push(Tx);
             }
         }
+        
         var TxReceive = Engine.GetUnpackedArray(Block.TxReceive);
         var TxSend = Engine.GetUnpackedArray(Block.TxSend);
         for(var i = 0; i < TxReceive.length; i++)
@@ -120,6 +141,7 @@ function InitClass(Engine)
             }
             Block.TxData.push(Tx);
         }
+        
         for(var i = 0; i < TxSend.length; i++)
         {
             var Index = TxSend[i];
@@ -129,16 +151,20 @@ function InitClass(Engine)
                 if(global.JINN_WARNING >= 3)
                     Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT", 3);
                 Child.CahcheVersion++;
+                
                 return 0;
             }
             Block.TxData.push(Tx);
         }
+        
         delete Block.TTTransfer;
         delete Block.TxTransfer;
         delete Block.TxReceive;
         delete Block.TxSend;
+        
         return 1;
     };
+    
     Engine.GetUnpackedArray = function (Arr)
     {
         var Arr2 = [];
@@ -150,8 +176,10 @@ function InitClass(Engine)
                 for(var n = 0; n < Count; n++)
                     Arr2.push(Value + n);
             }
+        
         return Arr2;
     };
+    
     Engine.GetPackedArray = function (Arr)
     {
         Arr.sort(function (a,b)
@@ -164,6 +192,7 @@ function InitClass(Engine)
         {
             var Value = Arr[i];
             var Value2 = Arr[i + 1];
+            
             Counter++;
             if(Value + 1 === Value2)
             {
@@ -172,17 +201,21 @@ function InitClass(Engine)
             {
                 Arr2.push(Value - Counter + 1);
                 Arr2.push(Counter);
+                
                 Counter = 0;
             }
         }
         return Arr2;
     };
+    
     Engine.ProcessMaxHashOnSend = function (Child,BlockNum,Arr)
     {
         if(!glUsePackMaxHash)
             return ;
+        
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var Map = ChildMap.SendHashMap;
+        
         for(var a = 0; a < Arr.length; a++)
         {
             var Status = Arr[a];
@@ -204,12 +237,15 @@ function InitClass(Engine)
             }
         }
     };
+    
     Engine.ProcessMaxHashOnReceive = function (Child,BlockNum,Arr)
     {
         if(!glUsePackMaxHash)
             return 1;
+        
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var ArrHash = ChildMap.ReceiveHashArr;
+        
         for(var a = 0; a < Arr.length; a++)
         {
             var Status = Arr[a];
@@ -236,10 +272,13 @@ function InitClass(Engine)
         }
         return 1;
     };
+    
     Engine.InitChildNext = function (Child)
     {
+        
         Child.CacheAll = {};
         Child.CacheBlockNumAll = {};
+        
         Child.CahcheVersion = 0;
         Child.GetCache = function (Name,BlockNum,FTreeSort)
         {
@@ -253,6 +292,7 @@ function InitClass(Engine)
                     Map = {};
                 ChildCache[Name] = Map;
             }
+            
             return Map;
         };
         Child.GetCacheByBlockNum = function (BlockNum)
@@ -263,6 +303,7 @@ function InitClass(Engine)
                 Map = {};
                 Map.ReceiveTicketMap = {};
                 Map.SendTicketMap = {};
+                
                 Map.SendHashMap = {};
                 Map.ReceiveHashArr = [];
                 Map.SendHashIndex = 0;
@@ -270,13 +311,16 @@ function InitClass(Engine)
             }
             return Map;
         };
+        
         Child.SetCache = function (Version,BlockNum)
         {
             if(typeof Version !== "number")
                 throw "SetCache:Error type Version";
             if(typeof BlockNum !== "number")
                 throw "SetCache:Error type BlockNum";
+            
             Child.CurrentCache = Version;
+            
             var Map = Child.CacheAll[Version];
             if(!Map)
             {
@@ -288,8 +332,10 @@ function InitClass(Engine)
                 Child.CacheAll[Version] = Map;
             }
             Map.CacheTime = Date.now();
+            
             Child.CurrentCacheMap = Map.Cache;
             Child.CurrentCacheMapNum = Map.ByBlockNum;
+            
             var Map2 = Map.ByBlockNum[BlockNum];
             if(!Map2)
             {
@@ -300,12 +346,14 @@ function InitClass(Engine)
                 Map2.SendTxArr = [];
                 Child.CurrentCacheMapNum[BlockNum] = Map2;
             }
+            
             Child.CreateCacheTime = Map.CreateCacheTime;
             Child.ReceiveTxMap = Map2.ReceiveTxMap;
             Child.SendTxMap = Map2.SendTxMap;
             Child.ReceiveTxArr = Map2.ReceiveTxArr;
             Child.SendTxArr = Map2.SendTxArr;
         };
+        
         Child.CheckCache = function (Version,BlockNum)
         {
             Child.SetCache(Version, BlockNum);
@@ -316,6 +364,7 @@ function InitClass(Engine)
         {
             Child.SetCache(Child.CahcheVersion, BlockNum);
         };
+        
         Child.InvalidateOldBlockNumCache = function ()
         {
             var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
@@ -326,6 +375,7 @@ function InitClass(Engine)
                     continue;
                 delete Child.CacheBlockNumAll[key];
             }
+            
             if(!Engine.CanHistoryClear())
                 return ;
             if(Child.CurrentCacheMapNum)
@@ -339,17 +389,21 @@ function InitClass(Engine)
         };
         Child.InvalidateOldChildCache = function ()
         {
+            
             var CurDate = Date.now();
             for(var key in Child.CacheAll)
             {
                 var Map = Child.CacheAll[key];
                 if(!Map)
                     continue;
-                var Delta = CurDate - Map.CacheTime;
+                
                 if(!Map.CacheTime)
                     throw "Error Map.CacheTime";
+                
+                var Delta = CurDate - Map.CacheTime;
                 if(Map.CacheVersion === Child.CahcheVersion)
                     continue;
+                
                 if(Delta > JINN_CONST.CACHE_PERIOD_FOR_INVALIDATE * 1000)
                 {
                     delete Child.CacheAll[key];
@@ -358,6 +412,7 @@ function InitClass(Engine)
         };
     };
 }
+
 function InitAfter(Engine)
 {
     Engine.FindInCache = function (Child,BlockNum,Tx)
@@ -367,6 +422,7 @@ function InitAfter(Engine)
         else
             return 1;
     };
+    
     Engine.AddTxToSendCache = function (Child,BlockNum,Tx)
     {
         var Index = Child.SendTxMap[Tx.KEY];
@@ -383,11 +439,14 @@ function InitAfter(Engine)
     {
         if(Child.ReceiveTxMap[Tx.KEY] !== undefined)
             return ;
+        
         if(Tx.Index === undefined)
             throw "Error Tx.Index";
+        
         var Index = Tx.Index;
         Child.ReceiveTxMap[Tx.KEY] = Index;
         Child.ReceiveTxArr[Index] = Tx;
+        
         return Index;
     };
 }

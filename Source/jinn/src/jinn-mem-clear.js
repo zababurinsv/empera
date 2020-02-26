@@ -6,20 +6,28 @@
  * Telegram:  https://t.me/progr76
 */
 
+
 /**
  *
  * The module is responsible for clearing memory of old data (caches)
  *
 **/
+
+
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
+
+//Engine context
+
 function DoNode(Engine)
 {
     if(Engine.TickNum % 20 === 0)
     {
         Engine.MemClear();
+        
         if(!Engine.CanMemClear())
             return ;
+        
         if(Engine.TickNum % 100 === 0)
         {
             for(var i = 0; i < Engine.LevelArr.length; i++)
@@ -30,6 +38,7 @@ function DoNode(Engine)
                     if(Engine.TickNum % 200 === 0)
                         if(Engine.CanHistoryClear())
                             Child.CahcheVersion++;
+                    
                     Child.InvalidateOldChildCache();
                     Child.InvalidateOldBlockNumCache();
                 }
@@ -37,6 +46,7 @@ function DoNode(Engine)
         }
     }
 }
+
 function InitClass(Engine)
 {
     Engine.CanMemClear = function ()
@@ -57,6 +67,7 @@ function InitClass(Engine)
             var Store = Engine.BlockStore[n];
             if(!Store)
                 return 0;
+            
             for(var i = 0; i < Store.LiderArr.length / 2; i++)
             {
                 var Item = Store.LiderArr[i];
@@ -66,6 +77,7 @@ function InitClass(Engine)
         }
         return 1;
     };
+    
     Engine.MemClear = function ()
     {
         var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
@@ -74,17 +86,18 @@ function InitClass(Engine)
             var BlockNum =  + key;
             if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
                 continue;
+            
             var Value = Engine.ListTreeTx[key];
             Value.clear();
             delete Engine.ListTreeTx[key];
         }
-        Engine.ListTreeTicket;
         if(Engine.ListTreeTicket)
             for(var key in Engine.ListTreeTicket)
             {
                 var BlockNum =  + key;
                 if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
                     continue;
+                
                 var Value = Engine.ListTreeTicket[key];
                 Value.clear();
                 delete Engine.ListTreeTicket[key];
@@ -98,6 +111,7 @@ function InitClass(Engine)
         }
         if(!Engine.CanMemClear())
             return ;
+        
         if(!Engine.CanHistoryClear())
             return ;
     };

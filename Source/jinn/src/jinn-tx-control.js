@@ -11,14 +11,20 @@
  * Control the number of transactions
  *
 **/
+
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
+
+//Engine context
+
 function InitClass(Engine)
 {
+    
     Engine.GetTopTxArrayFromTree = function (Tree)
     {
         if(!Tree)
             return [];
+        
         var BufLength = 0;
         var arr = [];
         var it = Tree.iterator(), Item;
@@ -34,6 +40,7 @@ function InitClass(Engine)
         }
         return arr;
     };
+    
     Engine.AddTxToTree = function (Tree,Tx)
     {
         var Tx0 = Tree.find(Tx);
@@ -48,14 +55,18 @@ function InitClass(Engine)
             {
                 var maxitem = Tree.max();
                 Tree.remove(maxitem);
+                
                 if(CompareArr(maxitem.HashPow, Tx.HashPow) === 0)
                     return 0;
             }
+            
             return 1;
         }
     };
+    
     Engine.CheckSizeTXArray = function (Child,TxArr)
     {
+        
         if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
         {
             Child.ToError("Error Tx Arr length = " + TxArr.length);
@@ -67,8 +78,10 @@ function InitClass(Engine)
         return CheckTx(StrCheckName, Tx, BlockNum, 1);
     };
 }
+
 function FSortTx(a,b)
 {
+    
     if(a.TimePow !== b.TimePow)
         return b.TimePow - a.TimePow;
     return CompareArr(a.HashPow, b.HashPow);

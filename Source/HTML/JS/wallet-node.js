@@ -16,6 +16,7 @@ function SavePrivateKey()
         ConvertToPrivateKey();
         return ;
     }
+    
     var Str = document.getElementById("idKeyNew").value;
     Str = Str.trim();
     if(Select.value === "private" && (Str.length !== 64 || !IsHexStr(Str)))
@@ -29,11 +30,13 @@ function SavePrivateKey()
             SetError("Error: Length must 66 HEX chars. (Length=" + Str.length + ")");
             return ;
         }
+    
     if(Select.value === "private" && PrivKeyStr !== Str)
         SetStatus("Private key changed");
     else
         if(Select.value === "public" && PubKeyStr !== Str)
             SetStatus("Public key changed");
+    
     GetData("SetWalletKey", Str, function (Data)
     {
         if(Data && Data.result === 1)
@@ -43,11 +46,13 @@ function SavePrivateKey()
             else
                 if(Select.value === "public")
                     SelectStyle("styleContrast2");
+            
             SetVisibleEditKeys(0);
             UpdatesData();
         }
     });
 }
+
 function CreateCheckPoint()
 {
     if(!ServerBlockNumDB || ServerBlockNumDB < 16)
@@ -58,6 +63,7 @@ function CreateCheckPoint()
     var BlockNum = ServerBlockNumDB - 10;
     SetCheckPoint(BlockNum);
 }
+
 function UseAutoCheckPoint()
 {
     var Set = $("idUseAutoCheckPoint").checked;
@@ -80,6 +86,7 @@ function UseAutoCorrTime()
         }
     });
 }
+
 function SetCodeVersionJSON()
 {
     var Data = JSON.parse(JSON.stringify(CONFIG_DATA.CODE_VERSION));
@@ -95,9 +102,11 @@ function SetCodeVersionJSON()
     Data.Hash = undefined;
     Data.Sign = undefined;
     Data.StartLoadVersionNum = undefined;
+    
     var Str = JSON.stringify(Data, "", 2);
     document.getElementById("idDevService").value = Str;
 }
+
 function SetCorrTimeJSON()
 {
     var AutoDelta = parseInt(document.getElementById("idDevValue").value);
@@ -108,8 +117,11 @@ function SetCorrTimeJSON()
         Data.bAddTime = 0;
     }
     Data.DeltaTime = 40;
+    
     Data.StartBlockNum = ServerCurBlockNum + 10;
+    
     Data.EndBlockNum = Data.StartBlockNum + Math.floor(AutoDelta / Data.DeltaTime);
+    
     var Str = JSON.stringify(Data, "", 2);
     document.getElementById("idDevService").value = Str;
 }
@@ -122,6 +134,7 @@ function SetNetConstJSON()
     var Str = JSON.stringify(Data, "", 2);
     document.getElementById("idDevService").value = Str;
 }
+
 function SetNewCodeVersion()
 {
     try
@@ -134,6 +147,7 @@ function SetNewCodeVersion()
         return ;
     }
     Data.addrArr = GetArrFromHex(Data.addrArr);
+    
     GetData("SetNewCodeVersion", Data, function (Data)
     {
         if(Data)
@@ -142,6 +156,7 @@ function SetNewCodeVersion()
         }
     });
 }
+
 function StartTimeCorrect()
 {
     try
@@ -153,6 +168,7 @@ function StartTimeCorrect()
         SetError("Error format setting data");
         return ;
     }
+    
     GetData("SetCheckDeltaTime", Data, function (Data)
     {
         if(Data)
@@ -172,6 +188,7 @@ function StartNetConst()
         SetError("Error format setting data");
         return ;
     }
+    
     GetData("SetCheckNetConstant", Data, function (Data)
     {
         if(Data)
@@ -180,14 +197,17 @@ function StartNetConst()
         }
     });
 }
+
 function RestartNode()
 {
     GetData("RestartNode", {});
     DoRestartWallet();
 }
+
 function UseAutoUpdate()
 {
     var Data = {USE_AUTO_UPDATE:document.getElementById("idAutoUpdate").checked, DoMining:1};
+    
     GetData("SaveConstant", Data, function (Data)
     {
         if(Data && Data.result)
@@ -204,6 +224,7 @@ function UseMining()
         return ;
     }
     var Data = {USE_MINING:document.getElementById("idUseMining").checked, DoMining:1};
+    
     GetData("SaveConstant", Data, function (Data)
     {
         if(Data && Data.result)
@@ -215,6 +236,7 @@ function UseMining()
 function SetPercentMining()
 {
     var Data = {POW_MAX_PERCENT:document.getElementById("idPercentMining").value};
+    
     GetData("SaveConstant", Data, function (Data)
     {
         if(Data && Data.result)
@@ -223,6 +245,7 @@ function SetPercentMining()
         }
     });
 }
+
 function MiningSets()
 {
     var name = "edit_mining_set";
@@ -240,6 +263,7 @@ function MiningSets()
 function SaveMiningSet(Value)
 {
     SetVisibleBlock("edit_mining_set", false);
+    
     if(Value)
     {
         MiningAccount = Value;
@@ -257,16 +281,21 @@ function CancalMiningSet()
     var name = "edit_mining_set";
     SetVisibleBlock(name, false);
 }
+
 var WasHistoryMaxNum;
 var WasLastNumSound = 0;
 function CheckNewMoney()
 {
     return ;
+    
     if(!$("idUseSoundHistory").checked)
         return ;
+    
     if(WasHistoryMaxNum === HistoryMaxNum || !ServerBlockNumDB)
         return ;
+    
     WasHistoryMaxNum = HistoryMaxNum;
+    
     GetData("GetHistoryAct", {StartNum:HistoryMaxNum - 40, CountNum:40}, function (Data)
     {
         if(Data && Data.result)
@@ -275,6 +304,7 @@ function CheckNewMoney()
             for(var i = 0; i < arr.length; i++)
             {
                 var Item = arr[i];
+                
                 if(Item.Direct === "+" && Item.BlockNum > ServerBlockNumDB - 60 && Item.BlockNum < ServerBlockNumDB - 20 && Item.BlockNum > WasLastNumSound)
                 {
                     WasLastNumSound = Item.BlockNum;
@@ -296,6 +326,7 @@ function DoRestartWallet()
         }, 10 * 1000);
     }
 }
+
 function SetArrLog(arr)
 {
     var Str = "";
@@ -303,10 +334,12 @@ function SetArrLog(arr)
     for(var i = 0; i < arr.length; i++)
     {
         var Item = arr[i];
+        
         var tr_text = GetTransactionText(MapSendTransaction[Item.key], Item.key.substr(0, 16));
         var info = Item.time + " " + Item.text;
         if(tr_text)
             info += " (" + tr_text + ")";
+        
         if(Item.final)
         {
             var TR = MapSendTransaction[Item.key];
@@ -326,6 +359,7 @@ function SetArrLog(arr)
                     }
                 }
             }
+            
             var Account = MapCheckTransaction[Item.key];
             if(Account)
             {
@@ -333,10 +367,12 @@ function SetArrLog(arr)
                 Account.NextSendTime = 0;
             }
         }
+        
         Str = Str + info + "\n";
     }
     SetStatusFromServer(Str);
     CheckSending();
+    
     if(bFindAccount)
     {
         FindMyAccounts();
@@ -353,6 +389,7 @@ function SetAutoMining()
         }
     }, 100);
 }
+
 function ViewNetworkMode()
 {
     if(IsVisibleBlock('idNetworkView'))
@@ -362,29 +399,36 @@ function ViewNetworkMode()
     else
     {
         SetVisibleBlock('idNetworkView', true);
+        
         var Mode = CONFIG_DATA.CONSTANTS.NET_WORK_MODE;
         if(!Mode)
         {
             Mode = {};
             Mode.UseDirectIP = true;
+            
             if(INTERNET_IP_FROM_STUN)
                 Mode.ip = INTERNET_IP_FROM_STUN;
             else
                 Mode.ip = SERVER_IP;
             Mode.port = SERVER_PORT;
         }
+        
         document.getElementById("idUseDirectIP").checked = Mode.UseDirectIP;
         document.getElementById("idIP").value = Mode.ip;
         document.getElementById("idPort").value = Mode.port;
     }
 }
+
 function SetNetworkParams(bRestart)
 {
+    
     var Mode = {};
     Mode.UseDirectIP = document.getElementById("idUseDirectIP").checked;
     Mode.ip = document.getElementById("idIP").value;
     Mode.port = ParseNum(document.getElementById("idPort").value);
+    
     Mode.DoRestartNode = bRestart;
+    
     GetData("SetNetMode", Mode, function (Data)
     {
         if(Data && Data.result)
@@ -396,6 +440,7 @@ function SetNetworkParams(bRestart)
     if(bRestart)
         DoRestartWallet();
 }
+
 function ViewConstant()
 {
     if(IsVisibleBlock('idConstantView'))
@@ -419,7 +464,9 @@ function SaveConstant(bRestart)
         SetError("Error JSON format setting constant");
         return ;
     }
+    
     Data.DoRestartNode = bRestart;
+    
     GetData("SaveConstant", Data, function (Data)
     {
         if(Data && Data.result)
@@ -431,6 +478,7 @@ function SaveConstant(bRestart)
     if(bRestart)
         DoRestartWallet();
 }
+
 function ViewRemoteParams()
 {
     if(IsVisibleBlock('idRemoteView'))
@@ -450,6 +498,7 @@ function SetRemoteParams(bRestart)
     var PrevHTTPPassword = HTTPPassword;
     var HTTPPort = ParseNum(document.getElementById("idHTTPPort").value);
     var HTTPPassword = document.getElementById("idHTTPPassword").value;
+    
     GetData("SetHTTPParams", {HTTPPort:HTTPPort, HTTPPassword:HTTPPassword, DoRestartNode:bRestart}, function (Data)
     {
         if(!PrevHTTPPassword && HTTPPassword)
@@ -463,14 +512,18 @@ function SetRemoteParams(bRestart)
     if(bRestart)
         DoRestartWallet();
 }
+
+
 function RewriteAllTransactions()
 {
     DoBlockChainProcess("RewriteAllTransactions", "Rewrite all transactions", 0);
 }
+
 function RewriteTransactions()
 {
     DoBlockChainProcess("RewriteTransactions", "Rewrite transactions on last %1 blocks", 1);
 }
+
 function TruncateBlockChain()
 {
     DoBlockChainProcess("TruncateBlockChain", "Truncate last %1 blocks", 1);
@@ -483,9 +536,11 @@ function CleanChain()
 {
     DoBlockChainProcess("CleanChain", "Clean chain on last %1 blocks", 1);
 }
+
 function DoBlockChainProcess(FuncName,Text,LastBlock)
 {
     SaveValues();
+    
     var Params = {};
     if(LastBlock)
     {
@@ -495,8 +550,10 @@ function DoBlockChainProcess(FuncName,Text,LastBlock)
     var result = confirm(Text + "?");
     if(!result)
         return ;
+    
     SetVisibleBlock("idServerBlock", 1);
     SetStatus("START: " + Text);
+    
     GetData(FuncName, Params, function (Data)
     {
         if(Data)
