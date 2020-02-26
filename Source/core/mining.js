@@ -9,6 +9,7 @@
 */
 
 const fs = require('fs');
+const os = require('os');
 var StartCheckMining = 0;
 global.MiningPaused = 0;
 var ProcessMemorySize = 0;

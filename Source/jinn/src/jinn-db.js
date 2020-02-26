@@ -103,7 +103,10 @@ function InitClass(Engine)
         JINN_STAT.SaveDB++;
         var Result = Engine.WriteBlockDBInner(Block, bCheckSum);
         if(Result)
+        {
             Engine.AddBlockDBToCache(Block, 1);
+            Engine.AddBlockToChain(Block);
+        }
         
         return Result;
     };

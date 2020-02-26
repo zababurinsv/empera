@@ -240,7 +240,7 @@ function InitClass(Engine)
         {
             //making a new entry in the array
             
-            Engine.AddChainArr(Block);
+            Engine.AddBlockToChain(Block);
         }
         
         //check the condition for further loading

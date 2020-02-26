@@ -95,7 +95,7 @@ function InitClass(Engine)
         {
             Engine.ToDebug("Add new mem block: " + BlockNum);
             Block.Comment = "Mem block";
-            Engine.AddChainArr(Block);
+            Engine.AddBlockToChain(Block);
         }
     };
     

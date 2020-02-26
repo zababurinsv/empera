@@ -66,6 +66,7 @@ function InitClass(Engine)
                 break;
         }
         JINN_STAT.MAXCacheDBLength = Math.max(JINN_STAT.MAXCacheDBLength, Engine.VersionDBTree.size);
+        JINN_STAT.MAXCacheDBLength = Math.max(JINN_STAT.MAXCacheDBLength, Engine.CacheDBTree.size);
     };
     
     Engine.AddBlockDBToCache = function (Block,bFull)

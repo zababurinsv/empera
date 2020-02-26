@@ -33,11 +33,11 @@ require("./jinn-ticket.js");
 require("./jinn-tx-control.js");
 
 require("./jinn-block.js");
-require("./jinn-block-list.js");
-require("./jinn-block-list-q.js");
+require("./jinn-consensus-chain.js");
+require("./jinn-db-chain-cache.js");
 require("./jinn-consensus.js");
 require("./jinn-consensus-boost.js");
-require("./jinn-cache.js");
+require("./jinn-net-cache.js");
 require("./jinn-mem-clear.js");
 require("./jinn-db.js");
 require("./jinn-db-chain.js");

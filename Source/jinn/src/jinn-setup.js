@@ -25,7 +25,8 @@ global.DEBUG_ID = 0;
 
 
 global.JINN_STAT = {AllTraffic:0, TxSend:0, TTSend:0, HeaderSend:0, BodySend:0, BodyTxSend:0, SaveDB:0, LoadDB:0, LoadHDB:0,
-    MAXFindHeadCount:0, MAXFindEmptyCount:0, MAXCacheChainLength:0, MAXCacheDBLength:0, SaveCH:0, CacheErrDB:0, };
+    MAXFindHeadCount:0, MAXFindEmptyCount:0, MAXChainHeight:0, MAXCacheChainLength:0, MAXCacheDBLength:0, SaveCH:0, CacheErrDB:0,
+};
 JINN_STAT.Clear = function ()
 {
     for(var key in JINN_STAT)
