@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1419;
+global.UPDATE_CODE_VERSION_NUM = 1424;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 
@@ -286,7 +286,7 @@ if(global.LOCAL_RUN || global.FORK_MODE)
     global.UPDATE_CODE_1 = 0;
     global.UPDATE_CODE_2 = 0;
     global.UPDATE_CODE_3 = 0;
-    EXPERIMENTAL_CODE = 1;
+    EXPERIMENTAL_CODE = 0;
     
     global.REST_START_COUNT = 0;
     global.LOAD_TO_BEGIN = 0;
@@ -302,7 +302,7 @@ else
         console.log("CURRENT NUM: " + (Math.trunc(Num / 1000) * 1000));
         
         global.SMART_BLOCKNUM_START = 0;
-        global.START_NETWORK_DATE = 1577703330000 - 400 * 1000;
+        global.START_NETWORK_DATE = 1582830189000;
         
         global.START_MINING = 100;
         global.REF_PERIOD_END = 0;
@@ -312,13 +312,13 @@ else
         global.TRANSACTION_PROOF_COUNT = 200 * 1000;
         global.MAX_SIZE_LOG = 20 * 1024 * 1024;
         
-        global.START_BLOCK_ACCOUNT_HASH = 100;
-        global.START_BLOCK_ACCOUNT_HASH3 = 200;
+        global.START_BLOCK_ACCOUNT_HASH = 1;
+        global.START_BLOCK_ACCOUNT_HASH3 = 1;
         
-        global.BLOCKNUM_TICKET_ALGO = 1;
+        global.BLOCKNUM_TICKET_ALGO = 0;
         
         global.WALLET_NAME = "TEST";
-        NETWORK = "TERA-TEST4";
+        NETWORK = "TERA-TEST";
         
         global.ALL_VIEW_ROWS = 1;
         
@@ -328,6 +328,7 @@ else
         global.NEW_FORMULA_KTERA = 3;
         global.NEW_FORMULA_TARGET1 = 0;
         global.NEW_FORMULA_TARGET2 = 1;
+        
         global.NEW_SIGN_TIME = 1;
         
         global.MAX_LENGTH_SENDER_MAP = 100;
@@ -335,7 +336,8 @@ else
         
         global.REST_START_COUNT = 10000;
         global.LOAD_TO_BEGIN = 2;
-        global.START_BAD_ACCOUNT_CONTROL = 3105000;
+        global.START_BAD_ACCOUNT_CONTROL = 0;
+        
         global.UPDATE_CODE_1 = 0;
         global.UPDATE_CODE_2 = 0;
         global.UPDATE_CODE_3 = 0;

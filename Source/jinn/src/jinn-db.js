@@ -14,8 +14,8 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 
-global.DB_BLOCK_FORMAT = {BlockNum:"uint", LinkHash:"hash", TreeHash:"hash", MinerHash:"hash", PrevBlockHash:"hash", SumPow:"uint",
-    TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}], };
+global.DB_BLOCK_FORMAT = {BlockNum:"uint", LinkData:"hash", LinkRef:"hash", TreeHash:"hash", MinerHash:"hash", PrevBlockHash:"hash",
+    SumPow:"uint", TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}], };
 global.DB_BLOCK_FORMATWRK = {};
 const DB_BLOCK_HEADER_FORMAT = GetCopyObj(DB_BLOCK_FORMAT);
 delete DB_BLOCK_HEADER_FORMAT.TxData;
@@ -137,8 +137,9 @@ function InitClass(Engine)
             var PrevBlock = Engine.GetBlockDB(BlockNum - 1);
             if(!PrevBlock)
                 throw "SaveToDB: Error PrevBlock on Block=" + BlockNum;
-            if(!Block.LinkHash)
-                throw "SaveToDB: Error LinkHash";
+            
+            if(!Block.LinkRef)
+                throw "SaveToDB: Error LinkRef";
             if(PrevBlock.BlockNum !== Block.BlockNum - 1)
                 throw "SaveToDB: Error PrevBlock.BlockNum on Block=" + BlockNum;
             
@@ -154,8 +155,11 @@ function InitClass(Engine)
                     Engine.ToLog(Str);
                 }
             }
-            
-            Block.PrevBlockHash = PrevBlock.Hash;
+            if(!IsEqArr(Block.LinkRef, PrevBlock.Hash))
+            {
+                var Str = "SaveToDB: Error LinkRef: " + Block.LinkRef + "/" + PrevBlock.Hash + " on block=" + Block.BlockNum;
+                ToLogTrace(Str);
+            }
             Block.SumPow = PrevBlock.SumPow + Block.Power;
         }
         else

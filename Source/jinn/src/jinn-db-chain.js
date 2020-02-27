@@ -8,17 +8,17 @@
 
 /**
  *
- * Pre-recording blocks in the database
+ * A record of all downloadable combinations of blocks in the database
  *
 **/
 
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
 
-global.DB_CHAIN_FORMAT = {BlockNum:"uint", StartVersion:"uint32", ArrBlock:[{BlockNum:"uint", LinkHash:"hash", TreeHash:"hash",
-        MinerHash:"hash", PrevBlockHash:"hash", SumPow:"uint", TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}], BodyLinkVer:"uint",
-        FirstEmptyBodyNum:"uint", FirstEmptyBodyHash:"hash", HeadNum:"uint", HeadRow:"uint16", HeadDeltaSum:"uint", VersionDB:"byte",
-        StartVersion:"uint32", }]};
+global.DB_CHAIN_FORMAT = {BlockNum:"uint", StartVersion:"uint32", ArrBlock:[{BlockNum:"uint", LinkData:"hash", LinkRef:"hash",
+        TreeHash:"hash", MinerHash:"hash", PrevBlockHash:"hash", SumPow:"uint", TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}],
+        BodyLinkVer:"uint", FirstEmptyBodyNum:"uint", FirstEmptyBodyHash:"hash", HeadNum:"uint", HeadRow:"uint16", HeadDeltaSum:"uint",
+        VersionDB:"byte", StartVersion:"uint32", }]};
 const DB_CHAIN_FORMATWRK = {};
 
 function DoNode(Engine)

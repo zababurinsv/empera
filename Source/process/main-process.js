@@ -196,7 +196,8 @@ global.AddTransactionFromWeb = AddTransactionFromWeb;
 
 global.STATIC_PROCESS = {Name:"STATIC PROCESS", NodeOnly:1, idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(),
     Worker:undefined, Path:"./process/static-process.js", OnMessage:OnMessageStatic, PeriodAlive:50000};
-ArrChildProcess.push(STATIC_PROCESS);
+if(!global.TEST_JINN)
+    ArrChildProcess.push(STATIC_PROCESS);
 
 function OnMessageStatic(msg)
 {

@@ -223,8 +223,8 @@ module.exports = class CDB extends require("../code")
                     arr.push(Prev.Hash)
                 }
                 
-                var PrevHash = CalcHashFromArray(arr, true);
-                var SeqHash = this.GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
+                var PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum);
+                var SeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
                 
                 var Value = GetHashFromSeqAddr(SeqHash, Block.AddrHash, Block.BlockNum, PrevHash);
                 
@@ -376,9 +376,6 @@ module.exports = class CDB extends require("../code")
         if(!bPreSave && Block.BlockNum > this.BlockNumDBMin)
             bBlockProcess = 1
         else
-            bBlockProcess = 0
-        
-        if(global.TEST_NETWORK && !bPreSave && Block.BlockNum <= this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2)
             bBlockProcess = 0
         
         if(this.BlockNumDBMin && Block.BlockNum <= this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2)
@@ -730,7 +727,7 @@ module.exports = class CDB extends require("../code")
     {
         Block.Info = ""
         Block.BlockNum = Num
-        Block.SeqHash = this.GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
+        Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
         if(Block.BlockNum >= BLOCK_GENESIS_COUNT)
         {
             CalcHashBlockFromSeqAddr(Block)
@@ -1071,12 +1068,6 @@ module.exports = class CDB extends require("../code")
     GetHashGenesis(Num)
     {
         return [Num + 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Num + 1];
-    }
-    GetSeqHash(BlockNum, PrevHash, TreeHash)
-    {
-        var arr = [GetArrFromValue(BlockNum), PrevHash, TreeHash];
-        var SeqHash = CalcHashFromArray(arr, true);
-        return SeqHash;
     }
     
     CheckCreateTicketObject(Tr, BlockNum, SetTxID)

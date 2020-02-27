@@ -24,6 +24,11 @@ function InitClass(Engine)
 {
     Engine.BlockStore = {};
     
+    Engine.Header1 = 0;
+    Engine.Header2 = 0;
+    Engine.Block1 = 0;
+    Engine.Block2 = 0;
+    
     Engine.StartSendLiderArr = function (BlockNum)
     {
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
@@ -363,32 +368,6 @@ function InitClass(Engine)
         }
     };
     
-    Engine.DoNextBodyLoad = function (BlockHead,NodeStatus)
-    {
-        var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead, NodeStatus.BlockSeed);
-        if(BodyForLoad)
-        {
-            Engine.ToDebug("AddBlockBody: BodyForLoad=" + BodyForLoad.BlockNum + " TreeHash=" + BodyForLoad.TreeHash);
-            
-            //continue loading the body
-            NodeStatus.LoadTreeNum = BodyForLoad.BlockNum;
-            NodeStatus.LoadTreeHash = BodyForLoad.TreeHash;
-            NodeStatus.LoadHead = BodyForLoad;
-            
-            Engine.Block1 = BodyForLoad.BlockNum;
-            Engine.Block2 = NodeStatus.BlockSeed.BlockNum;
-            
-            return 1;
-        }
-        else
-        {
-            NodeStatus.LoadTreeNum = 0;
-            NodeStatus.LoadTreeHash = [];
-            NodeStatus.LoadHead = undefined;
-            return 0;
-        }
-    };
-    
     Engine.DoEventDB = function (Store)
     {
         Engine.ToDebug("Engine.DoEventDB");
@@ -444,6 +423,32 @@ function InitClass(Engine)
             
             //since this chain is a higher priority, we stop the cycle
             break;
+        }
+    };
+    
+    Engine.DoNextBodyLoad = function (BlockHead,NodeStatus)
+    {
+        var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead, NodeStatus.BlockSeed);
+        if(BodyForLoad)
+        {
+            Engine.ToDebug("AddBlockBody: BodyForLoad=" + BodyForLoad.BlockNum + " TreeHash=" + BodyForLoad.TreeHash);
+            
+            //continue loading the body
+            NodeStatus.LoadTreeNum = BodyForLoad.BlockNum;
+            NodeStatus.LoadTreeHash = BodyForLoad.TreeHash;
+            NodeStatus.LoadHead = BodyForLoad;
+            
+            Engine.Block1 = BodyForLoad.BlockNum;
+            Engine.Block2 = NodeStatus.BlockSeed.BlockNum;
+            
+            return 1;
+        }
+        else
+        {
+            NodeStatus.LoadTreeNum = 0;
+            NodeStatus.LoadTreeHash = [];
+            NodeStatus.LoadHead = undefined;
+            return 0;
         }
     };
     

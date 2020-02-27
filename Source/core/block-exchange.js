@@ -968,7 +968,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             return false;
         }
         Block.PrevHash = PrevHash
-        Block.SeqHash = this.GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
+        Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
         this.CreatePOWNew(Block)
         Block.Prepared = true
         if(global.USE_MINING && !Block.StartMining)
@@ -1072,7 +1072,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 ToLog("#6 WatchdogSaved: Error PrevHash on Num=" + BlockNum)
                 return ;
             }
-            var SeqHash = this.GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
+            var SeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
             if(CompareArr(SeqHash, Block.SeqHash) !== 0)
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
@@ -1081,7 +1081,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             }
             
             PrevHash = this.GetLinkHashDB(BlockDB)
-            SeqHash = this.GetSeqHash(BlockDB.BlockNum, PrevHash, BlockDB.TreeHash)
+            SeqHash = GetSeqHash(BlockDB.BlockNum, PrevHash, BlockDB.TreeHash)
             
             if(CompareArr(SeqHash, BlockDB.SeqHash) !== 0)
             {
@@ -1227,7 +1227,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                     Block.HasErr = 1
                     continue;
                 }
-                var SeqHash = this.GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
+                var SeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
                 if(CompareArr(SeqHash, Block.SeqHash) !== 0)
                 {
                     

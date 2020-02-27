@@ -65,7 +65,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], SumHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], Comment1:"GENESIS", Comment2:"", TrCount:0, TrDataPos:0, TrDataLen:0, };
         
-        Block.SeqHash = this.GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
+        Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
         
         Block.SumPow = 0
         Block.bSave = true
@@ -133,7 +133,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 return undefined;
             }
         }
-        var PrevHash = CalcHashFromArray(arr, true);
+        var PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum);
         return PrevHash;
     }
     
@@ -158,7 +158,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             arr.push(PrevBlock.Hash)
         }
         
-        var PrevHash = CalcHashFromArray(arr, true);
+        var PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum);
         return PrevHash;
     }
     StartSyncBlockchain(Node, bSilent, bCheckPoint, PrevStartedBlockNum)
@@ -1008,6 +1008,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(chain.CurNumArrLoad >= chain.arr.length)
         {
             var Block = chain.arr[chain.arr.length - 1];
+            
             if(chain.WriteToDBAfterLoad || Block.BlockNum >= this.CurrentBlockNum + TIME_START_SAVE - 2)
             {
                 var bAllLoaded = true;
@@ -1504,7 +1505,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         
         var PrevHash = this.GetLinkHashDB(Block);
         
-        var testSeqHash = this.GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
+        var testSeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
         
         var TestValue = GetHashFromSeqAddr(testSeqHash, Block.AddrHash, Block.BlockNum, PrevHash);
         
@@ -1924,8 +1925,8 @@ function GenerateChain(StartBlockTime)
             arr.push(Prev.Hash);
         }
         
-        Block.PrevHash = CalcHashFromArray(arr, true);
-        Block.SeqHash = SERVER.GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash);
+        Block.PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum);
+        Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash);
         
         if(n % 100000 === 0)
             ToLog("Create: " + n);

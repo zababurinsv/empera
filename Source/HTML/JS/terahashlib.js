@@ -370,13 +370,6 @@ function IsEqArr(a,b)
     return (CompareArr(a, b) === 0) ? 1 : 0;
 }
 
-function GetSeqHash(BlockNum,PrevHash,TreeHash)
-{
-    var arr = [GetArrFromValue(BlockNum), PrevHash, TreeHash];
-    var SeqHash = CalcHashFromArray(arr, true);
-    return SeqHash;
-}
-
 function arr2(Value1,Value2)
 {
     var Buf = [];
@@ -444,7 +437,7 @@ function GetBlockArrFromBuffer(BufRead,Info)
                 var Prev = BlockArr[start + n];
                 arr.push(Prev.Hash);
             }
-            Block.PrevHash = CalcHashFromArray(arr, true);
+            Block.PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum);
             Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash);
             var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
             var PrevAddrNum = ReadUint32FromArr(Block.AddrHash, 28);
@@ -493,6 +486,114 @@ function shaarrblock2(Value1,Value2,BlockNum)
     return shaarrblock(arr2(Value1, Value2), BlockNum);
 }
 
+function GetSeqHash(BlockNum,PrevHash,TreeHash)
+{
+    var arr = [GetArrFromValue(BlockNum), PrevHash, TreeHash];
+    
+    if(!global.LOCAL_RUN)
+        return CalcHashFromArray(arr, true);
+    
+    // new code
+    return CalcHash3FromArray(arr, true);
+}
+
+function CalcLinkHashFromArray(ArrHashes,BlockNum,RetStruct)
+{
+    if(!global.LOCAL_RUN)
+        return CalcHashFromArray(ArrHashes, true);
+    
+    //new code
+    if(ArrHashes.length !== 8)
+    {
+        ToLogTrace("Error CalcLinkHashFromArray ArrHashes.length=" + ArrHashes.length);
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    }
+    
+    var Buf = [];
+    for(var i = 0; i < 7; i++)
+    {
+        var Value = ArrHashes[i];
+        for(var n = 0; n < 32; n++)
+            Buf.push(Value[n]);
+    }
+    if(Buf.length !== 7 * 32)
+    {
+        ToLogTrace("Error CalcLinkHashFromArray Buf.length=" + Buf.length);
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    }
+    var LinkData = sha3(Buf);
+    var LinkRef = ArrHashes[7];
+    var LinkHash = sha3(LinkData.concat(LinkRef));
+    
+    if(RetStruct)
+    {
+        RetStruct.LinkData = LinkData;
+        RetStruct.LinkRef = LinkRef;
+        RetStruct.LinkHash = LinkHash;
+    }
+    
+    return LinkHash;
+}
+
+function CalcHashFromArray(ArrHashes,bOriginalSeq)
+{
+    if(bOriginalSeq === undefined)
+        ArrHashes.sort(CompareArr);
+    
+    var Buf = [];
+    for(var i = 0; i < ArrHashes.length; i++)
+    {
+        var Value = ArrHashes[i];
+        for(var n = 0; n < Value.length; n++)
+            Buf.push(Value[n]);
+    }
+    if(Buf.length === 0)
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    else
+        if(Buf.length === 32)
+            return Buf;
+    
+    var Hash = shaarr(Buf);
+    return Hash;
+}
+
+function CalcHash3FromArray(ArrHashes,bOriginalSeq)
+{
+    if(bOriginalSeq === undefined)
+        ArrHashes.sort(CompareArr);
+    
+    var Buf = [];
+    for(var i = 0; i < ArrHashes.length; i++)
+    {
+        var Value = ArrHashes[i];
+        for(var n = 0; n < Value.length; n++)
+            Buf.push(Value[n]);
+    }
+    if(Buf.length === 0)
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    else
+        if(Buf.length === 32)
+            return Buf;
+    
+    var Hash = sha3(Buf);
+    return Hash;
+}
+
+function GetArrFromValue(Num)
+{
+    var arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    arr[0] = Num & 0xFF;
+    arr[1] = (Num >>> 8) & 0xFF;
+    arr[2] = (Num >>> 16) & 0xFF;
+    arr[3] = (Num >>> 24) & 0xFF;
+    
+    var NumH = Math.floor(Num / 4294967296);
+    arr[4] = NumH & 0xFF;
+    arr[5] = (NumH >>> 8) & 0xFF;
+    
+    return arr;
+}
+
 if(typeof global === "object")
 {
     global.ReadUint32FromArr = ReadUint32FromArr;
@@ -522,6 +623,13 @@ if(typeof global === "object")
     
     global.GetBlockArrFromBuffer = GetBlockArrFromBuffer;
     global.shaarrblock2 = shaarrblock2;
+    global.GetSeqHash = GetSeqHash;
+    
+    global.CalcHash3FromArray = CalcHash3FromArray;
+    global.CalcLinkHashFromArray = CalcLinkHashFromArray;
+    global.CalcHashFromArray = CalcHashFromArray;
+    
+    global.GetArrFromValue = GetArrFromValue;
 }
 else
     if(typeof window === "object")

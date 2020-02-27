@@ -267,7 +267,6 @@ function InitAfter(Engine)
                 for(var n = 0; n < Data.Arr1.length; n++)
                 {
                     var Value = Data.Arr1[n];
-                    
                     if(Value)
                     {
                         JINN_STAT.HeaderSend++;
@@ -311,8 +310,8 @@ function InitAfter(Engine)
     
     Engine.MAXHASH_SEND = {Cache:"uint", BlockNum:"uint", Arr:[{Mode:"byte", DataHashNum:"byte", DataHash:"zhash", MinerHash:"hash",
             CountItem:"uint16", LoadN:"uint", LoadH:"zhash"}], };
-    Engine.MAXHASH_RET = {result:"byte", Cache:"uint", Mode:"byte", Arr1:[{BlockNum:"uint", PrevBlockHash:"hash", LinkHash:"hash",
-            TreeHash:"zhash", MinerHash:"hash"}], Arr2:[{BlockNum:"uint", TxTransfer:[{Index:"uint16", body:"tr"}], TTTransfer:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH],
+    Engine.MAXHASH_RET = {result:"byte", Cache:"uint", Mode:"byte", Arr1:[{BlockNum:"uint", PrevBlockHash:"hash", LinkData:"hash",
+            LinkRef:"hash", TreeHash:"zhash", MinerHash:"hash"}], Arr2:[{BlockNum:"uint", TxTransfer:[{Index:"uint16", body:"tr"}], TTTransfer:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH],
             TxReceive:["uint16"], TxSend:["uint16"]}]};
     Engine.MAXHASH = function (Child,Data)
     {

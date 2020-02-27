@@ -26,19 +26,15 @@ function Init(Engine)
         
         if(bInMemory)
         {
+            Block.LinkData = ZERO_ARR_32;
+            Block.LinkRef = ZERO_ARR_32;
             Block.LinkHash = ZERO_ARR_32;
         }
         else
         {
-            Block.LinkHash = SERVER.GetLinkHashDB(Block);
-            if(!Block.LinkHash)
-            {
-                ToLog("Cannt create new bloc - not calc LinkHash (not found prev blocks) on " + Block.BlockNum);
-                return undefined;
-            }
+            Engine.SetLinkDataFromDB(Block);
         }
-        
-        Block.DataHash = SERVER.GetSeqHash(Block.BlockNum, Block.LinkHash, Block.TreeHash);
+        Engine.CalcBlockHash(Block);
         
         Engine.ConvertToTera(Block, 0);
         CreateHashMinimal(Block, GENERATE_BLOCK_ACCOUNT);
@@ -48,12 +44,7 @@ function Init(Engine)
             global.SetCalcPOW(Block, "FastCalcBlock");
         }
         
-        Engine.ConvertFromTera(Block, 0, 1);
-        
-        if(PrevBlock)
-            Block.PrevBlockHash = PrevBlock.Hash;
-        else
-            Block.PrevBlockHash = ZERO_ARR_32;
+        Engine.ConvertFromTera(Block, 0, !bInMemory);
         
         return Block;
     };

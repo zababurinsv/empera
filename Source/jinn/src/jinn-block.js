@@ -12,9 +12,9 @@
  *
  * The formula for calculating hashes:
  *
- *  LinkHash | -----------> DataHash | ---------------->    Hash
- *     +     |                  +    |
- *  TreeHash |              MinerHash|
+ *  LinkRef  --> LinkHash | -----------> DataHash | ---------------->    Hash
+ *                 +      |                  +    |
+ *              TreeHash  |              MinerHash|
  *
  * i.e.:
  * LinkHash + TreeHash              = DataHash
@@ -95,6 +95,7 @@ function InitClass(Engine)
         {
             Engine.ToDebug("Add new mem block: " + BlockNum);
             Block.Comment = "Mem block";
+            
             Engine.AddBlockToChain(Block);
         }
     };
@@ -124,7 +125,8 @@ function InitClass(Engine)
         Block.TreeHash = ZERO_ARR_32;
         Block.BlockNum = Num;
         
-        Block.LinkHash = PrevBlock.Hash;
+        Block.LinkData = ZERO_ARR_32;
+        Block.LinkRef = PrevBlock.Hash;
         
         Block.MinerHash = ZERO_ARR_32;
         Engine.CalcBlockHash(Block);
@@ -135,24 +137,11 @@ function InitClass(Engine)
         
         return Block;
     };
-    Engine.GetLinkHashDB = function (Block)
-    {
-        if(Block.BlockNum < 1)
-            return ZERO_ARR_32;
-        
-        var PrevBlock = Engine.GetBlockHeaderDB(Block.BlockNum - 1);
-        if(PrevBlock)
-            return PrevBlock.Hash;
-        else
-            return ZERO_ARR_32;
-    };
     
     Engine.GetNewBlock = function (BlockNum,TxArr,PrevBlock,bInMemory)
     {
         var Block = {};
         Block.BlockNum = BlockNum;
-        
-        Block.LinkHash = Engine.GetLinkHashDB(Block);
         
         Block.TxData = TxArr;
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
@@ -161,22 +150,21 @@ function InitClass(Engine)
         for(var i = 2; i < 32; i++)
             Block.MinerHash[i] = i;
         
+        Engine.SetLinkDataFromDB(Block);
         Engine.CalcBlockHash(Block);
         Block.PrevBlockHash = PrevBlock.Hash;
         
-        if(!bInMemory)
-        {
-        }
         return Block;
     };
     
     Engine.GetBlockHeader = function (Block)
     {
-        if(Block.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT && IsZeroArr(Block.LinkHash))
-            ToLog("ZeroArr Block.LinkHash on BlockNum=" + Block.BlockNum);
         
-        var Data = {BlockNum:Block.BlockNum, LinkHash:Block.LinkHash, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash, DataHash:Block.DataHash,
-            Hash:Block.Hash, PrevBlockHash:Block.PrevBlockHash, Size:3 * 32 + 10, };
+        if(Block.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT && IsZeroArr(Block.LinkRef))
+            ToLog("ZeroArr LinkRef on BlockNum=" + Block.BlockNum);
+        
+        var Data = {BlockNum:Block.BlockNum, LinkData:Block.LinkData, LinkRef:Block.LinkRef, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash,
+            DataHash:Block.DataHash, Hash:Block.Hash, PrevBlockHash:Block.PrevBlockHash, Size:3 * 32 + 10, };
         
         return Data;
     };
@@ -230,10 +218,20 @@ function InitClass(Engine)
         return arr;
     };
     
+    Engine.SetLinkDataFromDB = function (Block)
+    {
+        var PrevBlock = Engine.GetBlockHeaderDB(Block.BlockNum - 1);
+        if(PrevBlock)
+            Block.LinkRef = PrevBlock.Hash;
+        else
+            Block.LinkRef = ZERO_ARR_32;
+    };
+    
     Engine.CalcBlockHash = function (Block)
     {
-        if(!Block.LinkHash)
-            ToLogTrace("Error No Block.LinkHash");
+        if(!Block.LinkRef)
+            ToLogTrace("Error No Block.LinkRef");
+        Block.LinkHash = Block.LinkRef;
         
         Block.DataHash = sha3(Block.LinkHash.concat(Block.TreeHash));
         Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash));

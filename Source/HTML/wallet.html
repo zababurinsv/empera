@@ -500,7 +500,7 @@
             WalletStatus="WAIT";
         }
         else
-        if(Data.RelayMode && DeltaDB>BLOCK_PROCESSING_LENGTH*2 || DeltaDB>BLOCK_PROCESSING_LENGTH*20)
+        if((Data.RelayMode && DeltaDB>BLOCK_PROCESSING_LENGTH*2) || (!Data.RelayMode && DeltaDB>BLOCK_PROCESSING_LENGTH*1))
         {
             CanSendTransaction=0;
             var StrMode="";
@@ -1922,7 +1922,7 @@
                             <th id="GetHexFromArr(Item.Hash)" class="hash">Block Hash</th>
 
 <!--                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
-<!--                            <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>-->
+                            <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>
 <!--                            <th id="Item.SumPow" class="num">SumPow</th>-->
 
                             <th id="Item.TrDataLen" class="num">Bytes</th>

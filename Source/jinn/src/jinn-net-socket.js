@@ -36,7 +36,7 @@ function InitClass(Engine)
             
             var Child = Engine.RetNewConnectByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
             if(Child)
-                Engine.SetEventsProcessing(Socket, Child, "Client");
+                Engine.SetEventsProcessing(Socket, Child, "Client", 1);
             else
                 Engine.CloseSocket(Socket, "Error child");
         });
@@ -76,8 +76,23 @@ function InitClass(Engine)
         });
     };
     
-    Engine.SetEventsProcessing = function (SOCKET,Child,StrConnect)
+    Engine.SetEventsProcessing = function (SOCKET,Child,StrConnect,bAll)
     {
+        SOCKET.on('close', function (err)
+        {
+            Engine.ClearSocket(SOCKET);
+        });
+        
+        SOCKET.on('error', function (err)
+        {
+            Engine.CloseSocket(SOCKET, "ERRORS");
+        });
+        SOCKET.on('end', function ()
+        {
+        });
+        
+        if(!bAll)
+            return ;
         Engine.LinkSocketToChild(SOCKET, Child, StrConnect);
         SOCKET.on('data', function (data)
         {
@@ -96,20 +111,6 @@ function InitClass(Engine)
                     Child.ToLog("CONNECT : Error GetSocketStatus");
                 }
             }
-        });
-        
-        SOCKET.on('close', function (err)
-        {
-            Engine.ClearSocket(SOCKET);
-        });
-        
-        SOCKET.on('error', function (err)
-        {
-            Engine.CloseSocket(SOCKET, "ERRORS");
-        });
-        
-        SOCKET.on('end', function ()
-        {
         });
     };
     
@@ -193,12 +194,12 @@ function InitAfter(Engine)
                 {
                     if(Child.Socket)
                     {
-                        Engine.SetEventsProcessing(Child.Socket, Child, "Server");
+                        Engine.SetEventsProcessing(Child.Socket, Child, "Server", 1);
                     }
-                    
                     F(!!Child.Socket);
                 });
                 SetSocketStatus(Child.Socket, 1);
+                Engine.SetEventsProcessing(Child.Socket, Child, "Server", 0);
             }
             else
             {

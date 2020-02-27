@@ -17,10 +17,10 @@ var TestMode = 2;
 
 global.TEST_DB_CHAIN = 1;
 
-global.DB_ITEM_FORMAT = {VersionDB:"byte", TreeHash:"hash", AddrHash:"hash", PrevHash:"hash", SumHash:"hash", SumPow:"uint",
-    TrDataPos:"uint", TrDataLen:"uint32", Reserv500:"uint", PrevBlockHash:"hash", BodyLinkVer:"uint", FirstEmptyBodyNum:"uint",
-    FirstEmptyBodyHash:"hash", PrevPos:"uint", HeadNum:"uint", HeadRow:"uint16", HeadDeltaSum:"uint", StartVersion:"uint32", Reserv:"byte",
-};
+global.DB_ITEM_FORMAT = {VersionDB:"byte", TreeHash:"hash", MinerHash:"hash", LinkHash:"hash", SumHash:"hash", SumPow:"uint",
+    TrDataPos:"uint", TrDataLen:"uint32", Reserv500:"uint", LinkData:"hash", LinkRef:"hash", PrevBlockHash:"hash", BodyLinkVer:"uint",
+    FirstEmptyBodyNum:"uint", FirstEmptyBodyHash:"hash", PrevPos:"uint", HeadNum:"uint", HeadRow:"uint16", HeadDeltaSum:"uint",
+    StartVersion:"uint32", Reserv:"byte", };
 const ITEM_SIZE = SerializeLib.GetBufferFromObject({}, DB_ITEM_FORMAT, {}).length;
 
 const DB_ITEM_FORMATWRK = {};
@@ -179,10 +179,11 @@ function Init(Engine)
         for(var i = 0; i < Chain.ArrBlock.length; i++)
         {
             var Block = Chain.ArrBlock[i];
-            Engine.ConvertToTera(Block, 1);
+            
             var Ret;
             if(Block.TxData && Block.TxData.length && !Block.TrDataLen)
             {
+                Engine.ConvertBodyToTera(Block);
                 Ret = SERVER.WriteBodyDB(Block);
             }
             else
@@ -240,12 +241,16 @@ function Init(Engine)
                 ToLog("Err Block.StartVersion=" + Block.StartVersion + "/" + global.StartVersion);
             
             var bAdd = 0;
-            if(SERVER.PrepareBlockFields(Block, BlockNum))
+            Block.BlockNum = BlockNum;
+            if(Engine.CalcBlockHash(Block))
             {
+                
                 bAdd = 0;
                 if(Block && Block.TrDataLen)
                 {
                     bAdd = SERVER.ReadBlockBodyDB(Block);
+                    if(bAdd)
+                        Engine.ConvertBodyFromTera(Block);
                 }
                 else
                 {
@@ -255,8 +260,6 @@ function Init(Engine)
             
             if(bAdd)
             {
-                Engine.ConvertFromTera(Block, 1);
-                
                 if(!IsZeroArr(Block.TreeHash) && (Block.TxData && Block.TxData.length === 0))
                     Block.TxData = undefined;
                 

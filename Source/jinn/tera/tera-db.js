@@ -68,53 +68,6 @@ function Init(Engine)
         
         return Block;
     };
-    Engine.GetLinkHashDB = function (Block)
-    {
-        if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
-            return ZERO_ARR_32;
-        
-        var LinkHash = SERVER.GetLinkHashDB(Block);
-        return LinkHash;
-    };
-    Engine.GetLinkHashDB222 = function (Block)
-    {
-        if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
-            return ZERO_ARR_32;
-        
-        var startPrev = Block.BlockNum - BLOCK_PROCESSING_LENGTH2;
-        var arr = [];
-        for(var i = 0; i < BLOCK_PROCESSING_LENGTH; i++)
-        {
-            var num = startPrev + i;
-            var PrevBlock = Engine.GetBlockHeaderDB(num);
-            if(!PrevBlock || !PrevBlock.bSave)
-            {
-                var StrDop = "";
-                if(PrevBlock)
-                    StrDop = "  NO Save";
-                else
-                    StrDop = "  NOT Found";
-                ToLogTrace(" ERROR CALC BLOCK: " + Block.BlockNum + " - prev block " + StrDop + ": " + num + "  MaxNumBlockDB=" + SERVER.GetMaxNumBlockDB());
-                return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-            }
-            arr.push(PrevBlock.Hash);
-        }
-        
-        var PrevHash = CalcHashFromArray(arr, true);
-        return PrevHash;
-    };
-    
-    Engine.GetPrevBlockHashDB = function (Block)
-    {
-        var PrevBlockHash = ZERO_ARR_32;
-        if(Block.BlockNum > 0)
-        {
-            var PrevBlock = Engine.GetBlockHeaderDB(Block.BlockNum - 1, 1);
-            if(PrevBlock)
-                PrevBlockHash = PrevBlock.Hash;
-        }
-        return PrevBlockHash;
-    };
     Engine.SetBlockData = function (BlockDst,BlockSrc)
     {
         BlockDst.TxData = BlockSrc.TxData;

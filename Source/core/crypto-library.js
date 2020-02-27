@@ -245,21 +245,6 @@ global.GetKeyPairTest = function (password,Power)
 }
 
 
-function GetArrFromValue(Num)
-{
-    var arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    arr[0] = Num & 0xFF;
-    arr[1] = (Num >>> 8) & 0xFF;
-    arr[2] = (Num >>> 16) & 0xFF;
-    arr[3] = (Num >>> 24) & 0xFF;
-    
-    var NumH = Math.floor(Num / 4294967296);
-    arr[4] = NumH & 0xFF;
-    arr[5] = (NumH >>> 8) & 0xFF;
-    
-    return arr;
-}
-
 function GetHashWithNonce(hash0,nonce)
 {
     return shaarr2(hash0, GetArrFromValue(nonce));
@@ -357,61 +342,6 @@ function CreateNoncePOWExternMinPower(arr0,BlockNum,MinPow)
 }
 
 
-global.CreateNoncePOWInner = function (arr0,count)
-{
-    var Hash;
-    var arr = arr0.slice();
-    var maxnonce = 0;
-    var supervalue = MAX_SUPER_VALUE_POW;
-    for(var nonce = 0; nonce < count; nonce++)
-    {
-        var hashTest = GetHashWithNonce(arr, nonce);
-        var value = GetPowValue(hashTest);
-        
-        if(value < supervalue)
-        {
-            maxnonce = nonce;
-            supervalue = value;
-            Hash = hashTest;
-        }
-    }
-    return {nonce:maxnonce, Hash:Hash};
-}
-
-global.CreateAddrPOW = function (SeqHash,AddrArr,MaxHash,Start,CountNonce,BlockNum)
-{
-    
-    var MaxNonce = 0;
-    var bFind = 0;
-    
-    for(var nonce = Start; nonce < Start + CountNonce; nonce++)
-    {
-        AddrArr[6] = nonce & 0xFF;
-        AddrArr[7] = (nonce >>> 8) & 0xFF;
-        AddrArr[8] = (nonce >>> 16) & 0xFF;
-        AddrArr[9] = (nonce >>> 24) & 0xFF;
-        
-        var HashTest = shaarrblock2(SeqHash, AddrArr, BlockNum);
-        if(CompareArr(MaxHash, HashTest) >= 0)
-        {
-            MaxHash = HashTest;
-            MaxNonce = nonce;
-            bFind = 1;
-        }
-    }
-    
-    if(bFind)
-    {
-        AddrArr[6] = MaxNonce & 0xFF;
-        AddrArr[7] = (MaxNonce >>> 8) & 0xFF;
-        AddrArr[8] = (MaxNonce >>> 16) & 0xFF;
-        AddrArr[9] = (MaxNonce >>> 24) & 0xFF;
-    }
-    
-    return {MaxHash:MaxHash, LastNonce:nonce, MaxNonce:MaxNonce, bFind:bFind};
-}
-
-
 function IsZeroArr(arr)
 {
     if(arr)
@@ -421,50 +351,6 @@ function IsZeroArr(arr)
                 return false;
         }
     return true;
-}
-
-function CalcHashFromArray(ArrHashes,bOriginalSeq)
-{
-    if(bOriginalSeq === undefined)
-        ArrHashes.sort(CompareArr);
-    
-    var Buf = [];
-    for(var i = 0; i < ArrHashes.length; i++)
-    {
-        var Value = ArrHashes[i];
-        for(var n = 0; n < Value.length; n++)
-            Buf.push(Value[n]);
-    }
-    if(Buf.length === 0)
-        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    else
-        if(Buf.length === 32)
-            return Buf;
-    
-    var Hash = shaarr(Buf);
-    return Hash;
-}
-
-function CalcHash3FromArray(ArrHashes,bOriginalSeq)
-{
-    if(bOriginalSeq === undefined)
-        ArrHashes.sort(CompareArr);
-    
-    var Buf = [];
-    for(var i = 0; i < ArrHashes.length; i++)
-    {
-        var Value = ArrHashes[i];
-        for(var n = 0; n < Value.length; n++)
-            Buf.push(Value[n]);
-    }
-    if(Buf.length === 0)
-        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    else
-        if(Buf.length === 32)
-            return Buf;
-    
-    var Hash = sha3(Buf);
-    return Hash;
 }
 
 function CalcMerkl3FromArray(Arr,Tree0)
@@ -1175,8 +1061,6 @@ function GetRandomBytes(Count)
 }
 
 global.GetRandomBytes = GetRandomBytes;
-global.CalcHash3FromArray = CalcHash3FromArray;
-global.CalcHashFromArray = CalcHashFromArray;
 global.CalcMerklFromArray = CalcMerklFromArray;
 global.CalcTreeHashFromArrBody = CalcTreeHashFromArrBody;
 global.UpdateMerklTree = UpdateMerklTree;
@@ -1187,7 +1071,6 @@ global.CheckMerkleProof = CheckMerkleProof;
 global.IsZeroArr = IsZeroArr;
 global.GetHashWithNonce = GetHashWithNonce;
 global.GetPowPower = GetPowPower;
-global.GetArrFromValue = GetArrFromValue;
 global.GetPowValue = GetPowValue;
 global.Mesh = Mesh;
 

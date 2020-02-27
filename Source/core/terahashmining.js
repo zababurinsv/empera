@@ -32,7 +32,7 @@ function CreateHashMinimal(Block,MinerID)
 {
     if(Block.BlockNum < BLOCKNUM_ALGO2)
     {
-        throw "BlockNum < BLOCKNUM_ALGO2";
+        ToLog("BlockNum < BLOCKNUM_ALGO2");
         return false;
     }
     

@@ -79,6 +79,46 @@ function Init(Engine)
         return Block;
     };
     
+    SERVER.GetLinkHashDB = function (Block)
+    {
+        return Engine.GetLinkDataFromDB(Block);
+    };
+    
+    Engine.SetLinkDataFromDB = function (Block)
+    {
+        if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
+        {
+            Block.LinkData = ZERO_ARR_32;
+            Block.LinkRef = ZERO_ARR_32;
+            Block.LinkHash = ZERO_ARR_32;
+            return ;
+        }
+        
+        Engine.GetLinkDataFromDB(Block, Block);
+    };
+    
+    Engine.GetLinkDataFromDB = function (Block,StructSet)
+    {
+        if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
+            return ZERO_ARR_32;
+        
+        var startPrev = Block.BlockNum - BLOCK_PROCESSING_LENGTH2;
+        var arr = [];
+        for(var i = 0; i < BLOCK_PROCESSING_LENGTH; i++)
+        {
+            var num = startPrev + i;
+            var PrevBlock = Engine.GetBlockHeaderDB(num, 1);
+            if(!PrevBlock)
+            {
+                ToLogTrace(" ERROR CALC BLOCK: " + Block.BlockNum + " - prev block NOT Found: " + num + "  MaxNumBlockDB=" + SERVER.GetMaxNumBlockDB());
+                return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            }
+            arr.push(PrevBlock.Hash);
+        }
+        
+        return CalcLinkHashFromArray(arr, Block.BlockNum, StructSet);
+    };
+    
     Engine.CalcBlockHash = function CalcBlockHash(Block)
     {
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
@@ -87,25 +127,39 @@ function Init(Engine)
             Block.DataHash = Block2.DataHash;
             Block.Hash = Block2.Hash;
             Block.PowHash = Block2.PowHash;
+            Block.LinkData = ZERO_ARR_32;
+            Block.LinkRef = ZERO_ARR_32;
+            Block.LinkHash = ZERO_ARR_32;
             
             Block.Power = Engine.GetPowPower(Block.PowHash);
         }
         else
         {
-            if(!Block.LinkHash)
+            
+            if(!Block.LinkData)
             {
-                ToLogTrace("No LinkHash on block " + Block.BlockNum);
-                Block.LinkHash = ZERO_ARR_32;
+                ToLogTrace("No LinkData on block " + Block.BlockNum);
+                Block.LinkData = ZERO_ARR_32;
             }
+            if(!Block.LinkRef)
+            {
+                ToLogTrace("No LinkRef on block " + Block.BlockNum);
+                Block.LinkRef = ZERO_ARR_32;
+            }
+            
+            Block.LinkHash = sha3(Block.LinkData.concat(Block.LinkRef));
+            
             if(!Block.TreeHash)
                 ToLogTrace("No TreeHash on block " + Block.BlockNum);
             
-            Block.DataHash = SERVER.GetSeqHash(Block.BlockNum, Block.LinkHash, Block.TreeHash);
+            Block.DataHash = GetSeqHash(Block.BlockNum, Block.LinkHash, Block.TreeHash);
             Block.SeqHash = Block.DataHash;
             Block.AddrHash = Block.MinerHash;
             CalcHashBlockFromSeqAddr(Block);
             Block.Power = GetPowPower(Block.PowHash);
         }
+        
+        return !IsZeroArr(Block.Hash);
     };
     Engine.CalcHashMaxLider = function (Data,BlockNum)
     {
@@ -131,12 +185,7 @@ function Init(Engine)
         
         if(bBody && Block.TxData)
         {
-            var Arr = [];
-            for(var i = 0; i < Block.TxData.length; i++)
-            {
-                Arr.push(Block.TxData[i].body);
-            }
-            Block.arrContent = Arr;
+            Engine.ConvertBodyToTera(Block);
         }
     };
     
@@ -155,6 +204,41 @@ function Init(Engine)
         
         if(bBody && Block.arrContent)
         {
+            Engine.ConvertBodyFromTera(Block);
+        }
+        if(bCalcPrevBlockHash)
+        {
+            Engine.SetLinkDataFromDB(Block);
+            
+            Block.PrevBlockHash = ZERO_ARR_32;
+            if(Block.BlockNum > 0)
+            {
+                var PrevBlock = Engine.GetBlockHeaderDB(Block.BlockNum - 1, 1);
+                if(PrevBlock)
+                {
+                    Block.PrevBlockHash = PrevBlock.Hash;
+                }
+            }
+        }
+    };
+    
+    Engine.ConvertBodyToTera = function (Block)
+    {
+        if(Block.TxData)
+        {
+            var Arr = [];
+            for(var i = 0; i < Block.TxData.length; i++)
+            {
+                Arr.push(Block.TxData[i].body);
+            }
+            Block.arrContent = Arr;
+        }
+    };
+    
+    Engine.ConvertBodyFromTera = function (Block)
+    {
+        if(Block.arrContent)
+        {
             var Arr = [];
             for(var i = 0; i < Block.arrContent.length; i++)
             {
@@ -162,10 +246,6 @@ function Init(Engine)
                 Arr.push(Tx);
             }
             Block.TxData = Arr;
-        }
-        if(bCalcPrevBlockHash)
-        {
-            Block.PrevBlockHash = Engine.GetPrevBlockHashDB(Block);
         }
     };
 }

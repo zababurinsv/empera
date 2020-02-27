@@ -129,6 +129,12 @@ window.NEW_SIGN_TIME = 25500000;
 
 window.SetBlockChainConstant = function (Data)
 {
+    window.NETWORK = Data.NETWORK;
+    if(NETWORK === "LOCAL")
+        window.LOCAL_RUN = 1;
+    else
+        if(window.NETWORK.substr(0, 9) === "TERA-TEST")
+            window.TEST_NETWORK = 1;
     
     var DeltaServerClient = new Date() - Data.CurTime;
     if(!Data.DELTA_CURRENT_TIME)
@@ -216,42 +222,6 @@ function CreateHashBodyPOWInnerMinPower(arr,MinPow,startnonce)
             BlockNum = GetBlockNumTr(arr);
         }
     }
-}
-
-function CalcHashFromArray(ArrHashes,bOriginalSeq)
-{
-    if(bOriginalSeq === undefined)
-        ArrHashes.sort(CompareArr);
-    
-    var Buf = [];
-    for(var i = 0; i < ArrHashes.length; i++)
-    {
-        var Value = ArrHashes[i];
-        for(var n = 0; n < Value.length; n++)
-            Buf.push(Value[n]);
-    }
-    if(Buf.length === 0)
-        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    else
-        if(Buf.length === 32)
-            return Buf;
-    
-    var Hash = shaarr(Buf);
-    return Hash;
-}
-function GetArrFromValue(Num)
-{
-    var arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    arr[0] = Num & 0xFF;
-    arr[1] = (Num >>> 8) & 0xFF;
-    arr[2] = (Num >>> 16) & 0xFF;
-    arr[3] = (Num >>> 24) & 0xFF;
-    
-    var NumH = Math.floor(Num / 4294967296);
-    arr[4] = NumH & 0xFF;
-    arr[5] = (NumH >>> 8) & 0xFF;
-    
-    return arr;
 }
 
 function LoadLib(Path)

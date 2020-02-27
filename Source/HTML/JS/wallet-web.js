@@ -31,7 +31,7 @@ var ServerTestMap = {"127.0.0.1":{"ip":"127.0.0.1", "port":80, "Name":"LOCAL"}, 
 
 function StartWebWallet()
 {
-    if(NETWORK_NAME === "TERA-TEST4")
+    if(NETWORK_NAME === "TERA-TEST")
     {
         MIN_SUM_POWER = 0;
         ServerMap = ServerTestMap;

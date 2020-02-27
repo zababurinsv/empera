@@ -1407,7 +1407,7 @@ MapCurrencyIcon[16] = "./PIC/B.svg";
 
 function InitMapCurrency()
 {
-    if(window.NETWORK_NAME === "TERA-TEST4")
+    if(window.NETWORK_NAME === "TERA-TEST")
     {
         MapCurrency = {};
         MapCurrency[0] = "TERA";
