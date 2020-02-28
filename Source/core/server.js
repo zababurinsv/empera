@@ -1058,11 +1058,19 @@ module.exports = class CTransport extends require("./connect")
             return ;
         }
         
+        if(Info.GrayConnect)
+        {
+            Info.FromIP = Socket.remoteAddress
+            Info.FromPort = Socket.remotePort
+        }
+        
         var Node = this.FindRunNodeContext(Info.addrArr, Info.FromIP, Info.FromPort, true);
         if(!Node)
         {
-            AddNodeInfo(Node, "Error Node Context")
-            this.SendCloseSocket(Socket, "Error Node Context")
+            var StrDop = "";
+            if(!this.IsCorrectNode(Info.FromIP, Info.FromPort))
+                StrDop = " Not correct ip=" + Info.FromIP + ":" + Info.FromPort
+            this.SendCloseSocket(Socket, "Error Node Context" + StrDop)
             return ;
         }
         var Hash = shaarr2(this.addrArr, Socket.HashRND);

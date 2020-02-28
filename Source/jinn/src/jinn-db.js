@@ -165,16 +165,11 @@ function InitClass(Engine)
             {
                 var Str = "SaveToDB: Error PrevSumHash: " + Block.PrevSumHash + "/" + PrevBlock.SumHash + " on block=" + Block.BlockNum;
                 ToLogTrace(Str);
+                return 0;
             }
             
             Block.PrevSumHash = PrevBlock.SumHash;
             var SumHash = sha3(Block.PrevSumHash.concat(Block.Hash));
-            
-            if(!IsEqArr(Block.SumHash, SumHash))
-            {
-                var Str = "SaveToDB: Error SumHash: " + Block.SumHash + "/" + SumHash + " on block=" + Block.BlockNum;
-                ToLogTrace(Str);
-            }
             
             Block.SumPow = PrevBlock.SumPow + Block.Power;
             Block.SumHash = SumHash;

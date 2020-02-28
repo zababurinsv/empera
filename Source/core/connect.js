@@ -108,13 +108,13 @@ module.exports = class CConnect extends require("./connect2")
         Node = this.NodesMap[addrStr]
         if(!Node)
         {
+            if(!this.IsCorrectNode(ip, port))
+                return undefined;
+            
             var key = "" + ip + ":" + port;
             Node = this.NodesIPPortMap[key]
             if(!Node)
             {
-                if(!this.IsCorrectNode(ip, port))
-                    return undefined;
-                
                 Node = this.GetNewNode(ip, port, addrStr)
                 if(!Node)
                     return undefined;
@@ -787,7 +787,10 @@ module.exports = class CConnect extends require("./connect2")
         {
             var CountPorts = this.GetCountPortsByIP(ip);
             if(CountPorts >= global.UNIQUE_IP_MODE)
+            {
+                ToLog("Not unique ip addres: " + ip, 3)
                 return 0;
+            }
         }
         return 1;
     }

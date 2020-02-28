@@ -11,11 +11,11 @@
 "use strict";
 
 var MIN_POW_CHAINS = 4;
-global.COUNT_NODE_PROOF = 12;
+var COUNT_NODE_PROOF = 8;
 if(global.TEST_NETWORK)
 {
     MIN_POW_CHAINS = 1;
-    global.COUNT_NODE_PROOF = 1;
+    COUNT_NODE_PROOF = 1;
 }
 
 module.exports = class CRest extends require("./db/block-db")
@@ -54,7 +54,11 @@ module.exports = class CRest extends require("./db/block-db")
                 this.NodesArr[i].SendRestGetHeader = 0
             }
             
-            ToLog("**********START REST MODE: " + this.LoadRestContext.BlockNumProof)
+            var Delta = Math.floor((Date.now() - this.StartTime) / 1000);
+            var StrDop = "";
+            if(Delta < 60)
+                StrDop = " (wait " + Delta + " sec)"
+            ToLog("**********START REST MODE: " + this.LoadRestContext.BlockNumProof + StrDop)
         }
         else
         {
@@ -72,6 +76,8 @@ module.exports = class CRest extends require("./db/block-db")
                 {
                     return ;
                 }
+                if(Date.now() - this.StartTime < 60 * 1000)
+                    return ;
                 
                 var ArrNodes = this.GetActualNodes();
                 
@@ -93,13 +99,10 @@ module.exports = class CRest extends require("./db/block-db")
                     Context.SendGetHeaderCount++
                     break;
                 }
-                var MinCount;
-                if(GrayConnect())
-                    MinCount = global.CountConnectedNode / 2
-                else
-                    MinCount = COUNT_NODE_PROOF
                 
-                if(Context.ReceiveHeaderCount > MinCount)
+                var MinCount = Math.min(COUNT_NODE_PROOF, Math.floor(global.CountConnectedNode / 2));
+                MIN_POW_CHAINS = Math.floor(MinCount / 2)
+                if(Context.ReceiveHeaderCount >= MinCount)
                 {
                     Context.Mode = 2
                     ToLog("Next mode: " + Context.Mode + "  Receive:" + Context.ReceiveHeaderCount + "/" + Context.SendGetHeaderCount, 2)
