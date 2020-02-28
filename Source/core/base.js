@@ -26,6 +26,7 @@ var GlSumSys;
 var GlSumIdle;
 
 global.CountAllNode = 0;
+global.CountConnectedNode = 0;
 
 module.exports = class CCommon
 {
@@ -141,6 +142,8 @@ module.exports = class CCommon
             if(INFO.AutoCorrectTime)
                 CountAutoCorrectTime++
         }
+        
+        global.CountConnectedNode = Count
         
         ADD_TO_STAT("MAX:ALL_NODES", CountAll)
         ADD_TO_STAT("MAX:CONNECTED_NODES", Count)

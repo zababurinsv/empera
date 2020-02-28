@@ -10,7 +10,7 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 
-global.TEST_BLOCK_LIST = 0;
+global.TEST_BLOCK_LIST = 1;
 
 //Engine context
 
@@ -24,9 +24,13 @@ function InitClass(Engine)
     
     Engine.AddBlockToChain = function (Block)
     {
-        if(!Block.LinkHash)
+        if(!Block.LinkSumHash)
+            ToLogTrace("!Block.LinkSumHash on Block=" + Block.BlockNum);
+        if(!Block.PrevSumHash)
+            ToLogTrace("!Block.PrevSumHash on Block=" + Block.BlockNum);
+        if(!Block.SumHash)
         {
-            ToLogTrace("!Block.LinkHash on Block=" + Block.BlockNum);
+            ToLogTrace("!Block.SumHash on Block=" + Block.BlockNum);
             return ;
         }
         if(!Block.MinerHash)
@@ -38,7 +42,7 @@ function InitClass(Engine)
         for(var i = 0; i < ArrBlock.length; i++)
         {
             var Block2 = ArrBlock[i];
-            if(IsEqArr(Block.Hash, Block2.Hash))
+            if(IsEqArr(Block.SumHash, Block2.SumHash))
             {
                 nRow = i;
                 break;
@@ -59,16 +63,16 @@ function InitClass(Engine)
     
     Engine.GetPrevBlock = function (Block,bReadOnly)
     {
-        return Engine.GetBlockAtNum(Block.BlockNum - 1, Block.PrevBlockHash, bReadOnly);
+        return Engine.GetBlockAtNum(Block.BlockNum - 1, Block.PrevSumHash, bReadOnly);
     };
     
-    Engine.GetBlockAtNum = function (BlockNum,Hash,bReadOnly)
+    Engine.GetBlockAtNum = function (BlockNum,SumHash,bReadOnly)
     {
         var ArrBlock = Engine.GetChainArrByNum(BlockNum, bReadOnly);
         for(var i = 0; i < ArrBlock.length; i++)
         {
             var Block2 = ArrBlock[i];
-            if(IsEqArr(Hash, Block2.Hash))
+            if(IsEqArr(SumHash, Block2.SumHash))
             {
                 return Block2;
             }
@@ -421,6 +425,7 @@ function InitClass(Engine)
     
     Engine.CheckCorrectLoad = function (BlockHead,BlockHead2,NodeStatus)
     {
+        return Engine.IsValidBlockDB(BlockHead);
         
         var Count = JINN_CONST.LINK_HASH_LENGTH;
         var Delta = BlockHead2.BlockNum - BlockHead.BlockNum;
@@ -447,6 +452,7 @@ function InitClass(Engine)
     
     Engine.GetNextPrevBlock = function (Block)
     {
+        return Block;
         
         var Count;
         Count = JINN_CONST.LINK_HASH_LENGTH;

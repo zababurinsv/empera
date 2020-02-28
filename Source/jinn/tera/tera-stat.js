@@ -117,8 +117,9 @@ function Init(Engine)
         var Arr = SERVER.GetActualNodes();
         
         global.CountAllNode = Engine.GetCountAddr();
-        ADD_TO_STAT("MAX:HOT_NODES", Arr.length);
-        ADD_TO_STAT("MAX:CONNECTED_NODES", Arr.length);
+        global.CountConnectedNode = Arr.length;
+        ADD_TO_STAT("MAX:HOT_NODES", global.CountConnectedNode);
+        ADD_TO_STAT("MAX:CONNECTED_NODES", global.CountConnectedNode);
         ADD_TO_STAT("MAX:ALL_NODES", global.CountAllNode);
         
         ADD_TO_STAT("SENDDATA(KB)", Engine.SendTraffic / 1024);

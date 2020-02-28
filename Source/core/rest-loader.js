@@ -91,10 +91,15 @@ module.exports = class CRest extends require("./db/block-db")
                     })
                     
                     Context.SendGetHeaderCount++
-                    
                     break;
                 }
-                if(Context.ReceiveHeaderCount >= COUNT_NODE_PROOF)
+                var MinCount;
+                if(GrayConnect())
+                    MinCount = global.CountConnectedNode / 2
+                else
+                    MinCount = COUNT_NODE_PROOF
+                
+                if(Context.ReceiveHeaderCount > MinCount)
                 {
                     Context.Mode = 2
                     ToLog("Next mode: " + Context.Mode + "  Receive:" + Context.ReceiveHeaderCount + "/" + Context.SendGetHeaderCount, 2)

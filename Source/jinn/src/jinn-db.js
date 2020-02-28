@@ -14,8 +14,8 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass});
 
-global.DB_BLOCK_FORMAT = {BlockNum:"uint", LinkData:"hash", LinkRef:"hash", TreeHash:"hash", MinerHash:"hash", PrevBlockHash:"hash",
-    SumPow:"uint", TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}], };
+global.DB_BLOCK_FORMAT = {BlockNum:"uint", LinkSumHash:"hash", TreeHash:"hash", MinerHash:"hash", SumHash:"hash", SumPow:"uint",
+    TxData:[{HASH:"hash", HashPow:"hash", body:"tr"}], };
 global.DB_BLOCK_FORMATWRK = {};
 const DB_BLOCK_HEADER_FORMAT = GetCopyObj(DB_BLOCK_FORMAT);
 delete DB_BLOCK_HEADER_FORMAT.TxData;
@@ -58,8 +58,17 @@ function InitClass(Engine)
             return Block;
         }
     };
+    Engine.GetBlockHeaderDB = function (BlockNum,bRawMode,bMustHave)
+    {
+        var Block = Engine.GetBlockHeaderDBNext(BlockNum, bRawMode);
+        if(!Block && bMustHave)
+        {
+            ToLogTrace("Error find block in DB on Num = " + BlockNum);
+        }
+        return Block;
+    };
     
-    Engine.GetBlockHeaderDB = function (BlockNum,bRawMode)
+    Engine.GetBlockHeaderDBNext = function (BlockNum,bRawMode)
     {
         var MaxNum = Engine.GetMaxNumBlockDB();
         if(BlockNum > MaxNum)
@@ -138,34 +147,51 @@ function InitClass(Engine)
             if(!PrevBlock)
                 throw "SaveToDB: Error PrevBlock on Block=" + BlockNum;
             
-            if(!Block.LinkRef)
-                throw "SaveToDB: Error LinkRef";
+            if(!Block.LinkSumHash)
+                throw "SaveToDB: Error LinkSumHash";
             if(PrevBlock.BlockNum !== Block.BlockNum - 1)
                 throw "SaveToDB: Error PrevBlock.BlockNum on Block=" + BlockNum;
             
             if(bCheckSum)
             {
                 var SumPow = PrevBlock.SumPow + Block.Power;
-                
-                var PrevBlockHash = PrevBlock.Hash;
-                
                 if(Block.SumPow !== SumPow)
                 {
                     var Str = "SaveToDB: Error Sum POW: " + Block.SumPow + "/" + SumPow + " on block=" + Block.BlockNum;
                     Engine.ToLog(Str);
                 }
             }
-            if(!IsEqArr(Block.LinkRef, PrevBlock.Hash))
+            if(!IsEqArr(Block.PrevSumHash, PrevBlock.SumHash))
             {
-                var Str = "SaveToDB: Error LinkRef: " + Block.LinkRef + "/" + PrevBlock.Hash + " on block=" + Block.BlockNum;
+                var Str = "SaveToDB: Error PrevSumHash: " + Block.PrevSumHash + "/" + PrevBlock.SumHash + " on block=" + Block.BlockNum;
                 ToLogTrace(Str);
             }
+            
+            Block.PrevSumHash = PrevBlock.SumHash;
+            var SumHash = sha3(Block.PrevSumHash.concat(Block.Hash));
+            
+            if(!IsEqArr(Block.SumHash, SumHash))
+            {
+                var Str = "SaveToDB: Error SumHash: " + Block.SumHash + "/" + SumHash + " on block=" + Block.BlockNum;
+                ToLogTrace(Str);
+            }
+            
             Block.SumPow = PrevBlock.SumPow + Block.Power;
+            Block.SumHash = SumHash;
         }
         else
         {
-            Block.PrevBlockHash = ZERO_ARR_32;
+            Block.LinkSumHash = ZERO_ARR_32;
+            Block.PrevSumHash = ZERO_ARR_32;
+            Block.SumHash = ZERO_ARR_32;
             Block.SumPow = 0;
+        }
+        
+        var LinkSumHash = Engine.GetLinkDataFromDB(Block);
+        if(!IsEqArr(LinkSumHash, Block.LinkSumHash))
+        {
+            var Str = "SaveToDB: Error LinkSumHash: " + Block.LinkSumHash + " / " + LinkSumHash + " on block=" + Block.BlockNum;
+            ToLogTrace(Str);
         }
         if(Engine.ArrDB.length > BlockNum)
         {
@@ -185,6 +211,7 @@ function InitClass(Engine)
         if(typeof Buf === "string")
         {
             var BlockDB = JSON.parse(Buf);
+            Engine.SetBlockDataFromDB(BlockDB);
             Engine.CalcBlockHash(BlockDB);
             
             return BlockDB;
@@ -201,12 +228,13 @@ function InitClass(Engine)
             BlockDB.TxData[i] = Tx;
             CheckTx("GetBlockDB", Tx, BlockNum);
         }
+        Engine.SetBlockDataFromDB(BlockDB);
         Engine.CalcBlockHash(BlockDB);
         
         return BlockDB;
     };
     
-    Engine.GetBlockHeaderDBInner = function (BlockNum)
+    Engine.GetBlockHeaderDBInner = function (BlockNum,bRawMode)
     {
         var Buf = Engine.ArrDB[BlockNum];
         if(!Buf)
@@ -223,7 +251,11 @@ function InitClass(Engine)
         var BlockHDB = SerializeLib.GetObjectFromBuffer(Buf, DB_BLOCK_HEADER_FORMAT, DB_BLOCK_HEADER_FORMATWRK, 1);
         if(!BlockHDB)
             throw "Error GetBlockHeaderDB";
-        Engine.CalcBlockHash(BlockHDB);
+        if(!bRawMode)
+        {
+            Engine.SetBlockDataFromDB(BlockHDB);
+            Engine.CalcBlockHash(BlockHDB);
+        }
         
         return BlockHDB;
     };

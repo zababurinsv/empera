@@ -12,13 +12,13 @@
  *
  * The formula for calculating hashes:
  *
- *  LinkRef  --> LinkHash | -----------> DataHash | ---------------->    Hash
- *                 +      |                  +    |
- *              TreeHash  |              MinerHash|
+ *   LinkSumHash | -----------> DataHash | ---------------->    Hash
+ *        +      |                  +    |
+ *     TreeHash  |              MinerHash|
  *
  * i.e.:
- * LinkHash + TreeHash              = DataHash
- * DataHash + MinerHash             = Hash
+ * LinkSumHash + TreeHash  = DataHash
+ * DataHash + MinerHash    = Hash
  **/
 
 
@@ -60,6 +60,7 @@ function InitClass(Engine)
                     return ;
                 }
             }
+            
             var Result = Engine.SaveToDB(Block, 0, 1);
             if(!Result)
                 break;
@@ -79,6 +80,7 @@ function InitClass(Engine)
     };
     Engine.CreateBlockInMemory = function (BlockNum)
     {
+        return ;
         if(Engine.GetBlockHeaderDB(BlockNum))
             return ;
         
@@ -114,7 +116,7 @@ function InitClass(Engine)
         
         var PrevBlock;
         if(!Num)
-            PrevBlock = {Hash:ZERO_ARR_32, SumPow:0};
+            PrevBlock = {Hash:ZERO_ARR_32, SumPow:0, SumHash:ZERO_ARR_32, };
         else
             PrevBlock = Engine.GenesisArr[Num - 1];
         
@@ -122,15 +124,12 @@ function InitClass(Engine)
         Block.Genesis = 1;
         Block.BlockNum = Num;
         Block.TxData = [];
+        Block.LinkSumHash = ZERO_ARR_32;
         Block.TreeHash = ZERO_ARR_32;
-        Block.BlockNum = Num;
-        
-        Block.LinkData = ZERO_ARR_32;
-        Block.LinkRef = PrevBlock.Hash;
-        
         Block.MinerHash = ZERO_ARR_32;
+        Block.PrevSumHash = PrevBlock.SumHash;
         Engine.CalcBlockHash(Block);
-        Block.PrevBlockHash = PrevBlock.Hash;
+        
         Block.SumPow = Block.Power + PrevBlock.SumPow;
         
         Block.Description = "Genesis";
@@ -150,21 +149,21 @@ function InitClass(Engine)
         for(var i = 2; i < 32; i++)
             Block.MinerHash[i] = i;
         
-        Engine.SetLinkDataFromDB(Block);
+        Engine.SetBlockDataFromDB(Block);
         Engine.CalcBlockHash(Block);
-        Block.PrevBlockHash = PrevBlock.Hash;
         
         return Block;
     };
     
     Engine.GetBlockHeader = function (Block)
     {
+        if(Block.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT && IsZeroArr(Block.LinkSumHash))
+            ToLog("ZeroArr LinkSumHash on BlockNum=" + Block.BlockNum);
+        if(Block.BlockNum > 0 && IsZeroArr(Block.SumHash))
+            ToLog("ZeroArr SumHash on BlockNum=" + Block.BlockNum);
         
-        if(Block.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT && IsZeroArr(Block.LinkRef))
-            ToLog("ZeroArr LinkRef on BlockNum=" + Block.BlockNum);
-        
-        var Data = {BlockNum:Block.BlockNum, LinkData:Block.LinkData, LinkRef:Block.LinkRef, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash,
-            DataHash:Block.DataHash, Hash:Block.Hash, PrevBlockHash:Block.PrevBlockHash, Size:3 * 32 + 10, };
+        var Data = {BlockNum:Block.BlockNum, LinkSumHash:Block.LinkSumHash, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash, PrevSumHash:Block.PrevSumHash,
+            Hash:Block.Hash, Size:4 * 32 + 6, };
         
         return Data;
     };
@@ -174,7 +173,7 @@ function InitClass(Engine)
         if(!IsZeroArr(Block.TreeHash) && (!Block.TxData || Block.TxData.length === 0))
             ToLogTrace("GetBlockBody : Error block tx data TreeHash=" + Block.TreeHash + " on block: " + Block.BlockNum);
         
-        var Data = {BlockNum:Block.BlockNum, TreeHash:Block.TreeHash, PrevBlockHash:Block.PrevBlockHash, TxData:Block.TxData, };
+        var Data = {BlockNum:Block.BlockNum, TreeHash:Block.TreeHash, PrevSumHash:Block.PrevSumHash, TxData:Block.TxData, };
         
         var Size = 10;
         for(var i = 0; i < Data.TxData.length; i++)
@@ -218,24 +217,61 @@ function InitClass(Engine)
         return arr;
     };
     
-    Engine.SetLinkDataFromDB = function (Block)
+    Engine.SetBlockDataFromDB = function (Block)
     {
-        var PrevBlock = Engine.GetBlockHeaderDB(Block.BlockNum - 1);
-        if(PrevBlock)
-            Block.LinkRef = PrevBlock.Hash;
+        var PrevNum, PrevBlock;
+        PrevNum = Block.BlockNum - 1;
+        if(PrevNum < 0)
+            Block.PrevSumHash = ZERO_ARR_32;
         else
-            Block.LinkRef = ZERO_ARR_32;
+        {
+            PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1, 1);
+            if(PrevBlock)
+                Block.PrevSumHash = PrevBlock.SumHash;
+            else
+                Block.PrevSumHash = ZERO_ARR_32;
+        }
+        
+        Block.LinkSumHash = Engine.GetLinkDataFromDB(Block);
     };
     
-    Engine.CalcBlockHash = function (Block)
+    Engine.GetLinkDataFromDB = function (Block)
     {
-        if(!Block.LinkRef)
-            ToLogTrace("Error No Block.LinkRef");
-        Block.LinkHash = Block.LinkRef;
+        var PrevNum, PrevBlock;
+        if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
+        {
+            return ZERO_ARR_32;
+        }
+        else
+        {
+            PrevNum = Block.BlockNum - JINN_CONST.LINK_HASH_DELTA;
+            PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1, 1);
+            if(PrevBlock)
+                return PrevBlock.SumHash;
+            else
+                return ZERO_ARR_32;
+        }
+    };
+    
+    Engine.CalcBlockHash = function (Block,bNoSumHash)
+    {
+        if(!Block.LinkSumHash)
+            ToLogTrace("Error No Block.LinkSumHash on Block=" + Block.BlockNum);
         
-        Block.DataHash = sha3(Block.LinkHash.concat(Block.TreeHash));
+        Block.DataHash = sha3(Block.LinkSumHash.concat(Block.TreeHash));
         Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash));
         Block.Power = Engine.GetPowPower(Block.Hash);
+        
+        if(bNoSumHash)
+            return ;
+        if(Block.BlockNum === 0)
+            Block.SumHash = ZERO_ARR_32;
+        else
+        {
+            if(!Block.PrevSumHash)
+                ToLogTrace("Error No Block.PrevSumHash on Block=" + Block.BlockNum);
+            Block.SumHash = sha3(Block.PrevSumHash.concat(Block.Hash));
+        }
     };
     
     Engine.GetPowPower = function (arrhash)

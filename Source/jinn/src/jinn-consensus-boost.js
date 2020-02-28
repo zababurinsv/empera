@@ -43,7 +43,7 @@ function InitClass(Engine)
             if(!BlockHeader)
                 break;
             LoadNum = BlockHeader.BlockNum - 1;
-            LoadHash = BlockHeader.PrevBlockHash;
+            LoadHash = BlockHeader.PrevSumHash;
             var StrHash = GetHexFromArr(BlockHeader.Hash);
             if(glUseBHCache && CacheHeaderMap[StrHash])
                 continue;
@@ -79,7 +79,7 @@ function InitClass(Engine)
             
             for(var n = 1; n < Status.CountItem; n++)
             {
-                BlockBody = Engine.GetBodyByHash(BlockBody.BlockNum - 1, BlockBody.PrevBlockHash);
+                BlockBody = Engine.GetBodyByHash(BlockBody.BlockNum - 1, BlockBody.PrevSumHash);
                 if(!BlockBody)
                     break;
                 
@@ -133,12 +133,12 @@ function InitClass(Engine)
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
-            if(Block && IsEqArr(Block.Hash, Hash))
+            if(Block && (IsEqArr(Block.Hash, Hash) || IsEqArr(Block.SumHash, Hash)))
             {
                 if(Block.TxData && Block.TreeHash && !IsZeroArr(Block.TreeHash))
                     return Engine.GetBlockBody(Block, 1);
                 else
-                    return {PrevBlockHash:Block.PrevBlockHash, BlockNum:Block.BlockNum};
+                    return {PrevSumHash:Block.PrevSumHash, BlockNum:Block.BlockNum};
             }
         }
         return undefined;
@@ -310,8 +310,8 @@ function InitAfter(Engine)
     
     Engine.MAXHASH_SEND = {Cache:"uint", BlockNum:"uint", Arr:[{Mode:"byte", DataHashNum:"byte", DataHash:"zhash", MinerHash:"hash",
             CountItem:"uint16", LoadN:"uint", LoadH:"zhash"}], };
-    Engine.MAXHASH_RET = {result:"byte", Cache:"uint", Mode:"byte", Arr1:[{BlockNum:"uint", PrevBlockHash:"hash", LinkData:"hash",
-            LinkRef:"hash", TreeHash:"zhash", MinerHash:"hash"}], Arr2:[{BlockNum:"uint", TxTransfer:[{Index:"uint16", body:"tr"}], TTTransfer:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH],
+    Engine.MAXHASH_RET = {result:"byte", Cache:"uint", Mode:"byte", Arr1:[{BlockNum:"uint", LinkSumHash:"hash", TreeHash:"zhash",
+            MinerHash:"hash", PrevSumHash:"hash"}], Arr2:[{BlockNum:"uint", TxTransfer:[{Index:"uint16", body:"tr"}], TTTransfer:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH],
             TxReceive:["uint16"], TxSend:["uint16"]}]};
     Engine.MAXHASH = function (Child,Data)
     {

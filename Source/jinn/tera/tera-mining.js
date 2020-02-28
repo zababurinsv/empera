@@ -32,7 +32,7 @@ function Init(Engine)
         }
         else
         {
-            Engine.SetLinkDataFromDB(Block);
+            Engine.SetBlockDataFromDB(Block);
         }
         Engine.CalcBlockHash(Block);
         

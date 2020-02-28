@@ -84,39 +84,18 @@ function Init(Engine)
         return Engine.GetLinkDataFromDB(Block);
     };
     
-    Engine.SetLinkDataFromDB = function (Block)
-    {
-        if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
-        {
-            Block.LinkData = ZERO_ARR_32;
-            Block.LinkRef = ZERO_ARR_32;
-            Block.LinkHash = ZERO_ARR_32;
-            return ;
-        }
-        
-        Engine.GetLinkDataFromDB(Block, Block);
-    };
-    
     Engine.GetLinkDataFromDB = function (Block,StructSet)
     {
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
             return ZERO_ARR_32;
-        
-        var startPrev = Block.BlockNum - BLOCK_PROCESSING_LENGTH2;
-        var arr = [];
-        for(var i = 0; i < BLOCK_PROCESSING_LENGTH; i++)
+        var Num = Block.BlockNum - BLOCK_PROCESSING_LENGTH;
+        var PrevBlock = Engine.GetBlockHeaderDB(Num, 1);
+        if(!PrevBlock)
         {
-            var num = startPrev + i;
-            var PrevBlock = Engine.GetBlockHeaderDB(num, 1);
-            if(!PrevBlock)
-            {
-                ToLogTrace(" ERROR CALC BLOCK: " + Block.BlockNum + " - prev block NOT Found: " + num + "  MaxNumBlockDB=" + SERVER.GetMaxNumBlockDB());
-                return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-            }
-            arr.push(PrevBlock.Hash);
+            ToLogTrace(" ERROR CALC BLOCK: " + Block.BlockNum + " - prev block NOT Found: " + Num + "  MaxNumBlockDB=" + SERVER.GetMaxNumBlockDB());
+            return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         }
-        
-        return CalcLinkHashFromArray(arr, Block.BlockNum, StructSet);
+        return PrevBlock.SumHash;
     };
     
     Engine.CalcBlockHash = function CalcBlockHash(Block)
@@ -208,7 +187,7 @@ function Init(Engine)
         }
         if(bCalcPrevBlockHash)
         {
-            Engine.SetLinkDataFromDB(Block);
+            Engine.SetBlockDataFromDB(Block);
             
             Block.PrevBlockHash = ZERO_ARR_32;
             if(Block.BlockNum > 0)

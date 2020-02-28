@@ -501,7 +501,6 @@ function CalcLinkHashFromArray(ArrHashes,BlockNum,RetStruct)
 {
     if(!global.LOCAL_RUN)
         return CalcHashFromArray(ArrHashes, true);
-    
     //new code
     if(ArrHashes.length !== 8)
     {

@@ -39,6 +39,7 @@ function InitClass(Engine)
         for(var n = 0; n < Store.LiderArr.length; n++)
         {
             var NodeStatus = Store.LiderArr[n];
+            
             var Element = {DataHash:NodeStatus.DataHash, MinerHash:NodeStatus.MinerHash, LoadNum:NodeStatus.LoadNum, LoadHash:NodeStatus.LoadHash,
                 LoadTreeNum:NodeStatus.LoadTreeNum, LoadTreeHash:NodeStatus.LoadTreeHash};
             Arr.push(Element);
@@ -175,13 +176,11 @@ function InitClass(Engine)
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
-            if(Block && !Block.Hash)
-                throw "!Block.Hash";
+            if(Block && Block.SumHash && IsEqArr(Block.SumHash, LoadHash))
+                return Engine.GetBlockHeader(Block);
             
             if(Block && Block.Hash && IsEqArr(Block.Hash, LoadHash))
-            {
                 return Engine.GetBlockHeader(Block);
-            }
         }
         
         return undefined;
@@ -256,7 +255,8 @@ function InitClass(Engine)
         for(var n = 0; n < Store.LiderArr.length; n++)
         {
             var NodeStatus = Store.LiderArr[n];
-            if(NodeStatus.LoadNum && NodeStatus.LoadNum === Block.BlockNum && IsEqArr(NodeStatus.LoadHash, Block.Hash))
+            if(NodeStatus.LoadNum && NodeStatus.LoadNum === Block.BlockNum && (IsEqArr(NodeStatus.LoadHash, Block.SumHash) || IsEqArr(NodeStatus.LoadHash,
+            Block.Hash)))
             {
                 Child.ToDebug("Header status:" + n + " processing:" + NodeStatus.LoadNum);
                 
@@ -274,13 +274,17 @@ function InitClass(Engine)
                 var BlockHead2 = Engine.CalcHead(NodeStatus.BlockSeed);
                 if(!NodeStatus.BlockSeed.HeadNum)
                     continue;
+                
                 var BlockHead = Engine.GetNextPrevBlock(BlockHead2);
                 
                 //continue downloading
                 if(BlockHead.BlockNum >= 1)
                 {
                     NodeStatus.LoadNum = BlockHead.BlockNum - 1;
-                    NodeStatus.LoadHash = BlockHead.PrevBlockHash;
+                    if(IsZeroArr(BlockHead.PrevSumHash))
+                        NodeStatus.LoadHash = BlockHead.LinkSumHash;
+                    else
+                        NodeStatus.LoadHash = BlockHead.PrevSumHash;
                     NodeStatus.LoadHead = BlockHead;
                 }
                 else
@@ -465,9 +469,9 @@ function InitClass(Engine)
     
     Engine.FillDataMaxLider = function (Data,BlockNum,bBlock)
     {
-        
         if(Data.DataHash === undefined)
             throw "PrecessDataMaxLider Error DataHash on block:" + BlockNum;
+        
         if(Data.MinerHash === undefined)
             throw "PrecessDataMaxLider Error MinerHash on block:" + BlockNum;
     };
