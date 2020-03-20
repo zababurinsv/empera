@@ -107,6 +107,11 @@ function InitClass(Engine)
         
         Child.ConnectStart = Date.now();
         
+        Child.TimeMap = {};
+        Child.LastGetNetConstant = 0;
+        Child.LastGetCodeVersion = 0;
+        Child.LastGetCode = 0;
+        
         Child.IsOpen = function ()
         {
             return (Engine.GetSocketStatus(Child) === 100);

@@ -275,10 +275,10 @@ function InitClass(Engine)
             return 0;
         }
         
-        if(global.UNIQUE_IP_MODE)
+        if(JINN_CONST.UNIQUE_IP_MODE)
         {
             var CountPorts = Engine.GetCountPortsByIP(ip);
-            if(CountPorts >= global.UNIQUE_IP_MODE)
+            if(CountPorts >= JINN_CONST.UNIQUE_IP_MODE)
                 return 0;
         }
         return 1;

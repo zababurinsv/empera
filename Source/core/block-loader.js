@@ -35,7 +35,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         this.LoadHistoryMode = false
         this.MapBlockBodyLoad = {}
         
-        if(!global.ADDRLIST_MODE && !this.VirtualMode)
+        if(!global.ADDRLIST_MODE && !this.VirtualMode && !global.TEST_JINN)
         {
             
             let Self = this;
@@ -62,13 +62,15 @@ module.exports = class CBlock extends require("./rest-loader.js")
         var Block = {BlockNum:Num, TreeHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0], AddrHash:DEVELOP_PUB_KEY0, Hash:this.GetHashGenesis(Num), PowHash:this.GetHashGenesis(Num), PrevHash:[0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], SeqHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], SumHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], Comment1:"GENESIS", Comment2:"", TrCount:0, TrDataPos:0, TrDataLen:0, };
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], PrevSumHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], SumHash:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], Comment1:"GENESIS", Comment2:"", TrCount:0, TrDataPos:0, TrDataLen:0, };
         
         Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash)
         
         Block.SumPow = 0
         Block.bSave = true
+        
         return Block;
     }
     
@@ -94,12 +96,15 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(this.BlockNumDB < BLOCK_GENESIS_COUNT)
             this.CreateGenesisBlocks()
         
-        GenerateStartedBlocks()
-        
         if(fs.existsSync(GetCodePath("EXPERIMENTAL/_run.js")))
         {
             require(GetCodePath("EXPERIMENTAL/_run.js"))
         }
+        
+        if(global.TEST_JINN)
+            return ;
+        
+        GenerateStartedBlocks()
         
         this.LoadMemBlocksOnStart()
     }
@@ -1415,7 +1420,6 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         ToLog("**** BAD ACCOUNT Hash in block=" + Block.BlockNum + " from:" + NodeName(Info.Node) + " ****")
                         ToLog("May be need to Rewrite transactions from: " + (Block.BlockNum - 2 * DELTA_BLOCK_ACCOUNT_HASH))
                         this.SetBlockNOSendToNode(Block, Info.Node, "BAD CMP ACC HASH")
-                        
                         if(global.WATCHDOG_BADACCOUNT && this.BADHashCount > 60)
                         {
                             ToLog("Run WATCHDOG!")
@@ -1504,6 +1508,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         
         var PrevHash = this.GetLinkHashDB(Block);
+        if(CompareArr(PrevHash, Block.PrevHash) !== 0)
+        {
+            var Str = StrError + " #2 ERROR PrevHash - block num: " + Block.BlockNum + "  " + GetHexFromArr(Block.PrevHash) + "/" + GetHexFromArr(PrevHash);
+            ToLogTrace(Str)
+            return false;
+        }
         
         var testSeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
         
@@ -1897,6 +1907,8 @@ function TransactionGenerate()
 
 function GenerateChain(StartBlockTime)
 {
+    if(global.TEST_JINN)
+        return true;
     if(StartBlockTime < BLOCK_PROCESSING_LENGTH)
         StartBlockTime = BLOCK_PROCESSING_LENGTH * 2 - 1;
     var nStartBlockGenerate = StartBlockTime + 1;
@@ -1981,8 +1993,6 @@ function UseScoreBlockLoad(Node,BlockNum)
     
     return 1;
 }
-
-
 
 function SortNodeBlockProcessCountTimeAvg(a,b)
 {

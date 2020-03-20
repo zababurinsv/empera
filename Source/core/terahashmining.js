@@ -10,11 +10,11 @@
 
 
 var START_NONCE = 0;
-const COUNT_FIND_HASH1 = 64;
 
 const DELTA_LONG_MINING = 5000;
 var BLOCKNUM_ALGO2 = 6560000;
-if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE)
+var BLOCKNUM_HASH_FIX = 70000000;
+if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE || global.JINN_MODE)
 {
     BLOCKNUM_ALGO2 = 0;
 }
@@ -37,6 +37,8 @@ function CreateHashMinimal(Block,MinerID)
     }
     
     var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
+    if(Block.BlockNum >= BLOCKNUM_HASH_FIX)
+        PrevHashNum = Block.BlockNum;
     
     var Ret = GetHash(Block.SeqHash, PrevHashNum, Block.BlockNum, MinerID, 0, 0, 0, 0, 0);
     Block.Hash = Ret.Hash;
@@ -143,6 +145,9 @@ function CreatePOWVersion3(Block,bHashPump)
         return ;
     var Ret = 0;
     var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
+    if(Block.BlockNum >= BLOCKNUM_HASH_FIX)
+        PrevHashNum = Block.BlockNum;
+    
     var HashBase = GetHashFromNum2(BlockNum, PrevHashNum);
     var Value1 = FindHashBuffer3(HashBase, BlockNum, Miner, 1);
     if(Value1)

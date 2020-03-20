@@ -735,7 +735,9 @@ function SetFreezeListF()
     {
         if(key.substr(0, 1) != "$")
             continue;
-        var Value = window[key];
+        if(window[key])
+            continue;
+        var Value = ListF[key];
         Object.freeze(Value);
         Object.defineProperty(window, key, {writable:false, value:Value});
     }

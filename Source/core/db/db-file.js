@@ -13,7 +13,7 @@ const fs = require('fs');
 
 
 
-module.exports = class CDBItem extends require("./db")
+module.exports = class CDBFile extends require("./db")
 {
     constructor(FileName, bReadOnly)
     {
@@ -23,11 +23,39 @@ module.exports = class CDBItem extends require("./db")
         var FileItem = this.OpenDBFile(this.FileName, !bReadOnly);
         this.FileNameFull = FileItem.fname
     }
+    WriteUint32(Data, Position)
+    {
+        var Arr = [];
+        WriteUint32(Arr, Data)
+        if(global.Buffer)
+            Arr = Buffer.from(Arr)
+        
+        return this.WriteInner(Arr, Position, 0);
+    }
+    ReadUint32(Position)
+    {
+        var BufForSize = this.ReadInner(Position, 4);
+        if(!BufForSize)
+            return undefined;
+        
+        BufForSize.len = 0
+        return ReadUint32FromArr(BufForSize);
+    }
     
     Write(BufWrite, Position, CheckSize)
     {
+        return this.WriteInner(BufWrite, Position, CheckSize);
+    }
+    Read(Position, DataSize)
+    {
+        return this.ReadInner(Position, DataSize);
+    }
+    
+    WriteInner(BufWrite, Position, CheckSize)
+    {
         var FI = this.OpenDBFile(this.FileName, 1);
-        if(!Position)
+        
+        if(Position === undefined)
         {
             if(!FI.size)
                 FI.size = 100
@@ -49,7 +77,7 @@ module.exports = class CDBItem extends require("./db")
         return Position;
     }
     
-    Read(Position, DataSize)
+    ReadInner(Position, DataSize)
     {
         Position = Math.trunc(Position)
         
@@ -62,10 +90,15 @@ module.exports = class CDBItem extends require("./db")
         return BufRead;
     }
     
-    Size()
+    GetSize()
     {
         var FI = this.OpenDBFile(this.FileName);
         return FI.size;
+    }
+    
+    Size()
+    {
+        return this.GetSize();
     }
     
     Truncate(Pos)

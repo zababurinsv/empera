@@ -24,6 +24,7 @@ function InitClass(Engine)
 {
     Engine.StartHandShake = function (Child)
     {
+        
         var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
         };
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
@@ -73,6 +74,7 @@ function InitClass(Engine)
         Engine.LinkHotItem(Child);
         
         Engine.OnAddConnect(Child);
+        
         return {result:1};
     };
     

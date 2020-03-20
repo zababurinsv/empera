@@ -45,6 +45,9 @@ function DoNode(Engine)
             Engine.SendConnectReq(Child);
         }
     }
+    else
+        if(Engine.NodesTree.size === 0 && Engine.TickNum > 10)
+            Engine.WasSendToGenesis = 0;
     for(var i = 0; i < Engine.ConnectArray.length; i++)
     {
         var Child = Engine.ConnectArray[i];
@@ -59,8 +62,10 @@ function DoNode(Engine)
             var DeltaTime = Date.now() - Child.ConnectStart;
             if(DeltaTime > MAX_CONNECT_TIMEOUT)
             {
-                global.DEBUG_ID === "HOT" && Child.ToLog("StartDisconnect #0  i=" + i);
-                Engine.StartDisconnect(Child, 1);
+                
+                var StrError = "MAX_CONNECT_TIMEOUT StartDisconnect #" + i + "  DeltaTime=" + DeltaTime;
+                global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+                Engine.StartDisconnect(Child, 1, StrError);
             }
             continue;
         }
@@ -89,8 +94,9 @@ function DoNode(Engine)
         {
             if(Child.InComeConnect)
             {
-                global.DEBUG_ID === "HOT" && Child.ToLog("StartDisconnect 1 Num:" + Child.ConnectNum + " port:" + Child._port);
-                Engine.StartDisconnect(Child, 1);
+                var StrError = "StartDisconnect 1 Num:" + Child.ConnectNum + " port:" + Child._port;
+                global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+                Engine.StartDisconnect(Child, 1, StrError);
                 Engine.DenyHotConnection(Child);
             }
         }
@@ -98,8 +104,9 @@ function DoNode(Engine)
         {
             if(!Child.InComeConnect)
             {
-                global.DEBUG_ID === "HOT" && Child.ToLog("StartDisconnect 2 Num: " + Child.ConnectNum);
-                Engine.StartDisconnect(Child, 1);
+                var StrError = "StartDisconnect 2 Num: " + Child.ConnectNum;
+                global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+                Engine.StartDisconnect(Child, 1, StrError);
                 Engine.DenyHotConnection(Child);
             }
         }
@@ -169,12 +176,12 @@ function InitClass(Engine)
     {
     };
     
-    Engine.StartDisconnect = function (Child,bSend)
+    Engine.StartDisconnect = function (Child,bSend,StrError)
     {
-        Engine.DisconnectHot(Child, bSend);
+        Engine.DisconnectLevel(Child, bSend);
         if(bSend && Child.IsOpen())
         {
-            Engine.CloseConnectionToChild(Child);
+            Engine.CloseConnectionToChild(Child, StrError);
             Engine.OnDeleteConnect(Child);
         }
         else
@@ -188,7 +195,7 @@ function InitClass(Engine)
         if(Engine.InHotStart(Child))
             Engine.DenyHotConnection(Child);
         
-        Engine.DisconnectHot(Child, 0);
+        Engine.DisconnectLevel(Child, 0);
         
         if(Engine.OnDeleteConnectNext)
             Engine.OnDeleteConnectNext(Child, StrError);

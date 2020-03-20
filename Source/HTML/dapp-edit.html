@@ -979,7 +979,7 @@
                         var Smart=SetData.arr[0];
                         $("idSmartOwner").value=Smart.Owner;
                         $("idSmartAccount").value=Smart.Account;
-                        if(MapAccounts[Smart.Owner] && Smart.BaseState.HTMLBlock!==undefined && Smart.BaseState.HTMLTr!==undefined)
+                        if(MapAccounts[Smart.Owner] && Smart.BaseState && Smart.BaseState.HTMLBlock!==undefined && Smart.BaseState.HTMLTr!==undefined)
                             $("idSmartHTMLMode").value=1;
                         else
                             $("idSmartHTMLMode").value=0;

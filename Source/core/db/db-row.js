@@ -113,7 +113,6 @@ module.exports = class CDBRow extends require("./db")
             var bytesRead = fs.readSync(FI.fd, BufRead, 0, BufRead.length, Position);
             if(bytesRead !== BufRead.length)
                 return undefined;
-            this.SetMap(Num, BufRead)
         }
         
         if(GetBufOnly)
@@ -292,9 +291,9 @@ module.exports = class CDBRow extends require("./db")
         this.BufMapCount = 0
     }
     
-    Close()
+    Close(bDel)
     {
         this.ClearBufMap()
-        this.CloseDBFile(this.FileName)
+        this.CloseDBFile(this.FileName, bDel)
     }
 };

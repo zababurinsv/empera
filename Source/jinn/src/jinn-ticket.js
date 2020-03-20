@@ -69,8 +69,10 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(!Child || !Child.IsHot() || Child.HotStart)
+            if(!Child || !Child.IsHot() || !Child.IsOpen() || Child.HotStart)
                 continue;
+            
+            Child.SetLastCache(BlockNum);
             var ChildMap = Child.GetCacheByBlockNum(BlockNum);
             
             var Arr = [];
@@ -92,10 +94,10 @@ function InitClass(Engine)
             if(!Arr.length)
                 continue;
             
-            Engine.Send("TRANSFERTT", Child, {BlockNum:BlockNum, TxArr:Arr});
+            Engine.Send("TRANSFERTT", Child, {Cache:Child.CahcheVersion, BlockNum:BlockNum, TxArr:Arr});
         }
     };
-    Engine.TRANSFERTT_SEND = {BlockNum:"uint", TxArr:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH]};
+    Engine.TRANSFERTT_SEND = {Cache:"uint", BlockNum:"uint32", TxArr:["arr" + JINN_CONST.TX_TICKET_HASH_LENGTH]};
     Engine.TRANSFERTT = function (Child,Data)
     {
         
@@ -111,6 +113,8 @@ function InitClass(Engine)
         Engine.CheckHotConnection(Child);
         if(!Child || !Child.IsHot() || Child.HotStart)
             return ;
+        
+        Child.CheckCache(Data.Cache, BlockNum);
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var Tree = Engine.GetTreeTicket(BlockNum);
         
@@ -135,8 +139,11 @@ function InitClass(Engine)
                 Engine.AddTxToTree(Tree, Tt);
             }
         }
-        
-        Engine.SendTicket(BlockNum);
+        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_TICKET;
+        if(BlockNum !== CurBlockNum)
+        {
+            Engine.SendTicket(BlockNum);
+        }
     };
     
     Engine.GetTicket = function (HashTicket,Key,Num)
@@ -144,14 +151,5 @@ function InitClass(Engine)
         var Tx = {HashTicket:HashTicket, KEY:Key, num:Num};
         Engine.FillTicket(Tx);
         return Tx;
-    };
-    Engine.FillTicket = function (Tx)
-    {
-        var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        for(var i = 0; i < JINN_CONST.TX_TICKET_HASH_LENGTH; i++)
-            FullHashTicket[i] = Tx.HashTicket[i];
-        WriteUintToArrOnPos(FullHashTicket, Tx.num, JINN_CONST.TX_TICKET_HASH_LENGTH);
-        Tx.HashPow = sha3(FullHashTicket);
-        Tx.TimePow = Engine.GetPowPower(Tx.HashPow);
     };
 }

@@ -703,7 +703,7 @@ HTTPCaller.GetHashList = function (Params)
         item.BlockNum = item.Num * PERIOD_ACCOUNT_HASH;
         
         item.Hash100 = [];
-        if(item.BlockNum % 100 === 0)
+        if(item.BlockNum % 100 === 0 && SERVER.DBHeader100)
         {
             var Data = SERVER.DBHeader100.Read(item.BlockNum / 100);
             if(Data)
@@ -771,7 +771,8 @@ HTTPCaller.GetWalletInfo = function (Params)
         CONSTANTS:Constants, CheckPointBlockNum:CHECK_POINT.BlockNum, MiningAccount:global.GENERATE_BLOCK_ACCOUNT, CountMiningCPU:GetCountMiningCPU(),
         CountRunCPU:global.ArrMiningWrk.length, MiningPaused:global.MiningPaused, HashRate:HashRateOneSec, MIN_POWER_POW_TR:MIN_POWER_POW_TR,
         PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NWMODE:global.NWMODE, PERIOD_ACCOUNT_HASH:PERIOD_ACCOUNT_HASH, MAX_ACCOUNT_HASH:DApps.Accounts.DBAccountsHash.GetMaxNum(),
-        TXBlockNum:TXBlockNum, SpeedSignLib:global.SpeedSignLib, NETWORK:global.NETWORK, RestContext:RestContext, };
+        TXBlockNum:TXBlockNum, SpeedSignLib:global.SpeedSignLib, NETWORK:global.NETWORK, RestContext:RestContext, JINN_NET_CONSTANT:global.JINN_NET_CONSTANT,
+    };
     
     if(Params.Account)
         Ret.PrivateKey = GetHexFromArr(WALLET.GetPrivateKey(WALLET.AccountMap[Params.Account]));
@@ -1060,22 +1061,35 @@ HTTPCaller.SetCheckNetConstant = function (Data)
     if(Ret !== true)
         return Ret;
     
-    if(!Data)
+    if(!Data || !Data.TERA)
     {
         ToLogClient("Data not set");
         return {result:0, text:"Data not set"};
     }
     
-    Data.Num = GetCurrentBlockNumByTime();
-    Data.BlockNum = GetCurrentBlockNumByTime() + 10;
-    var SignArr = SERVER.GetSignCheckNetConstant(Data);
-    Data.Sign = secp256k1.sign(SHA3BUF(SignArr), WALLET.KeyPair.getPrivateKey('')).signature;
+    var Num = GetCurrentBlockNumByTime();
+    var BlockNum = GetCurrentBlockNumByTime() + 10;
+    if(JINN)
+    {
+        var DataJinn = Data.JINN;
+        DataJinn.NetConstVer = Num;
+        DataJinn.NetConstStartNum = BlockNum;
+        var SignArr = JINN.GetSignCheckNetConstant(DataJinn);
+        DataJinn.NET_SIGN = secp256k1.sign(SHA3BUF(SignArr), WALLET.KeyPair.getPrivateKey('')).signature;
+        JINN.CheckNetConstant(DataJinn);
+    }
+    else
+    {
+        var DataTera = Data.TERA;
+        DataTera.Num = Num;
+        DataTera.BlockNum = BlockNum;
+        var SignArr = SERVER.GetSignCheckNetConstant(DataTera);
+        DataTera.Sign = secp256k1.sign(SHA3BUF(SignArr), WALLET.KeyPair.getPrivateKey('')).signature;
+        SERVER.CheckNetConstant({NetConstant:DataTera}, {addrStr:"local"});
+        SERVER.ResetNextPingAllNode();
+    }
     
-    SERVER.CheckNetConstant({NetConstant:Data}, {addrStr:"local"});
-    
-    SERVER.ResetNextPingAllNode();
-    
-    return {result:1, text:"Set NET_CONSTANT BlockNum=" + Data.BlockNum};
+    return {result:1, text:"Set NET_CONSTANT BlockNum=" + BlockNum};
 }
 
 HTTPCaller.SetCheckDeltaTime = function (Data)
@@ -2213,7 +2227,7 @@ if(global.HTTP_PORT_NUMBER)
         
         SetSafeResponce(response);
         
-        if(!global.SERVER)
+        if(!global.SERVER || global.SERVER.CanSend !== 2)
         {
             response.writeHead(404, {'Content-Type':'text/html'});
             response.end("");
@@ -2629,6 +2643,11 @@ function GetTransactionFromBody(Params,Block,TrNum,Body)
         ConvertBufferToStr(TR);
         TR.result = 1;
         TR.Meta = Params.Meta;
+        
+        if(global.JINN_MODE)
+        {
+            JINN.DBResult.CheckLoadResult(Block);
+        }
         
         if(Block.VersionBody === 1 && Block.arrContentResult)
         {

@@ -47,6 +47,9 @@ module.exports = class CDB extends require("../code")
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
         
+        if(global.JINN_MODE)
+            return ;
+        
         var bWriteMode = (global.PROCESS_NAME === "MAIN");
         
         global.DB_VERSION = DEFAULT_DB_VERSION
@@ -153,7 +156,7 @@ module.exports = class CDB extends require("../code")
                 continue;
             }
             
-            var SumHash = shaarr2(PrevBlock.SumHash, Block.Hash);
+            var SumHash = CalcSumHash(PrevBlock.SumHash, Block.Hash, Block.BlockNum, Block.SumPow);
             if(CompareArr(SumHash, Block.SumHash) === 0)
             {
                 delta = 1
@@ -173,10 +176,9 @@ module.exports = class CDB extends require("../code")
     CheckBlocksOnStartFoward(StartNum, bCheckBody)
     {
         var PrevBlock;
-        if(StartNum < this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2)
-            StartNum = this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2
-        
-        var MaxNum = DApps.Accounts.GetHashedMaxBlockNum();
+        if(StartNum < this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2 - 1)
+            StartNum = this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2 - 1
+        var MaxNum = this.BlockNumDB;
         var BlockNumTime = GetCurrentBlockNumByTime();
         if(BlockNumTime < MaxNum)
             MaxNum = BlockNumTime
@@ -207,23 +209,31 @@ module.exports = class CDB extends require("../code")
             
             if(PrevBlock)
             {
-                if(arr.length !== BLOCK_PROCESSING_LENGTH)
+                var PrevHash;
+                if(Block.BlockNum < global.UPDATE_CODE_JINN_1)
                 {
-                    var start = num - BLOCK_PROCESSING_LENGTH2;
-                    for(var n = 0; n < BLOCK_PROCESSING_LENGTH; n++)
+                    if(arr.length !== BLOCK_PROCESSING_LENGTH)
                     {
-                        var Prev = this.ReadBlockHeaderDB(start + n);
+                        var start = num - BLOCK_PROCESSING_LENGTH2;
+                        for(var n = 0; n < BLOCK_PROCESSING_LENGTH; n++)
+                        {
+                            var Prev = this.ReadBlockHeaderDB(start + n);
+                            arr.push(Prev.Hash)
+                        }
+                    }
+                    else
+                    {
+                        arr.shift()
+                        var Prev = this.ReadBlockHeaderDB(num - BLOCK_PROCESSING_LENGTH - 1);
                         arr.push(Prev.Hash)
                     }
+                    
+                    PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum)
                 }
                 else
                 {
-                    arr.shift()
-                    var Prev = this.ReadBlockHeaderDB(num - BLOCK_PROCESSING_LENGTH - 1);
-                    arr.push(Prev.Hash)
+                    PrevHash = Block.PrevHash
                 }
-                
-                var PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum);
                 var SeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
                 
                 var Value = GetHashFromSeqAddr(SeqHash, Block.AddrHash, Block.BlockNum, PrevHash);
@@ -233,8 +243,7 @@ module.exports = class CDB extends require("../code")
                     ToLog("=================== FIND ERR Hash in " + Block.BlockNum + "  bCheckBody=" + bCheckBody)
                     return num > 0 ? num - 1 : 0;
                 }
-                
-                var SumHash = shaarr2(PrevBlock.SumHash, Block.Hash);
+                var SumHash = CalcSumHash(PrevBlock.SumHash, Block.Hash, Block.BlockNum, Block.SumPow);
                 if(CompareArr(SumHash, Block.SumHash) !== 0)
                 {
                     ToLog("=================== FIND ERR SumHash in " + Block.BlockNum)
@@ -255,9 +264,6 @@ module.exports = class CDB extends require("../code")
             ToLogTrace("ERROR WRITE TrCount BLOCK:" + Block.BlockNum)
             throw "ERROR WRITE";
         }
-        
-        if(Block.LinkHash)
-            Block.PrevHash = Block.LinkHash
         
         var Ret = this.WriteBodyDB(Block);
         if(Ret)
@@ -399,7 +405,8 @@ module.exports = class CDB extends require("../code")
                 throw "ERR: PREV BLOCK NOT FOUND";
                 return false;
             }
-            Block.SumHash = shaarr2(PrevBlock.SumHash, Block.Hash)
+            Block.PrevSumHash = PrevBlock.SumHash
+            Block.SumHash = CalcSumHash(Block.PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow)
             Block.SumPow = PrevBlock.SumPow + GetPowPower(Block.PowHash)
         }
         
@@ -466,6 +473,9 @@ module.exports = class CDB extends require("../code")
     {
         return ;
         this.DBHeader100.Truncate(Math.trunc(LastBlock.BlockNum / 100))
+    }
+    CheckLoadBody(Block)
+    {
     }
     ReadBlockDB(Num)
     {
@@ -697,6 +707,9 @@ module.exports = class CDB extends require("../code")
     
     Close()
     {
+        if(global.JINN_MODE)
+            return ;
+        
         this.ClearBufMap()
         this.ReadStateTX()
         

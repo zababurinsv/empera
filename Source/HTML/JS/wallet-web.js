@@ -21,11 +21,10 @@ var NETWORK_NAME = "TERA-MAIN";
 var ServerMap = {};
 var ServerMainMap = {"127.0.0.1":{"ip":"127.0.0.1", "port":80, "Name":"LOCAL"}, "terawallet.org":{"ip":"terawallet.org", "port":443,
         "Name":"terawallet", "System":1}, "teraexplorer.org":{"ip":"teraexplorer.org", "port":443, "Name":"teraexplorer", "System":1},
-    "t2.teraexplorer.com":{"ip":"t2.teraexplorer.com", "port":443, "Name":"t2.teraexplorer.com", "System":1}, "t3.teraexplorer.com":{"ip":"t3.teraexplorer.com",
-        "port":443, "Name":"t3.teraexplorer.com", "System":1}, "t4.teraexplorer.com":{"ip":"t4.teraexplorer.com", "port":443, "Name":"t4.teraexplorer.com",
-        "System":1}, "t5.teraexplorer.com":{"ip":"t5.teraexplorer.com", "port":443, "Name":"t5.teraexplorer.com", "System":1}, "dappsgate.com":{"ip":"dappsgate.com",
-        "port":80, "Name":"SUPPORT2", "System":1}, "t1.teraexplorer.com":{"ip":"t1.teraexplorer.com", "port":80, "Name":"t1.teraexplorer.com",
-        "System":1}, };
+    "t2.teraexplorer.com":{"ip":"t2.teraexplorer.com", "port":443, "Name":"t2.teraexplorer.com", "System":1}, "t4.teraexplorer.com":{"ip":"t4.teraexplorer.com",
+        "port":443, "Name":"t4.teraexplorer.com", "System":1}, "t5.teraexplorer.com":{"ip":"t5.teraexplorer.com", "port":443, "Name":"t5.teraexplorer.com",
+        "System":1}, "dappsgate.com":{"ip":"dappsgate.com", "port":80, "Name":"SUPPORT2", "System":1}, "t1.teraexplorer.com":{"ip":"t1.teraexplorer.com",
+        "port":80, "Name":"t1.teraexplorer.com", "System":1}, };
 var ServerTestMap = {"127.0.0.1":{"ip":"127.0.0.1", "port":80, "Name":"LOCAL"}, "dappsgate.com":{"ip":"dappsgate.com", "port":88,
         "Name":"SUPPORT1", "System":1}, };
 
@@ -143,8 +142,23 @@ function LoopHandShake()
         DoNodeList(Item);
     }
 }
+function IsCorrectDomenName(ip)
+{
+    var Arr = ip.match(/[\w\.]/g);
+    if(!Arr || !ip || Arr.length !== ip.length)
+    {
+        return 0;
+    }
+    return 1;
+}
+
 function DoNodeList(Item)
 {
+    if(!IsCorrectDomenName(Item.ip))
+    {
+        console.log("Not correct ip: " + Item.ip);
+        return ;
+    }
     
     if(window.location.protocol === "https:" && Item.port !== 443)
         return ;
@@ -310,7 +324,7 @@ function FindLider()
         {
             Item.Stat++;
             
-            SetStatus("Find " + Item.ip + ":" + Item.port + " pow=" + Item.SumPower + "  t:" + Item.DeltaTime2 + " ms");
+            SetStatus("Node found " + Item.ip + ":" + Item.port + " pow=" + Item.SumPower + "  t:" + Item.DeltaTime2 + " ms");
             MainServer = Item;
             SaveServerMap();
             break;

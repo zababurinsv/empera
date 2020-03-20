@@ -71,7 +71,7 @@ WebApi2.CreateAccount = function (Params,response)
 
 
 var MapSendID = {};
-WebApi2.Send = function (Params,response,A,request,bJsonRet)
+WebApi2.Send = function (Params,response,A,request,nJsonRet)
 {
     if(typeof Params !== "object")
         return {result:0};
@@ -128,15 +128,21 @@ WebApi2.Send = function (Params,response,A,request,bJsonRet)
     var TR = {Type:111, Version:3, Reserve:0, FromID:FromNum, OperationID:OperationID, To:[{PubKey:ToPubKeyArr, ID:ToID, SumCOIN:Coin.SumCOIN,
             SumCENT:Coin.SumCENT}], Description:Params.Description, Body:[], };
     
-    if(bJsonRet)
+    if(nJsonRet === 1)
         return {result:1, Tx:TR};
     
     if(!Params.FromPrivKey)
         return {result:0, Meta:Params.Meta, text:"Params.FromPrivKey required"};
     TR.Sign = DApps.Accounts.GetSignTransferTx(TR, GetArrFromHex(Params.FromPrivKey));
     
-    var Body = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER3, MAX_TRANSACTION_SIZE, {}, 1);
+    var Body = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER3, GetTxSize(TR), {}, 1);
     Body = Body.slice(0, Body.len + 12);
+    
+    if(nJsonRet === 2)
+    {
+        CreateHashBodyPOWInnerMinPower(TR, Body, undefined, 0);
+        return {result:1, Tx:TR, Body:Body};
+    }
     
     SendTransaction(Body, TR, Confirm, function (result,text)
     {
@@ -304,7 +310,7 @@ WebApi2.SendRawTransaction = function (Params,response)
         
         var TR = Params.Tx;
         TxHexToArr(TR);
-        var Body = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER3, MAX_TRANSACTION_SIZE, {}, 1);
+        var Body = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER3, GetTxSize(TR), {}, 1);
         Body = Body.slice(0, Body.len + 12);
         
         SendTransaction(Body, TR, Params.Wait, function (result,text)
@@ -351,7 +357,8 @@ function TxHexToArr(TR)
     }
 }
 
-var DELTA_FOR_TIME_TX = 1;
+
+global.DELTA_FOR_TIME_TX = 1;
 
 function GetBlockNumTr(arr)
 {

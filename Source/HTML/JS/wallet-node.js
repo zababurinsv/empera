@@ -64,29 +64,6 @@ function CreateCheckPoint()
     SetCheckPoint(BlockNum);
 }
 
-function UseAutoCheckPoint()
-{
-    var Set = $("idUseAutoCheckPoint").checked;
-    var Period = ParseNum($("idPeriodAutoCheckPoint").value);
-    GetData("SetAutoCheckPoint", {Set:Set, Period:Period}, function (Data)
-    {
-        if(Data)
-        {
-            SetStatus(Data.text, !Data.result);
-        }
-    });
-}
-function UseAutoCorrTime()
-{
-    GetData("SetAutoCorrTime", document.getElementById("idUseAutoCorrTime").checked, function (Data)
-    {
-        if(Data)
-        {
-            SetStatus(Data.text, !Data.result);
-        }
-    });
-}
-
 function SetCodeVersionJSON()
 {
     var Data = JSON.parse(JSON.stringify(CONFIG_DATA.CODE_VERSION));
@@ -95,6 +72,7 @@ function SetCodeVersionJSON()
         Data.LevelUpdate = 16;
         Data.BlockPeriod = 3;
     }
+    
     Data.BlockNum = CONFIG_DATA.CurBlockNum;
     Data.addrArr = GetHexFromArr(Data.addrArr);
     Data.Hash = GetHexFromArr(Data.Hash);
@@ -103,7 +81,8 @@ function SetCodeVersionJSON()
     Data.Sign = undefined;
     Data.StartLoadVersionNum = undefined;
     
-    var Str = JSON.stringify(Data, "", 2);
+    var Data2 = CopyObjKeys({Service:"SetNewCodeVersion"}, Data);
+    var Str = JSON.stringify(Data2, "", 2);
     document.getElementById("idDevService").value = Str;
 }
 
@@ -122,20 +101,32 @@ function SetCorrTimeJSON()
     
     Data.EndBlockNum = Data.StartBlockNum + Math.floor(AutoDelta / Data.DeltaTime);
     
-    var Str = JSON.stringify(Data, "", 2);
+    var Data2 = CopyObjKeys({Service:"SetCheckDeltaTime"}, Data);
+    var Str = JSON.stringify(Data2, "", 2);
     document.getElementById("idDevService").value = Str;
 }
 function SetNetConstJSON()
 {
     var Str = JSON.stringify(Data, "", 2);
     document.getElementById("idDevService").value = Str;
-    var Data = {MaxTrasactionLimit:CONFIG_DATA.MAX_TRANSACTION_LIMIT, ProtocolVer:CONFIG_DATA.PROTOCOL_VER, ProtocolMode:CONFIG_DATA.PROTOCOL_MODE,
-        MaxLevel:CONFIG_DATA.MAX_LEVEL, };
-    var Str = JSON.stringify(Data, "", 2);
+    var Data = {TERA:{MaxTrasactionLimit:CONFIG_DATA.MAX_TRANSACTION_LIMIT, ProtocolVer:CONFIG_DATA.PROTOCOL_VER, ProtocolMode:CONFIG_DATA.PROTOCOL_MODE,
+            MaxLevel:CONFIG_DATA.MAX_LEVEL, }, JINN:CONFIG_DATA.JINN_NET_CONSTANT};
+    
+    if(Data.JINN)
+    {
+        delete Data.JINN.NetConstStartNum;
+        delete Data.JINN.NetConstVer;
+        delete Data.JINN.CHECK_POINT_HASH;
+        delete Data.JINN.RESERVE_DATA;
+        delete Data.JINN.NET_SIGN;
+    }
+    
+    var Data2 = CopyObjKeys({Service:"SetCheckNetConstant"}, Data);
+    var Str = JSON.stringify(Data2, "", 2);
     document.getElementById("idDevService").value = Str;
 }
 
-function SetNewCodeVersion()
+function RunDevelopService()
 {
     try
     {
@@ -143,57 +134,27 @@ function SetNewCodeVersion()
     }
     catch(e)
     {
-        SetError("Error format setting data");
+        SetError("Error JSON format setting data");
         return ;
     }
-    Data.addrArr = GetArrFromHex(Data.addrArr);
+    if(!Data.Service)
+    {
+        SetError("Error format setting - not found Service");
+        return ;
+    }
     
-    GetData("SetNewCodeVersion", Data, function (Data)
+    if(Data.addrArr)
+        Data.addrArr = GetArrFromHex(Data.addrArr);
+    
+    GetData(Data.Service, Data, function (Data)
     {
         if(Data)
         {
             SetStatus(Data.text, !Data.result);
         }
-    });
-}
-
-function StartTimeCorrect()
-{
-    try
-    {
-        var Data = JSON.parse(document.getElementById("idDevService").value);
-    }
-    catch(e)
-    {
-        SetError("Error format setting data");
-        return ;
-    }
-    
-    GetData("SetCheckDeltaTime", Data, function (Data)
-    {
-        if(Data)
+        else
         {
-            SetStatus(Data.text, !Data.result);
-        }
-    });
-}
-function StartNetConst()
-{
-    try
-    {
-        var Data = JSON.parse(document.getElementById("idDevService").value);
-    }
-    catch(e)
-    {
-        SetError("Error format setting data");
-        return ;
-    }
-    
-    GetData("SetCheckNetConstant", Data, function (Data)
-    {
-        if(Data)
-        {
-            SetStatus(Data.text, !Data.result);
+            ToError("Error");
         }
     });
 }

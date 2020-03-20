@@ -81,12 +81,6 @@ global.FORMAT_MONEY_TRANSFER3 = "{\
 const WorkStructTransfer3 = {};
 global.FORMAT_MONEY_TRANSFER_BODY3 = FORMAT_MONEY_TRANSFER3.replace("Sign:arr64,", "");
 
-global.FORMAT_ACCOUNT_HASH = "{\
-    Type:byte,\
-    BlockNum:uint,\
-    AccHash:buffer32,\
-    }";
-
 global.FORMAT_ACCOUNT_HASH3 = "{\
     Type:byte,\
     BlockNum:uint,\
@@ -215,13 +209,12 @@ class AccountApp extends require("./dapp")
         
         if(!bReadOnly)
             this.Start()
+        
         setInterval(this.ControlActSize.bind(this), 60 * 1000)
     }
     
     Start(bClean)
     {
-        if(global.LOCAL_RUN)
-            bClean = 1
         
         if(!bClean && this.DBState.GetMaxNum() + 1 >= BLOCK_PROCESSING_LENGTH2)
             return ;
@@ -234,14 +227,15 @@ class AccountApp extends require("./dapp")
         this.DBAccountsHash.Truncate( - 1)
         this.DBStateTX.Truncate( - 1)
         this.DBRest.Truncate( - 1)
-        this._DBStateWrite({Num:0, PubKey:[], Value:{BlockNum:1, SumCOIN:0.95 * TOTAL_SUPPLY_TERA}, Name:"System account"}, 1)
+        this.DBStateWriteInner({Num:0, PubKey:[], Value:{BlockNum:1, SumCOIN:0.95 * TOTAL_SUPPLY_TERA}, Name:"System account"}, 1)
         for(var i = 1; i < 8; i++)
-            this._DBStateWrite({Num:i, PubKey:[], Value:{BlockNum:1}, Name:""})
+            this.DBStateWriteInner({Num:i, PubKey:[], Value:{BlockNum:1}, Name:""})
         
-        this._DBStateWrite({Num:8, PubKey:GetArrFromHex(ARR_PUB_KEY[0]), Value:{BlockNum:1, SumCOIN:0.05 * TOTAL_SUPPLY_TERA}, Name:"Founder account"})
-        this._DBStateWrite({Num:9, PubKey:GetArrFromHex(ARR_PUB_KEY[1]), Value:{BlockNum:1, SumCOIN:0}, Name:"Developer account"})
+        this.DBStateWriteInner({Num:8, PubKey:GetArrFromHex(ARR_PUB_KEY[0]), Value:{BlockNum:1, SumCOIN:0.05 * TOTAL_SUPPLY_TERA},
+            Name:"Founder account"})
+        this.DBStateWriteInner({Num:9, PubKey:GetArrFromHex(ARR_PUB_KEY[1]), Value:{BlockNum:1, SumCOIN:0}, Name:"Developer account"})
         for(var i = 10; i < BLOCK_PROCESSING_LENGTH2; i++)
-            this._DBStateWrite({Num:i, PubKey:GetArrFromHex(ARR_PUB_KEY[i - 8]), Value:{BlockNum:1}, Name:""})
+            this.DBStateWriteInner({Num:i, PubKey:GetArrFromHex(ARR_PUB_KEY[i - 8]), Value:{BlockNum:1}, Name:""})
         
         this.DBStateTX.Write({Num:0, BlockNum:0})
         
@@ -249,6 +243,7 @@ class AccountApp extends require("./dapp")
         
         var FileItem = HistoryDB.OpenDBFile(FILE_NAME_HISTORY, 1);
         fs.ftruncateSync(FileItem.fd, 0)
+        FileItem.size = 0
         
         ToLog("MAX_NUM:" + this.DBState.GetMaxNum())
     }
@@ -307,7 +302,7 @@ class AccountApp extends require("./dapp")
         ToLog("******************************FINISH FillRestDB")
     }
     
-    _DBStateWrite(Data, BlockNum)
+    DBStateWriteInner(Data, BlockNum)
     {
         this.CheckRestDB()
         
@@ -323,7 +318,7 @@ class AccountApp extends require("./dapp")
         this.DBRest.Write(RestData)
     }
     
-    _DBStateTruncate(Num)
+    DBStateTruncateInner(Num)
     {
         this.DBState.Truncate(Num)
         
@@ -565,6 +560,7 @@ class AccountApp extends require("./dapp")
                 Sum = Power * Power * SysBalance / TOTAL_SUPPLY_TERA / 100
             }
             
+            var OperationNum = 0;
             var CoinTotal = {SumCOIN:0, SumCENT:0};
             var CoinSum = COIN_FROM_FLOAT(Sum);
             if(!ISZERO(CoinSum))
@@ -578,26 +574,37 @@ class AccountApp extends require("./dapp")
                         var K = (REF_PERIOD_END - Block.BlockNum) / (REF_PERIOD_END - REF_PERIOD_START);
                         var CoinAdv = COIN_FROM_FLOAT(Sum * K);
                         
-                        this.SendMoneyTR(Block, 0, Data.Adviser, CoinAdv, Block.BlockNum, 0xFFFF, "", "Adviser coin base [" + AccountID + "]", 1)
+                        OperationNum++
+                        this.SendMoneyTR(Block, 0, Data.Adviser, CoinAdv, Block.BlockNum, 0xFFFF, "", "Adviser coin base [" + AccountID + "]", 1, 0,
+                        OperationNum)
                         ADD(CoinTotal, CoinAdv)
                         
                         ADD(CoinSum, CoinAdv)
                     }
                 }
                 
-                this.SendMoneyTR(Block, 0, AccountID, CoinSum, Block.BlockNum, 0xFFFF, "", "Coin base", 1)
+                OperationNum++
+                this.SendMoneyTR(Block, 0, AccountID, CoinSum, Block.BlockNum, 0xFFFF, "", "Coin base", 1, 0, OperationNum)
                 ADD(CoinTotal, CoinSum)
                 
                 var CoinDevelop = CopyObjValue(CoinTotal);
                 DIV(CoinDevelop, 100)
                 if(!ISZERO(CoinDevelop))
-                    this.SendMoneyTR(Block, 0, 9, CoinDevelop, Block.BlockNum, 0xFFFF, "", "Developers support", 1)
+                {
+                    OperationNum++
+                    this.SendMoneyTR(Block, 0, 9, CoinDevelop, Block.BlockNum, 0xFFFF, "", "Developers support", 1, 0, OperationNum)
+                }
             }
         }
     }
     
     GetVerifyTransaction(Block, BlockNum, TrNum, Body)
     {
+        if(global.JINN_MODE)
+        {
+            JINN.DBResult.CheckLoadResult(Block)
+        }
+        
         if(Block.VersionBody === 1)
         {
             var Result = Block.arrContentResult[TrNum];
@@ -727,6 +734,10 @@ class AccountApp extends require("./dapp")
             CheckMinPower = 0
         }
         if(global.LOCAL_RUN || global.FORK_MODE)
+        {
+            CheckMinPower = 0
+        }
+        if(global.TEST_NETWORK && global.JINN_MODE)
         {
             CheckMinPower = 0
         }
@@ -999,6 +1010,24 @@ class AccountApp extends require("./dapp")
         else
             return Item.BlockNum;
     }
+    GetLastBlockNumAct()
+    {
+        var DBAct;
+        var MaxNum = this.DBAct.GetMaxNum();
+        if(MaxNum ===  - 1)
+            DBAct = this.DBActPrev
+        else
+            DBAct = this.DBAct
+        var MaxNum = DBAct.GetMaxNum();
+        if(MaxNum ===  - 1)
+            return  - 1;
+        
+        var Item = DBAct.Read(MaxNum);
+        if(!Item)
+            return  - 1;
+        else
+            return Item.BlockNum;
+    }
     
     DeleteAct(BlockNumFrom)
     {
@@ -1060,31 +1089,35 @@ class AccountApp extends require("./dapp")
                 continue;
             Map[Item.ID] = 1
             
-            if(Item.Mode === 1)
+            if(Item.Mode === 100)
             {
-                
-                if(!NumTruncateState)
-                    NumTruncateState = Item.ID
             }
             else
-            {
-                var Data = this.DBState.Read(Item.ID);
-                Data.Value = Item.PrevValue
-                this._DBStateWrite(Data, Item.BlockNum, 1)
-                var History = this.DBStateHistory.Read(Item.ID);
-                if(History)
+                if(Item.Mode === 1)
                 {
-                    History.NextPos = Item.PrevValue.NextPos
-                    this.DBStateHistory.Write(History)
+                    
+                    if(!NumTruncateState)
+                        NumTruncateState = Item.ID
                 }
-            }
+                else
+                {
+                    var Data = this.DBState.Read(Item.ID);
+                    Data.Value = Item.PrevValue
+                    this.DBStateWriteInner(Data, Item.BlockNum, 1)
+                    var History = this.DBStateHistory.Read(Item.ID);
+                    if(History)
+                    {
+                        History.NextPos = Item.PrevValue.NextPos
+                        this.DBStateHistory.Write(History)
+                    }
+                }
         }
         
         if(bWas)
         {
             if(NumTruncateState)
             {
-                this._DBStateTruncate(NumTruncateState - 1)
+                this.DBStateTruncateInner(NumTruncateState - 1)
                 this.DBStateHistory.Truncate(NumTruncateState - 1)
             }
             DBAct.Truncate(StartNum - 1)
@@ -1467,10 +1500,15 @@ class AccountApp extends require("./dapp")
                 Mode:Account.New};
             this.DBAct.Write(BackLog)
         }
+        if(arr.length === 0)
+        {
+            var BackLog = {Num:undefined, ID:0, BlockNum:BlockNum, PrevValue:{}, TrNum:0, Mode:100};
+            this.DBAct.Write(BackLog)
+        }
         for(var i = 0; i < arr.length; i++)
         {
             var Account = arr[i];
-            this._DBStateWrite(Account, BlockNum, 0)
+            this.DBStateWriteInner(Account, BlockNum, 0)
         }
         for(var i = 0; i < arr.length; i++)
         {
@@ -1490,6 +1528,7 @@ class AccountApp extends require("./dapp")
                 process.send({cmd:"DappEvent", Data:Data})
             }
         }
+        
         SetTickCounter(0)
         this.DBChanges = undefined
         
@@ -1525,6 +1564,7 @@ class AccountApp extends require("./dapp")
         {
             DBChanges.BlockEvent.push(DBChanges.TREvent[i])
         }
+        
         SetTickCounter(0)
         return true;
     }
@@ -1609,7 +1649,7 @@ class AccountApp extends require("./dapp")
         Data.ChangeTrNum = TrNum
     }
     
-    SendMoneyTR(Block, FromID, ToID, CoinSum, BlockNum, TrNum, DescriptionFrom, DescriptionTo, OperationCount, bSmartMode)
+    SendMoneyTR(Block, FromID, ToID, CoinSum, BlockNum, TrNum, DescriptionFrom, DescriptionTo, OperationCount, bSmartMode, OperationNum)
     {
         FromID = ParseNum(FromID)
         ToID = ParseNum(ToID)
@@ -1712,15 +1752,14 @@ class AccountApp extends require("./dapp")
                 for(var j = 0; j < 33; j++)
                     Arr[Arr.length] = DataTo.PubKey[j]
             }
-            
-            var Body = BufLib.GetBufferFromObject(TR, format, MAX_TRANSACTION_SIZE, {});
+            var Body = BufLib.GetBufferFromObject(TR, format, GetTxSize(TR), {});
             
             for(var j = 0; j < Body.length; j++)
                 Arr[Arr.length] = Body[j]
         }
         else
         {
-            Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY, MAX_TRANSACTION_SIZE, {})
+            Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY, GetTxSize(TR), {})
         }
         
         var sigObj = secp256k1.sign(SHA3BUF(Arr), Buffer.from(PrivKey));

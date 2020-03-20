@@ -56,7 +56,15 @@ var KeyPair = crypto.createECDH('secp256k1');
 KeyPair.setPrivateKey(Buffer.from([77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77,
 77, 77, 77, 77, 77, 77, 77, 77, 77, 77]));
 global.SERVER = new CServerDB(KeyPair, undefined, undefined, false, true);
-
+if(global.JINN_MODE)
+{
+    SERVER.port = 0;
+    SERVER.ip = "0.0.0.0";
+    
+    var JinnLib = require("../jinn/tera");
+    var Map = {"Block":1, "BlockDB":1, "Log":1, };
+    JinnLib.Create(SERVER, Map);
+}
 
 
 global.TreeFindTX = new STreeBuffer(30 * 1000, CompareItemHashSimple, "string");
@@ -70,33 +78,57 @@ setInterval(function ()
     
     DoTXProcess();
 }
-, 10);
+, 20);
 
 var BlockTree = new STreeBuffer(30 * 1000, CompareItemHashSimple, "number");
 
 global.bShowDetail = 0;
 global.StopTxProcess = 0;
 var MinimalValidBlock = 0;
-var LastBlockNum = undefined;
+var glLastBlockNum = undefined;
+
+var CountProcessWait = 0;
+var CountProcessSkip = 0;
 function DoTXProcess()
 {
-    if(StopTxProcess)
+    if(CountProcessWait * 2 > CountProcessSkip)
+    {
+        CountProcessSkip++;
         return ;
+    }
     
-    if(LastBlockNum === undefined)
+    var Count = DoTXProcessNext();
+    if(Count)
+    {
+        CountProcessWait = 0;
+    }
+    else
+    {
+        CountProcessWait++;
+    }
+    CountProcessSkip = 0;
+}
+
+function DoTXProcessNext()
+{
+    var Count = 0;
+    if(StopTxProcess)
+        return Count;
+    
+    if(glLastBlockNum === undefined)
         InitTXProcess();
     var BlockMin = FindMinimal();
     if(!BlockMin)
     {
         if(bShowDetail)
             ToLog("!BlockMin");
-        return ;
+        return Count;
     }
     
     var StartTime = Date.now();
     
     if(bShowDetail)
-        ToLog("BlockMin: " + BlockMin.BlockNum + "  LastBlockNum=" + LastBlockNum);
+        ToLog("BlockMin: " + BlockMin.BlockNum + "  LastBlockNum=" + glLastBlockNum);
     var CountTX = 0;
     for(var Num = BlockMin.BlockNum; Num < BlockMin.BlockNum + 1000; Num++)
     {
@@ -105,11 +137,25 @@ function DoTXProcess()
         if(Delta >= 1000)
             break;
         
-        var Block = SERVER.ReadBlockDB(Num);
+        var Block = SERVER.ReadBlockHeaderDB(Num);
         if(!Block)
+            break;
+        
+        var LastBlockNumAct = DApps.Accounts.GetLastBlockNumAct();
+        if(LastBlockNumAct >= 0 && LastBlockNumAct + 1 < Num)
         {
+            var Delta = Num - LastBlockNumAct;
+            
             if(bShowDetail)
-                ToLog("!Block");
+                ToLog("************Skip on Block: " + LastBlockNumAct + " --" + Delta + "--> " + Num);
+            BlockTree.Clear();
+            break;
+        }
+        if(global.glStopTxProcessNum && Num >= global.glStopTxProcessNum)
+        {
+            if(!global.WasStopTxProcessNum)
+                ToLog("--------------------------------Stop TX AT NUM: " + Num);
+            global.WasStopTxProcessNum = 1;
             break;
         }
         if(!IsValidSumHash(Block))
@@ -126,18 +172,21 @@ function DoTXProcess()
         }
         if(Num > 0)
         {
-            var Block0 = SERVER.ReadBlockDB(Num - 1);
+            var Block0 = SERVER.ReadBlockHeaderDB(Num - 1);
             if(Block0)
             {
                 var Item0 = BlockTree.LoadValue(Block0.BlockNum, 1);
                 if(Item0 && CompareArr(Item0.SumHash, Block0.SumHash) !== 0)
                 {
+                    if(bShowDetail)
+                        ToLog("WAS_CHANGED_PREV_BLOCK = " + Block0.BlockNum);
                     break;
                 }
             }
         }
         
-        SERVER.BlockProcessTX(Block);
+        Count++;
+        SERVER.BlockProcessTX(Num);
         if(Num % 100000 === 0)
             ToLog("CALC: " + Num);
         
@@ -147,28 +196,30 @@ function DoTXProcess()
             ToLog("    CALC: " + Num + " SumHash: " + GetHexFromArr(Block.SumHash).substr(0, 12));
         
         BlockTree.SaveValue(Block.BlockNum, {BlockNum:Block.BlockNum, SumHash:Block.SumHash});
-        LastBlockNum = Block.BlockNum;
+        glLastBlockNum = Block.BlockNum;
     }
+    
+    return CountTX;
 }
 
 function FindMinimal()
 {
     
     var MaxNumBlockDB = SERVER.GetMaxNumBlockDB();
-    if(MaxNumBlockDB && MaxNumBlockDB < LastBlockNum)
+    if(MaxNumBlockDB && MaxNumBlockDB < glLastBlockNum)
     {
         if(bShowDetail)
-            ToLog("MaxNumBlockDB<LastBlockNum: " + MaxNumBlockDB + "<" + LastBlockNum);
-        LastBlockNum = MaxNumBlockDB - 1;
+            ToLog("MaxNumBlockDB<LastBlockNum: " + MaxNumBlockDB + "<" + glLastBlockNum);
+        glLastBlockNum = MaxNumBlockDB - 1;
         BlockTree.Clear();
     }
     
-    if(LastBlockNum < MinimalValidBlock)
-        LastBlockNum = MinimalValidBlock;
+    if(glLastBlockNum < MinimalValidBlock)
+        glLastBlockNum = MinimalValidBlock;
     
     if(bShowDetail)
-        ToLog("FindMinimal from LastBlockNum=" + LastBlockNum);
-    for(var Num = LastBlockNum; Num--; Num >= 0)
+        ToLog("FindMinimal from LastBlockNum=" + glLastBlockNum);
+    for(var Num = glLastBlockNum; Num--; Num >= 0)
     {
         if(Num < MinimalValidBlock)
             break;
@@ -203,7 +254,7 @@ function FindMinimal()
     if(bShowDetail)
         ToLog("MinimalValidBlock:" + MinimalValidBlock);
     
-    if(MinimalValidBlock === 0 && LastBlockNum > 0)
+    if(MinimalValidBlock === 0 && glLastBlockNum > 0)
     {
         RewriteAllTransactions();
     }
@@ -226,7 +277,7 @@ function IsValidSumHash(Block)
     if(!PrevBlock)
         return 0;
     
-    var SumHash2 = shaarr2(PrevBlock.SumHash, Block.Hash);
+    var SumHash2 = CalcSumHash(PrevBlock.SumHash, Block.Hash, Block.BlockNum, Block.SumPow);
     if(CompareArr(SumHash2, Block.SumHash) === 0)
         return 1;
     
@@ -239,39 +290,39 @@ function InitTXProcess()
     var StateTX = DApps.Accounts.DBStateTX.Read(0);
     if(!StateTX)
     {
-        LastBlockNum = 0;
+        glLastBlockNum = 0;
         var MaxNum = DApps.Accounts.DBAccountsHash.GetMaxNum();
         if(MaxNum > 0)
         {
             var Item = DApps.Accounts.DBAccountsHash.Read(MaxNum);
             if(Item)
             {
-                LastBlockNum = Item.BlockNum;
+                glLastBlockNum = Item.BlockNum;
             }
         }
         
-        ToLog("DETECT NEW VER on BlockNum=" + LastBlockNum, 2);
-        DApps.Accounts.DBStateTX.Write({Num:0, BlockNum:LastBlockNum, BlockNumMin:MinimalValidBlock});
+        ToLog("DETECT NEW VER on BlockNum=" + glLastBlockNum, 2);
+        DApps.Accounts.DBStateTX.Write({Num:0, BlockNum:glLastBlockNum, BlockNumMin:MinimalValidBlock});
     }
     StateTX = DApps.Accounts.DBStateTX.Read(0);
-    LastBlockNum = StateTX.BlockNum;
+    glLastBlockNum = StateTX.BlockNum;
     MinimalValidBlock = StateTX.BlockNumMin;
     
-    LastBlockNum = PERIOD_ACCOUNT_HASH * Math.trunc(LastBlockNum / PERIOD_ACCOUNT_HASH);
+    glLastBlockNum = PERIOD_ACCOUNT_HASH * Math.trunc(glLastBlockNum / PERIOD_ACCOUNT_HASH);
     
-    if(LastBlockNum > 100)
+    if(glLastBlockNum > 100)
     {
-        LastBlockNum = 1 + LastBlockNum - 100;
+        glLastBlockNum = 1 + glLastBlockNum - 100;
     }
     
     ToLog("Start CalcMerkleTree", 2);
     DApps.Accounts.CalcMerkleTree(1);
     ToLog("Finsih CalcMerkleTree", 2);
     
-    if(LastBlockNum <= 0)
+    if(glLastBlockNum <= 0)
         RewriteAllTransactions();
     else
-        ToLog("Start NUM = " + LastBlockNum, 2);
+        ToLog("Start NUM = " + glLastBlockNum, 2);
 }
 
 
@@ -283,8 +334,12 @@ function ClearDataBase()
     {
         DApps[key].ClearDataBase();
     }
-    LastBlockNum = 0;
+    glLastBlockNum = 0;
     BlockTree.Clear();
+    
+    if(JINN)
+        JINN.DBResult.Clear();
+    ToLog("Start num = " + glLastBlockNum, 2);
 }
 
 global.RewriteAllTransactions = RewriteAllTransactions;
@@ -297,13 +352,8 @@ function RewriteAllTransactions()
     }
     
     ToLog("*************RewriteAllTransactions");
-    for(var key in DApps)
-    {
-        DApps[key].ClearDataBase();
-    }
-    LastBlockNum = 0;
-    BlockTree.Clear();
-    ToLog("Start num = " + LastBlockNum, 2);
+    
+    ClearDataBase();
 }
 
 global.ReWriteDAppTransactions = ReWriteDAppTransactions;
@@ -315,10 +365,10 @@ function ReWriteDAppTransactions(Params)
     var EndNum = Params.EndNum;
     ToLog("ReWriteDAppTransactions: " + StartNum + " - " + EndNum);
     BlockTree.Clear();
-    if(StartNum < LastBlockNum)
-        LastBlockNum = StartNum;
+    if(StartNum < glLastBlockNum)
+        glLastBlockNum = StartNum;
     
-    ToLog("Start num = " + LastBlockNum, 2);
+    ToLog("Start num = " + glLastBlockNum, 2);
 }
 
 function TXPrepareLoadRest(BlockNum)
@@ -326,13 +376,9 @@ function TXPrepareLoadRest(BlockNum)
     StopTxProcess = 1;
     MinimalValidBlock = BlockNum;
     ToLog("*************TXPrepareLoadRest:" + BlockNum, 2);
-    for(var key in DApps)
-    {
-        DApps[key].ClearDataBase();
-    }
-    LastBlockNum = BlockNum;
-    BlockTree.Clear();
-    DApps.Accounts.DBStateTX.Write({Num:0, BlockNum:LastBlockNum, BlockNumMin:LastBlockNum});
+    ClearDataBase();
+    
+    DApps.Accounts.DBStateTX.Write({Num:0, BlockNum:glLastBlockNum, BlockNumMin:glLastBlockNum});
 }
 global.TXPrepareLoadRest = TXPrepareLoadRest;
 
@@ -346,7 +392,7 @@ function TXWriteAccArr(Params)
     {
         var Data = BufLib.GetObjectFromBuffer(Params.Arr[i], WorkFormat, WorkStruct);
         Data.Num = Params.StartNum + i;
-        DApps.Accounts._DBStateWrite(Data, MinimalValidBlock);
+        DApps.Accounts.DBStateWriteInner(Data, MinimalValidBlock);
     }
 }
 global.TXWriteAccArr = TXWriteAccArr;

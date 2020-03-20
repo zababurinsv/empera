@@ -12,7 +12,7 @@
 
 var fs = require("fs");
 
-const FORMAT_EVAL_SEND = "{MaxBlockNum:uint,Code:str,Sign:arr64}";
+
 
 module.exports = class CCode extends require("./base")
 {
@@ -20,7 +20,7 @@ module.exports = class CCode extends require("./base")
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
         
-        if(!global.ADDRLIST_MODE && !this.VirtualMode)
+        if(!global.ADDRLIST_MODE && !this.VirtualMode || global.TEST_JINN)
         {
             setInterval(this.CheckLoadCodeTime.bind(this), 10 * 1000)
         }
@@ -62,45 +62,37 @@ module.exports = class CCode extends require("./base")
         if(fs.existsSync(fname))
         {
             this.UseCode(VersionNum, false)
-            return ;
         }
-        
-        var Context = {"VersionNum":VersionNum};
-        this.SendF(Node, {"Method":"GETCODE", "Context":Context, "Data":VersionNum})
+        else
+        {
+            this.StartGetNewCode(Node, VersionNum)
+        }
     }
     
-    static
-    
-    GETCODE_F()
+    DownloadingNewCodeToPath(Node, Data, VersionNum)
     {
-        return "uint";
-    }
-    
-    RETCODE(Info)
-    {
-        
-        var VersionNum = Info.Context.VersionNum;
-        if(!VersionNum || !START_LOAD_CODE.StartLoad)
-            return ;
         var fname = GetDataPath("Update/wallet-" + VersionNum + ".zip");
         if(!fs.existsSync(fname))
         {
-            var Hash = shaarr(Info.Data);
+            var Hash = shaarr(Data);
             if(CompareArr(Hash, START_LOAD_CODE.StartLoad.Hash) === 0)
             {
                 var file_handle = fs.openSync(fname, "w");
-                fs.writeSync(file_handle, Info.Data, 0, Info.Data.length)
+                fs.writeSync(file_handle, Data, 0, Data.length)
                 fs.closeSync(file_handle)
                 
                 this.UseCode(VersionNum, global.USE_AUTO_UPDATE)
+                
+                return 1;
             }
             else
             {
-                ToError("Error check hash of version code :" + START_LOAD_CODE.StartLoadVersionNum + " from node: " + Info.Node.ip + ":" + Info.Node.port)
+                ToError("Error check hash of version code :" + START_LOAD_CODE.StartLoadVersionNum + " from node: " + Node.ip + ":" + Node.port)
                 this.ClearLoadCode()
-                this.AddCheckErrCount(Info.Node, 1, "Error check hash of version code")
+                return 0;
             }
         }
+        return 1;
     }
     
     UseCode(VersionNum, bUpdate)
@@ -147,6 +139,26 @@ module.exports = class CCode extends require("./base")
         {
             return "File not exist: " + fname;
         }
+    }
+    StartGetNewCode(Node, VersionNum)
+    {
+        var Context = {"VersionNum":VersionNum};
+        this.SendF(Node, {"Method":"GETCODE", "Context":Context, "Data":VersionNum})
+    }
+    static
+    GETCODE_F()
+    {
+        return "uint";
+    }
+    RETCODE(Info)
+    {
+        
+        var VersionNum = Info.Context.VersionNum;
+        if(!VersionNum || !START_LOAD_CODE.StartLoad)
+            return ;
+        
+        if(!this.DownloadingNewCodeToPath(Info.Node, Info.Data, VersionNum))
+            this.AddCheckErrCount(Info.Node, 1, "Error check hash of version code")
     }
 };
 

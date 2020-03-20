@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-window.CLIENT_VERSION = 16;
+window.CLIENT_VERSION = 17;
 
 function $(id)
 {
@@ -357,7 +357,7 @@ function GetArrFromHex(Str)
 var HexStr = "0123456789ABCDEF";
 function GetHexFromArr(arr)
 {
-    if(!(arr instanceof Array) && arr.data)
+    if(arr && !(arr instanceof Array) && arr.data)
         arr = arr.data;
     
     var Str = "";
@@ -662,6 +662,7 @@ function CopyObjKeys(dest,src)
     {
         dest[key] = src[key];
     }
+    return dest;
 }
 
 function SaveToArr(Arr,Obj)
@@ -1047,7 +1048,7 @@ function RetOpenBlock(BlockNum,bTrDataLen)
 {
     if(BlockNum && bTrDataLen)
     {
-        if(bTrDataLen === 2)
+        if(bTrDataLen ===  - 1)
         {
             return '<a target="_blank" onclick="ViewTransaction(' + BlockNum + ')">' + BlockNum + '</a>';
         }
@@ -1357,6 +1358,8 @@ function LoadValuesByArr(Arr,DopStr)
     {
         var name = Arr[i];
         var Item = document.getElementById(name);
+        if(!Item)
+            continue;
         var name2 = DopStr + name;
         
         var value = Storage.getItem(name2);

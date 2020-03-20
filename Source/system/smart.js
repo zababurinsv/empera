@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 "use strict";
 
 require("../HTML/JS/lexer.js");
@@ -528,11 +529,12 @@ class SmartApp extends require("./dapp")
             
             var CanAdd = 1;
             var DataState = DApps.Accounts.ReadState(Data.Account);
-            if(DataState && !global.ALL_VIEW_ROWS)
+            if(DataState)
             {
                 Data.BaseState = DApps.Accounts.GetSmartState(DataState, Data.StateFormat)
-                if(typeof Data.BaseState === "object" && Data.BaseState.HTMLBlock === 404)
-                    CanAdd = 0
+                if(!global.ALL_VIEW_ROWS)
+                    if(typeof Data.BaseState === "object" && Data.BaseState.HTMLBlock === 404)
+                        CanAdd = 0
             }
             
             if(CanAdd)

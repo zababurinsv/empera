@@ -46,6 +46,7 @@ function InitClass(Engine)
         var Tx0 = Tree.find(Tx);
         if(Tx0)
         {
+            JINN_STAT.WasSendOnAddTxToTree++;
             return 3;
         }
         else
@@ -57,9 +58,13 @@ function InitClass(Engine)
                 Tree.remove(maxitem);
                 
                 if(CompareArr(maxitem.HashPow, Tx.HashPow) === 0)
+                {
+                    JINN_STAT.NotAddTxToTree++;
                     return 0;
+                }
             }
             
+            JINN_STAT.AddToTreeTx++;
             return 1;
         }
     };
@@ -69,13 +74,16 @@ function InitClass(Engine)
         
         if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
         {
-            Child.ToError("Error Tx Arr length = " + TxArr.length);
+            Child.ToLog("Error Tx Arr length = " + TxArr.length, 4);
             TxArr.length = JINN_CONST.MAX_TRANSACTION_COUNT;
         }
     };
     Engine.IsValidateTx = function (Tx,StrCheckName,BlockNum)
     {
-        return CheckTx(StrCheckName, Tx, BlockNum, 1);
+        var Result = CheckTx(StrCheckName, Tx, BlockNum, 1);
+        if(!Result)
+            JINN_STAT.NoValidateTx++;
+        return Result;
     };
 }
 

@@ -1,0 +1,238 @@
+/*
+ * @project: JINN
+ * @version: 1.0
+ * @license: MIT (not for evil)
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * Telegram:  https://t.me/progr76
+*/
+
+/**
+ *
+ * The entry in the database (the base class, DB emulation)
+ *
+**/
+'use strict';
+global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, DoNode:DoNode, Name:"BlockDB"});
+
+var BWRITE_MODE = (global.PROCESS_NAME === "MAIN");
+
+//Engine context
+
+function InitClass(Engine)
+{
+    
+    Engine.InitDB = function ()
+    {
+        
+        if(BWRITE_MODE)
+            Engine.DB = new CDBBlockCache(Engine.ID, Engine.CalcBlockData);
+        else
+            Engine.DB = new CDBBodyCache(Engine.ID, Engine.CalcBlockData);
+        
+        Engine.DBResult = new CDBResult(Engine.ID);
+    };
+    Engine.Close = function ()
+    {
+        Engine.DB.Close();
+        Engine.DBResult.Close();
+    };
+    
+    Engine.WriteGenesisDB = function ()
+    {
+        for(var Num = 0; Num < JINN_CONST.BLOCK_GENESIS_COUNT; Num++)
+        {
+            var Block = Engine.GetGenesisBlock(Num);
+            Engine.SaveToDB(Block, 0, 1);
+        }
+    };
+    
+    Engine.GetBlockDB = function (BlockNum)
+    {
+        var Block = Engine.GetBlockHeaderDB(BlockNum);
+        Engine.CheckLoadBody(Block);
+        return Block;
+    };
+    
+    Engine.GetBlockHeaderDB = function (BlockNum,bRawMode,bMustHave)
+    {
+        var Block = Engine.GetBlockHeaderDBNext(BlockNum, bRawMode);
+        if(!Block && bMustHave)
+        {
+            ToLogTrace("Error find block in DB on Num = " + BlockNum);
+            var Block2 = Engine.GetBlockHeaderDBNext(BlockNum, bRawMode);
+        }
+        return Block;
+    };
+    
+    Engine.GetBlockHeaderDBNext = function (BlockNum,bRawMode)
+    {
+        var MaxNum = Engine.GetMaxNumBlockDB();
+        if(BlockNum > MaxNum)
+            return undefined;
+        
+        var Block = Engine.DB.ReadBlockMain(BlockNum);
+        return Block;
+    };
+    
+    Engine.SaveToDB = function (Block)
+    {
+        Block.BlockNum = Math.floor(Block.BlockNum);
+        if(global.TEST_DB_BLOCK)
+        {
+            var BlockNum = Block.BlockNum;
+            var MaxNum = Engine.GetMaxNumBlockDB();
+            if(BlockNum > MaxNum + 1)
+            {
+                ToLogTrace("Error SaveToDB Block.BlockNum>MaxNum+1   BlockNum=" + BlockNum + "  MaxNum=" + MaxNum);
+                return false;
+            }
+            
+            if(!IsZeroArr(Block.TreeHash) && !Block.TxData && !Block.TxPosition)
+            {
+                ToLogTrace("B=" + BlockNum + " SaveError Block TxPosition=" + Block.TxPosition);
+                return 0;
+            }
+            
+            var LinkSumHash = Engine.GetLinkDataFromDB(Block);
+            if(!IsEqArr(LinkSumHash, Block.LinkSumHash))
+            {
+                var Str = "SaveToDB: Error LinkSumHash: " + Block.LinkSumHash + " / " + LinkSumHash + " on block=" + BlockNum;
+                ToLogTrace(Str);
+                return 0;
+            }
+            
+            if(BlockNum > 0)
+            {
+                var PrevBlock = Engine.GetBlockHeaderDB(BlockNum - 1, 1, 1);
+                if(!PrevBlock)
+                {
+                    ToLogTrace("SaveToDB: Error PrevBlock on Block=" + BlockNum);
+                    var PrevBlock2 = Engine.GetBlockHeaderDB(BlockNum - 1, 1, 1);
+                    return 0;
+                }
+                
+                if(!Block.LinkSumHash)
+                {
+                    ToLogTrace("SaveToDB: Error LinkSumHash on Block=" + BlockNum);
+                    return 0;
+                }
+                if(PrevBlock.BlockNum !== BlockNum - 1)
+                {
+                    ToLogTrace("SaveToDB: Error PrevBlock.BlockNum on Block=" + BlockNum);
+                    return 0;
+                }
+                
+                var SumPow = PrevBlock.SumPow + Block.Power;
+                if(Block.SumPow !== SumPow)
+                {
+                    var Str = "SaveToDB: Error Sum POW: " + Block.SumPow + "/" + SumPow + " on block=" + BlockNum;
+                    Engine.ToLog(Str);
+                    return 0;
+                }
+                if(!IsEqArr(Block.PrevSumHash, PrevBlock.SumHash))
+                {
+                    var Str = "SaveToDB: Error PrevSumHash: " + Block.PrevSumHash + "/" + PrevBlock.SumHash + " on block=" + BlockNum;
+                    ToLogTrace(Str);
+                    return 0;
+                }
+            }
+        }
+        
+        var Result = Engine.WriteBlockDBInner(Block);
+        return Result;
+    };
+    
+    Engine.WriteBlockDBInner = function (Block)
+    {
+        return Engine.DB.WriteBlockMain(Block);
+    };
+    Engine.TruncateDB = function (LastBlockNum)
+    {
+        Engine.DB.TruncateDB(LastBlockNum);
+    };
+    
+    Engine.GetMaxNumBlockDB = function ()
+    {
+        return Engine.DB.GetMaxNumBlockDB();
+    };
+    
+    Engine.CheckLoadBody = function (Block)
+    {
+        if(!Block)
+            return ;
+        
+        if(NeedLoadBodyFromDB(Block))
+        {
+            Engine.DB.LoadBlockTx(Block);
+        }
+        for(var i = 0; Block.TxData && i < Block.TxData.length; i++)
+        {
+            var Item = Block.TxData[i];
+            if(Item.HASH)
+                break;
+            var Tx = Engine.GetTx(Item.body);
+            Block.TxData[i] = Tx;
+            CheckTx("GetBlock", Tx, Block.BlockNum);
+        }
+    };
+    
+    Engine.ClearDataBase = function ()
+    {
+        Engine.ToLog("START CLEARDATABASE");
+        
+        Engine.MaxLiderList = {};
+        Engine.Header1 = 0;
+        Engine.Header2 = 0;
+        Engine.Block1 = 0;
+        Engine.Block2 = 0;
+        
+        Engine.ListTreeTx = {};
+        Engine.ListTreeTicket = {};
+        Engine.BAN_IP = {};
+        
+        if(Engine.DB)
+            Engine.DB.Clear();
+        
+        Engine.InitDB();
+        Engine.InitBlockList();
+        
+        Engine.WriteGenesisDB();
+        for(var i = 0; i < Engine.LevelArr.length; i++)
+        {
+            var Child = Engine.LevelArr[i];
+            if(Child)
+            {
+                Child.CahcheVersion++;
+                Child.CacheAll = {};
+                Child.CacheBlockNumAll = {};
+                
+                Child.LastTransferTime = Date.now();
+                Child.FirstTransferTime = Date.now();
+            }
+        }
+    };
+}
+
+function DoNode(Engine)
+{
+    
+    if(Engine.TickNum % 10 === 0)
+    {
+        Engine.DB.DoNode();
+    }
+    
+    if(BWRITE_MODE)
+        Engine.DBResult.Close();
+}
+
+function InitAfter(Engine)
+{
+    Engine.InitDB();
+}
+function GetCopyObj(Obj)
+{
+    var Obj2 = {};
+    for(var key in Obj)
+        Obj2[key] = Obj[key];
+    return Obj2;
+}

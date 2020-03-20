@@ -26,21 +26,25 @@ function RunOnUpdate()
         
         SaveParams(fname, UpdateInfo);
         
-        if(global.LOCAL_RUN)
+        if(global.JINN_MODE)
         {
         }
         else
-            if(global.TEST_NETWORK)
+            if(global.LOCAL_RUN)
             {
             }
             else
-            {
-                
-                if(CurNum < 1417)
+                if(global.TEST_NETWORK)
                 {
-                    UpdateSumHash();
                 }
-            }
+                else
+                {
+                    
+                    if(CurNum < 1417)
+                    {
+                        UpdateSumHash();
+                    }
+                }
         ToLog("UPDATER Finish");
     }
 }

@@ -1205,7 +1205,7 @@ function OpenDappCard(Num)
     
     var Str = FillDappCard(StrDappCardTemplate, Item);
     Str = Str.replace("$Item.Account", RetBaseAccount(Item));
-    Str = Str.replace("$Item.BlockNum", RetOpenBlock(Item.BlockNum, 2));
+    Str = Str.replace("$Item.BlockNum", RetOpenBlock(Item.BlockNum,  - 1));
     Str = FillDappCategory(Str, Item, 1);
     Str = FillDappCategory(Str, Item, 2);
     Str = FillDappCategory(Str, Item, 3);

@@ -12,6 +12,7 @@
 var DELTA_LONG_MINING = 5000;
 var BLOCKNUM_ALGO2 = 6560000;
 var BLOCKNUM_HASH_NEW = 10195000;
+var BLOCKNUM_HASH_FIX = 70000000;
 var BLOCKNUM_TICKET_ALGO = 16070000;
 
 if(typeof global === "object")
@@ -24,20 +25,26 @@ if(typeof global === "object")
     global.XORArr = XORArr;
     
     global.GetHash = GetHash;
-    if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE)
+    if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE || global.JINN_MODE)
     {
         BLOCKNUM_ALGO2 = 0;
         
-        if(global.TEST_NETWORK)
+        if(global.JINN_MODE)
         {
-            BLOCKNUM_HASH_NEW = 100;
+            BLOCKNUM_HASH_NEW = 0;
             BLOCKNUM_TICKET_ALGO = 0;
         }
         else
-        {
-            BLOCKNUM_HASH_NEW = 100;
-            BLOCKNUM_TICKET_ALGO = 0;
-        }
+            if(global.TEST_NETWORK)
+            {
+                BLOCKNUM_HASH_NEW = 100;
+                BLOCKNUM_TICKET_ALGO = 0;
+            }
+            else
+            {
+                BLOCKNUM_HASH_NEW = 100;
+                BLOCKNUM_TICKET_ALGO = 0;
+            }
     }
 }
 
@@ -66,16 +73,10 @@ function GetHashFromSeqAddr(SeqHash,AddrHash,BlockNum,PrevHash,MiningVer)
         PrevHashNum = ReadUint32FromArr(AddrHash, 28);
     }
     
-    var Data = GetHash(SeqHash, PrevHashNum, BlockNum, MinerID, Nonce0, Nonce1, Nonce2, DeltaNum1, DeltaNum2);
+    if(BlockNum >= BLOCKNUM_HASH_FIX)
+        PrevHashNum = BlockNum;
     
-    if(MiningVer)
-    {
-        if(AddrHash[17] !== MiningVer || AddrHash[23] !== MiningVer)
-        {
-            Data.PowHash = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-            255, 255, 255, 255, 255, 255, 255, 255, 255, 255];
-        }
-    }
+    var Data = GetHash(SeqHash, PrevHashNum, BlockNum, MinerID, Nonce0, Nonce1, Nonce2, DeltaNum1, DeltaNum2);
     return Data;
 }
 
@@ -441,6 +442,11 @@ function GetBlockArrFromBuffer(BufRead,Info)
             Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash);
             var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
             var PrevAddrNum = ReadUint32FromArr(Block.AddrHash, 28);
+            if(Block.BlockNum >= BLOCKNUM_HASH_FIX)
+            {
+                PrevHashNum = Block.BlockNum;
+                PrevAddrNum = Block.BlockNum;
+            }
             if(PrevHashNum !== PrevAddrNum && Block.BlockNum > 20000000)
             {
                 if(global.WATCHDOG_DEV)
@@ -458,7 +464,7 @@ function GetBlockArrFromBuffer(BufRead,Info)
             Block.Power = GetPowPower(Block.PowHash);
             if(PrevBlock)
             {
-                Block.SumHash = shaarr2(PrevBlock.SumHash, Block.Hash);
+                Block.SumHash = CalcSumHash(PrevBlock.SumHash, Block.Hash, Block.BlockNum, Block.SumPow);
             }
             
             PrevBlock = Block;
@@ -488,50 +494,62 @@ function shaarrblock2(Value1,Value2,BlockNum)
 
 function GetSeqHash(BlockNum,PrevHash,TreeHash)
 {
-    var arr = [GetArrFromValue(BlockNum), PrevHash, TreeHash];
-    
-    if(!global.LOCAL_RUN)
-        return CalcHashFromArray(arr, true);
-    
-    // new code
-    return CalcHash3FromArray(arr, true);
+    return CalcDataHash(PrevHash, TreeHash, BlockNum);
 }
 
-function CalcLinkHashFromArray(ArrHashes,BlockNum,RetStruct)
+function CalcDataHash(PrevHash,TreeHash,BlockNum)
 {
-    if(!global.LOCAL_RUN)
-        return CalcHashFromArray(ArrHashes, true);
-    //new code
-    if(ArrHashes.length !== 8)
+    if(BlockNum >= global.UPDATE_CODE_JINN_1)
     {
-        ToLogTrace("Error CalcLinkHashFromArray ArrHashes.length=" + ArrHashes.length);
-        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        // new code
+        return sha3(PrevHash.concat(TreeHash));
+    }
+    else
+    {
+        // old code
+        var arr = [GetArrFromValue(BlockNum), PrevHash, TreeHash];
+        return CalcHashFromArray(arr, true);
+    }
+}
+
+function CalcBlockHash(Block,SeqHash,AddrHash,BlockNum)
+{
+    var Value = GetHashFromSeqAddr(SeqHash, AddrHash, BlockNum);
+    Block.Hash = Value.Hash;
+    Block.PowHash = Value.PowHash;
+    Block.Power = GetPowPower(Value.PowHash);
+}
+
+function CalcSumHash(PrevSumHash,Hash,BlockNum,SumPow)
+{
+    if(BlockNum >= global.UPDATE_CODE_JINN_1)
+    {
+        // new code
+        
+        if(SumPow === undefined)
+            ToLogTrace("Error: SumPow===undefined");
+        
+        var arr_sum_pow = [];
+        WriteUintToArr(arr_sum_pow, SumPow);
+        return sha3(PrevSumHash.concat(Hash).concat(arr_sum_pow));
+    }
+    else
+    {
+        // old code
+        return shaarr2(PrevSumHash, Hash);
+    }
+}
+
+function CalcLinkHashFromArray(ArrHashes,BlockNum)
+{
+    if(BlockNum >= global.UPDATE_CODE_JINN_1)
+    {
+        // new code
+        ToLogTrace("Error algo for new mode CalcLinkHashFromArray");
     }
     
-    var Buf = [];
-    for(var i = 0; i < 7; i++)
-    {
-        var Value = ArrHashes[i];
-        for(var n = 0; n < 32; n++)
-            Buf.push(Value[n]);
-    }
-    if(Buf.length !== 7 * 32)
-    {
-        ToLogTrace("Error CalcLinkHashFromArray Buf.length=" + Buf.length);
-        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    }
-    var LinkData = sha3(Buf);
-    var LinkRef = ArrHashes[7];
-    var LinkHash = sha3(LinkData.concat(LinkRef));
-    
-    if(RetStruct)
-    {
-        RetStruct.LinkData = LinkData;
-        RetStruct.LinkRef = LinkRef;
-        RetStruct.LinkHash = LinkHash;
-    }
-    
-    return LinkHash;
+    // old code
+    return CalcHashFromArray(ArrHashes, true);
 }
 
 function CalcHashFromArray(ArrHashes,bOriginalSeq)
@@ -627,6 +645,9 @@ if(typeof global === "object")
     global.CalcHash3FromArray = CalcHash3FromArray;
     global.CalcLinkHashFromArray = CalcLinkHashFromArray;
     global.CalcHashFromArray = CalcHashFromArray;
+    global.CalcSumHash = CalcSumHash;
+    global.CalcDataHash = CalcDataHash;
+    global.CalcBlockHash = CalcBlockHash;
     
     global.GetArrFromValue = GetArrFromValue;
 }

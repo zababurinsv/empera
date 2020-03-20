@@ -109,40 +109,39 @@
 //            {name:"MAX:CPU_USER_MODE",text:"USER MODE, мс",value:0,red:"#06A"},
 //            {name:"MAX:CPU_IDLE_MODE",text:"USER IDLE, мс",value:0,red:"#0A6"},
 
-            {name:"MAX:MEMORY_USAGE",text:"Mem usage, Mbyte",value:300},
+            {name:"MAX:MEMORY_USAGE",text:"Mem usage, Mbyte",value:400},
             {name:"MAX:MEMORY_FREE",text:"Mem free, Mbyte",value:0,red:"#a1c3b9"},
 
             //{name:"MAX:POWER-HASH**",text:"Hash Rate, Mh/s",value:0,red:"#95d6b9"},
-            {name:"HASHRATE",text:"Hash Rate, Mh/s",value:0,red:"#95d6b9"},
-            {name:"MAX:POWER",text:"MAX:POWER",value:0,red:"#95d6b9"},
-            {name:"POWER_MY_WIN",text:"POWER MY WIN",value:0,red:"#088a4a"},
-            {name:"POWER_BLOCKCHAIN",text:"POWER Blockchain",value:0,red:"#2b6311"},
+            // {name:"HASHRATE",text:"Hash Rate, Mh/s",value:0,red:"#95d6b9"},
+            // {name:"MAX:POWER",text:"MAX:POWER",value:0,red:"#95d6b9"},
+            // {name:"POWER_MY_WIN",text:"POWER MY WIN",value:0,red:"#088a4a"},
+            // {name:"POWER_BLOCKCHAIN",text:"POWER Blockchain",value:0,red:"#2b6311"},
 
             {isLine:true,text:"NETWORK"},
 
             {name:"GETDATA(KB)",text:"Packets receive, Kbyte",value:0,red:"#3b8a7f"},
             {name:"SENDDATA(KB)",text:"Packets send, Kbyte",value:0,red:"#2b1e8a"},
             //{name:"WRITECHAIN_TO_DB_COUNT",text:"Loaded blocks, count",value:0},
-            {name:"MAX:TRANSACTION_COUNT",text:"Count transactions in block",value:0,red:"#2d628a"},
+            {name:"MAX:TRANSACTION_COUNT",text:"Count transactions in block",value:0,red:"#4598d7"},
 
-            {isLine:true,text:"HEALTH"},
+            // {isLine:true,text:"HEALTH"},
 
-            {name:"ERRORS",text:"ERRORS",value:0,red:"#A00"},
-            {name:"MAX:LOADEDCHAINLIST",text:"Loaded chains, count",value:0,red:"#95d6b9"},
+            // {name:"ERRORS",text:"ERRORS",value:0,red:"#A00"},
+            // {name:"MAX:LOADEDCHAINLIST",text:"Loaded chains, count",value:0,red:"#95d6b9"},
 
-            {isLine:true,text:"NODES"},
-            {name:"MAX:BUSY_LEVEL",text:"BUSY_LEVEL",value:0,red:"#ff353b"},
-            {name:"STOP_METHOD",text:"STOP_METHOD",value:0,red:"#8a3d74"},
-            {name:"AddToBan",text:"AddToBan",value:0,red:"#8a3d74"},
-            {name:"TRANSFER_TIME_OUT",text:"TRANSFER TIME OUT, count",value:0,red:"#ff353b"},
-            {name:"NETCONFIGURATION",text:"NETCONFIGURATION",value:0,red:"#8a5663"},
+            // {isLine:true,text:"NODES"},
+            // {name:"MAX:BUSY_LEVEL",text:"BUSY_LEVEL",value:0,red:"#ff353b"},
+            // {name:"STOP_METHOD",text:"STOP_METHOD",value:0,red:"#8a3d74"},
+            // {name:"AddToBan",text:"AddToBan",value:0,red:"#8a3d74"},
+            // {name:"TRANSFER_TIME_OUT",text:"TRANSFER TIME OUT, count",value:0,red:"#ff353b"},
+            // {name:"NETCONFIGURATION",text:"NETCONFIGURATION",value:0,red:"#8a5663"},
 
 
             {name:"MAX:ALL_NODES",text:"All nodes count",value:0,red:"#83a3d6"},
             {name:"MAX:CONNECTED_NODES",text:"Connected nodes count",value:0,red:"#516e80"},
-            {name:"MAX:HASH_OK",text:"Block chain Hash = OK",value:0,red:"#2b6311"},
-
-            {name:"MAX:HOT_NODES",text:"TRANSFER nodes, count",value:0,red:"#063c8a"},
+            // {name:"MAX:HASH_OK",text:"Block chain Hash = OK",value:0,red:"#2b6311"},
+            // {name:"MAX:HOT_NODES",text:"TRANSFER nodes, count",value:0,red:"#063c8a"},
 
 //            {name:"MAX:MEDIAN_GLOB_TIME",text:"MEDIAN_GLOB_TIME",value:0,red:"#5e729b",zero:100},
 //            {name:"MAX:DISP_MEDIAN_GLOB_TIME",text:"DISP_MEDIAN_GLOB_TIME 90%",value:0,red:"#4a809b"},
@@ -188,7 +187,7 @@
             {name:"MAX:CPU_SYS_MODE",text:"CPU USER SYS, мс",value:0,red:"#06A"},
             {name:"MAX:CPU",text:"CPU WORK, мс",value:0,red:"#06A"},
 
-            {name:"MAX:MEMORY_USAGE",text:"Используемая память, Mb",value:300},
+            {name:"MAX:MEMORY_USAGE",text:"Используемая память, Mb",value:400},
             {name:"MAX:MEMORY_FREE",text:"Mem free, Mbyte",value:0,red:"#a1c3b9"},
             //            {name:"MAX:CPU_USER_MODE",text:"USER MODE, мс",value:0,red:"#06A"},
             //            {name:"MAX:CPU_SYS_MODE",text:"USER SYS, мс",value:0,red:"#06A"},
@@ -443,6 +442,7 @@
         {
             ArrSystem=DiagramArrR;
         }
+        ArrSystem=DiagramArrR;
 
         var StrArr=Storage.getItem("DiagramArr");
         if(StrArr && StrArr!=="undefined")

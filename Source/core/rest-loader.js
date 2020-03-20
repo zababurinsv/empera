@@ -101,6 +101,8 @@ module.exports = class CRest extends require("./db/block-db")
                 }
                 
                 var MinCount = Math.min(COUNT_NODE_PROOF, Math.floor(global.CountConnectedNode / 2));
+                if(MinCount < 2)
+                    MinCount = 2
                 MIN_POW_CHAINS = Math.floor(MinCount / 2)
                 if(Context.ReceiveHeaderCount >= MinCount)
                 {

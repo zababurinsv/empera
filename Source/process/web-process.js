@@ -444,7 +444,12 @@ function DoCommandNew(request,response,Type,Path,Params)
             if(typeof Ret === "object")
                 Str = JSON.stringify(Ret);
             else
-                Str = Ret;
+            {
+                if(typeof Ret === "string")
+                    Str = Ret;
+                else
+                    Str = "" + Ret;
+            }
             
             response.end(Str);
         }
@@ -1030,10 +1035,22 @@ HostingCaller.GetHistoryTransactions = function (Params)
     return HTTPCaller.GetHistoryTransactions(Params);
 }
 
+HostingCaller.GetSupplyCalc = function (Params)
+{
+    var BlockNum = GetCurrentBlockNumByTime();
+    var BlockNum0 = 53828967;
+    var RestAcc0 = 370714758;
+    var Delta = BlockNum - BlockNum0;
+    var DeltaReward = Math.floor(Delta * NEW_FORMULA_KTERA * RestAcc0 / TOTAL_SUPPLY_TERA);
+    return TOTAL_SUPPLY_TERA - RestAcc0 + DeltaReward;
+}
+
 HostingCaller.GetSupply = function (Params)
 {
     if(HTTPS_HOSTING_DOMAIN === "terafoundation.org")
-        return "" + (1000000000 - 375 * 1000000);
+    {
+        return HostingCaller.GetSupplyCalc(Params);
+    }
     
     var Data = DApps.Accounts.ReadState(0);
     if(!Data)
@@ -1122,7 +1139,7 @@ global.LoadBlockFromNetwork = function (Params,F)
     });
 }
 
-if(global.LOCAL_RUN)
+if(0 && global.LOCAL_RUN)
 {
     setTimeout(function ()
     {

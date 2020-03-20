@@ -353,6 +353,7 @@ function CopyObjKeys(dest,src)
     {
         dest[key] = src[key];
     }
+    return dest;
 }
 
 global.CopyObjKeys = CopyObjKeys;
@@ -564,3 +565,14 @@ if(global.START_SERVER)
             CheckGlobalTime();
         }
 }
+
+function GetTxSize(Tx)
+{
+    var Size = 200;
+    if(Tx.Description)
+        Size += Tx.Description.length * 2;
+    if(Tx.Body)
+        Size += Tx.Body.length;
+    return Size;
+}
+global.GetTxSize = GetTxSize;

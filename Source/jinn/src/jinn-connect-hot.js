@@ -18,7 +18,7 @@ global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Hot"});
 
 
 var START_TRANSFER_TIMEOUT = 3 * 1000;
-var MAX_TRANSFER_TIMEOUT = 2 * 1000;
+var MAX_TRANSFER_TIMEOUT = 3 * 1000;
 
 var MAX_DENY_HOT_CONNECTION = 7 * 1000;
 var MAX_HOT_CONNECTION_DELAY = 2 * 1000;
@@ -33,9 +33,12 @@ function DoNode(Engine)
         return ;
     
     Engine.CaclNextAddrHashPOW(50);
-    for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION; L++)
+    for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION + JINN_CONST.EXTRA_SLOTS_COUNT; L++)
     {
         var Child = Engine.LevelArr[L];
+        if(!Child && L >= JINN_CONST.MAX_LEVEL_CONNECTION)
+            continue;
+        
         if(!Child || !Child.IsHot())
         {
             var LArr = Engine.NodesArrByLevel[L];
@@ -80,23 +83,34 @@ function DoNode(Engine)
         
         if(!Engine.InHotStart(Child) && (!Child.IsOpen() || Child.Del))
         {
-            global.DEBUG_ID === "HOT" && Child.ToLog("1# DenyHotConnection");
-            Engine.StartDisconnect(Child, 1);
+            var StrError = "1# DenyHotConnection: The connection was broken, but the hot sign remained.";
+            global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+            Engine.StartDisconnect(Child, 1, StrError);
             Engine.DenyHotConnection(Child);
         }
         else
             if(Child.HotStart && !Engine.InHotStart(Child))
             {
-                global.DEBUG_ID === "HOT" && Child.ToLog("2# DenyHotConnection");
-                Engine.StartDisconnect(Child, 1);
+                var StrError = "2# DenyHotConnection: More than the allowed connection time has passed.";
+                global.DEBUG_ID === "HOT" && Child.ToLog();
+                Engine.StartDisconnect(Child, 1, StrError);
                 Engine.DenyHotConnection(Child);
             }
             else
-                if((Date.now() - Child.FirstTransferTime > START_TRANSFER_TIMEOUT) && (Date.now() - Child.LastTransferTime > MAX_TRANSFER_TIMEOUT))
+                if(Child.HotStart)
                 {
-                    global.DEBUG_ID === "HOT" && Child.ToLog("3# DenyHotConnection");
-                    Engine.StartDisconnect(Child, 1);
-                    Engine.DenyHotConnection(Child);
+                    var NowTime = Date.now();
+                    var Delta1 = NowTime - Child.FirstTransferTime;
+                    var Delta2 = NowTime - Child.LastTransferTime;
+                    if((Delta1 > START_TRANSFER_TIMEOUT) && (Delta2 > MAX_TRANSFER_TIMEOUT))
+                    {
+                        var StrError = "3# DenyHotConnection: there is no data exchange here for a long time. Delta1=" + Delta1 + "  Delta2=" + Delta2;
+                        global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+                        Engine.StartDisconnect(Child, 1, StrError);
+                        Engine.DenyHotConnection(Child);
+                        Child.LastTransferTime = 0;
+                        Child.FirstTransferTime = 0;
+                    }
                 }
     }
 }
@@ -108,24 +122,27 @@ function InitClass(Engine)
     
     Engine.NetConfiguration = 0;
     
-    Engine.DisconnectHot = function (Child,bSend)
+    Engine.DisconnectLevel = function (Child,bSend)
     {
-        if(bSend && Child.IsHot())
-            Engine.Send("DISCONNECTHOT", Child, {});
+        if(bSend && Child.IsHot() && Child.IsOpen())
+            Engine.Send("DISCONNECTLEVEL", Child, {});
         
         if(Engine.LevelArr[Child.Level] === Child)
         {
             Engine.LevelArr[Child.Level] = null;
-            global.DEBUG_ID === "HOT" && Child.ToLog("*DisconnectHot* Level=" + Child.Level);
+            global.DEBUG_ID === "HOT" && Child.ToLog("*DisconnectLevel* Level=" + Child.Level);
             
             Engine.NetConfiguration++;
         }
-    };
-    Engine.DISCONNECTHOT_SEND = "";
-    Engine.DISCONNECTHOT = function (Child,Data)
-    {
         
-        Engine.DisconnectHot(Child, 0);
+        if(Child.Level >= JINN_CONST.MAX_LEVEL_CONNECTION)
+            Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
+    };
+    
+    Engine.DISCONNECTLEVEL_SEND = "";
+    Engine.DISCONNECTLEVEL = function (Child,Data)
+    {
+        Engine.DisconnectLevel(Child, 0);
     };
     
     Engine.DenyHotConnection = function (Child)
@@ -135,7 +152,7 @@ function InitClass(Engine)
         
         Child.HotItem.HotStart = 0;
         Child.HotItem.DenyHotStart = Date.now();
-        Engine.DisconnectHot(Child, 0);
+        Engine.DisconnectLevel(Child, 0);
     };
     
     Engine.CheckHotConnection = function (Child)
@@ -177,12 +194,12 @@ function InitClass(Engine)
     
     Engine.TryHotConnection = function (Child,bSend)
     {
-        
         if(Engine.ROOT_NODE)
             return 0;
         
         if(!Child.HotItem)
             return 0;
+        
         if(!Engine.CanSetHot(Child))
             return 0;
         Engine.LevelArr[Child.Level] = Child;
@@ -196,13 +213,15 @@ function InitClass(Engine)
                 return 1;
             }
             
-            Engine.Send("ADDLEVELCONNECT", Child, {}, function (Child,Data)
+            if(Engine.TickNum >= JINN_CONST.EXTRA_SLOTS_START_TIME)
+                Engine.UseExtraSlot = 1;
+            Engine.Send("CONNECTLEVEL", Child, {UseExtraSlot:Engine.UseExtraSlot}, function (Child,Data)
             {
                 var result2 = Data.result;
-                global.DEBUG_ID === "HOT" && Child.ToLog("RESULT ADDLEVELCONNECT = " + Data.result);
+                global.DEBUG_ID === "HOT" && Child.ToLog("RESULT CONNECTLEVEL = " + Data.result);
                 if(result2)
                 {
-                    result2 = Engine.SetHotConnection(Child);
+                    result2 = Engine.SetHotConnection(Child, 1);
                     global.DEBUG_ID === "HOT" && Child.ToLog("SetHotConnection: Level=" + Child.Level + " result:" + result2);
                 }
                 
@@ -235,8 +254,11 @@ function InitClass(Engine)
         return 1;
     };
     
-    Engine.SetHotConnection = function (Child)
+    Engine.SetHotConnection = function (Child,bCheckLevel)
     {
+        if(bCheckLevel && Child.Level >= JINN_CONST.MAX_LEVEL_CONNECTION)
+            Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
+        
         if(!Engine.CanSetHot(Child))
         {
             return 0;
@@ -256,13 +278,28 @@ function InitClass(Engine)
         return 1;
     };
     
-    Engine.ADDLEVELCONNECT_SEND = "";
-    Engine.ADDLEVELCONNECT_RET = {result:"byte"};
-    Engine.ADDLEVELCONNECT = function (Child,Data)
+    Engine.CONNECTLEVEL_SEND = {UseExtraSlot:"byte"};
+    Engine.CONNECTLEVEL_RET = {result:"byte"};
+    Engine.CONNECTLEVEL = function (Child,Data)
     {
         if(Engine.ROOT_NODE)
             return 0;
-        var Ret = Engine.SetHotConnection(Child);
+        
+        var Ret = Engine.SetHotConnection(Child, 1);
+        if(!Ret && Data.UseExtraSlot)
+        {
+            for(var i = JINN_CONST.MAX_LEVEL_CONNECTION; i < JINN_CONST.MAX_LEVEL_CONNECTION + JINN_CONST.EXTRA_SLOTS_COUNT; i++)
+            {
+                var Slot = Engine.LevelArr[i];
+                if(!Slot)
+                {
+                    Child.Level = i;
+                    Ret = Engine.SetHotConnection(Child, 0);
+                    break;
+                }
+            }
+        }
+        
         if(!Ret)
         {
             Engine.DenyHotConnection(Child);

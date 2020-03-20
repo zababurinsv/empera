@@ -6,6 +6,7 @@
  * Telegram:  https://t.me/progr76
 */
 
+'use strict';
 module.exports.Init = Init;
 
 const os = require('os');
@@ -135,8 +136,7 @@ function Init(Engine)
         ADD_TO_STAT("NETCONFIGURATION", Engine.NetConfiguration);
         Engine.NetConfiguration = 0;
         
-        ADD_TO_STAT("ERRORS", Engine.ErrorCount);
-        Engine.ErrorCount = 0;
+        ADD_TO_STAT("ERRORS", JINN_STAT.ErrorCount);
         ADD_TO_STAT("MAX:MEMORY_USAGE", process.memoryUsage().heapTotal / 1024 / 1024);
         ADD_TO_STAT("MAX:MEMORY_FREE", os.freemem() / 1024 / 1024);
         
@@ -162,5 +162,15 @@ function Init(Engine)
         GlSumUser = SumUser;
         GlSumSys = SumSys;
         GlSumIdle = SumIdle;
+        
+        var Str = GetJinnStatInfo();
+        Str = Str.replace(/[\n]/g, " ");
+        if(Engine.ID ===  - 1)
+            console.log("" + SERVER.GetMaxNumBlockDB() + ": " + Str);
+        ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.MaxBlockTx);
+        
+        global.TERA_STAT = {};
+        CopyObjKeys(global.TERA_STAT, JINN_STAT);
+        JINN_STAT.Clear();
     };
 }

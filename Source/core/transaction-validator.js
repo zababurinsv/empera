@@ -15,8 +15,6 @@ require("../system/dapp");
 require("../system/accounts");
 require("../system/smart");
 require("../system/file");
-require("../system/names");
-require("../system/messager");
 
 if(global.PROCESS_NAME === "MAIN")
 {
@@ -77,9 +75,13 @@ module.exports = class CSmartContract extends require("./block-exchange")
     {
     }
     
-    BlockProcessTX(Block)
+    BlockProcessTX(BlockNum)
     {
-        if(Block.BlockNum < 1)
+        if(BlockNum < 1)
+            return ;
+        
+        var Block = SERVER.ReadBlockDB(BlockNum);
+        if(!Block)
             return ;
         
         var COUNT_MEM_BLOCKS = 0;
@@ -91,24 +93,24 @@ module.exports = class CSmartContract extends require("./block-exchange")
             NUM2 = 1000000000000
         }
         
-        if(Block.BlockNum > global.BLOCKNUM_TICKET_ALGO)
+        if(BlockNum > global.BLOCKNUM_TICKET_ALGO)
         {
             NUM1 = 1000000000000
             NUM2 = 1000000000000
         }
         
-        if(Block.BlockNum > NUM1)
+        if(BlockNum > NUM1)
         {
             COUNT_MEM_BLOCKS = 1
-            if(Block.BlockNum > NUM2)
+            if(BlockNum > NUM2)
                 COUNT_MEM_BLOCKS = 60
             
-            if(this.BufHashTree.LastAddNum !== Block.BlockNum - 1)
+            if(this.BufHashTree.LastAddNum !== BlockNum - 1)
             {
                 this.BufHashTree.clear()
                 for(var num = COUNT_MEM_BLOCKS; num >= 1; num--)
                 {
-                    var Block2 = this.ReadBlockDB(Block.BlockNum - num);
+                    var Block2 = this.ReadBlockDB(BlockNum - num);
                     if(Block2)
                     {
                         this.AddBlockToHashTree(Block2)
@@ -124,7 +126,6 @@ module.exports = class CSmartContract extends require("./block-exchange")
         
         var arrContentResult = [];
         
-        var BlockNum = Block.BlockNum;
         var arr = Block.arrContent;
         if(arr)
             for(var i = 0; i < arr.length; i++)
@@ -192,14 +193,23 @@ module.exports = class CSmartContract extends require("./block-exchange")
         
         if(COUNT_MEM_BLOCKS)
         {
-            var Block2 = this.ReadBlockDB(Block.BlockNum - COUNT_MEM_BLOCKS);
+            var Block2 = this.ReadBlockDB(BlockNum - COUNT_MEM_BLOCKS);
             if(Block2)
                 this.DeleteBlockFromHashTree(Block2)
             
             this.AddBlockToHashTree(Block)
         }
         if(arrContentResult.length)
-            process.send({cmd:"WriteBodyResult", BlockNum:Block.BlockNum, arrContentResult:arrContentResult})
+        {
+            if(global.JINN_MODE)
+            {
+                JINN.DBResult.WriteBodyResult(BlockNum, arrContentResult)
+            }
+            else
+            {
+                process.send({cmd:"WriteBodyResult", BlockNum:BlockNum, arrContentResult:arrContentResult})
+            }
+        }
         
         for(var key in DApps)
         {
@@ -273,14 +283,14 @@ module.exports = class CSmartContract extends require("./block-exchange")
         return 1;
     }
     
-    AddDAppTransactions(BlockNum, Arr)
+    GetDAppTransactions(BlockNum)
     {
         if(BlockNum % PERIOD_ACCOUNT_HASH !== 0)
-            return ;
+            return undefined;
         
         var BlockNumHash = BlockNum - DELTA_BLOCK_ACCOUNT_HASH;
         if(BlockNumHash < 0)
-            return ;
+            return undefined;
         
         var Item = DApps.Accounts.GetAccountHashItem(BlockNumHash);
         if(Item)
@@ -297,19 +307,29 @@ module.exports = class CSmartContract extends require("./block-exchange")
                 WriteUintToArr(Body, 0)
             }
             
-            var Tr = {body:Body};
-            this.CheckCreateTransactionObject(Tr)
-            Arr.unshift(Tr)
+            var Tx = {body:Body};
+            return Tx;
+        }
+        return undefined;
+    }
+    AddDAppTransactions(BlockNum, Arr)
+    {
+        var Tx = this.GetDAppTransactions(BlockNum);
+        if(Tx)
+        {
+            this.CheckCreateTransactionObject(Tx)
+            Arr.unshift(Tx)
         }
     }
     
     AddTransactionOwn(Tr)
     {
-        if(!global.TX_PROCESS.Worker)
-            return  - 6;
         
-        var StrHex = GetHexFromArr(sha3(Tr.body));
-        global.TX_PROCESS.Worker.send({cmd:"FindTX", TX:StrHex})
+        if(global.TX_PROCESS.Worker)
+        {
+            var StrHex = GetHexFromArr(sha3(Tr.body));
+            global.TX_PROCESS.Worker.send({cmd:"FindTX", TX:StrHex})
+        }
         
         return this.AddTransaction(Tr, 1);
     }

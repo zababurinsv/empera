@@ -110,7 +110,7 @@ module.exports = class
     }
 };
 
-const DBFile = new module.exports();
+const LibDBFile = new module.exports();
 
 function CheckStartOneProcess(Name)
 {
@@ -127,12 +127,11 @@ function CheckStartOneProcess(Name)
     }
     try
     {
-        DBFile.OpenDBFile(Name);
+        LibDBFile.OpenDBFile(Name);
     }
     catch(e)
     {
-        ToLog("****** DETECT START ANOTHER PROCESS for: " + Name);
-        ToLogTrace("EXIT");
+        ToLogTrace("****** DETECT START ANOTHER PROCESS for: " + Name + " - EXIT!");
         process.exit();
     }
 }

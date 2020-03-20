@@ -52,7 +52,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(!Child || !Child.IsHot() || Child.HotStart)
+            if(!Child || !Child.IsHot() || !Child.IsOpen() || Child.HotStart)
                 continue;
             
             Child.SetLastCache(BlockNum);
@@ -90,7 +90,7 @@ function InitClass(Engine)
             Engine.Send("TRANSFERTX", Child, {Cache:Child.CahcheVersion, BlockNum:BlockNum, TxArr:Arr});
         }
     };
-    Engine.TRANSFERTX_SEND = {Cache:"uint", BlockNum:"uint", TxArr:[{Index:"uint16", body:"tr"}]};
+    Engine.TRANSFERTX_SEND = {Cache:"uint", BlockNum:"uint32", TxArr:[{Index:"uint16", body:"tr"}]};
     Engine.TRANSFERTX = function (Child,Data)
     {
         
@@ -123,7 +123,7 @@ function InitClass(Engine)
                 var Tree = Engine.ListTreeTx[BlockNum];
                 if(Tree && Tree.find(Tx))
                 {
-                    Engine.ToLog("<-" + Child.ID + ". B=" + BlockNum + " Bad TICKET CHACHE - WAS Tx=" + Tx.name);
+                    Engine.ToLog("<-" + Child.ID + ". B=" + BlockNum + " Bad TICKET CHACHE - WAS Tx=" + Tx.KEY.substr(0, 6));
                 }
             }
             
@@ -132,31 +132,11 @@ function InitClass(Engine)
         }
         
         Engine.AddCurrentProcessingTx(BlockNum, TxArr2);
-        
-        Engine.SendTx(BlockNum);
-    };
-    Engine.SendTestMap = {};
-    
-    Engine.SendTest = function (Value)
-    {
-        if(Engine.SendTestMap[Value])
-            return ;
-        Engine.SendTestMap[Value] = 1;
-        for(var i = 0; i < Engine.LevelArr.length; i++)
+        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_TX;
+        if(BlockNum !== CurBlockNum)
         {
-            var Child = Engine.LevelArr[i];
-            if(!Child)
-                continue;
-            
-            Engine.Send("TESTMESSAGE", Child, {Value:Value});
+            Engine.SendTx(BlockNum);
         }
-    };
-    Engine.TESTMESSAGE = function (Child,Data)
-    {
-        Engine.TestValue = Data.Value;
-        Engine.SendTest(Data.Value);
-        
-        Engine.CheckHotConnection(Child);
     };
     Engine.FindInCache = function (Child,BlockNum,Tx)
     {
@@ -220,22 +200,43 @@ function InitClass(Engine)
         if(HashPow)
         {
             Tx.HashPow = HashPow;
-            Tx.TimePow = Engine.GetPowPower(HashPow);
+            Tx.TimePow = GetPowPower(HashPow);
         }
         else
         {
             Engine.FillTicket(Tx);
         }
         
-        Tx.name = Tx.KEY.substr(0, 6) + "-" + Tx.TimePow;
-        
         return Tx;
+    };
+    Engine.SendTestMap = {};
+    
+    Engine.SendTest = function (Value)
+    {
+        if(Engine.SendTestMap[Value])
+            return ;
+        Engine.SendTestMap[Value] = 1;
+        for(var i = 0; i < Engine.LevelArr.length; i++)
+        {
+            var Child = Engine.LevelArr[i];
+            if(!Child)
+                continue;
+            
+            Engine.Send("TESTMESSAGE", Child, {Value:Value});
+        }
+    };
+    Engine.TESTMESSAGE = function (Child,Data)
+    {
+        Engine.TestValue = Data.Value;
+        Engine.SendTest(Data.Value);
+        
+        Engine.CheckHotConnection(Child);
     };
 }
 
 function CheckTx(StrCheckName,Tx,BlockNum,bLog)
 {
-    if(!Tx || !Tx.KEY || Tx.TimePow === undefined || Tx.num !== BlockNum)
+    if(!Tx || !Tx.KEY || Tx.TimePow === undefined)
     {
         if(global.JINN_WARNING >= 2)
         {

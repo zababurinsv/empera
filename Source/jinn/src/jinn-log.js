@@ -20,8 +20,6 @@ global.JINN_MODULES.push({InitClass:InitClass, Name:"Log"});
 function InitClass(Engine)
 {
     
-    Engine.ErrorCount = 0;
-    
     Engine.ToLog = function (Str,StartLevel)
     {
         if(StartLevel)
@@ -76,8 +74,8 @@ function InitClass(Engine)
     
     Engine.ToError = function (Child,Str,WarningLevel)
     {
-        Engine.ErrorCount++;
-        Child.ErrCount++;
+        Engine.AddCheckErrCount(Child, 1, Str);
+        
         if(WarningLevel === "t")
             ToLogTrace("" + Engine.ID + "<-->" + Child.ID + " ********ERROR: " + Str, WarningLevel);
         else
@@ -86,10 +84,6 @@ function InitClass(Engine)
                 var ID = GetNodeID(Child);
                 Engine.ToWarning("<-->" + ID + " ********ERROR: " + Str, WarningLevel);
             }
-    };
-    Engine.ToLogTrace = function (Str)
-    {
-        ToLogTrace("" + Engine.ID + ". " + Str);
     };
 }
 

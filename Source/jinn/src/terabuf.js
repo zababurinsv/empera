@@ -153,12 +153,11 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     WriteArr(buf, data, 32);
                     break;
                 }
-            case "buffer":
             case "arr":
                 {
                     var length;
                     if(ParamValue === undefined)
-                        length = (data ? data.length : 0);
+                        throw "Error format " + format + " needs number of length";
                     else
                         length = ParamValue;
                     
@@ -182,6 +181,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     break;
                 }
                 
+            case "buffer":
             case "data":
                 {
                     var length;
@@ -371,9 +371,11 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                     break;
                 }
                 
-            case "buffer":
             case "arr":
                 {
+                    if(ParamValue === undefined)
+                        throw "Error format " + format + " needs number of length";
+                    
                     if(buf.len + ParamValue <= buf.length)
                         ret = buf.slice(buf.len, buf.len + ParamValue);
                     else
@@ -383,6 +385,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                             ret[i] = 0;
                     }
                     buf.len += ParamValue;
+                    
                     break;
                 }
             case "tr":
@@ -400,11 +403,14 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                     break;
                 }
             case "data":
+            case "buffer":
                 {
                     var length = ReadUint32FromArr(buf);
                     if(length > buf.length - buf.len)
                         length = 0;
                     ret = ReadArr(buf, length);
+                    if(format === "buffer")
+                        ret = Buffer.from(ret);
                     break;
                 }
                 
@@ -497,7 +503,7 @@ function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
     
     if(!bNoSizeControl && glError && Arr.len !== Arr.length)
     {
-        ToLog("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
+        ToLogTrace("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
     }
     
     return Data;
@@ -516,7 +522,7 @@ function GetBufferFromObject(data,format,WorkStruct,bGetAsBuffer)
     Arr.len = 0;
     Write(Arr, data, format, undefined, WorkStruct);
     
-    if(bGetAsBuffer)
+    if(bGetAsBuffer && global.Buffer)
         Arr = Buffer.from(Arr);
     
     return Arr;

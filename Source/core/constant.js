@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1433;
+global.UPDATE_CODE_VERSION_NUM = 1518;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 
@@ -39,6 +39,10 @@ global.CONST_NAME_ARR = ["DELTA_CURRENT_TIME", "WALLET_NAME", "WALLET_DESCRIPTIO
 "REST_START_COUNT", "LOAD_TO_BEGIN", "MAX_SIZE_DB", ];
 
 global.DEBUG_EXIT_ON_BADS = 0;
+
+// Code updates for JINN
+
+global.UPDATE_CODE_JINN_1 = 1000000000;
 
 
 global.UPDATE_CODE_1 = 36000000;
@@ -230,38 +234,35 @@ global.PRICE_DAO = function (BlockNum)
 if(global.LOCAL_RUN)
 {
     var Num = Date.now();
-    if(global.TEST_JINN)
-        Num = Num - 10 * 1000;
-    else
-        Num = Num - 300 * 1000;
+    Num = Num - 300 * 1000;
     global.START_NETWORK_DATE = Math.trunc(Num / 1000) * 1000;
 }
+
+if(global.START_NETWORK_DATE_FORCE)
+    global.START_NETWORK_DATE = global.START_NETWORK_DATE_FORCE;
 
 global.NEW_SIGN_TIME = 25500000;
 global.STANDART_PORT_NUMBER = 30000;
 
 InitParamsArg();
 
-if(global.LOCAL_RUN || global.FORK_MODE)
+if(global.JINN_MODE)
 {
-    if(!global.FORK_MODE)
-        NETWORK = "LOCAL";
-    if(global.FORK_MODE || global.LOCAL_RUN === 1)
-        global.RESYNC_CONDITION = 0;
-    global.REST_BLOCK_SCALE = 100;
+    NETWORK = "JINN";
+    if(!global.LOCAL_RUN)
+        global.START_NETWORK_DATE = 1584369472000;
     
+    global.RESYNC_CONDITION = 0;
+    global.REST_BLOCK_SCALE = 100;
     global.DELTA_BLOCK_ACCOUNT_HASH = 30;
     global.PERIOD_ACCOUNT_HASH = 10;
-    global.START_BLOCK_ACCOUNT_HASH = 1;
+    global.START_BLOCK_ACCOUNT_HASH = 68000;
     global.START_BLOCK_ACCOUNT_HASH3 = 1;
     
     global.SMART_BLOCKNUM_START = 0;
-    global.START_MINING = 60;
+    global.START_MINING = 30;
     global.REF_PERIOD_END = 0;
     global.REF_PERIOD_MINING = 10;
-    
-    if(global.TEST_JINN)
-        global.START_MINING = 30;
     
     global.TEST_TRANSACTION_GENERATE = 0;
     global.MIN_POWER_POW_ACC_CREATE = 8;
@@ -283,6 +284,7 @@ if(global.LOCAL_RUN || global.FORK_MODE)
     global.AUTO_CORRECT_TIME = 0;
     global.CHECK_GLOBAL_TIME = 0;
     
+    global.UPDATE_CODE_JINN_1 = 0;
     global.UPDATE_CODE_1 = 0;
     global.UPDATE_CODE_2 = 0;
     global.UPDATE_CODE_3 = 0;
@@ -292,35 +294,27 @@ if(global.LOCAL_RUN || global.FORK_MODE)
     global.LOAD_TO_BEGIN = 0;
 }
 else
-    if(global.TEST_NETWORK)
+    if(global.LOCAL_RUN || global.FORK_MODE)
     {
-        global.STANDART_PORT_NUMBER = 40000;
+        if(!global.FORK_MODE)
+            NETWORK = "LOCAL";
         
+        if(global.FORK_MODE || global.LOCAL_RUN === 1)
+            global.RESYNC_CONDITION = 0;
         global.REST_BLOCK_SCALE = 100;
         
-        var Num = Date.now() - 50 * 1000;
-        console.log("CURRENT NUM: " + (Math.trunc(Num / 1000) * 1000));
-        
-        global.SMART_BLOCKNUM_START = 0;
-        global.START_NETWORK_DATE = 1582830189000;
-        
-        global.START_MINING = 100;
-        global.REF_PERIOD_END = 0;
-        global.REF_PERIOD_MINING = 200;
-        global.MIN_POWER_POW_ACC_CREATE = 8;
-        
-        global.TRANSACTION_PROOF_COUNT = 200 * 1000;
-        global.MAX_SIZE_LOG = 20 * 1024 * 1024;
-        
+        global.DELTA_BLOCK_ACCOUNT_HASH = 30;
+        global.PERIOD_ACCOUNT_HASH = 10;
         global.START_BLOCK_ACCOUNT_HASH = 1;
         global.START_BLOCK_ACCOUNT_HASH3 = 1;
         
-        global.BLOCKNUM_TICKET_ALGO = 0;
+        global.SMART_BLOCKNUM_START = 0;
+        global.START_MINING = 60;
+        global.REF_PERIOD_END = 0;
+        global.REF_PERIOD_MINING = 10;
         
-        global.WALLET_NAME = "TEST";
-        NETWORK = "TERA-TEST";
-        
-        global.ALL_VIEW_ROWS = 1;
+        global.TEST_TRANSACTION_GENERATE = 0;
+        global.MIN_POWER_POW_ACC_CREATE = 8;
         
         global.NEW_ACCOUNT_INCREMENT = 1;
         global.NEW_BLOCK_REWARD1 = 1;
@@ -329,20 +323,77 @@ else
         global.NEW_FORMULA_TARGET1 = 0;
         global.NEW_FORMULA_TARGET2 = 1;
         
-        global.NEW_SIGN_TIME = 1;
+        global.ALL_VIEW_ROWS = 1;
         
-        global.MAX_LENGTH_SENDER_MAP = 100;
-        global.DELTA_START_SENDER_MAP = 12;
+        global.NEW_SIGN_TIME = 0;
         
-        global.REST_START_COUNT = 10000;
-        global.LOAD_TO_BEGIN = 2;
         global.START_BAD_ACCOUNT_CONTROL = 0;
+        global.BLOCKNUM_TICKET_ALGO = 0;
+        global.MIN_POWER_POW_TR = 0;
+        global.AUTO_CORRECT_TIME = 0;
+        global.CHECK_GLOBAL_TIME = 0;
         
+        global.UPDATE_CODE_JINN_1 = 0;
         global.UPDATE_CODE_1 = 0;
         global.UPDATE_CODE_2 = 0;
         global.UPDATE_CODE_3 = 0;
-        global.EXPERIMENTAL_CODE = 0;
+        EXPERIMENTAL_CODE = 0;
+        
+        global.REST_START_COUNT = 0;
+        global.LOAD_TO_BEGIN = 0;
     }
+    else
+        if(global.TEST_NETWORK)
+        {
+            global.STANDART_PORT_NUMBER = 40000;
+            
+            global.REST_BLOCK_SCALE = 100;
+            
+            var Num = Date.now() - 50 * 1000;
+            console.log("CURRENT NUM: " + (Math.trunc(Num / 1000) * 1000));
+            
+            global.SMART_BLOCKNUM_START = 0;
+            global.START_NETWORK_DATE = 1582830189000;
+            
+            global.START_MINING = 100;
+            global.REF_PERIOD_END = 0;
+            global.REF_PERIOD_MINING = 200;
+            global.MIN_POWER_POW_ACC_CREATE = 8;
+            
+            global.TRANSACTION_PROOF_COUNT = 200 * 1000;
+            global.MAX_SIZE_LOG = 20 * 1024 * 1024;
+            
+            global.START_BLOCK_ACCOUNT_HASH = 1;
+            global.START_BLOCK_ACCOUNT_HASH3 = 1;
+            
+            global.BLOCKNUM_TICKET_ALGO = 0;
+            
+            global.WALLET_NAME = "TEST";
+            NETWORK = "TERA-TEST";
+            
+            global.ALL_VIEW_ROWS = 1;
+            
+            global.NEW_ACCOUNT_INCREMENT = 1;
+            global.NEW_BLOCK_REWARD1 = 1;
+            global.NEW_FORMULA_START = 1;
+            global.NEW_FORMULA_KTERA = 3;
+            global.NEW_FORMULA_TARGET1 = 0;
+            global.NEW_FORMULA_TARGET2 = 1;
+            
+            global.NEW_SIGN_TIME = 1;
+            
+            global.MAX_LENGTH_SENDER_MAP = 100;
+            global.DELTA_START_SENDER_MAP = 12;
+            
+            global.REST_START_COUNT = 10000;
+            global.LOAD_TO_BEGIN = 2;
+            global.START_BAD_ACCOUNT_CONTROL = 0;
+            
+            global.UPDATE_CODE_1 = 0;
+            global.UPDATE_CODE_2 = 0;
+            global.UPDATE_CODE_3 = 0;
+            global.EXPERIMENTAL_CODE = 0;
+        }
 
 global.GetNetworkName = function ()
 {
@@ -489,8 +540,11 @@ function InitParamsArg()
                                                 global.USE_HARD_API_V2 = 1;
                                                 break;
                                                 
-                                            case "JINNRUN":
+                                            case "TESTJINN":
                                                 global.TEST_JINN = 1;
+                                                break;
+                                            case "JINNMODE":
+                                                global.JINN_MODE = 1;
                                                 break;
                                                 
                                             case "NOPSWD":

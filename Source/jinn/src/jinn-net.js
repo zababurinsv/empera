@@ -14,11 +14,11 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Net"});
 
-global.NET_DEBUG = 1;
+global.TEST_NET_DEBUG = 1;
 const NET_STRING_MODE = 0;
 
 var TEMP_PACKET_ARR = [0, 0, 0, 0];
-if(global.NET_DEBUG)
+if(global.TEST_NET_DEBUG)
     TEMP_PACKET_ARR = [0, 0, 0, 0, 0, 0, 0, 0];
 
 //Engine context
@@ -48,6 +48,9 @@ function InitClass(Engine)
     {
         Engine.ReceiveTraffic += Data.length;
         
+        if(!Engine.CanProcessPacket(Child, Data))
+            return ;
+        
         if(Engine.PrepareOnReceiveZip && global.glUseZip)
             Engine.PrepareOnReceiveZip(Child, Data);
         else
@@ -56,6 +59,15 @@ function InitClass(Engine)
     
     Engine.PrepareOnSend = function (Method,Child,DataObj,bCall,F,RetContext)
     {
+        var State = Engine.GetSocketStatus(Child);
+        if(State !== 100)
+        {
+            var StrData = JSON.stringify(DataObj);
+            Child.ToLog(Method + " - ERROR SEND - NOT WAS CONNECT: State=" + State + " IsHot:" + Child.IsHot() + " IsOpen=" + Child.IsOpen(),
+            3);
+            return ;
+        }
+        
         if(bCall)
         {
             RetContext = 0;
@@ -70,7 +82,7 @@ function InitClass(Engine)
         var DataBuf = Engine.GetRAWFromObject(Child, Method, bCall, RetContext, DataObj);
         Engine.LogTransfer(Child, DataBuf, "->");
         
-        if(global.NET_DEBUG)
+        if(global.TEST_NET_DEBUG)
         {
             WriteUint32AtPos(TEMP_PACKET_ARR, Child.SendPacketCount, 0);
             WriteUint32AtPos(TEMP_PACKET_ARR, 8 + DataBuf.length, 4);
@@ -105,7 +117,7 @@ function InitClass(Engine)
         
         var Length;
         var Pos;
-        if(global.NET_DEBUG)
+        if(global.TEST_NET_DEBUG)
         {
             if(Arr.length < 8)
             {
@@ -130,7 +142,7 @@ function InitClass(Engine)
             Pos = 4;
         }
         
-        if(Length > JINN_CONST.MAX_PACKET_LENGTH)
+        if(Length > JINN_CONST.MAX_PACKET_SIZE)
         {
             Engine.ToError(Child, "Bad packet size = " + Length, 0);
             return ;
@@ -151,7 +163,7 @@ function InitClass(Engine)
                 Engine.TweakOneMethod(Child);
             }
             else
-                if(global.NET_DEBUG)
+                if(global.TEST_NET_DEBUG)
                 {
                     Child.ReceivePacketCount--;
                 }
@@ -186,6 +198,9 @@ function InitClass(Engine)
         }
         else
         {
+            if(!Engine.CanProcessMethod(Child, Obj))
+                return ;
+            
             var F = Engine[Obj.Method];
             if(typeof F !== "function")
             {
@@ -221,12 +236,12 @@ function InitClass(Engine)
     {
         if(NET_STRING_MODE)
         {
-            var Obj = {Cache:Child.CurrentCache, Method:Method, Call:bCall, RetContext:RetContext, Data:DataObj};
+            var Obj = {Cache:Child.CurrentCacheVersion, Method:Method, Call:bCall, RetContext:RetContext, Data:DataObj};
             return Engine.GetRAWFromJSON(JSON.stringify(Obj));
         }
         
         var Data = Engine.GetBufferFromData(Method, DataObj, bCall);
-        var Obj = {Cache:Child.CurrentCache, Method:Method, Call:bCall, RetContext:RetContext, Data:Data};
+        var Obj = {Cache:Child.CurrentCacheVersion, Method:Method, Call:bCall, RetContext:RetContext, Data:Data};
         return SerializeLib.GetBufferFromObject(Obj, NetFormat, NetFormatWrk);
     };
     
@@ -281,5 +296,19 @@ function InitClass(Engine)
             Engine.PrevTraficBlockNum = BlockNum;
             Engine.Traffic = 0;
         }
+    };
+    
+    Engine.AddCheckErrCount = function (Child,Count,StrErr)
+    {
+        JINN_STAT.ErrorCount += Count;
+        Child.ErrCount += Count;
+        
+        if(Child.ErrCount > 10)
+        {
+            Child.ErrCount = 0;
+            Child.BlockProcessCount--;
+        }
+        
+        Child.ToLog(StrErr);
     };
 }

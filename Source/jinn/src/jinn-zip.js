@@ -28,7 +28,7 @@ function InitClass(Engine)
         {
             const level = zlib.constants.Z_BEST_SPEED;
             
-            Child.EncodeZip = zlib.createGzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_LENGTH, level:level});
+            Child.EncodeZip = zlib.createGzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_SIZE, level:level});
             Child.WriterZip = new Writable({objectMode:true, write:function (chunk,encoding,callback)
                 {
                     callback(0);
@@ -48,7 +48,7 @@ function InitClass(Engine)
         let DecodeZip = Child.DecodeZip;
         if(!DecodeZip)
         {
-            DecodeZip = zlib.createGunzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_LENGTH});
+            DecodeZip = zlib.createGunzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_SIZE});
             Child.WriterUnZip = new Writable({objectMode:true, write:function (chunk,encoding,callback)
                 {
                     callback(0);

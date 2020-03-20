@@ -114,12 +114,13 @@ function InitClass(Engine)
         });
     };
     
-    Engine.CloseSocket = function (Socket,StrError)
+    Engine.CloseSocket = function (Socket,StrError,bSilently)
     {
         if(!Socket || Socket.WasClose)
             return ;
         
-        Engine.ToLog("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError, 3);
+        if(!bSilently && Socket.remoteAddress)
+            Engine.ToLog("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError, 3);
         Engine.ClearSocket(Socket);
         Socket.end();
     };
@@ -208,7 +209,7 @@ function InitAfter(Engine)
         }
     };
     
-    Engine.CloseConnectionToChild = function (Child)
+    Engine.CloseConnectionToChild = function (Child,StrError)
     {
         if(Child.Close)
         {
@@ -221,7 +222,9 @@ function InitAfter(Engine)
             return ;
         }
         
-        Engine.CloseSocket(Child.Socket, "Close");
+        if(Child.Socket)
+            Child.ToLog("CloseSocket: " + Child.Socket.remoteAddress + ":" + Child.Socket.remotePort + " " + StrError, 3);
+        Engine.CloseSocket(Child.Socket, "", 1);
     };
     
     Engine.SENDTONETWORK = function (Child,Data)
@@ -233,7 +236,7 @@ function InitAfter(Engine)
         }
         else
         {
-            Child.ToLog("ERROR SEND - NOT WAS CONNECT: State=" + State);
+            Child.ToLog("ERROR SEND - NOT WAS CONNECT: State=" + State, 3);
         }
     };
     

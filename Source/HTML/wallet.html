@@ -64,7 +64,7 @@
     var SaveIdArr=["idAccount","idTo","idSumSend","idDescription","idSelStyle",
         "idViewAccountNum","idViewBlockNum","idViewActNum","idViewHashNum","idViewDappNum",
         "idRunText","idViewAccountFilter",
-        "idBlockCount","idPeriodAutoCheckPoint","idDeltaPow"];
+        "idBlockCount","idDeltaPow"];
 
 
     var MaxAccID=0;
@@ -596,7 +596,7 @@
 
         SetVisibleBlock("idDevelopService",Data.IsDevelopAccount);
         SetVisibleBlock("idDevelopService2",CONFIG_DATA.CONSTANTS.WALLET_DESCRIPTION);
-        SetVisibleBlock("idTimeDelta",CONFIG_DATA.CONSTANTS.COMMON_KEY?"inline-block":0);
+        //SetVisibleBlock("idTimeDelta",CONFIG_DATA.CONSTANTS.COMMON_KEY?"inline-block":0);
 
 
         if(Data.CurBlockNum<1000000 || Data.IsDevelopAccount)
@@ -1502,24 +1502,15 @@
                                 <INPUT type="button" class="bt btdoit" onclick="SetNetConstJSON()" value="NET CONST >>"><BR>
 
                             </td>
-                            <td style="width: 500px">
+                            <td style="width: 300px">
                                 Value:<INPUT type="string" id="idDevValue" value="0"><BR>
-                                <TEXTAREA id="idDevService" rows="15" cols="90"> </TEXTAREA><BR>
+                                <TEXTAREA id="idDevService" rows="15" cols="70"> </TEXTAREA><BR>
+                            </td>
+                            <td style="width: 200px">
+                                <INPUT type="button" class="bt btdoit" style="background-color: #f4f542;color:black;font-weight: bold;height: 50px;width: 100px;" onclick="RunDevelopService()" value="RUN">
                             </td>
                         </tr>
                     </table>
-                    <INPUT type="button" onclick="CreateCheckPoint()" class="btdoit  bt" value="CHECK POINT">
-                    <INPUT type="button" onclick="SetNewCodeVersion()" class="btdoit  bt" value=">>NEW VERSION">
-                    <INPUT type="button" onclick="StartTimeCorrect()" class="btdoit  bt" value=">>TIME CORR.">
-                    <INPUT type="button" onclick="StartNetConst()" class="btdoit  bt" value=">>SET CONST.">
-
-                    <input type="checkbox" class="checkbox" id="idUseAutoCheckPoint" onchange = "UseAutoCheckPoint()"/>
-                    <label for="idUseAutoCheckPoint">Auto check point each :</label>
-                    <INPUT type="number" id="idPeriodAutoCheckPoint" style="width: 60px" value="10"> sec<BR>
-
-                    <input type="checkbox" class="checkbox" id="idUseAutoCorrTime" onchange = "UseAutoCorrTime()"/>
-                    <label for="idUseAutoCorrTime">Auto corr time</label><BR>
-
                     <HR>
                 </DIV>
             </DIV>
@@ -1917,12 +1908,14 @@
 
                             <th id="(RetOpenBlock(Item.BlockNum,Item.TrDataLen))" class="num">Num</th>
                             <th id="(DateFromBlock(Item.BlockNum,1))" class="date">Date</th>
-                            <th id="GetHexFromArr(Item.TreeHash)" class="hash">Data Hash</th>
+                            <th id="GetHexFromArr(Item.TreeHash)" class="hash">Tx Hash</th>
                             <th id="GetHexFromArr(Item.PowHash)" class="hash">PowHash</th>
-                            <th id="GetHexFromArr(Item.Hash)" class="hash">Block Hash</th>
+<!--                            <th id="GetHexFromArr(Item.Hash)" class="hash">Hash</th>-->
 
                             <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>
+<!--                            <th id="GetHexFromArr(Item.SeqHash)" class="hash">SeqHash</th>-->
                             <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>
+<!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->
 <!--                            <th id="Item.SumPow" class="num">SumPow</th>-->
 
                             <th id="Item.TrDataLen" class="num">Bytes</th>
