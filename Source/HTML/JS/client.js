@@ -1269,23 +1269,22 @@ function SetCheckPoint(BlockNum)
 
 function AddDiagramToArr(Arr,Item)
 {
-    var bWas = 0;
+    var DiagramMaxNum = 0;
+    for(var i = 0; i < Arr.length; i++)
+        if(Arr[i].num > DiagramMaxNum)
+            DiagramMaxNum = Arr[i].num;
+    
     for(var i = 0; i < Arr.length; i++)
     {
         if(Arr[i].name === Item.name)
         {
-            Item.Delete = 0;
-            Arr[i] = Item;
-            bWas = 1;
-            break;
+            Arr.splice(i, 1);
+            i--;
         }
     }
     
-    if(!bWas)
-    {
-        Item.num = Arr.length;
-        Arr.push(Item);
-    }
+    Item.num = DiagramMaxNum + 2;
+    Arr.push(Item);
 }
 
 function SetVisibleBlock(name,bSet)

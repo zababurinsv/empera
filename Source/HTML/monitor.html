@@ -481,7 +481,12 @@
 
     function AddDiagram()
     {
-        var Name=document.getElementById("idNameDiagram").value.trim();
+        var Name = document.getElementById("idNameDiagram").value.trim();
+        AddDiagramInner(Name);
+    }
+
+    function AddDiagramInner(Name)
+    {
         var Item={name:Name,text:Name,value:0,red:"#5681b6"};
         if(Name.substr(0,1)==="-")
         {
@@ -605,7 +610,20 @@
 
         SetPause(0);
 
+        window.addEventListener('storage',function (event)
+        {
+            if(!window.sessionStorage)
+                return;
 
+            if(event.key!=="ExternAddDiagram")
+                return;
+
+            //ToLog("ONSTORAGE:"+event.key + ':' + event.newValue + " at " + event.url);
+
+            var Item=JSON.parse(event.newValue);
+            AddDiagramInner(Item.Name);
+
+        });
 
         GetData("GetWalletInfo",{}, function (Data)
         {

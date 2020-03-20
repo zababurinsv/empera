@@ -151,18 +151,18 @@
 
     function AddDiagram(Name)
     {
-        var Str=localStorage["DiagramArr"];
-        if(!Str|| Str==="undefined")
-            Str="[]";
-        var DiagramArr=JSON.parse(Str);
+        // var Str=localStorage["DiagramArr"];
+        // if(!Str|| Str==="undefined")
+        //     Str="[]";
+        // var DiagramArr=JSON.parse(Str);
+        //
+        // var Item={name:Name,text:Name,value:0,red:"#1c6bb6"};
+        //AddDiagramToArr(DiagramArr,Item);
+        // localStorage["DiagramArr"]=GetStrFromDiagrArr(DiagramArr);
+        // localStorage["ExternSetDiagramArr"]=1;
 
-        var Item={name:Name,text:Name,value:0,red:"#1c6bb6"};
-
-        AddDiagramToArr(DiagramArr,Item);
-
-        localStorage["DiagramArr"]=GetStrFromDiagrArr(DiagramArr);
-        localStorage["ExternSetDiagramArr"]=1;
-
+        var Item={Name:Name};
+        localStorage["ExternAddDiagram"]=JSON.stringify(Item);
     }
 
 

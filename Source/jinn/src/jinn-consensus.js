@@ -387,27 +387,41 @@ function InitClass(Engine)
         var BlockDB = Engine.GetBlockHeaderDB(BlockHead.BlockNum);
         if(!BlockDB)
             return 0;
+        
+        var CurBlockSeed = BlockSeed;
         for(var delta = 0; delta <= JINN_CONST.STEP_LAST; delta++)
         {
-            var CurBlockNum = BlockSeed.BlockNum - delta;
-            if(CurBlockNum < BlockHead.BlockNum)
+            if(CurBlockSeed.BlockNum < BlockHead.BlockNum)
                 break;
             
-            var BlockSeedDB = Engine.GetBlockHeaderDB(CurBlockNum);
+            var BlockSeedDB = Engine.GetBlockHeaderDB(CurBlockSeed.BlockNum);
             if(BlockSeedDB)
             {
                 
-                if(delta === 0 && IsEqArr(BlockSeedDB.SumHash, BlockSeed.SumHash))
+                if(delta === 0 && IsEqArr(BlockSeedDB.SumHash, CurBlockSeed.SumHash))
                 {
                     //so there is a record of this chain in the database and since it is more priority, we stop the cycle
                     return 0;
                 }
                 
                 //write only if the chain has a large POW amount than the existing one in the database
-                if(BlockSeed.SumPow < BlockSeedDB.SumPow || (BlockSeed.SumPow === BlockSeedDB.SumPow && CompareArr(BlockSeedDB.Hash, BlockSeed.Hash) <= 0))
+                if(CurBlockSeed.SumPow < BlockSeedDB.SumPow || (CurBlockSeed.SumPow === BlockSeedDB.SumPow && CompareArr(BlockSeedDB.Hash,
+                CurBlockSeed.Hash) <= 0))
                 {
                     return 0;
                 }
+                
+                break;
+            }
+            else
+            {
+                var PrevBlockSeed = Engine.GetPrevBlock(CurBlockSeed);
+                if(!PrevBlockSeed)
+                {
+                    ToLogTrace("Error GetPrevBlock at block=" + CurBlockSeed.BlockNum);
+                    break;
+                }
+                CurBlockSeed = PrevBlockSeed;
             }
         }
         
