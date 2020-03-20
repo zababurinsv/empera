@@ -15,6 +15,7 @@ var GlSumUser;
 var GlSumSys;
 var GlSumIdle;
 
+var PrevSumPow = 0;
 function Init(Engine)
 {
     
@@ -163,11 +164,25 @@ function Init(Engine)
         GlSumSys = SumSys;
         GlSumIdle = SumIdle;
         
+        var MaxNum = SERVER.GetMaxNumBlockDB();
+        var MaxBlock = Engine.GetBlockHeaderDB(MaxNum);
+        if(MaxBlock)
+        {
+            if(PrevSumPow)
+                ADD_TO_STAT("MAX:BLOCK_SUMPOW", MaxBlock.SumPow - PrevSumPow);
+            PrevSumPow = MaxBlock.SumPow;
+        }
+        
         var Str = GetJinnStatInfo();
         Str = Str.replace(/[\n]/g, " ");
-        if(Engine.ID ===  - 1)
-            console.log("" + SERVER.GetMaxNumBlockDB() + ": " + Str);
+        if(global.DEV_MODE)
+            console.log("" + MaxNum + ": " + Str);
         ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.MaxBlockTx);
+        for(var key in JINN_STAT.Methods)
+        {
+            var StatNum = Math.floor(JINN_STAT.Methods[key]);
+            ADD_TO_STAT(key, StatNum);
+        }
         
         global.TERA_STAT = {};
         CopyObjKeys(global.TERA_STAT, JINN_STAT);

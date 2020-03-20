@@ -168,9 +168,13 @@ function InitClass(Engine)
         Child.ToDebug("Receive Body Block:" + Block.BlockNum);
         
         //we calculate the sent data hash
+        
+        Engine.SortBlock(Block);
+        
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
         
         //making an entry in the array of loaded blocks
+        
         var bSaveChain = Engine.DB.SetTxData(Block.BlockNum, Block.TreeHash, Block.TxData);
         if(bSaveChain)
         {
@@ -383,19 +387,27 @@ function InitClass(Engine)
         var BlockDB = Engine.GetBlockHeaderDB(BlockHead.BlockNum);
         if(!BlockDB)
             return 0;
-        var BlockSeedDB = Engine.GetBlockHeaderDB(BlockSeed.BlockNum);
-        if(BlockSeedDB)
+        for(var delta = 0; delta <= JINN_CONST.STEP_LAST; delta++)
         {
-            if(IsEqArr(BlockSeedDB.SumHash, BlockSeed.SumHash))
-            {
-                //so there is a record of this chain in the database and since it is more priority, we stop the cycle
-                return 0;
-            }
+            var CurBlockNum = BlockSeed.BlockNum - delta;
+            if(CurBlockNum < BlockHead.BlockNum)
+                break;
             
-            //write only if the chain has a large POW amount than the existing one in the database
-            if(BlockSeed.SumPow < BlockSeedDB.SumPow || (BlockSeed.SumPow === BlockSeedDB.SumPow && CompareArr(BlockSeedDB.Hash, BlockSeed.Hash) <= 0))
+            var BlockSeedDB = Engine.GetBlockHeaderDB(CurBlockNum);
+            if(BlockSeedDB)
             {
-                return 0;
+                
+                if(delta === 0 && IsEqArr(BlockSeedDB.SumHash, BlockSeed.SumHash))
+                {
+                    //so there is a record of this chain in the database and since it is more priority, we stop the cycle
+                    return 0;
+                }
+                
+                //write only if the chain has a large POW amount than the existing one in the database
+                if(BlockSeed.SumPow < BlockSeedDB.SumPow || (BlockSeed.SumPow === BlockSeedDB.SumPow && CompareArr(BlockSeedDB.Hash, BlockSeed.Hash) <= 0))
+                {
+                    return 0;
+                }
             }
         }
         

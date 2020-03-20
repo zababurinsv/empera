@@ -101,6 +101,7 @@ function InitClass(Engine)
                 continue;
             var Element2 = {};
             CopyObjKeys(Element2, Element);
+            MaxTree.insert(Element2);
             
             Arr.push(Element);
         }
@@ -369,6 +370,14 @@ function InitClass(Engine)
         if(!BlockBody.TxData || !BlockBody.TxData.length)
         {
             ToLogTrace("Error send block = " + BlockBody.BlockNum + " - NO TX BODY  BlockBody.TreeHash=" + BlockBody.TreeHash);
+            return Size;
+        }
+        
+        Engine.CheckHashExistArr(BlockBody.TxData);
+        var TreeHashTest = Engine.CalcTreeHash(BlockBody.BlockNum, BlockBody.TxData);
+        if(!IsEqArr(TreeHashTest, BlockBody.TreeHash))
+        {
+            Engine.ToLog("Error send block = " + BlockBody.BlockNum + " on AddBodyBlockToArr: TreeHash=" + TreeHashTest + "/" + BlockBody.TreeHash);
             return Size;
         }
         

@@ -167,6 +167,7 @@ function InitClass(Engine)
         Block.BlockNum = BlockNum;
         
         Block.TxData = TxArr;
+        Engine.SortBlock(Block);
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
         
         Block.MinerHash = [Engine.ID % 256, Engine.ID >>> 8];
@@ -213,16 +214,24 @@ function InitClass(Engine)
         return Data;
     };
     
+    Engine.CheckHashExistArr = function (TxArr)
+    {
+        for(var n = 0; TxArr && n < TxArr.length; n++)
+            Engine.CheckHashExist(TxArr[n]);
+    };
+    
     Engine.CalcTreeHash = function (BlockNum,TxArr)
     {
         if(!TxArr || !TxArr.length)
             return ZERO_ARR_32;
         
+        Engine.SortBlock({TxData:TxArr});
+        
         var Buf = [];
         for(var n = 0; n < TxArr.length; n++)
         {
             var Tx = TxArr[n];
-            CheckTx("CalcTreeHash", Tx, BlockNum, 1);
+            CheckTx("=CalcTreeHash=", Tx, BlockNum, 1);
             
             var Hash = Tx.HASH;
             for(var h = 0; h < Hash.length; h++)
@@ -233,6 +242,20 @@ function InitClass(Engine)
         
         var arr = sha3(Buf);
         return arr;
+    };
+    
+    Engine.SortBlock = function (Block)
+    {
+        if(!Block || !Block.TxData)
+            return ;
+        for(var i = 0; i < Block.TxData.length; i++)
+            Engine.CheckHashExist(Block.TxData[i]);
+        Block.TxData.sort(function (a,b)
+        {
+            if(b.TimePow !== a.TimePow)
+                return b.TimePow - a.TimePow;
+            return CompareArr(a.HashPow, b.HashPow);
+        });
     };
     
     Engine.SetBlockDataFromDB = function (Block)
@@ -362,6 +385,42 @@ function InitClass(Engine)
         WriteUintToArrOnPos(FullHashTicket, Tx.num, JINN_CONST.TX_TICKET_HASH_LENGTH);
         Tx.HashPow = sha3(FullHashTicket);
         Tx.TimePow = GetPowPower(Tx.HashPow);
+    };
+    
+    Engine.CheckHashExist = function (Tx)
+    {
+        if(!Tx.KEY)
+        {
+            var Tx2 = Engine.GetTx(Tx.body);
+            CopyObjKeys(Tx, Tx2);
+        }
+    };
+    
+    Engine.GetTx = function (body,HASH,HashPow)
+    {
+        
+        var Tx = {};
+        Tx.IsTx = 1;
+        Tx.num = ReadUintFromArr(body, body.length - 12);
+        if(HASH)
+            Tx.HASH = HASH;
+        else
+            Tx.HASH = sha3(body);
+        
+        Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
+        Tx.KEY = GetHexFromArr(Tx.HashTicket);
+        Tx.body = body;
+        if(HashPow)
+        {
+            Tx.HashPow = HashPow;
+            Tx.TimePow = GetPowPower(HashPow);
+        }
+        else
+        {
+            Engine.FillTicket(Tx);
+        }
+        
+        return Tx;
     };
 }
 

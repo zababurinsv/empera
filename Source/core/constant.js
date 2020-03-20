@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1518;
+global.UPDATE_CODE_VERSION_NUM = 1531;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 
@@ -363,7 +363,7 @@ else
             global.TRANSACTION_PROOF_COUNT = 200 * 1000;
             global.MAX_SIZE_LOG = 20 * 1024 * 1024;
             
-            global.START_BLOCK_ACCOUNT_HASH = 1;
+            global.START_BLOCK_ACCOUNT_HASH = 1850000;
             global.START_BLOCK_ACCOUNT_HASH3 = 1;
             
             global.BLOCKNUM_TICKET_ALGO = 0;

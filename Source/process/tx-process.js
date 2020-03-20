@@ -19,8 +19,6 @@ global.DATA_PATH = GetNormalPathString(global.DATA_PATH);
 global.CODE_PATH = GetNormalPathString(global.CODE_PATH);
 require("../core/library");
 
-
-
 global.READ_ONLY_DB = 0;
 
 require("./child-process");
@@ -153,9 +151,9 @@ function DoTXProcessNext()
         }
         if(global.glStopTxProcessNum && Num >= global.glStopTxProcessNum)
         {
-            if(!global.WasStopTxProcessNum)
+            if(global.WasStopTxProcessNum !== Num)
                 ToLog("--------------------------------Stop TX AT NUM: " + Num);
-            global.WasStopTxProcessNum = 1;
+            global.WasStopTxProcessNum = Num;
             break;
         }
         if(!IsValidSumHash(Block))
@@ -337,8 +335,8 @@ function ClearDataBase()
     glLastBlockNum = 0;
     BlockTree.Clear();
     
-    if(JINN)
-        JINN.DBResult.Clear();
+    if(global.JINN)
+        global.JINN.DBResult.Clear();
     ToLog("Start num = " + glLastBlockNum, 2);
 }
 

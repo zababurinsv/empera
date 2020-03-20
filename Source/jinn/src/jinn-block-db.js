@@ -121,8 +121,7 @@ function InitClass(Engine)
                     ToLogTrace("SaveToDB: Error PrevBlock.BlockNum on Block=" + BlockNum);
                     return 0;
                 }
-                
-                var SumPow = PrevBlock.SumPow + Block.Power;
+                var SumPow = Block.PrevSumPow + Block.Power;
                 if(Block.SumPow !== SumPow)
                 {
                     var Str = "SaveToDB: Error Sum POW: " + Block.SumPow + "/" + SumPow + " on block=" + BlockNum;

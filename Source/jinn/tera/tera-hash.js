@@ -42,6 +42,7 @@ function Init(Engine)
         
         return Tx;
     };
+    
     Engine.CalcTreeHash = CalcTreeHashFromArrBody;
     
     Engine.GetGenesisBlock = function (BlockNum)

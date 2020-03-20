@@ -25,6 +25,7 @@ function Init(Engine)
         var Block = {};
         Block.BlockNum = BlockNum;
         Block.TxData = TxArr;
+        Engine.SortBlock(Block);
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
         Block.MinerHash = ZERO_ARR_32;
         

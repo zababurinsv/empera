@@ -33,6 +33,7 @@ MapM["CODE"] = {Period:30 * 1000};
 
 function InitClass(Engine)
 {
+    
     Engine.CanProcessPacket = function (Child,Data)
     {
         return 1;

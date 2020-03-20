@@ -45,7 +45,6 @@ function Init(Engine)
             
             if(Data.VersionNum > CODE_VERSION.VersionNum)
             {
-                ToLog("Got VersionNum=" + Data.VersionNum);
                 Engine.CheckCodeVersion(Data, Child);
             }
         });

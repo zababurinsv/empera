@@ -193,8 +193,7 @@ function InitClass(Engine)
             }
             
             delete Child.ContextCallMap[Key];
-            
-            Cont.F(Child, Obj.Data);
+            Engine.RunMethod(Obj.Method + "_RET", Cont.F, Child, Obj.Data, 0);
         }
         else
         {
@@ -207,12 +206,38 @@ function InitClass(Engine)
                 Engine.ToError(Child, "Not fount method " + Obj.Method, 0);
                 return ;
             }
-            
-            var RetObj = F(Child, Obj.Data);
+            var RetObj = Engine.RunMethod(Obj.Method, F, Child, Obj.Data, 1);
             if(RetObj !== undefined && Obj.RetContext)
             {
                 Engine.PrepareOnSend(Obj.Method, Child, RetObj, 0, undefined, Obj.RetContext);
             }
+        }
+    };
+    
+    Engine.RunMethod = function (Method,F,Child,Data,bCall)
+    {
+        if(typeof process === "object")
+        {
+            var startTime = process.hrtime();
+            
+            var Ret = F(Child, Data);
+            
+            var Time = process.hrtime(startTime);
+            var deltaTime = Time[0] * 1000 + Time[1] / 1e6;
+            if(!JINN_STAT.Methods[Method])
+                JINN_STAT.Methods[Method] = 0;
+            JINN_STAT.Methods[Method] += deltaTime;
+            
+            if(bCall)
+                JINN_STAT.TimeCall += deltaTime;
+            else
+                JINN_STAT.TimeRet += deltaTime;
+            
+            return Ret;
+        }
+        else
+        {
+            return F(Child, Data);
         }
     };
     

@@ -20,7 +20,7 @@ function SendTestCoin(FRomId,ToID,Sum,Count,Mode)
     
     var Params = {"FromID":FRomId, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Тест", "Confirm":0};
     
-    var BlockNum = global.DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime();
+    var BlockNum = 2 + global.DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime();
     
     var WasSend = 0;
     if(!Mode)

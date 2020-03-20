@@ -48,11 +48,7 @@ function InitClass(Engine)
         for(var i = 0; i < Block.TxData.length; i++)
         {
             var Tx = Block.TxData[i];
-            if(!Tx.KEY)
-            {
-                Tx = Engine.GetTx(Tx.body);
-                Block.TxData[i] = Tx;
-            }
+            Engine.CheckHashExist(Tx);
             CheckTx("ProcessBlockOnSend", Tx, BlockNum);
             
             var TxIndexSend = Child.SendTxMap[Tx.KEY];

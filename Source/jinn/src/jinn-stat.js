@@ -13,11 +13,13 @@
 global.JINN_MODULES.push({DoNode:DoNode});
 
 var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderSend:"Head", BodySend:"Body", BodyTxSend:"BodyTx", ReadDB:"Reads",
-    LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBlockLength:"CacheD",
-    MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"FHead", MAXFindHeadCount:"MFHead",
-    FindEmptyCount:"FEmpty", MAXFindEmptyCount:"MFEmpty", HotCount:"Hots", MINHots:"MinHots", ActiveCount:"Connects", AddrCount:"Addrs",
-    NoValidateTx:0, AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", };
+    LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBlockLength:"-CacheD",
+    MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead",
+    FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty", HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs",
+    NoValidateTx:0, AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, TimeCall:"TCall", TimeRet:"TRet", ErrorCount:"NetErr",
+};
 global.JINN_STAT = {};
+JINN_STAT.Methods = {};
 JINN_STAT.Clear = function ()
 {
     for(var key in StatKeys)
@@ -25,6 +27,8 @@ JINN_STAT.Clear = function ()
     
     JINN_STAT.AllTraffic = 0;
     JINN_STAT.MINHots =  - 1;
+    
+    JINN_STAT.Methods = {};
 }
 JINN_STAT.Clear();
 global.GetJinnStatInfo = GetJinnStatInfo;
@@ -40,7 +44,11 @@ function GetJinnStatInfo(JinnStat)
     {
         var Value = StatKeys[key];
         if(Value && Value.substr(0, 1) !== "-")
-            Str += "\n" + Value + ":" + JinnStat[key];
+        {
+            var StatNum = JinnStat[key];
+            StatNum = Math.floor(StatNum);
+            Str += "\n" + Value + ":" + StatNum;
+        }
     }
     
     return Str;

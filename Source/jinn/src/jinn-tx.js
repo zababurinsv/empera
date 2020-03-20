@@ -182,33 +182,6 @@ function InitClass(Engine)
         
         return Tx;
     };
-    
-    Engine.GetTx = function (body,HASH,HashPow)
-    {
-        
-        var Tx = {};
-        Tx.IsTx = 1;
-        Tx.num = ReadUintFromArr(body, body.length - 12);
-        if(HASH)
-            Tx.HASH = HASH;
-        else
-            Tx.HASH = sha3(body);
-        
-        Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
-        Tx.KEY = GetHexFromArr(Tx.HashTicket);
-        Tx.body = body;
-        if(HashPow)
-        {
-            Tx.HashPow = HashPow;
-            Tx.TimePow = GetPowPower(HashPow);
-        }
-        else
-        {
-            Engine.FillTicket(Tx);
-        }
-        
-        return Tx;
-    };
     Engine.SendTestMap = {};
     
     Engine.SendTest = function (Value)

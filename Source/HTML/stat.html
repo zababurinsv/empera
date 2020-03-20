@@ -63,6 +63,20 @@
 
     function SetStat(htmlTable,arr)
     {
+        var Data10=arr[0];
+        var DataM=arr[arr.length-1];
+        var Data1={};
+        for(var key in Data10)
+        {
+            if(key.indexOf("MAX:")!==-1)
+                Data1[key] = DataM[key];
+            else
+            {
+                Data1[key] = Data10[key] / 10;
+            }
+        }
+        arr.unshift(Data1);
+
         var StrFilter = document.getElementById("idFilter").value;
 
         var rows=htmlTable.rows;
@@ -75,6 +89,7 @@
         if(0)
         for(var i=1;i<rows.length;i++)
             rows[i].Do=1;
+
 
         for(var m=0;m<arr.length;m++)
         {
@@ -333,6 +348,7 @@
     <table id="grid_stat" class="stat">
         <tr>
             <th>Counters</th>
+            <th>1 sec</th>
             <th>10 sec</th>
             <th>10 min</th>
             <th>total</th>
@@ -340,6 +356,7 @@
         </tr>
         <tr class="total">
             <td>Total</td>
+            <td></td>
             <td></td>
             <td></td>
             <td></td>
@@ -351,6 +368,7 @@
     <table id="grid_error" class="stat">
         <tr>
             <th>Errors</th>
+            <th>1 sec</th>
             <th>10 sec</th>
             <th>10 min</th>
             <th>total</th>
@@ -358,6 +376,7 @@
         </tr>
         <tr class="total">
             <td>Total</td>
+            <td></td>
             <td></td>
             <td></td>
             <td></td>
