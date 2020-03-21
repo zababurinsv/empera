@@ -41,7 +41,8 @@ var CServer = require("../core/server");
 
 require("../core/tests");
 
-const DEF_PERIOD_SIGN_LIB = 500;
+
+global.DEF_PERIOD_SIGN_LIB = 500;
 setTimeout(function ()
 {
     TestSignLib(DEF_PERIOD_SIGN_LIB);

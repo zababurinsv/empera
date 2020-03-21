@@ -95,9 +95,7 @@ module.exports.Create = function (Node,MapName)
     {
         setInterval(function ()
         {
-            var Str1 = "" + Engine.Header1 + "-" + Engine.Header2;
-            var Str2 = "" + Engine.Block1 + "-" + Engine.Block2;
-            SERVER.NodeSyncStatus = "(" + Str1 + "/" + Str2 + ")";
+            SERVER.NodeSyncStatus = {Header1:Engine.Header1, Header2:Engine.Header2, Block1:Engine.Block1, Block2:Engine.Block2, };
             
             NextRunEngine(Engine);
         }, Period);

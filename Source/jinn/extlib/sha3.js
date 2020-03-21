@@ -180,6 +180,8 @@
 
   function Keccak(bits, padding, outputBits)
   {
+      root.glKeccakCount++;
+
     this.blocks = [];
     this.s = [];
     this.padding = padding;
@@ -663,6 +665,8 @@
       s[1] ^= RC[n + 1];
     }
   };
+
+    root.glKeccakCount=0;
 
     root.sha3_str  = methods.sha3_256;
     root.sha3_array_256  = methods.sha3_array_256;

@@ -12,7 +12,7 @@
  *
 **/
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Timing"});
 
 //Engine context
 function InitClass(Engine)
@@ -55,6 +55,8 @@ function InitClass(Engine)
     
     Engine.DoTimeCorrect = function (CurBlockNum)
     {
+        if(!global.JINN_AUTO_CORRECT_TIME)
+            return ;
         
         var MaxItem = Engine.MaxTimeStatus;
         if(!MaxItem.BlockNum)
@@ -99,6 +101,8 @@ function InitClass(Engine)
     
     Engine.AddMaxHashToTimeStat = function (Child,Data)
     {
+        if(!global.JINN_AUTO_CORRECT_TIME)
+            return ;
         
         var BlockNum = Data.BlockNum;
         var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();

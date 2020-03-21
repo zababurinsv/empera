@@ -175,6 +175,9 @@ function Init(Engine)
         
         var Str = GetJinnStatInfo();
         Str = Str.replace(/[\n]/g, " ");
+        var JinnStat = Engine;
+        var StrMode = "(H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + ")";
+        Str += StrMode;
         if(global.DEV_MODE)
             console.log("" + MaxNum + ": " + Str);
         ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.MaxBlockTx);
@@ -183,6 +186,10 @@ function Init(Engine)
             var StatNum = Math.floor(JINN_STAT.Methods[key]);
             ADD_TO_STAT(key, StatNum);
         }
+        
+        ADD_TO_STAT("SHA3", global.glKeccakCount);
+        
+        global.glKeccakCount = 0;
         
         global.TERA_STAT = {};
         CopyObjKeys(global.TERA_STAT, JINN_STAT);

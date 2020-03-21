@@ -51,7 +51,7 @@ function InitClass(Engine)
         if(!Engine.CanProcessPacket(Child, Data))
             return ;
         
-        if(Engine.PrepareOnReceiveZip && global.glUseZip)
+        if(Engine.PrepareOnReceiveZip && global.glUseZip && Child.UseZip)
             Engine.PrepareOnReceiveZip(Child, Data);
         else
             Engine.PrepareOnReceive(Child, Data);
@@ -94,7 +94,7 @@ function InitClass(Engine)
         
         var DataBuf2 = TEMP_PACKET_ARR.concat(DataBuf);
         
-        if(Engine.PrepareOnSendZip && global.glUseZip)
+        if(Engine.PrepareOnSendZip && global.glUseZip && Child.UseZip)
             Engine.PrepareOnSendZip(Child, DataBuf2);
         else
             Engine.SendToNetwork(Child, DataBuf2);

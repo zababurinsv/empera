@@ -7,7 +7,7 @@
 */
 
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, DoNode:DoNode});
+global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, DoNode:DoNode, Name:"NetCache"});
 
 
 //Engine context

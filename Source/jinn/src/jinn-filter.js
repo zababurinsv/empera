@@ -13,7 +13,7 @@
  *
 **/
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass});
+global.JINN_MODULES.push({InitClass:InitClass, Name:"Filter"});
 
 global.MAXHASH_TIMING = 30;
 

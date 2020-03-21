@@ -16,7 +16,7 @@
 
 'use strict';
 
-global.JINN_MODULES.push({InitClass:InitClass});
+global.JINN_MODULES.push({InitClass:InitClass, Name:"Consensus"});
 
 //Engine context
 
@@ -369,13 +369,22 @@ function InitClass(Engine)
             else
             {
                 if(n === 0)
-                    Engine.Header1 = BlockHead.BlockNum;
+                {
+                    Engine.Header1 = BlockSeed.BlockNum;
+                    Engine.Header2 = Engine.Header1;
+                }
                 NodeStatus.LoadNum = 0;
                 NodeStatus.LoadHash = [];
                 NodeStatus.LoadBlockHead = undefined;
                 if(Engine.CanDoNextBodyLoad(BlockHead, NodeStatus, BlockSeed, n))
                     continue;
                 Engine.CheckAndSaveChainToDB(BlockHead, BlockSeed);
+                
+                if(n === 0)
+                {
+                    Engine.Block1 = BlockSeed.BlockNum;
+                    Engine.Block2 = Engine.Block1;
+                }
             }
         }
     };

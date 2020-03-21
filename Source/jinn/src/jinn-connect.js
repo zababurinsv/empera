@@ -20,7 +20,7 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Connect"});
 
-var MAX_CONNECT_TIMEOUT = 4 * 1000;
+var MAX_CONNECT_TIMEOUT = 10 * 1000;
 
 var glWorkConnect = 0;
 

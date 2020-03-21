@@ -42,7 +42,7 @@ global.TestSignLib = TestSignLib;
 function TestSignLib(MaxTime)
 {
     if(!MaxTime)
-        MaxTime = DEF_PERIOD_SIGN_LIB;
+        MaxTime = global.DEF_PERIOD_SIGN_LIB;
     
     var hash = Buffer.from(GetArrFromHex("A6B0914953F515F4686B2BA921B8FAC66EE6A6D3E317B43E981EBBA52393BFC6"));
     var PubKey = Buffer.from(GetArrFromHex("026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3"));

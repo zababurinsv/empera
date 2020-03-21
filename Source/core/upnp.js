@@ -40,7 +40,7 @@ function StartUseUPNP(ip,port,F)
             ToLog("OK port mapping");
         else
         {
-            ToLog("----------- ERROR port mapping: " + port);
+            ToLog("----------- Cannt port mapping: " + port);
             StartUseStun(ip, port, F);
             return ;
         }

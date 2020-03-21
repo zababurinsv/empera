@@ -209,6 +209,10 @@ function NextRunEngine(NetNodeArr)
         
         if(module.DoNode)
         {
+            var startTime;
+            if(typeof process === "object")
+                startTime = process.hrtime();
+            
             if(NetNodeArr.ID !== undefined)
                 module.DoNode(NetNodeArr);
             else
@@ -218,6 +222,18 @@ function NextRunEngine(NetNodeArr)
                     if(!Node.Del)
                         module.DoNode(Node);
                 }
+            
+            if(typeof process === "object")
+            {
+                var Time = process.hrtime(startTime);
+                var deltaTime = Time[0] * 1000 + Time[1] / 1e6;
+                
+                var Name = "DONODE:" + module.Name;
+                if(!JINN_STAT.Methods[Name])
+                    JINN_STAT.Methods[Name] = 0;
+                JINN_STAT.Methods[Name] += deltaTime;
+                JINN_STAT.DoNode += deltaTime;
+            }
         }
     }
 }

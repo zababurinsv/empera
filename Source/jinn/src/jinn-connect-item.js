@@ -16,7 +16,7 @@
 
 
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, Name:"Child"});
+global.JINN_MODULES.push({InitClass:InitClass, Name:"Item"});
 
 var glChildWorkNum = 0;
 
@@ -86,6 +86,8 @@ function InitClass(Engine)
     {
         glChildWorkNum++;
         Child.WorkNum = glChildWorkNum;
+        
+        Child.UseZip = global.glUseZip;
         
         Child.TransferCount = 0;
         Child.LastTransferTime = 0;

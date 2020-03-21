@@ -12,12 +12,19 @@
  *
 **/
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass});
+if(global.JINN_MODULES)
+    global.JINN_MODULES.push({InitClass:InitClass, Name:"Zip"});
 
 const zlib = require('zlib');
 const Writable = require('stream').Writable;
 
 global.glUseZip = 1;
+
+const ZIP_PACKET_SIZE = 32 * 1024;
+const ZIP_WINDOW_BITS = 15;
+
+const level = zlib.constants.Z_BEST_SPEED;
+var zip_options = {flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:ZIP_PACKET_SIZE, windowBits:ZIP_WINDOW_BITS, level:level};
 
 function InitClass(Engine)
 {
@@ -26,9 +33,8 @@ function InitClass(Engine)
         
         if(!Child.EncodeZip)
         {
-            const level = zlib.constants.Z_BEST_SPEED;
             
-            Child.EncodeZip = zlib.createGzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_SIZE, level:level});
+            Child.EncodeZip = zlib.createGzip(zip_options);
             Child.WriterZip = new Writable({objectMode:true, write:function (chunk,encoding,callback)
                 {
                     callback(0);
@@ -48,7 +54,7 @@ function InitClass(Engine)
         let DecodeZip = Child.DecodeZip;
         if(!DecodeZip)
         {
-            DecodeZip = zlib.createGunzip({flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:JINN_CONST.MAX_PACKET_SIZE});
+            DecodeZip = zlib.createGunzip(zip_options);
             Child.WriterUnZip = new Writable({objectMode:true, write:function (chunk,encoding,callback)
                 {
                     callback(0);
@@ -65,3 +71,20 @@ function InitClass(Engine)
         DecodeZip.write(Chunk);
     };
 }
+
+function TestZip(windowBits,PacketSize)
+{
+    const level = zlib.constants.Z_BEST_SPEED;
+    
+    var zip_options = {flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:PacketSize, windowBits:windowBits, level:level};
+    
+    var Count = 640 * 1024;
+    var buffer = require('crypto').randomBytes(Count);
+    var startTime = process.hrtime();
+    zlib.gzipSync(buffer, zip_options);
+    var Time = process.hrtime(startTime);
+    var deltaTime = Time[0] * 1000 + Time[1] / 1e6;
+    
+    console.log("windowBits:" + windowBits + " PacketSize:" + PacketSize + "  Time=" + deltaTime + "ms");
+}
+

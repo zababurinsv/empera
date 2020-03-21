@@ -150,6 +150,11 @@ class CDBChain
             return Block;
         }
     }
+    GetMaxIndex()
+    {
+        return this.DBChainIndex.GetMaxNum();
+    }
+    
     ReadIndex(BlockNum)
     {
         return this.DBChainIndex.Read(BlockNum);
@@ -160,6 +165,10 @@ class CDBChain
         return this.DBChainIndex.Write(Item);
     }
     
+    GetMaxMainIndex()
+    {
+        return this.DBMainIndex.GetMaxNum();
+    }
     ReadMainIndex(BlockNum)
     {
         return this.DBMainIndex.Read(BlockNum);

@@ -16,7 +16,7 @@
 
 const net = require("net");
 
-global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter});
+global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, Name:"NetSocket"});
 
 //Engine context
 

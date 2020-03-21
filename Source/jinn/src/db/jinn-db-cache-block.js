@@ -62,6 +62,9 @@ class CDBBlockCache extends global.CDBBodyCache
     }
     ReadIndex(BlockNum)
     {
+        if(BlockNum > this.GetMaxIndex())
+            return undefined;
+        
         var Find = this.CacheChainIndex.FindItemInCache(BlockNum);
         if(Find)
             return Find;
@@ -88,6 +91,9 @@ class CDBBlockCache extends global.CDBBodyCache
     }
     ReadMainIndex(BlockNum)
     {
+        if(BlockNum > this.GetMaxMainIndex())
+            return undefined;
+        
         var Find = this.CacheMainIndex.FindItemInCache(BlockNum);
         if(Find)
             return Find;

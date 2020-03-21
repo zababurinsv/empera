@@ -10,14 +10,17 @@
 'use strict';
 
 'use strict';
-global.JINN_MODULES.push({DoNode:DoNode});
+global.JINN_MODULES.push({DoNode:DoNode, Name:"Stat"});
 
 var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderSend:"Head", BodySend:"Body", BodyTxSend:"BodyTx", ReadDB:"Reads",
     LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBlockLength:"-CacheD",
     MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead",
     FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty", HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs",
-    NoValidateTx:0, AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, TimeCall:"TCall", TimeRet:"TRet", ErrorCount:"NetErr",
-};
+    NoValidateTx:0, AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", };
+if(typeof process === "object")
+{
+}
+
 global.JINN_STAT = {};
 JINN_STAT.Methods = {};
 JINN_STAT.Clear = function ()

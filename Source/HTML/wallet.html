@@ -473,6 +473,7 @@
         var DeltaDB=Data.CurBlockNum-Data.BlockNumDB;
         var DeltaTX=Data.CurBlockNum-Data.TXBlockNum;
 
+        var JinnStat=Data.NodeSyncStatus;
 
         var RestContext=Data.RestContext;
         if(RestContext)
@@ -507,26 +508,41 @@
             var MaxNum=Data.CurBlockNum-BLOCK_PROCESSING_LENGTH;
             if(MaxNum>0)
             {
-                var Percent=100*Data.BlockNumDB/MaxNum;
+                var Percent;
+
+                if(JinnStat)
+                {
+                    var LoadedH=JinnStat.Header2-JinnStat.Header1;
+                    var LoadedB=JinnStat.Block2-JinnStat.Block1;
+                    var Loaded=(LoadedH+LoadedB)/2;
+                    //var DeltaNeedLoad=MaxNum-Data.BlockNumDB-Loaded;
+
+                    Percent=100*(Data.BlockNumDB+Loaded)/MaxNum;
+                    if(Percent>=100)
+                        Percent=99.99;
+                    //StrMode = "(H:"+JinnStat.Header1+" B:"+JinnStat.Block1+")";
+                    StrMode = "(H:"+(JinnStat.Header2-JinnStat.Header1)+" B:"+(JinnStat.Block2-JinnStat.Block1)+")";
+                }
+                else
+                {
+                    Percent=100*Data.BlockNumDB/MaxNum;
+                    StrMode = "(" + Data.BlockNumDB + "/" + MaxNum + ")";
+                }
+
                 if(Percent<0)
                     Percent=0;
                 if(Percent>=99.5)
                     Percent=Percent.toFixed(3);
                 else
                     Percent=Percent.toFixed(2);
-
-                if(Data.NodeSyncStatus)
-                    StrMode=" "+Percent+"% "+" "+Data.NodeSyncStatus
-                else
-                    StrMode=" "+Percent+"% "+" ("+Data.BlockNumDB+"/"+MaxNum+")";
-
+                StrMode = " " + Percent + "% "+StrMode;
             }
 
             SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for synchronization "+StrMode+"</B></big></DIV>");
             WalletStatus="WAIT";
         }
         else
-        if(WalletStatus==="WAIT")
+        if(!JinnStat && WalletStatus==="WAIT")
         {
             CanSendTransaction=1;
             WalletStatus="OK";
@@ -534,8 +550,15 @@
         }
         else
         {
+            if(JinnStat)
+            {
+                StrMode = "(H:"+(JinnStat.Header2-JinnStat.Header1)+" B:"+(JinnStat.Block2-JinnStat.Block1)+")";
+                SetMainStatus("<DIV align='center' style='color:green'><big><B>Synchronization complete "+StrMode+"</B></big></DIV>", 1);
+            }
             CanSendTransaction=1;
         }
+
+
         if(Data.NET_WORK_MODE && Data.NET_WORK_MODE.NOT_RUN)
         {
             CanSendTransaction=0;

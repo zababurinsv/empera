@@ -22,7 +22,7 @@
 **/
 
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass});
+global.JINN_MODULES.push({InitClass:InitClass, Name:"Ticket"});
 
 global.glUseTicket = 1;
 
