@@ -84,7 +84,7 @@ function InitClass(Engine)
     
     Engine.AddBlockToChain = function (Block)
     {
-        var Find = Engine.DB.GetBlockFromDB(Block.BlockNum, Block.SumHash);
+        var Find = Engine.DB.FindBlockByHash(Block.BlockNum, Block.SumHash);
         if(!Find)
         {
             Engine.DB.WriteBlock(Block);

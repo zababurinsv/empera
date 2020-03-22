@@ -19,7 +19,7 @@ catch(e)
 {
 }
 
-if(natUpnp)
+if(natUpnp && !global.LOCAL_RUN)
 {
     var ClientUPNP = natUpnp.createClient();
     global.StartPortMapping = StartUseUPNP;

@@ -109,13 +109,14 @@ class CCache
         
         JINN_STAT.CacheErrDB++
         
-        if(0)
+        var CacheControlNum = 0;
+        if(CacheControlNum)
         {
             if(!this.CacheErrorList || JINN_STAT.CacheErrDB === 1)
                 this.CacheErrorList = []
             this.CacheErrorList.push(CacheIndex)
             
-            if(JINN_STAT.CacheErrDB === 30)
+            if(JINN_STAT.CacheErrDB === CacheControlNum)
             {
                 var Item = this.CacheDBTree.max();
                 ToLogTrace("CacheErrDB: MAX=" + Item.CacheIndex + " Arr=" + this.CacheErrorList)

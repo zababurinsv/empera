@@ -42,6 +42,8 @@ if(typeof window !== "object")
     require("./db/cache.js");
     require("./db/jinn-db-cache-body.js");
     require("./db/jinn-db-cache-block.js");
+    require("./db/jinn-db-cache-hot.js");
+    
     require("./db/jinn-db-result.js");
     require("./jinn-block-db.js");
     require("./jinn-connect.js");
@@ -98,7 +100,7 @@ JINN_CONST.CONSENSUS_PERIOD_TIME = 1000;
 
 
 
-JINN_CONST.MAX_BLOCK_SIZE = 130 * 1024;
+JINN_CONST.MAX_BLOCK_SIZE = 230 * 1024;
 JINN_CONST.BLOCK_GENESIS_COUNT = 16;
 JINN_CONST.START_BLOCK_NUM = JINN_CONST.BLOCK_GENESIS_COUNT + 4;
 JINN_CONST.DELTA_BLOCKS_FOR_LOAD_ONLY = JINN_CONST.START_BLOCK_NUM + 10;
@@ -128,7 +130,7 @@ JINN_CONST.CACHE_PERIOD_FOR_INVALIDATE = 5;
 
 
 JINN_CONST.TX_TICKET_HASH_LENGTH = 10;
-JINN_CONST.MAX_TRANSACTION_COUNT = 1500;
+JINN_CONST.MAX_TRANSACTION_COUNT = 2000;
 
 
 JINN_CONST.CACHE_DB_LENGTH = 50;

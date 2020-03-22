@@ -57,6 +57,8 @@ class CDBFile
     
     WriteInner(BufWrite, Position, CheckSize)
     {
+        JINN_STAT.WriteRowsDB++
+        
         var FI = this.OpenDBFile();
         if(Position === undefined)
         {
@@ -83,7 +85,7 @@ class CDBFile
     {
         Position = Math.trunc(Position)
         
-        JINN_STAT.ReadDB++
+        JINN_STAT.ReadRowsDB++
         
         var BufRead = [];
         var FI = this.OpenDBFile();

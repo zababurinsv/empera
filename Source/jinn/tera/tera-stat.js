@@ -173,10 +173,16 @@ function Init(Engine)
             PrevSumPow = MaxBlock.SumPow;
         }
         
+        JINN_STAT.ReadRowsDB += global.ReadRowsDB;
+        JINN_STAT.WriteRowsDB += global.WriteRowsDB;
+        
+        global.ReadRowsDB = 0;
+        global.WriteRowsDB = 0;
+        
         var Str = GetJinnStatInfo();
         Str = Str.replace(/[\n]/g, " ");
         var JinnStat = Engine;
-        var StrMode = "(H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + ")";
+        var StrMode = " H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + "";
         Str += StrMode;
         if(global.DEV_MODE)
             console.log("" + MaxNum + ": " + Str);

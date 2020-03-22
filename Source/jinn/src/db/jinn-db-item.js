@@ -43,6 +43,7 @@ class CDBItem extends global.CDBFile
     
     Read(Position)
     {
+        JINN_STAT.ReadRowsDB2++
         Position = Math.trunc(Position)
         var DataSize = this.ReadUint32(Position);
         if(!DataSize)

@@ -140,7 +140,7 @@ function InitClass(Engine)
         //search in the array of loaded blocks
         var WasInChain = 0;
         
-        var Find = Engine.DB.GetBlockFromDB(Block.BlockNum, Block.SumHash);
+        var Find = Engine.DB.FindBlockByHash(Block.BlockNum, Block.SumHash);
         if(!Find)
             Engine.DB.WriteBlock(Block);
         
@@ -328,7 +328,7 @@ function InitClass(Engine)
             var NodeStatus = Store.LiderArr[n];
             if(!NodeStatus.BlockSeed)
             {
-                NodeStatus.BlockSeed = Engine.DB.GetBlockFromDB(BlockNum, NodeStatus.Hash);
+                NodeStatus.BlockSeed = Engine.DB.FindBlockByHash(BlockNum, NodeStatus.Hash);
             }
             
             var BlockSeed = NodeStatus.BlockSeed;

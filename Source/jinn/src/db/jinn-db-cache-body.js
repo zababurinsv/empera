@@ -9,8 +9,6 @@
 
 'use strict';
 
-var BWRITE_MODE_TX = (global.PROCESS_NAME === "TX");
-
 class CDBBodyCache extends global.CDBChain
 {
     constructor(EngineID, FCalcBlockHash)

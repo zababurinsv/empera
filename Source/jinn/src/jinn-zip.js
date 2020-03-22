@@ -74,9 +74,9 @@ function InitClass(Engine)
 
 function TestZip(windowBits,PacketSize)
 {
-    const level = zlib.constants.Z_BEST_SPEED;
+    const zlib = require('zlib');
     
-    var zip_options = {flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:PacketSize, windowBits:windowBits, level:level};
+    var zip_options = {flush:zlib.constants.Z_SYNC_FLUSH, chunkSize:PacketSize, windowBits:windowBits, level:zlib.constants.Z_BEST_SPEED};
     
     var Count = 640 * 1024;
     var buffer = require('crypto').randomBytes(Count);

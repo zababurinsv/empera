@@ -263,28 +263,31 @@ function RunServer()
     
     if(global.TEST_JINN)
     {
-        var JinnLib = require("../jinn/tera");
-        
-        StartPortMapping(Worker.ip, Worker.port, function (ip)
-        {
-            if(!Worker.ip && ip)
-            {
-                Worker.ip = ip;
-                global.INTERNET_IP_FROM_STUN = ip;
-            }
-            
-            JinnLib.Create(Worker);
-            Worker.CanSend = 2;
-            setTimeout(function ()
-            {
-                Worker.CheckStartedBlocks();
-            }, 800);
-        });
-        
+        StartJinn();
         return ;
     }
     
     DoStartFindList();
+}
+
+function StartJinn()
+{
+    var JinnLib = require("../jinn/tera");
+    StartPortMapping(SERVER.ip, SERVER.port, function (ip)
+    {
+        if(!SERVER.ip && ip)
+        {
+            SERVER.ip = ip;
+            global.INTERNET_IP_FROM_STUN = ip;
+        }
+        
+        JinnLib.Create(SERVER);
+        SERVER.CanSend = 2;
+        setTimeout(function ()
+        {
+            SERVER.CheckStartedBlocks();
+        }, 800);
+    });
 }
 
 function DoStartFindList()

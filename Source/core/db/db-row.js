@@ -13,6 +13,9 @@
 
 const fs = require('fs');
 
+global.ReadRowsDB = 0;
+global.WriteRowsDB = 0;
+
 module.exports = class CDBRow extends require("./db")
 {
     constructor(FileName, DataSize, Format, bReadOnly, NumName)
@@ -57,6 +60,8 @@ module.exports = class CDBRow extends require("./db")
     
     Write(Data, RetBuf)
     {
+        global.WriteRowsDB++
+        
         var startTime = process.hrtime();
         
         this.LastHash = undefined
@@ -107,6 +112,8 @@ module.exports = class CDBRow extends require("./db")
         var BufRead = this.GetMap(Num);
         if(!BufRead)
         {
+            global.ReadRowsDB++
+            
             BufRead = BufLib.GetNewBuffer(this.DataSize)
             var Position = Num * this.DataSize;
             var FI = this.OpenDBFile(this.FileName);

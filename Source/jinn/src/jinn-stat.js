@@ -10,13 +10,14 @@
 'use strict';
 
 'use strict';
-global.JINN_MODULES.push({DoNode:DoNode, Name:"Stat"});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Stat"});
 
-var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderSend:"Head", BodySend:"Body", BodyTxSend:"BodyTx", ReadDB:"Reads",
-    LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBlockLength:"-CacheD",
-    MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead",
-    FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty", HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs",
-    NoValidateTx:0, AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", };
+var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderSend:"Head", BodySend:"Body", BodyTxSend:"BodyTx", ReadRowsDB:"Reads",
+    ReadRowsDB2:"Reads2", WriteRowsDB:"Writes", LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains",
+    MAXCacheBlockLength:"-CacheD", MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"-FHead",
+    MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty", HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects",
+    AddrCount:"Addrs", NoValidateTx:0, AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr",
+};
 if(typeof process === "object")
 {
 }
@@ -101,4 +102,20 @@ function DoNode(Engine)
         if(LArr)
             JINN_STAT.AddrCount += LArr.length;
     }
+}
+
+function InitClass(Engine)
+{
+    Engine.AddMethodStatTime = function (Method,deltaTime,bIsStartTime)
+    {
+        if(bIsStartTime)
+        {
+            var Time = process.hrtime(deltaTime);
+            deltaTime = Time[0] * 1000 + Time[1] / 1e6;
+        }
+        
+        if(!JINN_STAT.Methods[Method])
+            JINN_STAT.Methods[Method] = 0;
+        JINN_STAT.Methods[Method] += deltaTime;
+    };
 }

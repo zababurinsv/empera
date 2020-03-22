@@ -46,6 +46,29 @@ function InitClass(Engine)
     };
     Engine.ReceiveFromNetwork = function (Child,Data)
     {
+        if(typeof process !== "object")
+            return Engine.ReceiveFromNetworkNext(Child, Data);
+        
+        var startTime = process.hrtime();
+        
+        Engine.ReceiveFromNetworkNext(Child, Data);
+        
+        Engine.AddMethodStatTime("ReceiveFromNetwork", startTime, 1);
+    };
+    Engine.PrepareOnSend = function (Method,Child,DataObj,bCall,F,RetContext)
+    {
+        if(typeof process !== "object")
+            return Engine.PrepareOnSendNext(Method, Child, DataObj, bCall, F, RetContext);
+        
+        var startTime = process.hrtime();
+        
+        Engine.PrepareOnSendNext(Method, Child, DataObj, bCall, F, RetContext);
+        
+        Engine.AddMethodStatTime("SendToNetwork", startTime, 1);
+    };
+    
+    Engine.ReceiveFromNetworkNext = function (Child,Data)
+    {
         Engine.ReceiveTraffic += Data.length;
         
         if(!Engine.CanProcessPacket(Child, Data))
@@ -57,7 +80,7 @@ function InitClass(Engine)
             Engine.PrepareOnReceive(Child, Data);
     };
     
-    Engine.PrepareOnSend = function (Method,Child,DataObj,bCall,F,RetContext)
+    Engine.PrepareOnSendNext = function (Method,Child,DataObj,bCall,F,RetContext)
     {
         var State = Engine.GetSocketStatus(Child);
         if(State !== 100)
@@ -224,9 +247,8 @@ function InitClass(Engine)
             
             var Time = process.hrtime(startTime);
             var deltaTime = Time[0] * 1000 + Time[1] / 1e6;
-            if(!JINN_STAT.Methods[Method])
-                JINN_STAT.Methods[Method] = 0;
-            JINN_STAT.Methods[Method] += deltaTime;
+            
+            Engine.AddMethodStatTime(Method, deltaTime);
             
             if(bCall)
                 JINN_STAT.TimeCall += deltaTime;

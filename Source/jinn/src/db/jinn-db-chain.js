@@ -51,7 +51,7 @@ class CDBChain
         }
         if(TEST_DB_BLOCK && !Block.Position)
         {
-            var Find2 = this.GetBlockFromDB(Block.BlockNum, Block.SumHash);
+            var Find2 = this.FindBlockByHash(Block.BlockNum, Block.SumHash);
             if(Find2)
                 ToLogTrace("Find2: on Block=" + Block.BlockNum)
         }
@@ -164,10 +164,9 @@ class CDBChain
     {
         return this.DBChainIndex.Write(Item);
     }
-    
     GetMaxMainIndex()
     {
-        return this.DBMainIndex.GetMaxNum();
+        return this.GetMaxNumBlockDB();
     }
     ReadMainIndex(BlockNum)
     {
@@ -334,11 +333,11 @@ class CDBChain
         return Arr;
     }
     
-    GetBlockFromDB(BlockNum, Hash)
+    FindBlockByHash(BlockNum, Hash)
     {
         if(BlockNum > 0 && IsZeroArr(Hash))
         {
-            ToLogTrace("ZERO Hash on GetBlockFromDB Block=" + BlockNum)
+            ToLogTrace("ZERO Hash on FindBlockByHash Block=" + BlockNum)
             return undefined;
         }
         var Count = 0;
@@ -383,7 +382,7 @@ class CDBChain
             ToLogTrace("ZERO PrevSumHash on Block=" + Block.BlockNum)
             return undefined;
         }
-        var PrevBlock = this.GetBlockFromDB(Block.BlockNum - 1, Block.PrevSumHash);
+        var PrevBlock = this.FindBlockByHash(Block.BlockNum - 1, Block.PrevSumHash);
         return PrevBlock;
     }
     SetBlockJump(BlockSeed, Block, StrType)

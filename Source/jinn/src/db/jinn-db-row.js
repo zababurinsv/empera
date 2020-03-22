@@ -63,6 +63,7 @@ class CDBRow extends global.CDBFile
     
     Read(Num, GetBufOnly)
     {
+        JINN_STAT.ReadRowsDB2++
         Num = Math.trunc(Num)
         
         var Data;
