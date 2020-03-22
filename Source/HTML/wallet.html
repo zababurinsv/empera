@@ -432,6 +432,8 @@
         else
             document.title=TitleName;
     }
+
+    var LastLoadPercent=0;
     function SetConfigData(Data)
     {
         if(!Data || !Data.result)
@@ -503,13 +505,12 @@
         else
         if((Data.RelayMode && DeltaDB>BLOCK_PROCESSING_LENGTH*2) || (!Data.RelayMode && DeltaDB>BLOCK_PROCESSING_LENGTH*1))
         {
+            var Percent=0;
             CanSendTransaction=0;
             var StrMode="";
             var MaxNum=Data.CurBlockNum-BLOCK_PROCESSING_LENGTH;
             if(MaxNum>0)
             {
-                var Percent;
-
                 if(JinnStat)
                 {
                     var LoadedH=JinnStat.Header2-JinnStat.Header1;
@@ -535,21 +536,27 @@
                     Percent=Percent.toFixed(3);
                 else
                     Percent=Percent.toFixed(2);
+
                 StrMode = " " + Percent + "% "+StrMode;
             }
 
-            SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for synchronization "+StrMode+"</B></big></DIV>");
+            if(!JinnStat || Percent>LastLoadPercent)
+                SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for synchronization "+StrMode+"</B></big></DIV>");
+
+            LastLoadPercent=Percent;
             WalletStatus="WAIT";
         }
         else
         if(!JinnStat && WalletStatus==="WAIT")
         {
+            LastLoadPercent=0;
             CanSendTransaction=1;
             WalletStatus="OK";
             SetMainStatus("<DIV align='center' style='color:green'><big><B>Synchronization complete</B></big></DIV>",1);
         }
         else
         {
+            LastLoadPercent=0;
             if(JinnStat)
             {
                 StrMode = "(H:"+(JinnStat.Header2-JinnStat.Header1)+" B:"+(JinnStat.Block2-JinnStat.Block1)+")";

@@ -15,6 +15,7 @@ function Init(Engine)
 {
     Engine.GetNewBlock = function (BlockNum,TxArr,bInMemory)
     {
+        Engine.SortBlock({TxData:TxArr});
         var Tx = SERVER.GetDAppTransactions(BlockNum);
         if(Tx)
         {
@@ -25,7 +26,6 @@ function Init(Engine)
         var Block = {};
         Block.BlockNum = BlockNum;
         Block.TxData = TxArr;
-        Engine.SortBlock(Block);
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
         Block.MinerHash = ZERO_ARR_32;
         

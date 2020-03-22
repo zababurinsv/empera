@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1554;
+global.UPDATE_CODE_VERSION_NUM = 1566;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 
@@ -251,13 +251,13 @@ if(global.JINN_MODE)
 {
     NETWORK = "JINN";
     if(!global.LOCAL_RUN)
-        global.START_NETWORK_DATE = 1584369472000;
+        global.START_NETWORK_DATE = 1584916734000;
     
     global.RESYNC_CONDITION = 0;
     global.REST_BLOCK_SCALE = 100;
     global.DELTA_BLOCK_ACCOUNT_HASH = 30;
     global.PERIOD_ACCOUNT_HASH = 10;
-    global.START_BLOCK_ACCOUNT_HASH = 68000;
+    global.START_BLOCK_ACCOUNT_HASH = 0;
     global.START_BLOCK_ACCOUNT_HASH3 = 1;
     
     global.SMART_BLOCKNUM_START = 0;

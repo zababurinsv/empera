@@ -43,8 +43,6 @@ function Init(Engine)
         return Tx;
     };
     
-    Engine.CalcTreeHash = CalcTreeHashFromArrBody;
-    
     Engine.GetGenesisBlock = function (BlockNum)
     {
         if(BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT)

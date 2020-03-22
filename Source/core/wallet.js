@@ -37,7 +37,7 @@ class CApp
         {
             Params = {}
             
-            if(global.TEST_NETWORK)
+            if(global.global.LOCAL_RUN)
             {
                 Params.Key = global.ARR_PUB_KEY[0]
             }

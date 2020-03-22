@@ -169,8 +169,6 @@ function InitClass(Engine)
         
         //we calculate the sent data hash
         
-        Engine.SortBlock(Block);
-        
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
         
         //making an entry in the array of loaded blocks

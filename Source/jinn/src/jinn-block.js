@@ -166,8 +166,8 @@ function InitClass(Engine)
         var Block = {};
         Block.BlockNum = BlockNum;
         
+        Engine.SortBlock({TxData:TxArr});
         Block.TxData = TxArr;
-        Engine.SortBlock(Block);
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
         
         Block.MinerHash = [Engine.ID % 256, Engine.ID >>> 8];
@@ -224,8 +224,6 @@ function InitClass(Engine)
     {
         if(!TxArr || !TxArr.length)
             return ZERO_ARR_32;
-        
-        Engine.SortBlock({TxData:TxArr});
         
         var Buf = [];
         for(var n = 0; n < TxArr.length; n++)

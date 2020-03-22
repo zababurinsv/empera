@@ -71,7 +71,6 @@ function Init(Engine)
     SERVER.ReadBlockDB = function (BlockNum)
     {
         var Block = Engine.GetBlockDB(BlockNum);
-        Engine.SortBlock(Block);
         Engine.ConvertToTera(Block, 1);
         return Block;
     };
