@@ -434,6 +434,7 @@
     }
 
     var LastLoadPercent=0;
+    var LastLoadPercentTime=0;
     function SetConfigData(Data)
     {
         if(!Data || !Data.result)
@@ -513,9 +514,9 @@
             {
                 if(JinnStat)
                 {
-                    var LoadedH=JinnStat.Header2-JinnStat.Header1;
+                    var LoadedH=(JinnStat.Header2-JinnStat.Header1)/2;
                     var LoadedB=JinnStat.Block2-JinnStat.Block1;
-                    var Loaded=(LoadedH+LoadedB)/2;
+                    var Loaded=LoadedH+LoadedB;
                     //var DeltaNeedLoad=MaxNum-Data.BlockNumDB-Loaded;
 
                     Percent=100*(Data.BlockNumDB+Loaded)/MaxNum;
@@ -540,10 +541,13 @@
                 StrMode = " " + Percent + "% "+StrMode;
             }
 
-            if(!JinnStat || Percent>LastLoadPercent)
-                SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for synchronization "+StrMode+"</B></big></DIV>");
+            if(!JinnStat || Percent>LastLoadPercent || Date.now()-LastLoadPercentTime>10*1000)
+            {
+                SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for synchronization " + StrMode + "</B></big></DIV>");
+                LastLoadPercent = Percent;
+                LastLoadPercentTime=Date.now();
+            }
 
-            LastLoadPercent=Percent;
             WalletStatus="WAIT";
         }
         else

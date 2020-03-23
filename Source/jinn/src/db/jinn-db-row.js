@@ -45,6 +45,8 @@ class CDBRow extends global.CDBFile
     
     Write(Data)
     {
+        JINN_STAT.WriteRowsDB++
+        
         this.CheckNewNum(Data)
         var Num = Math.floor(Data[this.ColName]);
         
@@ -54,7 +56,8 @@ class CDBRow extends global.CDBFile
             ToLogTrace("Error SerializeLib")
         }
         
-        var Position = (Num + this.DeltaNum) * this.DataSize;
+        var Num2 = Num + this.DeltaNum;
+        var Position = (Num2) * this.DataSize;
         if(this.WriteInner(BufWrite, Position, 0) === false)
             return 0;
         
@@ -63,16 +66,18 @@ class CDBRow extends global.CDBFile
     
     Read(Num, GetBufOnly)
     {
-        JINN_STAT.ReadRowsDB2++
+        JINN_STAT.ReadRowsDB++
         Num = Math.trunc(Num)
         
         var Data;
-        if(isNaN(Num) || Num + this.DeltaNum < 0 || Num > this.GetMaxNum())
-        {
+        if(isNaN(Num))
             return undefined;
-        }
         
-        var Position = (Num + this.DeltaNum) * this.DataSize;
+        var Num2 = Num + this.DeltaNum;
+        if(Num2 < 0 || Num > this.GetMaxNum())
+            return undefined;
+        
+        var Position = (Num2) * this.DataSize;
         if(Position < 0)
             return undefined;
         
@@ -121,6 +126,7 @@ class CDBRow extends global.CDBFile
         
         if(Position !== this.GetSize())
         {
+            JINN_STAT.WriteRowsDB++
             super.Truncate(Position)
         }
     }

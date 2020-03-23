@@ -26,6 +26,8 @@ class CDBItem extends global.CDBFile
     
     Write(Data)
     {
+        JINN_STAT.WriteRowsDB++
+        
         var BufWrite = SerializeLib.GetBufferFromObject(Data, this.Format, this.WorkStruct, 1);
         if(this.DataSize && this.DataSize !== BufWrite.length)
         {
@@ -43,7 +45,7 @@ class CDBItem extends global.CDBFile
     
     Read(Position)
     {
-        JINN_STAT.ReadRowsDB2++
+        JINN_STAT.ReadRowsDB++
         Position = Math.trunc(Position)
         var DataSize = this.ReadUint32(Position);
         if(!DataSize)

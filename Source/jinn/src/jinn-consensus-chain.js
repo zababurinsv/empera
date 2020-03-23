@@ -75,7 +75,8 @@ function InitClass(Engine)
         var Delta = BlockSeed.BlockNum - Block.BlockNum;
         if(Delta > 0)
         {
-            var Level = Math.floor(Math.log(Delta));
+            var Level = Math.floor(Math.log10(Delta));
+            
             if(!Arr[Level])
                 Arr[Level] = Block;
         }
@@ -110,7 +111,6 @@ function InitClass(Engine)
         var Block = BlockSeed;
         
         var ArrJump = [];
-        var BlockSet;
         var BlockJump = undefined;
         while(true)
         {
@@ -119,7 +119,7 @@ function InitClass(Engine)
             {
                 break;
             }
-            var BlockHead = Engine.GetBlockJump(Block, "H");
+            var BlockHead = Engine.DB.GetBlockJump(Block, "H");
             if(BlockHead)
             {
                 Engine.AddJumpToArr(BlockSeed0, BlockHead, ArrJump);
@@ -141,7 +141,6 @@ function InitClass(Engine)
                 ToLogTrace("Error PrevSumHash on Block=" + Block.BlockNum);
             
             Engine.AddJumpToArr(BlockSeed0, Block, ArrJump);
-            BlockSet = Block;
             Block = PrevBlock;
         }
         if(TEST_BLOCK_LIST)
@@ -169,7 +168,7 @@ function InitClass(Engine)
                 var CurBlock = ArrJump[i];
                 if(CurBlock)
                 {
-                    if(Engine.SetBlockJump(PrevBlock, CurBlock, "H"))
+                    if(Engine.DB.SetBlockJump(PrevBlock, CurBlock, "H"))
                     {
                         if(StrSet)
                             StrSet += ",";
@@ -179,81 +178,9 @@ function InitClass(Engine)
                     PrevBlock = CurBlock;
                 }
             }
-            if(Count > 50)
+            if(Count > 100)
                 Engine.ToLog("[" + Count + "/" + nSet + "]" + "  jump: " + Delta + "   " + BlockSeed0.BlockNum + "->" + Block.BlockNum + "   " + GetHexFromArr(BlockSeed0.SumHash).substr(0,
                 8) + "->" + GetHexFromArr(Block.SumHash).substr(0, 8) + Engine.GetStrFromJumpArr(ArrJump) + "  " + StrSet);
-        }
-        
-        JINN_STAT.FindHeadCount += Count;
-        JINN_STAT.MAXFindHeadCount = Math.max(JINN_STAT.MAXFindHeadCount, Count);
-        
-        return Block;
-    };
-    
-    Engine.CalcHead00 = function (BlockSeed,bTest)
-    {
-        
-        var Count = 0;
-        var Block = BlockSeed;
-        var JumpBlockTo, JumpBlock;
-        
-        var BlockSet;
-        
-        while(true)
-        {
-            Count++;
-            if(Engine.IsValidBlockDB(Block))
-            {
-                break;
-            }
-            var BlockHead = Engine.GetBlockJump(Block, "H");
-            if(BlockHead)
-            {
-                if(!Engine.IsValidBlockDB(BlockHead))
-                {
-                    JumpBlock = Block;
-                    JumpBlockTo = BlockHead;
-                    Block = BlockHead;
-                    
-                    continue;
-                }
-            }
-            
-            var PrevBlock = Engine.GetPrevBlock(Block, 1);
-            if(!PrevBlock)
-                break;
-            
-            if(!IsEqArr(Block.PrevSumHash, PrevBlock.SumHash))
-                ToLogTrace("Error PrevSumHash on Block=" + Block.BlockNum);
-            
-            JumpBlock = undefined;
-            JumpBlockTo = undefined;
-            
-            BlockSet = Block;
-            
-            Block = PrevBlock;
-        }
-        if(TEST_BLOCK_LIST)
-        {
-            var Block0 = Engine.GetFirstBlockHead0(BlockSeed);
-            if(Block && Block0 && Block0 !== Block && !IsEqArr(Block0.SumHash, Block.SumHash))
-            {
-                
-                var Str = "Err from seed:" + BlockInfo(BlockSeed) + " BlockHead = " + BlockInfo(Block) + "  Need = " + BlockInfo(Block0);
-                if(JumpBlock)
-                {
-                    Str += "  JumpBlock = " + BlockInfo(JumpBlock) + " -> " + BlockInfo(JumpBlockTo);
-                }
-                Engine.ToLog(Str);
-            }
-        }
-        
-        if(BlockSeed && BlockSet && BlockSeed.BlockNum !== BlockSet.BlockNum)
-        {
-            
-            var Delta = BlockSeed.BlockNum - BlockSet.BlockNum;
-            
-            var bWas = Engine.SetBlockJump(BlockSeed, BlockSet, "H");
         }
         
         JINN_STAT.FindHeadCount += Count;
@@ -281,7 +208,7 @@ function InitClass(Engine)
             {
                 break;
             }
-            var FirstBlock = Engine.GetBlockJump(Block, "B");
+            var FirstBlock = Engine.DB.GetBlockJump(Block, "B");
             if(FirstBlock)
             {
                 JumpBlock = Block;
@@ -310,19 +237,10 @@ function InitClass(Engine)
         
         if(BlockSeed && BlockSet && BlockSeed.BlockNum !== BlockSet.BlockNum)
         {
-            Engine.SetBlockJump(BlockSeed, BlockSet, "B");
+            Engine.DB.SetBlockJump(BlockSeed, BlockSet, "B");
         }
         
         return Block;
-    };
-    
-    Engine.SetBlockJump = function (BlockSeed,Block,StrType)
-    {
-        return Engine.DB.SetBlockJump(BlockSeed, Block, StrType);
-    };
-    Engine.GetBlockJump = function (BlockSeed,StrType)
-    {
-        return Engine.DB.GetBlockJump(BlockSeed, StrType);
     };
     
     Engine.IsValidBlockDB = function (Block)

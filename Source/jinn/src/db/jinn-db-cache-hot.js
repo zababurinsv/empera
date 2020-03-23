@@ -15,14 +15,14 @@ class CDBCacheHot extends global.CDBBlockCache
     {
         super(EngineID, FCalcBlockHash)
         
-        this.StartHotBlockNum = Math.max(JINN_CONST.BLOCK_GENESIS_COUNT, JINN_EXTERN.GetCurrentBlockNumByTime())
+        this.StartHotBlockNum = 1e9
     }
     
     DoNode()
     {
         super.DoNode()
         
-        this.StartHotBlockNum = Math.max(JINN_CONST.BLOCK_GENESIS_COUNT, JINN_EXTERN.GetCurrentBlockNumByTime() - 0)
+        this.StartHotBlockNum = Math.max(JINN_CONST.BLOCK_GENESIS_COUNT, JINN_EXTERN.GetCurrentBlockNumByTime() + 0)
     }
     
     Clear()
@@ -87,10 +87,10 @@ class CDBCacheHot extends global.CDBBlockCache
         ToLogTrace("Error hot WriteMainIndex on block=" + BlockNum)
         return 0;
     }
-    TruncateDB(LastBlockNum)
+    TruncateMain(LastBlockNum)
     {
         if(LastBlockNum < this.StartHotBlockNum)
-            return super.TruncateDB(LastBlockNum);
+            return super.TruncateMain(LastBlockNum);
         
         ToLogTrace("Error hot WriteMainIndex on block=" + LastBlockNum)
     }
@@ -134,7 +134,6 @@ class CDBCacheHot extends global.CDBBlockCache
     {
         if(BlockNum < this.StartHotBlockNum)
             return super.FindBlockByHash(BlockNum, Hash);
-        ToLogTrace("TODO FindBlockByHash on block=" + BlockNum)
         return undefined;
     }
     GetPrevBlockDB(Block)
@@ -151,14 +150,14 @@ class CDBCacheHot extends global.CDBBlockCache
     
     SetBlockJump(BlockSeed, Block, StrType)
     {
-        if(BlockSeed.BlockNum < this.StartHotBlockNum)
+        if(BlockSeed.BlockNum < this.StartHotBlockNum - JINN_CONST.HOT_CACHE_DELTA)
             return super.SetBlockJump(BlockSeed, Block, StrType);
         return 0;
     }
     
     GetBlockJump(BlockSeed, StrType)
     {
-        if(BlockSeed.BlockNum < this.StartHotBlockNum)
+        if(BlockSeed.BlockNum < this.StartHotBlockNum - JINN_CONST.HOT_CACHE_DELTA)
             return super.GetBlockJump(BlockSeed, StrType);
         
         return undefined;

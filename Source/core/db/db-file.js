@@ -53,7 +53,6 @@ module.exports = class CDBFile extends require("./db")
     
     WriteInner(BufWrite, Position, CheckSize)
     {
-        global.WriteRowsDB++
         
         var FI = this.OpenDBFile(this.FileName, 1);
         
@@ -81,7 +80,7 @@ module.exports = class CDBFile extends require("./db")
     
     ReadInner(Position, DataSize)
     {
-        global.ReadRowsDB++
+        
         Position = Math.trunc(Position)
         
         var BufRead = Buffer.alloc(DataSize);

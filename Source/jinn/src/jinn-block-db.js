@@ -145,9 +145,9 @@ function InitClass(Engine)
     {
         return Engine.DB.WriteBlockMain(Block);
     };
-    Engine.TruncateDB = function (LastBlockNum)
+    Engine.TruncateMain = function (LastBlockNum)
     {
-        Engine.DB.TruncateDB(LastBlockNum);
+        Engine.DB.TruncateMain(LastBlockNum);
     };
     
     Engine.GetMaxNumBlockDB = function ()

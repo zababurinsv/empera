@@ -47,7 +47,7 @@ exports.GetObjectFromBuffer = GetObjectFromBuffer;
 exports.GetBufferFromObject = GetBufferFromObject;
 exports.GetFormatFromObject = GetFormatFromObject;
 
-var glError = 1;
+var glError = global.DEV_MODE;
 
 function Write(buf,data,StringFormat,ParamValue,WorkStruct)
 {
@@ -503,7 +503,8 @@ function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
     
     if(!bNoSizeControl && glError && Arr.len !== Arr.length)
     {
-        ToLogTrace("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
+        if(global.DEV_MODE)
+            ToLog("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
     }
     
     return Data;

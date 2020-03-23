@@ -350,7 +350,7 @@ function InitClass(Engine)
                     {
                         
                         var Block2 = Engine.GetBlockHeaderDB(BlockHead.BlockNum - 1);
-                        if(!IsEqArr(BlockHead.PrevSumHash, Block2.SumHash))
+                        if(!Block2 || !IsEqArr(BlockHead.PrevSumHash, Block2.SumHash))
                         {
                             ToLogTrace("Error BlockHead at BlockNum = " + BlockHead.BlockNum);
                             
@@ -425,7 +425,6 @@ function InitClass(Engine)
                 var PrevBlockSeed = Engine.GetPrevBlock(CurBlockSeed);
                 if(!PrevBlockSeed)
                 {
-                    ToLogTrace("Error GetPrevBlock at block=" + CurBlockSeed.BlockNum);
                     break;
                 }
                 CurBlockSeed = PrevBlockSeed;

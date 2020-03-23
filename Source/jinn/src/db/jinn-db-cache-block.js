@@ -118,10 +118,16 @@ class CDBBlockCache extends global.CDBBodyCache
         return Result;
     }
     
-    TruncateDB(LastBlockNum)
+    TruncateMain(LastBlockNum)
     {
-        super.TruncateDB(LastBlockNum)
+        super.TruncateMain(LastBlockNum)
         this.CacheMainIndex.ClearCacheDBTree(LastBlockNum)
+    }
+    
+    TruncateIndex(LastBlockNum)
+    {
+        super.TruncateIndex(LastBlockNum)
+        this.CacheChainIndex.ClearCacheDBTree(LastBlockNum)
     }
     
     Clear()

@@ -13,8 +13,8 @@
 
 const fs = require('fs');
 
-global.ReadRowsDB = 0;
-global.WriteRowsDB = 0;
+global.TeraReadRowsDB = 0;
+global.TeraWriteRowsDB = 0;
 
 module.exports = class CDBRow extends require("./db")
 {
@@ -60,7 +60,7 @@ module.exports = class CDBRow extends require("./db")
     
     Write(Data, RetBuf)
     {
-        global.WriteRowsDB++
+        global.TeraWriteRowsDB++
         
         var startTime = process.hrtime();
         
@@ -112,7 +112,7 @@ module.exports = class CDBRow extends require("./db")
         var BufRead = this.GetMap(Num);
         if(!BufRead)
         {
-            global.ReadRowsDB++
+            global.TeraReadRowsDB++
             
             BufRead = BufLib.GetNewBuffer(this.DataSize)
             var Position = Num * this.DataSize;

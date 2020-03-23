@@ -13,11 +13,11 @@
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Stat"});
 
 var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderSend:"Head", BodySend:"Body", BodyTxSend:"BodyTx", ReadRowsDB:"Reads",
-    ReadRowsDB2:"Reads2", WriteRowsDB:"Writes", LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains",
-    MAXCacheBlockLength:"-CacheD", MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"-FHead",
-    MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty", HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects",
-    AddrCount:"Addrs", NoValidateTx:0, AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr",
-};
+    WriteRowsDB:"Writes", TeraReadRowsDB:"-TReads", TeraWriteRowsDB:"-TWrites", LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH",
+    SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBlockLength:"-CacheD", MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache",
+    CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty",
+    HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs", NoValidateTx:0, AddToTreeTx:"-AddTreeTx",
+    WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", };
 if(typeof process === "object")
 {
 }

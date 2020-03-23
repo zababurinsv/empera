@@ -45,6 +45,20 @@ function InitClass(Engine)
             var Block;
             Count++;
             var LastBlockNum = Engine.GetMaxNumBlockDB();
+            if(LastBlockNum >= 0)
+            {
+                if(!Engine.GetBlockHeaderDB(LastBlockNum, 1))
+                {
+                    ToLog("--------------1 Error DB in Block=" + LastBlockNum);
+                    return 0;
+                }
+                if(!Engine.GetBlockHeaderDB(LastBlockNum - 1, 1))
+                {
+                    ToLog("--------------2 Error DB in Block=" + (LastBlockNum - 1));
+                    return 0;
+                }
+            }
+            
             if(LastBlockNum >= CurBlockNum)
             {
                 return LastBlockNum;

@@ -345,7 +345,7 @@ function InitClass(Engine)
         }
     };
     
-    Engine.AddCheckErrCount = function (Child,Count,StrErr)
+    Engine.AddCheckErrCount = function (Child,Count,StrErr,bSilent)
     {
         JINN_STAT.ErrorCount += Count;
         Child.ErrCount += Count;
@@ -356,6 +356,7 @@ function InitClass(Engine)
             Child.BlockProcessCount--;
         }
         
-        Child.ToLog(StrErr);
+        if(!bSilent)
+            Child.ToLog(StrErr);
     };
 }

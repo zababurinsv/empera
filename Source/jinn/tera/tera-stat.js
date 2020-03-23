@@ -173,19 +173,19 @@ function Init(Engine)
             PrevSumPow = MaxBlock.SumPow;
         }
         
-        JINN_STAT.ReadRowsDB += global.ReadRowsDB;
-        JINN_STAT.WriteRowsDB += global.WriteRowsDB;
+        JINN_STAT.TeraReadRowsDB += global.TeraReadRowsDB;
+        JINN_STAT.TeraWriteRowsDB += global.TeraWriteRowsDB;
         
-        global.ReadRowsDB = 0;
-        global.WriteRowsDB = 0;
+        global.TeraReadRowsDB = 0;
+        global.TeraWriteRowsDB = 0;
         
         var Str = GetJinnStatInfo();
         Str = Str.replace(/[\n]/g, " ");
         var JinnStat = Engine;
         var StrMode = " H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + "";
         Str += StrMode;
-        if(global.DEV_MODE)
-            console.log("" + MaxNum + ": " + Str);
+        if(global.DEV_MODE === 123)
+            console.log("" + SERVER.CurrentBlockNum + ":" + Str);
         ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.MaxBlockTx);
         for(var key in JINN_STAT.Methods)
         {

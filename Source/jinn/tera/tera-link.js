@@ -91,7 +91,9 @@ function Init(Engine)
     
     SERVER.TruncateBlockDB = function (LastNum)
     {
-        return Engine.TruncateDB(LastNum);
+        var Result = Engine.DB.TruncateChain(LastNum);
+        
+        return Result;
     };
     
     SERVER.GetMaxNumBlockDB = function ()
@@ -131,7 +133,7 @@ function Init(Engine)
             SERVER.TruncateBlockDB(CurNumTime);
         }
         var BlockNum = SERVER.CheckBlocksOnStartReverse(SERVER.BlockNumDB);
-        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 3000, 0);
+        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 100000, 0);
         
         if(BlockNum < SERVER.BlockNumDB)
         {

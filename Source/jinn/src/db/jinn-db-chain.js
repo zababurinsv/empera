@@ -134,7 +134,7 @@ class CDBChain
         if(!this.WriteMainIndex(Block.BlockNum, Block.Position))
             return 0;
         
-        this.TruncateDB(Block.BlockNum)
+        this.TruncateMain(Block.BlockNum)
         
         return 1;
     }
@@ -164,6 +164,11 @@ class CDBChain
     {
         return this.DBChainIndex.Write(Item);
     }
+    
+    TruncateIndex(LastBlockNum)
+    {
+        this.DBChainIndex.Truncate(LastBlockNum)
+    }
     GetMaxMainIndex()
     {
         return this.GetMaxNumBlockDB();
@@ -178,7 +183,7 @@ class CDBChain
         return this.DBMainIndex.Write({BlockNum:BlockNum, MainPosition:Position});
     }
     
-    TruncateDB(LastBlockNum)
+    TruncateMain(LastBlockNum)
     {
         this.DBMainIndex.Truncate(LastBlockNum)
         this.WriteMainIndex(NUM_FOR_MAX_BLOCK, LastBlockNum)
@@ -415,6 +420,7 @@ class CDBChain
     
     GetBlockJump(BlockSeed, StrType)
     {
+        
         var BlockPosJump = BlockSeed["HeadPos" + StrType];
         if(!BlockPosJump)
             return undefined;
@@ -425,7 +431,11 @@ class CDBChain
     SaveChainToDB(BlockHead, BlockSeed)
     {
         var DB = this;
-        DB.TruncateDB(BlockHead.BlockNum)
+        
+        var Result = this.WriteBlockMain(BlockHead);
+        if(!Result)
+            return Result;
+        DB.TruncateMain(BlockHead.BlockNum)
         
         var Block = BlockSeed;
         var ArrNum = [], ArrPos = [];
@@ -455,14 +465,23 @@ class CDBChain
             ArrPos.push(Block.Position)
             if(ArrNum.length >= 100000)
             {
-                this.WriteArrNumPos(ArrNum, ArrPos)
+                if(!this.WriteArrNumPos(ArrNum, ArrPos))
+                    return 0;
             }
             
-            Block = DB.GetPrevBlockDB(Block)
+            var PrevBlock = DB.GetPrevBlockDB(Block);
+            if(!PrevBlock)
+            {
+                ToLog("Error PrevBlock on " + Block.BlockNum + " BlockHead.BlockNum=" + BlockHead.BlockNum)
+                this.TruncateChain(BlockHead.BlockNum)
+                return  - 1;
+            }
+            Block = PrevBlock
         }
         
-        this.WriteArrNumPos(ArrNum, ArrPos)
-        DB.TruncateDB(BlockSeed.BlockNum)
+        if(!this.WriteArrNumPos(ArrNum, ArrPos))
+            return 0;
+        DB.TruncateMain(BlockSeed.BlockNum)
         
         return 1;
     }
@@ -471,12 +490,36 @@ class CDBChain
     {
         for(var i = ArrNum.length - 1; i >= 0; i--)
         {
-            if(!this.WriteMainIndex(ArrNum[i], ArrPos[i]))
+            var BlockNum = ArrNum[i];
+            var Pos = ArrPos[i];
+            if(!Pos)
+            {
+                ToLog("Error Pos=" + Pos + " on Block=" + BlockNum, 1)
                 return 0;
+            }
+            if(!this.WriteMainIndex(BlockNum, ArrPos[i]))
+            {
+                ToLog("Error WriteMainIndex on Block=" + BlockNum, 1)
+                return 0;
+            }
         }
         
         ArrNum.length = 0
         ArrPos.length = 0
+        return 1;
+    }
+    
+    TruncateChain(StartNum)
+    {
+        ToLog("TruncateChain on " + StartNum)
+        if(StartNum < JINN_CONST.BLOCK_GENESIS_COUNT)
+        {
+            this.Clear()
+            return ;
+        }
+        
+        this.TruncateIndex(StartNum)
+        this.TruncateMain(StartNum)
     }
 };
 
