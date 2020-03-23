@@ -91,7 +91,7 @@ function Init(Engine)
     
     SERVER.TruncateBlockDB = function (LastNum)
     {
-        var Result = Engine.DB.TruncateChain(LastNum);
+        var Result = Engine.TruncateChain(LastNum);
         
         return Result;
     };
@@ -133,7 +133,7 @@ function Init(Engine)
             SERVER.TruncateBlockDB(CurNumTime);
         }
         var BlockNum = SERVER.CheckBlocksOnStartReverse(SERVER.BlockNumDB);
-        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 100000, 0);
+        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 10000, 0);
         
         if(BlockNum < SERVER.BlockNumDB)
         {

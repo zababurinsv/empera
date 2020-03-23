@@ -37,7 +37,7 @@ function InitClass(Engine)
         var Block = BlockSeed;
         while(Block)
         {
-            if(Engine.IsValidBlockDB(Block))
+            if(Engine.IsExistBlockDB(Block))
                 break;
             
             var PrevBlock = Engine.GetPrevBlock(Block);
@@ -103,7 +103,7 @@ function InitClass(Engine)
         }
         return Str + " (" + Str2 + ")";
     };
-    Engine.CalcHead = function (BlockSeed)
+    Engine.CalcHead = function (BlockSeed,bTest)
     {
         
         var Count = 0;
@@ -115,7 +115,7 @@ function InitClass(Engine)
         while(true)
         {
             Count++;
-            if(Engine.IsValidBlockDB(Block))
+            if(Engine.IsExistBlockDB(Block))
             {
                 break;
             }
@@ -123,9 +123,6 @@ function InitClass(Engine)
             if(BlockHead)
             {
                 Engine.AddJumpToArr(BlockSeed0, BlockHead, ArrJump);
-                
-                if(BlockHead.BlockNum < 100000)
-                    var Sop = 1;
                 
                 BlockJump = BlockHead;
                 Block = BlockHead;
@@ -143,10 +140,13 @@ function InitClass(Engine)
             Engine.AddJumpToArr(BlockSeed0, Block, ArrJump);
             Block = PrevBlock;
         }
+        
+        if(bTest)
+            return Block;
         if(TEST_BLOCK_LIST)
         {
             var Block0 = Engine.GetFirstBlockHead0(BlockSeed);
-            if(Block && Block0 && Block0 !== Block && !IsEqArr(Block0.SumHash, Block.SumHash))
+            if(Block && Block0 && Block0 !== Block && !IsEqArr(Block0.SumHash, Block.SumHash) && Block.BlockNum >= Block0.BlockNum)
             {
                 
                 var Str = "Err from seed:" + BlockInfo(BlockSeed) + " BlockHead = " + BlockInfo(Block) + "  Need = " + BlockInfo(Block0);
@@ -198,7 +198,7 @@ function InitClass(Engine)
         {
             BlockSet = Block;
             Count++;
-            if(Block.BlockNum < FirstBlockHeadNum)
+            if(Block.BlockNum < FirstBlockHeadNum || Engine.IsExistBlockDB(Block))
             {
                 Block = undefined;
                 break;
@@ -243,7 +243,7 @@ function InitClass(Engine)
         return Block;
     };
     
-    Engine.IsValidBlockDB = function (Block)
+    Engine.IsExistBlockDB = function (Block)
     {
         
         if(Block.BlockNum > Engine.GetMaxNumBlockDB())
@@ -251,7 +251,7 @@ function InitClass(Engine)
         
         if(Block.BlockNum > 0 && IsZeroArr(Block.SumHash))
         {
-            ToLogTrace("IsValidBlockDB: IsZeroArr(Block.SumHash) on Block.BlockNum=" + Block.BlockNum);
+            ToLogTrace("IsExistBlockDB: IsZeroArr(Block.SumHash) on Block.BlockNum=" + Block.BlockNum);
             return 0;
         }
         

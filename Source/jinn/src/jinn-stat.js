@@ -24,6 +24,8 @@ if(typeof process === "object")
 
 global.JINN_STAT = {};
 JINN_STAT.Methods = {};
+JINN_STAT.Keys = StatKeys;
+
 JINN_STAT.Clear = function ()
 {
     for(var key in StatKeys)
@@ -46,12 +48,12 @@ function GetJinnStatInfo(JinnStat)
     
     for(var key in StatKeys)
     {
-        var Value = StatKeys[key];
-        if(Value && Value.substr(0, 1) !== "-")
+        var Name = StatKeys[key];
+        if(Name && Name.substr(0, 1) !== "-")
         {
             var StatNum = JinnStat[key];
             StatNum = Math.floor(StatNum);
-            Str += "\n" + Value + ":" + StatNum;
+            Str += "\n" + Name + ":" + StatNum;
         }
     }
     
@@ -79,7 +81,6 @@ function DoNode(Engine)
         if(Block && Block.TxData)
         {
             JINN_STAT.BlockTx += Block.TxData.length;
-            JINN_STAT.MaxBlockTx = Math.max(Block.TxData.length);
         }
     }
     

@@ -186,11 +186,23 @@ function Init(Engine)
         Str += StrMode;
         if(global.DEV_MODE === 123)
             console.log("" + SERVER.CurrentBlockNum + ":" + Str);
-        ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.MaxBlockTx);
+        ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.BlockTx);
         for(var key in JINN_STAT.Methods)
         {
             var StatNum = Math.floor(JINN_STAT.Methods[key]);
             ADD_TO_STAT(key, StatNum);
+        }
+        for(var key in JINN_STAT.Keys)
+        {
+            var Name = JINN_STAT.Keys[key];
+            if(Name)
+            {
+                if(Name.substr(0, 1) === "-")
+                    Name = Name.substr(1);
+                
+                var StatNum = JINN_STAT[key];
+                ADD_TO_STAT("JINN:" + Name, StatNum);
+            }
         }
         
         ADD_TO_STAT("SHA3", global.glKeccakCount);

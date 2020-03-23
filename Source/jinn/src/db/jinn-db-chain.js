@@ -472,8 +472,7 @@ class CDBChain
             var PrevBlock = DB.GetPrevBlockDB(Block);
             if(!PrevBlock)
             {
-                ToLog("Error PrevBlock on " + Block.BlockNum + " BlockHead.BlockNum=" + BlockHead.BlockNum)
-                this.TruncateChain(BlockHead.BlockNum)
+                ToLog("Error PrevBlock on Block=" + Block.BlockNum + " BlockHead=" + BlockHead.BlockNum + " PrevSumHash=" + GetHexFromArr(Block.PrevSumHash))
                 return  - 1;
             }
             Block = PrevBlock

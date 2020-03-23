@@ -341,7 +341,7 @@ function InitClass(Engine)
             var BlockHead = Engine.CalcHead(BlockSeed);
             
             //checking for database entries
-            if(!Engine.IsValidBlockDB(BlockHead))
+            if(!Engine.IsExistBlockDB(BlockHead))
             {
                 if(BlockHead.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT)
                 {
@@ -376,7 +376,9 @@ function InitClass(Engine)
                 NodeStatus.LoadBlockHead = undefined;
                 if(Engine.CanDoNextBodyLoad(BlockHead, NodeStatus, BlockSeed, n))
                     continue;
-                Engine.CheckAndSaveChainToDB(BlockHead, BlockSeed);
+                var Res = Engine.CheckAndSaveChainToDB(BlockHead, BlockSeed);
+                if(Res ==  - 1)
+                    return ;
                 
                 if(n === 0)
                 {
@@ -434,9 +436,14 @@ function InitClass(Engine)
         //writing a chain to the database
         
         var Res = Engine.DB.SaveChainToDB(BlockHead, BlockSeed);
-        if(Res ===  - 1)
+        if(Res !== 1)
         {
             Engine.ToLog("Error on SaveChainToDB " + BlockHead.BlockNum + "-" + BlockSeed.BlockNum + " POW:" + BlockSeed.SumPow);
+            if(Res ==  - 1)
+            {
+                Engine.TruncateChain(BlockHead.BlockNum);
+                return  - 1;
+            }
         }
         
         return Res;

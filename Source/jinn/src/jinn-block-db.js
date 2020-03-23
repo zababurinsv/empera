@@ -145,6 +145,12 @@ function InitClass(Engine)
     {
         return Engine.DB.WriteBlockMain(Block);
     };
+    Engine.TruncateChain = function (LastBlockNum)
+    {
+        Engine.DB.TruncateChain(LastBlockNum);
+        Engine.MaxLiderList = {};
+    };
+    
     Engine.TruncateMain = function (LastBlockNum)
     {
         Engine.DB.TruncateMain(LastBlockNum);
