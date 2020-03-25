@@ -185,11 +185,17 @@ function DoTXProcessNext()
         Block = SERVER.ReadBlockDB(Block.BlockNum);
         if(!Block)
             break;
-        var PrevBlock = SERVER.ReadBlockHeaderDB(Block.BlockNum - 1);
-        if(!PrevBlock)
-            break;
-        
-        Block.PrevSumHash = PrevBlock.SumHash;
+        if(Block.BlockNum > 0)
+        {
+            var PrevBlock = SERVER.ReadBlockHeaderDB(Block.BlockNum - 1);
+            if(!PrevBlock)
+                break;
+            Block.PrevSumHash = PrevBlock.SumHash;
+        }
+        else
+        {
+            Block.PrevSumHash = ZERO_ARR_32;
+        }
         
         Count++;
         SERVER.BlockProcessTX(Block);
