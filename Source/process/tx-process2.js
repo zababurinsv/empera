@@ -298,12 +298,13 @@ class CTXProcess
         }
         
         var BlockNum = Block.BlockNum + 1;
-        var Block = SERVER.ReadBlockHeaderDB(BlockNum);
-        if(!Block)
+        var Block2 = SERVER.ReadBlockDB(BlockNum);
+        if(!Block2)
             return 0;
+        Block2.PrevSumHash = Block.SumHash
         
         this.ErrorAccHash = 0
-        SERVER.BlockProcessTX(BlockNum)
+        SERVER.BlockProcessTX(Block2)
         if(BlockNum % 100000 === 0 || bShowDetail)
             ToLog("CALC: " + BlockNum)
         return 1;

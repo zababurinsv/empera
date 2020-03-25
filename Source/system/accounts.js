@@ -1493,10 +1493,12 @@ class AccountApp extends require("./dapp")
         var DBChanges = this.DBChanges;
         var LastItem = this.GetLastBlockNumItem();
         var PrevSumHash;
-        if(LastItem && LastItem.HashData)
+        if(LastItem && LastItem.HashData && LastItem.BlockNum === Block.BlockNum - 1)
             PrevSumHash = LastItem.HashData.SumHash
         else
-            PrevSumHash = ZERO_ARR_32
+        {
+            PrevSumHash = Block.PrevSumHash
+        }
         var SumHash = CalcSumHash(PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
         if(!IsEqArr(Block.SumHash, SumHash))
         {

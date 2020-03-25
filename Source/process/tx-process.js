@@ -182,9 +182,17 @@ function DoTXProcessNext()
                 }
             }
         }
+        Block = SERVER.ReadBlockDB(Block.BlockNum);
+        if(!Block)
+            break;
+        var PrevBlock = SERVER.ReadBlockHeaderDB(Block.BlockNum - 1);
+        if(!PrevBlock)
+            break;
+        
+        Block.PrevSumHash = PrevBlock.SumHash;
         
         Count++;
-        SERVER.BlockProcessTX(Num);
+        SERVER.BlockProcessTX(Block);
         if(Num % 100000 === 0)
             ToLog("CALC: " + Num);
         
