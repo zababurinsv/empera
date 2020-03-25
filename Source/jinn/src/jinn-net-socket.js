@@ -120,7 +120,7 @@ function InitClass(Engine)
             return ;
         
         if(!bSilently && Socket.remoteAddress)
-            Engine.ToLog("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError, 3);
+            Engine.ToLog("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError, 4);
         Engine.ClearSocket(Socket);
         Socket.end();
     };
@@ -190,7 +190,7 @@ function InitAfter(Engine)
         {
             if(State === 0)
             {
-                Child.ToLog("Connect to " + Child.Name(), 3);
+                Child.ToLog("Connect to " + Child.Name(), 4);
                 Child.Socket = net.createConnection(Child.port, Child.ip, function ()
                 {
                     if(Child.Socket)
@@ -223,7 +223,7 @@ function InitAfter(Engine)
         }
         
         if(Child.Socket)
-            Child.ToLog("CloseSocket: " + Child.Socket.remoteAddress + ":" + Child.Socket.remotePort + " " + StrError, 3);
+            Child.ToLog("CloseSocket: " + Child.Socket.remoteAddress + ":" + Child.Socket.remotePort + " " + StrError, 4);
         Engine.CloseSocket(Child.Socket, "", 1);
     };
     

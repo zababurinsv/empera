@@ -504,7 +504,9 @@ function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
     if(!bNoSizeControl && glError && Arr.len !== Arr.length)
     {
         if(global.DEV_MODE)
-            ToLog("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
+        {
+            ToLogOne("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
+        }
     }
     
     return Data;

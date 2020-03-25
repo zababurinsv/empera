@@ -28,6 +28,8 @@ function InitClass(Engine)
         if(!port || typeof port !== "number")
             throw "RetNewConnectByIPPort : Error port number = " + port;
         
+        if(ip === "0.0.0.0")
+            return undefined;
         if(ip === Engine.ip && port === Engine.port)
             return undefined;
         
@@ -48,6 +50,9 @@ function InitClass(Engine)
     
     Engine.NewConnect = function (IDArr,ip,port)
     {
+        if(ip === "0.0.0.0")
+            return undefined;
+        
         if(!port || typeof port !== "number")
             throw "NewConnect : Error port number = " + port;
         

@@ -60,6 +60,7 @@ JINN_EXTERN.GetCurrentBlockNumByTime = global.GetCurrentBlockNumByTime;
 
 module.exports.Create = function (Node,MapName)
 {
+    ToLog("JINN Starting...");
     if(global.LOCAL_RUN)
     {
         JINN_CONST.UNIQUE_IP_MODE = 0;
@@ -71,14 +72,14 @@ module.exports.Create = function (Node,MapName)
     Engine.ID = Node.port % 1000;
     if(!Engine.ID)
         Engine.ID = 1;
-    Engine.ip = Node.ip;
     Engine.port = Node.port;
     Engine.IDArr = CalcIDArr(Engine.ip, Engine.port);
     Engine.IDStr = GetHexFromArr(Engine.IDArr);
     
     Engine.Header1 = 0;
-    
     global.CreateNodeEngine(Engine, MapName);
+    if(Engine.SetIP)
+        Engine.SetIP(Node.ip);
     
     require("./tera-hash").Init(Engine);
     require("./tera-link").Init(Engine);

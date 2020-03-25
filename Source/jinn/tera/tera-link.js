@@ -133,6 +133,7 @@ function Init(Engine)
             SERVER.TruncateBlockDB(CurNumTime);
         }
         var BlockNum = SERVER.CheckBlocksOnStartReverse(SERVER.BlockNumDB);
+        ToLog("CheckStartedBlocks...");
         BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 10000, 0);
         
         if(BlockNum < SERVER.BlockNumDB)
@@ -147,5 +148,10 @@ function Init(Engine)
     SERVER.GetLinkHashDB = function (Block)
     {
         return Engine.GetLinkDataFromDB(Block);
+    };
+    Engine.SetTimeDelta = function (DeltaTime)
+    {
+        global.DELTA_CURRENT_TIME = DeltaTime;
+        SAVE_CONST(0);
     };
 }

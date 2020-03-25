@@ -357,6 +357,6 @@ function InitClass(Engine)
         }
         
         if(!bSilent)
-            Child.ToLog(StrErr);
+            Child.ToLog(StrErr, 4);
     };
 }

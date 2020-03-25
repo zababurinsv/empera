@@ -45,12 +45,17 @@ function InitClass(Engine)
             }
             if(NewDelta)
             {
-                global.DELTA_CURRENT_TIME += NewDelta;
                 ToLog("SET TIME DELTA: " + NewDelta + " ms");
+                Engine.SetTimeDelta(global.DELTA_CURRENT_TIME + NewDelta);
             }
             Engine.MapStatArray = {};
             Engine.WasCorrectTime = 1;
         }
+    };
+    
+    Engine.SetTimeDelta = function (DeltaTime)
+    {
+        global.DELTA_CURRENT_TIME = DeltaTime;
     };
     
     Engine.DoTimeCorrect = function (CurBlockNum)

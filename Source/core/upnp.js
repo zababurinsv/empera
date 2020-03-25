@@ -19,15 +19,23 @@ catch(e)
 {
 }
 
-if(natUpnp && !global.LOCAL_RUN)
+if(global.LOCAL_RUN)
 {
-    var ClientUPNP = natUpnp.createClient();
-    global.StartPortMapping = StartUseUPNP;
+    global.StartPortMapping = function (ip,port,F)
+    {
+        F(ip);
+    };
 }
 else
-{
-    global.StartPortMapping = StartUseStun;
-}
+    if(natUpnp)
+    {
+        var ClientUPNP = natUpnp.createClient();
+        global.StartPortMapping = StartUseUPNP;
+    }
+    else
+    {
+        global.StartPortMapping = StartUseStun;
+    }
 
 function StartUseUPNP(ip,port,F)
 {

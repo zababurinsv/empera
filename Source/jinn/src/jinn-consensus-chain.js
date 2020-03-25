@@ -70,17 +70,6 @@ function InitClass(Engine)
         return Block;
     };
     
-    Engine.AddJumpToArr = function (BlockSeed,Block,Arr)
-    {
-        var Delta = BlockSeed.BlockNum - Block.BlockNum;
-        if(Delta > 0)
-        {
-            var Level = Math.floor(Math.log10(Delta));
-            
-            if(!Arr[Level])
-                Arr[Level] = Block;
-        }
-    };
     Engine.GetStrFromJumpArr = function (ArrJump)
     {
         var Str = " Arr:";
@@ -102,6 +91,17 @@ function InitClass(Engine)
             }
         }
         return Str + " (" + Str2 + ")";
+    };
+    Engine.AddJumpToArr = function (BlockSeed,Block,Arr)
+    {
+        var Delta = BlockSeed.BlockNum - Block.BlockNum;
+        if(Delta > 0)
+        {
+            var Level = Math.floor(Math.log10(Delta));
+            
+            if(!Arr[Level])
+                Arr[Level] = Block;
+        }
     };
     Engine.CalcHead = function (BlockSeed,bTest)
     {
@@ -146,7 +146,7 @@ function InitClass(Engine)
         if(TEST_BLOCK_LIST)
         {
             var Block0 = Engine.GetFirstBlockHead0(BlockSeed);
-            if(Block && Block0 && Block0 !== Block && !IsEqArr(Block0.SumHash, Block.SumHash) && Block.BlockNum >= Block0.BlockNum)
+            if(Block && Block0 && Block0 !== Block && !IsEqArr(Block0.SumHash, Block.SumHash) && Block.BlockNum > Block0.BlockNum)
             {
                 
                 var Str = "Err from seed:" + BlockInfo(BlockSeed) + " BlockHead = " + BlockInfo(Block) + "  Need = " + BlockInfo(Block0);
@@ -228,7 +228,7 @@ function InitClass(Engine)
             var Block0 = Engine.GetFirstEmptyBodyBlock0(FirstBlockHeadNum, BlockSeed);
             if(Block && Block0 && Block0 !== Block && !IsEqArr(Block0.SumHash, Block.SumHash))
             {
-                var Str = "Err EmptyBody = " + BlockInfo(Block) + "  Need = " + BlockInfo(Block0) + "  FirstBlockHead=" + FirstBlockHead.BlockNum;
+                var Str = "Err EmptyBody = " + BlockInfo(Block) + "  Need = " + BlockInfo(Block0) + "  FirstBlockHead=" + FirstBlockHeadNum;
                 if(JumpBlock)
                     Str += "  JumpBlock = " + BlockInfo(JumpBlock) + " -> " + BlockInfo(JumpBlockTo);
                 Engine.ToLog(Str);

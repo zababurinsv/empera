@@ -153,23 +153,43 @@ function InitClass(Engine)
     Engine.SendConnectReq = function (Child)
     {
         if(!Engine.CanConnect(Child))
-            return ;
+            return 0;
         
         Engine.CreateConnectionToChild(Child, function (result)
         {
-            if(!result)
-                return ;
-            
-            Engine.StartHandShake(Child);
+            if(result)
+            {
+                Engine.StartHandShake(Child);
+            }
         });
+        
+        return 1;
     };
     
     Engine.CanConnect = function (Child)
     {
         if(Engine.ROOT_NODE)
             return 1;
+        if(Child.Self)
+            return 0;
         
         return 1;
+    };
+    Engine.FindConnectByHash = function (RndHash)
+    {
+        if(!RndHash || IsZeroArr(RndHash))
+            return undefined;
+        
+        for(var i = 0; i < Engine.ConnectArray.length; i++)
+        {
+            var Item = Engine.ConnectArray[i];
+            if(Item.Del)
+                continue;
+            
+            if(Item.RndHash && IsEqArr(Item.RndHash, RndHash))
+                return Item;
+        }
+        return undefined;
     };
     
     Engine.OnAddConnect = function (Child)

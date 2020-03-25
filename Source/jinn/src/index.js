@@ -43,6 +43,7 @@ if(typeof window !== "object")
     require("./db/jinn-db-cache-body.js");
     require("./db/jinn-db-cache-block.js");
     require("./db/jinn-db-cache-hot.js");
+    require("./db/jinn-db-cache-jump.js");
     
     require("./db/jinn-db-result.js");
     require("./jinn-block-db.js");

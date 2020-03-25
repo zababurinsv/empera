@@ -71,6 +71,16 @@ global.ToLogTrace = function (Str)
     
     ToError("" + Str + ":" + Data);
 }
+var MapLogOne = {};
+global.ToLogOne = function (Str)
+{
+    var Data = new Error().stack;
+    if(!MapLogOne[Data])
+    {
+        MapLogOne[Data] = 1;
+        ToLog(Str);
+    }
+}
 
 global.ToInfo = function (Str)
 {

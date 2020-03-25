@@ -72,7 +72,7 @@ function InitClass(Engine)
                 var Item = Data.Arr[i];
                 if(Item.ip && Item.port)
                 {
-                    if(Engine.AddNodeAddr(Item) === 1)
+                    if(Engine.AddNodeAddr(Item, Child) === 1)
                         Count++;
                 }
             }
@@ -96,8 +96,10 @@ function InitClass(Engine)
         if(Engine.DirectIP && !Engine.ROOT_NODE)
             if(IsZeroArr(Data.Iterator))
             {
-                Engine.CaclNextAddrHashPOW(1);
-                Arr.push(Engine.AddrItem);
+                if(Engine.AddrItem)
+                {
+                    Arr.push(Engine.AddrItem);
+                }
             }
         
         for(var i = 0; i < JINN_CONST.MAX_RET_NODE_LIST; i++)
@@ -115,8 +117,16 @@ function InitClass(Engine)
     {
         return Engine.NodesTree.size;
     };
-    Engine.AddNodeAddr = function (AddrItem)
+    Engine.AddNodeAddr = function (AddrItem,Child)
     {
+        if(AddrItem.ip === "0.0.0.0")
+        {
+            ToLog("AddNodeAddr:Error ip from " + ChildName(Child));
+            return 0;
+        }
+        if(IsLocalIP(AddrItem.ip))
+            return 0;
+        
         if(!Engine.IsCorrectNode(AddrItem.ip, AddrItem.port))
         {
             Engine.ToLog("Not correct node ip = " + AddrItem.ip + ":" + AddrItem.port, 3);
@@ -167,6 +177,24 @@ function InitClass(Engine)
         if(JINN_EXTERN.NodeRoot && AddrItem.ip === JINN_EXTERN.NodeRoot.ip && AddrItem.port === JINN_EXTERN.NodeRoot.port)
             AddrItem.ROOT_NODE = 1;
         return 1;
+    };
+    
+    Engine.SetItemSelf = function (AddrItem)
+    {
+        var Find = Engine.NodesTree.find(AddrItem);
+        if(Find)
+            Find.Self = 1;
+    };
+    Engine.SetItemRndHash = function (AddrItem,RndHash)
+    {
+        if(IsZeroArr(RndHash))
+            return ;
+        
+        var Find = Engine.NodesTree.find(AddrItem);
+        if(Find)
+        {
+            Find.RndHash = RndHash;
+        }
     };
     Engine.GetNextNodeAddr = function (Iterator,RecurcionNum)
     {
@@ -221,16 +249,26 @@ function InitClass(Engine)
         var Hash = GetHashFromArrNum2(AddrItem.IDArr, BlockNum, Nonce);
         return Hash;
     };
+    
+    Engine.SetIP = function (ip)
+    {
+        Engine.ip = ip;
+        if(Engine.ip === "0.0.0.0")
+            return ;
+        Engine.AddrItem = {IDArr:Engine.IDArr, ip:Engine.ip, port:Engine.port, Nonce:0, NonceTest:0, BlockNum:0, AddrHashPOW:[255,
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+            255, 255, 255, 255, 255, 255]};
+    };
     Engine.CaclNextAddrHashPOW = function (Count)
     {
-        var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
         if(!Engine.AddrItem)
-        {
-            Engine.AddrItem = {IDArr:Engine.IDArr, ip:Engine.ip, port:Engine.port, Nonce:0, NonceTest:0, BlockNum:0, AddrHashPOW:[255,
-                255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-                255, 255, 255, 255, 255, 255]};
-        }
+            return ;
+        
+        var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
         var AddrItem = Engine.AddrItem;
+        
+        if(AddrItem.ip === "0.0.0.0")
+            return ;
         
         for(var i = 0; i < Count; i++)
         {
@@ -363,3 +401,25 @@ function CalcIDArr(ip,port)
 
 global.CalcIDArr = CalcIDArr;
 global.FNodeAddr = FNodeAddr;
+
+function ChildName(Child)
+{
+    if(!Child)
+        return " none";
+    
+    var HostName = String(Child.ip) + ":" + Child.port;
+    return HostName;
+}
+function IsLocalIP(addr)
+{
+    if(global.LOCAL_RUN)
+        return 0;
+    var addr7 = addr.substr(0, 7);
+    if(addr === "127.0.0.1" || addr7 === "192.168" || (addr7 >= "100.64." && addr7 <= "100.127") || (addr7 >= "172.16." && addr7 <= "172.31.") || addr.substr(0,
+    3) === "10.")
+        return 1;
+    else
+        return 0;
+}
+
+global.ChildName = ChildName;

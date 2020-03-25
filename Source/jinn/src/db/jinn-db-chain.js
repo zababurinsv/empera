@@ -53,7 +53,9 @@ class CDBChain
         {
             var Find2 = this.FindBlockByHash(Block.BlockNum, Block.SumHash);
             if(Find2)
+            {
                 ToLogTrace("Find2: on Block=" + Block.BlockNum)
+            }
         }
         
         var bSet = 0;
@@ -171,7 +173,7 @@ class CDBChain
     }
     GetMaxMainIndex()
     {
-        return this.GetMaxNumBlockDB();
+        return this.GetMaxNumBlockDBInner();
     }
     ReadMainIndex(BlockNum)
     {
@@ -180,6 +182,9 @@ class CDBChain
     
     WriteMainIndex(BlockNum, Position)
     {
+        if(BlockNum >= 0 && !Position)
+            ToLogTrace("WriteMainIndex:Error Position on Block=" + BlockNum)
+        
         return this.DBMainIndex.Write({BlockNum:BlockNum, MainPosition:Position});
     }
     
@@ -188,8 +193,12 @@ class CDBChain
         this.DBMainIndex.Truncate(LastBlockNum)
         this.WriteMainIndex(NUM_FOR_MAX_BLOCK, LastBlockNum)
     }
-    
     GetMaxNumBlockDB()
+    {
+        return this.GetMaxMainIndex();
+    }
+    
+    GetMaxNumBlockDBInner()
     {
         var Num = this.DBMainIndex.GetMaxNum();
         if(Num < 0)

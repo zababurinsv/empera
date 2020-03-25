@@ -217,6 +217,8 @@ function RunServer()
     
     if(global.NET_WORK_MODE)
     {
+        if(!NET_WORK_MODE.ip)
+            NET_WORK_MODE.ip = "";
         global.START_IP = NET_WORK_MODE.ip;
         global.START_PORT_NUMBER = NET_WORK_MODE.port;
     }
@@ -273,6 +275,8 @@ function RunServer()
 function StartJinn()
 {
     var JinnLib = require("../jinn/tera");
+    if(!SERVER.ip)
+        SERVER.ip = "0.0.0.0";
     StartPortMapping(SERVER.ip, SERVER.port, function (ip)
     {
         if(!SERVER.ip && ip)

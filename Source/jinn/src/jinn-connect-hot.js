@@ -51,7 +51,7 @@ function DoNode(Engine)
                     LArr.IndexLoop++;
                     
                     var AddrItem = LArr[LArr.IndexLoop % LArr.length];
-                    if(AddrItem && !AddrItem.ROOT_NODE && !AddrItem.Self && !Engine.InHotDeny(AddrItem))
+                    if(AddrItem && !AddrItem.ROOT_NODE && !AddrItem.Self && !Engine.InHotDeny(AddrItem) && !Engine.FindConnectByHash(AddrItem.RndHash))
                     {
                         
                         if(AddrItem.SendHotConnectPeriod === undefined && CompareArr(Engine.IDArr, AddrItem.IDArr) > 0)
@@ -209,8 +209,7 @@ function InitClass(Engine)
             Child.HotItem.HotStart = Date.now();
             if(!Child.IsOpen())
             {
-                Engine.SendConnectReq(Child);
-                return 1;
+                return Engine.SendConnectReq(Child);
             }
             
             if(Engine.TickNum >= JINN_CONST.EXTRA_SLOTS_START_TIME)
