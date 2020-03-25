@@ -1060,6 +1060,17 @@ function RetOpenBlock(BlockNum,bTrDataLen)
     else
         return '<B>' + BlockNum + '</B>';
 }
+function PrevValueToString(Item)
+{
+    if(Item.Mode === 200)
+    {
+        return "Acc:\n" + GetHexFromArr(Item.HashData.AccHash) + "\n" + "Sum:\n" + GetHexFromArr(Item.HashData.SumHash);
+    }
+    else
+    {
+        return SUM_TO_STRING(Item.PrevValue);
+    }
+}
 function RetBool(Value)
 {
     if(Value)

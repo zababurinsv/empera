@@ -190,6 +190,7 @@ class AccountApp extends require("./dapp")
         this.DBAct = new DBRow("accounts-act", 6 + 6 + (6 + 4 + 6 + 6 + 84) + 1 + 11, "{ID:uint, BlockNum:uint,PrevValue:{SumCOIN:uint,SumCENT:uint32, NextPos:uint, OperationID:uint,Smart:uint32,Data:arr80}, Mode:byte, TrNum:uint16, Reserve: arr9}",
         bReadOnly)
         this.DBActPrev = new DBRow("accounts-act-prev", this.DBAct.DataSize, this.DBAct.Format, bReadOnly)
+        this.FORMAT_TX_HASHES = "{SumHash:hash,AccHash:hash}"
         this.FORMAT_STATE_HISTORY = "{NextPos:uint,Reserv:arr2}"
         this.DBStateHistory = new DBRow("history-state", 8, this.FORMAT_STATE_HISTORY, bReadOnly)
         HistoryDB.OpenDBFile(FILE_NAME_HISTORY, !bReadOnly)
@@ -668,7 +669,7 @@ class AccountApp extends require("./dapp")
             return 0;
         }
         
-        if(BlockNum < START_BLOCK_ACCOUNT_HASH + 200000)
+        if(BlockNum < START_BLOCK_ACCOUNT_HASH + global.START_BAD_ACCOUNT_CONTROL)
             return 1;
         
         var Item = this.GetAccountHashItem(TR.BlockNum);
@@ -1012,21 +1013,27 @@ class AccountApp extends require("./dapp")
     }
     GetLastBlockNumAct()
     {
+        var Item = this.GetLastBlockNumItem();
+        if(!Item)
+            return  - 1;
+        else
+            return Item.BlockNum;
+    }
+    GetLastBlockNumItem()
+    {
         var DBAct;
         var MaxNum = this.DBAct.GetMaxNum();
         if(MaxNum ===  - 1)
             DBAct = this.DBActPrev
         else
             DBAct = this.DBAct
+        
         var MaxNum = DBAct.GetMaxNum();
         if(MaxNum ===  - 1)
-            return  - 1;
+            return undefined;
         
         var Item = DBAct.Read(MaxNum);
-        if(!Item)
-            return  - 1;
-        else
-            return Item.BlockNum;
+        return Item;
     }
     
     DeleteAct(BlockNumFrom)
@@ -1089,7 +1096,7 @@ class AccountApp extends require("./dapp")
                 continue;
             Map[Item.ID] = 1
             
-            if(Item.Mode === 100)
+            if(Item.Mode >= 100)
             {
             }
             else
@@ -1353,6 +1360,12 @@ class AccountApp extends require("./dapp")
             Item.Num = Item.Num
             if(Item.TrNum === 0xFFFF)
                 Item.TrNum = ""
+            
+            if(Item.Mode === 200)
+            {
+                Item.HashData = this.GetActHashesFromBuffer(Item.PrevValue.Data)
+            }
+            
             arr.push(Item)
             if(arr.length > count)
                 return arr;
@@ -1388,15 +1401,22 @@ class AccountApp extends require("./dapp")
         else
             return 0;
     }
-    CalcHash(Block, BlockMaxAccount)
+    
+    GetCalcHash()
     {
-        if(Block.BlockNum % PERIOD_ACCOUNT_HASH !== 0)
-            return ;
         if(this.DBState.WasUpdate || IsZeroArr(this.DBState.MerkleHash))
         {
             this.CalcMerkleTree()
         }
         var Hash = this.DBState.MerkleHash;
+        return Hash;
+    }
+    
+    CalcHash(Block, BlockMaxAccount)
+    {
+        if(Block.BlockNum % PERIOD_ACCOUNT_HASH !== 0)
+            return ;
+        var Hash = this.GetCalcHash();
         
         var SmartHash;
         var SmartCount = DApps.Smart.GetMaxNum() + 1;
@@ -1500,11 +1520,6 @@ class AccountApp extends require("./dapp")
                 Mode:Account.New};
             this.DBAct.Write(BackLog)
         }
-        if(arr.length === 0)
-        {
-            var BackLog = {Num:undefined, ID:0, BlockNum:BlockNum, PrevValue:{}, TrNum:0, Mode:100};
-            this.DBAct.Write(BackLog)
-        }
         for(var i = 0; i < arr.length; i++)
         {
             var Account = arr[i];
@@ -1532,11 +1547,25 @@ class AccountApp extends require("./dapp")
         SetTickCounter(0)
         this.DBChanges = undefined
         
+        var AccHash = this.GetCalcHash();
         this.CalcHash(Block, DBChanges.BlockMaxAccount)
+        var HashData = {SumHash:Block.SumHash, AccHash:AccHash};
+        this.DBAct.Write({Num:undefined, ID:0, BlockNum:BlockNum, PrevValue:{Data:this.GetBufferFromActHashes(HashData)}, TrNum:0xFFFF,
+            Mode:200})
         
         var StateTX = this.DBStateTX.Read(0);
         StateTX.BlockNum = BlockNum
         this.DBStateTX.Write(StateTX)
+    }
+    GetBufferFromActHashes(Struct)
+    {
+        var Buf = BufLib.GetBufferFromObject(Struct, this.FORMAT_TX_HASHES, 80, {});
+        return Buf;
+    }
+    GetActHashesFromBuffer(Buf)
+    {
+        var Item = BufLib.GetObjectFromBuffer(Buf, this.FORMAT_TX_HASHES, {});
+        return Item;
     }
     
     CommitTransaction(BlockNum, TrNum)

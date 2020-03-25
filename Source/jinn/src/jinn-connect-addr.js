@@ -121,7 +121,7 @@ function InitClass(Engine)
     {
         if(AddrItem.ip === "0.0.0.0")
         {
-            ToLog("AddNodeAddr:Error ip from " + ChildName(Child));
+            ToLogOne("AddNodeAddr:Error ip from " + ChildName(Child));
             return 0;
         }
         if(IsLocalIP(AddrItem.ip))

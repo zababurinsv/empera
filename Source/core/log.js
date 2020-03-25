@@ -74,10 +74,9 @@ global.ToLogTrace = function (Str)
 var MapLogOne = {};
 global.ToLogOne = function (Str)
 {
-    var Data = new Error().stack;
-    if(!MapLogOne[Data])
+    if(!MapLogOne[Str])
     {
-        MapLogOne[Data] = 1;
+        MapLogOne[Str] = 1;
         ToLog(Str);
     }
 }

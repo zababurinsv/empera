@@ -1442,7 +1442,8 @@ td.hash {
 	font-size: 10px;
 	line-height: 12px;
 	letter-spacing: 0.02em;
-	width: 220px;
+	width2: 220px;
+    width: 165px;
     min-width: 120px;
     word-break: break-all;
 }
