@@ -1033,6 +1033,12 @@ class AccountApp extends require("./dapp")
             return undefined;
         
         var Item = DBAct.Read(MaxNum);
+        
+        if(Item && Item.Mode === 200)
+        {
+            Item.HashData = this.GetActHashesFromBuffer(Item.PrevValue.Data)
+        }
+        
         return Item;
     }
     
@@ -1485,6 +1491,17 @@ class AccountApp extends require("./dapp")
     {
         var BlockNum = Block.BlockNum;
         var DBChanges = this.DBChanges;
+        var LastItem = this.GetLastBlockNumItem();
+        var PrevSumHash;
+        if(LastItem && LastItem.HashData)
+            PrevSumHash = LastItem.HashData.SumHash
+        else
+            PrevSumHash = ZERO_ARR_32
+        var SumHash = CalcSumHash(PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
+        if(!IsEqArr(Block.SumHash, SumHash))
+        {
+            ToLog("Error sum hash on Block=" + Block.BlockNum)
+        }
         for(var i = 0; i < DBChanges.BlockHistory.length; i++)
         {
             var Data = DBChanges.BlockHistory[i];
@@ -1546,16 +1563,17 @@ class AccountApp extends require("./dapp")
         
         SetTickCounter(0)
         this.DBChanges = undefined
-        
         var AccHash = this.GetCalcHash();
         this.CalcHash(Block, DBChanges.BlockMaxAccount)
-        var HashData = {SumHash:Block.SumHash, AccHash:AccHash};
+        var HashData = {SumHash:SumHash, AccHash:AccHash};
         this.DBAct.Write({Num:undefined, ID:0, BlockNum:BlockNum, PrevValue:{Data:this.GetBufferFromActHashes(HashData)}, TrNum:0xFFFF,
             Mode:200})
         
         var StateTX = this.DBStateTX.Read(0);
         StateTX.BlockNum = BlockNum
         this.DBStateTX.Write(StateTX)
+        
+        return 1;
     }
     GetBufferFromActHashes(Struct)
     {

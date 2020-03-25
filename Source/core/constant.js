@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1618;
+global.UPDATE_CODE_VERSION_NUM = 1620;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 
@@ -219,6 +219,8 @@ global.BLOCK_COUNT_IN_MEMORY = 40;
 global.HISTORY_BLOCK_COUNT = 40;
 global.MAX_SIZE_LOG = 200 * 1024 * 1024;
 
+global.ZERO_ARR_32 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
 
 global.READ_ONLY_DB = 0;
 global.USE_CHECK_SAVE_DB = 1;
@@ -279,7 +281,7 @@ if(global.JINN_MODE)
     
     global.NEW_SIGN_TIME = 0;
     
-    global.START_BAD_ACCOUNT_CONTROL = 249000;
+    global.START_BAD_ACCOUNT_CONTROL = 256000;
     global.BLOCKNUM_TICKET_ALGO = 0;
     global.MIN_POWER_POW_TR = 0;
     global.AUTO_CORRECT_TIME = 0;

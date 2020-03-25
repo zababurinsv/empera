@@ -104,7 +104,7 @@ function InitClass(Engine)
         
         if(!Data.result || !Engine.CanConnect(Child))
         {
-            Child.ToLog("OnHandShakeReturn : Not connect to " + Child.Name() + " result=" + Data.result, 3);
+            Child.ToLog("OnHandShakeReturn : Not connect to " + Child.Name() + " result=" + Data.result, 4);
             
             Engine.OnDeleteConnect(Child, "OnHandShakeReturn");
             return ;

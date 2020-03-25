@@ -522,6 +522,9 @@ function CalcBlockHash(Block,SeqHash,AddrHash,BlockNum)
 
 function CalcSumHash(PrevSumHash,Hash,BlockNum,SumPow)
 {
+    if(BlockNum === 0)
+        return ZERO_ARR_32;
+    
     if(BlockNum >= global.UPDATE_CODE_JINN_1)
     {
         // new code

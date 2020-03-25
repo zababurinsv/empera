@@ -277,10 +277,9 @@ class CTXProcess
             return  - 1;
         }
         
-        if(LastItem.Mode === 200)
+        if(LastItem.HashData)
         {
-            var HashData = DApps.Accounts.GetActHashesFromBuffer(LastItem.PrevValue.Data);
-            if(!IsEqArr(HashData.SumHash, Block.SumHash))
+            if(!IsEqArr(LastItem.HashData.SumHash, Block.SumHash))
             {
                 if(bShowDetail)
                     ToLog("SumHash:DeleteTX on Block=" + LastItem.BlockNum)
@@ -289,7 +288,7 @@ class CTXProcess
             }
             
             var AccHash = DApps.Accounts.GetCalcHash();
-            if(!IsEqArr(HashData.AccHash, AccHash))
+            if(!IsEqArr(LastItem.HashData.AccHash, AccHash))
             {
                 this.ErrorAccHash++
                 ToLog("AccHash:DeleteTX on Block=" + LastItem.BlockNum)
