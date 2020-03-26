@@ -432,8 +432,8 @@ class AccountApp extends require("./dapp")
         }
         catch(e)
         {
-            this.RollBackTransaction()
             ToErrorTx("BlockNum:" + Block.BlockNum + " - DoCoinBaseTR: " + e)
+            this.RollBackTransaction()
         }
         
         this.CommitBlock(Block)
@@ -1491,18 +1491,24 @@ class AccountApp extends require("./dapp")
     {
         var BlockNum = Block.BlockNum;
         var DBChanges = this.DBChanges;
-        var LastItem = this.GetLastBlockNumItem();
         var PrevSumHash;
-        if(LastItem && LastItem.HashData && LastItem.BlockNum === Block.BlockNum - 1)
-            PrevSumHash = LastItem.HashData.SumHash
-        else
+        if(Block.ForcePrevSumHash)
         {
             PrevSumHash = Block.PrevSumHash
         }
-        var SumHash = CalcSumHash(PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
-        if(!IsEqArr(Block.SumHash, SumHash))
+        else
         {
-            ToLog("Error sum hash on Block=" + Block.BlockNum)
+            var LastItem = this.GetLastBlockNumItem();
+            if(LastItem && LastItem.HashData && LastItem.BlockNum === Block.BlockNum - 1)
+                PrevSumHash = LastItem.HashData.SumHash
+            else
+                PrevSumHash = Block.PrevSumHash
+        }
+        
+        var SumHash = CalcSumHash(PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
+        if(!Block.NoChechkSumHash && !IsEqArr(Block.SumHash, SumHash))
+        {
+            ToLog("Error sum hash on Block=" + Block.BlockNum, 2)
         }
         for(var i = 0; i < DBChanges.BlockHistory.length; i++)
         {

@@ -55,9 +55,9 @@ global.glCurNumFindArr = 0;
 global.ArrReconnect = [];
 global.ArrConnect = [];
 
-var FindList = [{"ip":"dappsgate.com", "port":30000}, {"ip":"185.240.243.182", "port":30000}, {"ip":"t1.teraexplorer.com",
-    "port":30000}, {"ip":"t2.teraexplorer.com", "port":30000}, {"ip":"t4.teraexplorer.com", "port":30000}, {"ip":"212.80.217.199",
-    "port":30000}, {"ip":"teraexplorer.org", "port":30000}, ];
+var FindList = [{"ip":"185.240.243.182", "port":30000}, {"ip":"t1.teraexplorer.com", "port":30000}, {"ip":"t2.teraexplorer.com",
+    "port":30000}, {"ip":"t4.teraexplorer.com", "port":30000}, {"ip":"212.80.217.199", "port":30000}, {"ip":"teraexplorer.org",
+    "port":30000}, ];
 
 if(global.LOCAL_RUN)
 {
@@ -66,7 +66,7 @@ if(global.LOCAL_RUN)
 else
     if(global.TEST_NETWORK)
     {
-        FindList = [{"ip":"149.154.70.158", "port":40000}, ];
+        FindList = [{"ip":"dappsgate.com", "port":40000}, {"ip":"212.80.217.199", "port":40000}, ];
     }
 
 if(global.FORK_MODE)
@@ -171,7 +171,7 @@ function DoGetNodes()
 
 function DoConnectToNodes(Arr,Mode)
 {
-    if(!SERVER)
+    if(!SERVER || global.TEST_JINN)
         return ;
     if(!GrayConnect() && SERVER.CanSend < 2)
     {

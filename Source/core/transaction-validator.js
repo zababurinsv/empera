@@ -78,7 +78,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
     BlockProcessTX(Block)
     {
         var BlockNum = Block.BlockNum;
-        if(BlockNum < 1)
+        if(BlockNum <= 0)
             return ;
         
         var COUNT_MEM_BLOCKS = 0;

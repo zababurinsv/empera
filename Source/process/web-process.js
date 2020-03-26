@@ -869,11 +869,36 @@ function CheckDappCategoryMap()
 }
 
 
-
-HostingCaller.SendTransactionHex = function (Params,response)
+var MapIPSend = {};
+HostingCaller.SendTransactionHex = function (Params,response,ArrPath,request)
 {
     if(typeof Params !== "object" || !Params.Hex)
         return {result:0, text:"object required"};
+    
+    var ip = request.socket.remoteAddress;
+    var Item = MapIPSend[ip];
+    if(!Item)
+    {
+        Item = {StartTime:0, Count:0};
+        MapIPSend[ip] = Item;
+    }
+    
+    var Delta = Date.now() - Item.StartTime;
+    if(Delta > 600 * 1000)
+    {
+        Item.StartTime = Date.now();
+        Item.Count = 0;
+    }
+    Item.Count++;
+    if(Item.Count > global.MAX_TX_FROM_WEB_IP)
+    {
+        var Str = "Too many requests from the user";
+        ToLogOne("AddTransactionFromWeb: " + Str + " from ip: " + ip, 2);
+        
+        var Result = {result:0, text:Str};
+        response.end(JSON.stringify(Result));
+        return null;
+    }
     
     process.RunRPC("AddTransactionFromWeb", {HexValue:Params.Hex}, function (Err,Result)
     {

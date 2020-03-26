@@ -132,7 +132,7 @@ module.exports = class CDB extends require("../code")
             this.TruncateBlockDB(this.BlockNumDB)
         }
         
-        ToLog("START_BLOCK_NUM:" + this.BlockNumDB, 2)
+        ToLog("START_BLOCK_NUM : " + this.BlockNumDB, 2)
         this.CheckOnStartComplete = 1
     }
     CheckBlocksOnStartReverse(StartNum)
@@ -178,7 +178,7 @@ module.exports = class CDB extends require("../code")
         var PrevBlock;
         if(StartNum < this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2 - 1)
             StartNum = this.BlockNumDBMin + BLOCK_PROCESSING_LENGTH2 - 1
-        var MaxNum = this.BlockNumDB;
+        var MaxNum = this.GetMaxNumBlockDB();
         var BlockNumTime = GetCurrentBlockNumByTime();
         if(BlockNumTime < MaxNum)
             MaxNum = BlockNumTime
@@ -662,7 +662,8 @@ module.exports = class CDB extends require("../code")
         var Block = this.ReadBlockDB(LastBlockNum);
         if(!Block)
         {
-            ToLog("************ ERROR TruncateBlockDB - not found block=" + LastBlockNum, 2)
+            if(LastBlockNum >= 0)
+                ToLog("************ ERROR TruncateBlockDB - not found block=" + LastBlockNum, 2)
             return ;
         }
         this.WriteBlockDB(Block)
@@ -830,6 +831,7 @@ module.exports = class CDB extends require("../code")
     {
         var arr = [];
         var Block = this.ReadBlockDB(BlockNum);
+        
         if(Block && Block.arrContent)
             for(var num = start; num < start + count; num++)
             {
@@ -837,7 +839,6 @@ module.exports = class CDB extends require("../code")
                     continue;
                 if(num >= Block.arrContent.length)
                     break;
-                
                 var Tr = {body:Block.arrContent[num]};
                 this.CheckCreateTransactionObject(Tr, 1)
                 
@@ -1211,6 +1212,67 @@ module.exports = class CDB extends require("../code")
             }
         }
         return BufWrite;
+    }
+    
+    GetSortBlock(Block)
+    {
+        var Arr = this.GetArrTxFromBlock(Block);
+        this.SortBlockArr(Arr)
+        return Arr;
+    }
+    
+    SortBlockArr(Arr)
+    {
+        Arr.sort(function (a,b)
+        {
+            var b_TimePow = b.TimePow;
+            var a_TimePow = a.TimePow;
+            if(a.body[0] === 119)
+            {
+                a_TimePow += 100
+            }
+            if(b.body[0] === 119)
+            {
+                b_TimePow += 100
+            }
+            
+            if(b_TimePow !== a_TimePow)
+                return b_TimePow - a_TimePow;
+            return CompareArr(a.HashPow, b.HashPow);
+        })
+    }
+    
+    GetArrTxFromBlock(Block)
+    {
+        if(!Block || !Block.arrContent)
+            return [];
+        var Arr = Block.arrContent;
+        
+        var ArrRet = [];
+        for(var num = 0; num < Arr.length; num++)
+        {
+            var Tr = {body:Arr[num]};
+            this.CheckCreateTransactionObject(Tr, 1)
+            ArrRet.push(Tr)
+        }
+        return ArrRet;
+    }
+    
+    WasSortBlock(Block)
+    {
+        var Arr = this.GetArrTxFromBlock(Block);
+        for(var num = 0; num < Arr.length; num++)
+        {
+            Arr[num].NumTx = num
+        }
+        this.SortBlockArr(Arr)
+        for(var num = 0; num < Arr.length; num++)
+        {
+            if(Arr[num].NumTx !== num)
+                return 0;
+        }
+        
+        return 1;
     }
 };
 

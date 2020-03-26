@@ -106,7 +106,7 @@ function InitClass(Engine)
         
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TICKET))
         {
-            Engine.ToError(Child, "TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum, 3);
+            Engine.ToError(Child, "TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum, 4);
             return ;
         }
         

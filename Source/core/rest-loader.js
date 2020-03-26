@@ -104,18 +104,6 @@ module.exports = class CRest extends require("./db/block-db")
                 if(MinCount < 2)
                     MinCount = 2
                 MIN_POW_CHAINS = Math.floor(MinCount / 2)
-                if(Context.ReceiveHeaderCount >= MinCount)
-                {
-                    Context.Mode = 2
-                    ToLog("Next mode: " + Context.Mode + "  Receive:" + Context.ReceiveHeaderCount + "/" + Context.SendGetHeaderCount, 2)
-                }
-                
-                break;
-                
-            case 1000:
-                
-                break;
-            case 2:
                 
                 var MapSumPower = {};
                 for(var i = 0; i < Context.ArrProof.length; i++)
@@ -137,28 +125,36 @@ module.exports = class CRest extends require("./db/block-db")
                 
                 if(MaxCount < MIN_POW_CHAINS || MaxPow === 0)
                 {
-                    ToLog("****************************************************************** Error MaxPow=" + MaxPow + " - reload.")
-                    this.CheckSyncRest()
-                    return ;
+                    if(!Context.ConnectToAllTime)
+                        Context.ConnectToAllTime = 0
+                    if(Date.now() - Context.ConnectToAllTime > 100 * 1000)
+                    {
+                        ToLog("ConnectToAll", 2)
+                        this.ConnectToAll()
+                        Context.ConnectToAllTime = Date.now()
+                    }
+                    break;
                 }
+                if(Context.ArrProof.length < MinCount)
+                    break;
                 
                 for(var i = 0; i < Context.ArrProof.length; i++)
                 {
                     var Item = Context.ArrProof[i];
                     if(Item.SumPower !== MaxPow)
                     {
-                        var Str = "BAD SumPower: " + Item.SumPower + "/" + MaxPow;
-                        ToLog(Str + " from: " + NodeName(Item.Node), 2)
                     }
                     else
                         if(Item.SumPower && Item.arr.length >= Context.CountProof)
                         {
                             Item.OK = 1
                             Context.BlockProof = Item.arr[0]
+                            var Str = "OK SumPower: " + Item.SumPower + "/" + MaxPow;
+                            ToLog(Str + " from: " + NodeName(Item.Node), 2)
                         }
                 }
                 
-                Context.Mode++
+                Context.Mode = 3
                 ToLog("Next mode: " + Context.Mode + "  SumPower:" + MaxPow, 2)
                 break;
                 
@@ -180,6 +176,12 @@ module.exports = class CRest extends require("./db/block-db")
                     
                     global.TX_PROCESS.RunRPC("TXPrepareLoadRest", Block.BlockNum, function (Err,Params)
                     {
+                        if(Err)
+                        {
+                            ToLog("TX ERROR: " + Params)
+                            return ;
+                        }
+                        
                         Context.Mode++
                         ToLog("Next mode: " + Context.Mode, 2)
                     })
@@ -242,7 +244,10 @@ module.exports = class CRest extends require("./db/block-db")
                                             }
                                         }
                                         if(!FindTx)
+                                        {
+                                            ToLog("Not find TX at block=" + BlockProof.BlockNum + " from " + NodeName(Item.Node) + " arr=" + Data.arrContent.length, 2)
                                             return ;
+                                        }
                                         Context.TxProof = FindTx
                                         Context.Mode++
                                         ToLog("Next mode: " + Context.Mode, 2)
@@ -346,6 +351,11 @@ module.exports = class CRest extends require("./db/block-db")
                                         
                                         global.TX_PROCESS.RunRPC("TXWriteAccArr", {StartNum:Task.StartNum, Arr:Data.Arr}, function (Err,Params)
                                         {
+                                            if(Err)
+                                            {
+                                                ToLog("TX ERROR: " + Params)
+                                                return ;
+                                            }
                                             Context.AccTaskFinished++
                                         })
                                     }}, })
@@ -397,6 +407,11 @@ module.exports = class CRest extends require("./db/block-db")
                                         Task.OK = 1
                                         global.TX_PROCESS.RunRPC("TXWriteSmartArr", {StartNum:Task.StartNum, Arr:Data.Arr}, function (Err,Params)
                                         {
+                                            if(Err)
+                                            {
+                                                ToLog("TX ERROR: " + Params)
+                                                return ;
+                                            }
                                             Context.SmartTaskFinished++
                                         })
                                     }}, })
@@ -440,6 +455,11 @@ module.exports = class CRest extends require("./db/block-db")
                 var SELF = this;
                 global.TX_PROCESS.RunRPC("TXWriteAccHash", {}, function (Err,Params)
                 {
+                    if(Err)
+                    {
+                        ToLog("TX ERROR: " + Params)
+                        return ;
+                    }
                     if(!Params)
                         return ;
                     
@@ -461,6 +481,11 @@ module.exports = class CRest extends require("./db/block-db")
                         
                         global.TX_PROCESS.RunRPC("TXPrepareLoadRest", 0, function (Err,Params)
                         {
+                            if(Err)
+                            {
+                                ToLog("TX ERROR: " + Params)
+                                return ;
+                            }
                         })
                         
                         Context.Mode = 100
@@ -499,7 +524,6 @@ module.exports = class CRest extends require("./db/block-db")
         var BufRead = BufLib.GetReadBuffer(Info.Data);
         var arr = this.GetBlockArrFromBuffer_Load(BufRead, Info);
         
-        ToLog("RETBLOCKHEADER_FOWARD SyncRest from " + NodeName(Info.Node) + " arr=" + arr.length, 2)
         Context.ReceiveHeaderCount++
         
         var MinSumPow = 10 * Context.CountProof;
@@ -510,10 +534,13 @@ module.exports = class CRest extends require("./db/block-db")
                 SumPower += arr[i].Power
             }
         
+        ToLog("RETBLOCKHEADER_FOWARD SyncRest from " + NodeName(Info.Node) + " arr=" + arr.length + " SumPower=" + SumPower, 2)
+        
         if(SumPower <= MinSumPow)
             SumPower = 0
         
-        Context.ArrProof.push({Node:Info.Node, SumPower:SumPower, arr:arr, BufRead:BufRead})
+        if(SumPower > 0)
+            Context.ArrProof.push({Node:Info.Node, SumPower:SumPower, arr:arr, BufRead:BufRead})
     }
     
     static

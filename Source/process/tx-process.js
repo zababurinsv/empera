@@ -185,17 +185,24 @@ function DoTXProcessNext()
         Block = SERVER.ReadBlockDB(Block.BlockNum);
         if(!Block)
             break;
-        if(Block.BlockNum > 0)
+        
+        if(Block.BlockNum > MinimalValidBlock + 1)
         {
             var PrevBlock = SERVER.ReadBlockHeaderDB(Block.BlockNum - 1);
             if(!PrevBlock)
                 break;
             Block.PrevSumHash = PrevBlock.SumHash;
+            if(Block.BlockNum < MinimalValidBlock + BLOCK_PROCESSING_LENGTH2)
+            {
+                Block.ForcePrevSumHash = 1;
+            }
         }
         else
         {
             Block.PrevSumHash = ZERO_ARR_32;
         }
+        if(Block.BlockNum < MinimalValidBlock + BLOCK_PROCESSING_LENGTH2)
+            Block.NoChechkSumHash = 1;
         
         Count++;
         SERVER.BlockProcessTX(Block);
@@ -363,7 +370,7 @@ function RewriteAllTransactions()
         return ;
     }
     
-    ToLog("*************RewriteAllTransactions");
+    ToLogTrace("*************RewriteAllTransactions");
     
     ClearDataBase();
 }

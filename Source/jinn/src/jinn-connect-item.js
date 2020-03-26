@@ -138,7 +138,7 @@ function InitClass(Engine)
         
         Child.ToError = function (Str)
         {
-            Engine.ToError(Child, Str, 0);
+            Engine.ToError(Child, Str, 4);
         };
         Child.ToLog = function (Str,StartLevel)
         {

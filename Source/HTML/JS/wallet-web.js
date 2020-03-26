@@ -324,7 +324,7 @@ function FindLider()
         {
             Item.Stat++;
             
-            SetStatus("Node found " + Item.ip + ":" + Item.port + " pow=" + Item.SumPower + "  t:" + Item.DeltaTime2 + " ms");
+            SetStatus("Found node " + Item.ip + ":" + Item.port + " pow=" + Item.SumPower + "  t:" + Item.DeltaTime2 + " ms");
             MainServer = Item;
             SaveServerMap();
             break;

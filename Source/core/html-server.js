@@ -1069,7 +1069,7 @@ HTTPCaller.SetCheckNetConstant = function (Data)
     
     var Num = GetCurrentBlockNumByTime();
     var BlockNum = GetCurrentBlockNumByTime() + 10;
-    if(JINN)
+    if(global.JINN)
     {
         var DataJinn = Data.JINN;
         DataJinn.NetConstVer = Num;
@@ -2227,7 +2227,7 @@ if(global.HTTP_PORT_NUMBER)
         
         SetSafeResponce(response);
         
-        if(!global.SERVER || global.SERVER.CanSend !== 2)
+        if(!global.SERVER || !global.SERVER.CanSend)
         {
             response.writeHead(404, {'Content-Type':'text/html'});
             response.end("");
