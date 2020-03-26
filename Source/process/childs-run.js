@@ -118,8 +118,7 @@ function OnMessageStatic(msg)
 }
 
 
-var TxModuleName;
-TxModuleName = "./process/tx-process2.js";
+var TxModuleName = "./process/tx-process.js";
 
 global.TX_PROCESS = {Name:"TX PROCESS", NodeOnly:1, idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(), Worker:undefined,
     Path:TxModuleName, OnMessage:OnMessageTX, PeriodAlive:100 * 1000};
