@@ -72,12 +72,15 @@ global.ToLogTrace = function (Str)
     ToError("" + Str + ":" + Data);
 }
 var MapLogOne = {};
-global.ToLogOne = function (Str)
+global.ToLogOne = function (Str,Str2)
 {
     if(!MapLogOne[Str])
     {
         MapLogOne[Str] = 1;
-        ToLog(Str);
+        if(Str2)
+            ToLog(Str + Str2);
+        else
+            ToLog(Str);
     }
 }
 
@@ -275,7 +278,7 @@ global.GET_STATDIAGRAMS = function (Keys)
         var StepTime = 1;
         if(ItemServer.name.substr(0, 4) === "MAX:")
         {
-            while(arr.length >= MaxSizeArr)
+            while(arr.length > MaxSizeArr)
             {
                 arr = ResizeArrMax(arr);
                 StepTime = StepTime * 2;
@@ -283,7 +286,7 @@ global.GET_STATDIAGRAMS = function (Keys)
         }
         else
         {
-            while(arr.length >= MaxSizeArr)
+            while(arr.length > MaxSizeArr)
             {
                 arr = ResizeArrAvg(arr);
                 StepTime = StepTime * 2;

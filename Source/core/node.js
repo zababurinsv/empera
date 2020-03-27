@@ -415,7 +415,7 @@ module.exports = class CNode
             Result = secp256k1.verify(Buffer.from(shaarr(addrStr)), Buffer.from(Buf.Sign), Buffer.from([Buf.PubKeyType].concat(Buf.addrArr)))
             if(!Result)
             {
-                Result = secp256k1.verify(Buffer.from(sha3(addrStr)), Buffer.from(Buf.Sign), Buffer.from([Buf.PubKeyType].concat(Buf.addrArr)))
+                Result = secp256k1.verify(Buffer.from(sha3(addrStr, 34)), Buffer.from(Buf.Sign), Buffer.from([Buf.PubKeyType].concat(Buf.addrArr)))
             }
         }
         if(!Result)

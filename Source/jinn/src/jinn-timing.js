@@ -161,5 +161,9 @@ function DoNode(Engine)
     }
     Engine.SendTicket(CurBlockNum - JINN_CONST.STEP_TICKET);
     Engine.SendTx(CurBlockNum - JINN_CONST.STEP_TX);
-    Engine.StartSendLiderArr(CurBlockNum - JINN_CONST.STEP_MAXHASH);
+    
+    for(var delta = JINN_CONST.MAX_DELTA_PROCESSING; delta >= 0; delta--)
+    {
+        Engine.StartSendLiderArr(CurBlockNum - JINN_CONST.STEP_MAXHASH - delta);
+    }
 }

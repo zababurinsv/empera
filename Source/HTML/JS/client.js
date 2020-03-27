@@ -1282,7 +1282,7 @@ function AddDiagramToArr(Arr,Item)
 {
     var DiagramMaxNum = 0;
     for(var i = 0; i < Arr.length; i++)
-        if(Arr[i].num > DiagramMaxNum)
+        if(Arr[i].num && Arr[i].num > DiagramMaxNum)
             DiagramMaxNum = Arr[i].num;
     
     for(var i = 0; i < Arr.length; i++)
@@ -1290,11 +1290,11 @@ function AddDiagramToArr(Arr,Item)
         if(Arr[i].name === Item.name)
         {
             Arr.splice(i, 1);
-            i--;
+            break;
         }
     }
     
-    Item.num = DiagramMaxNum + 2;
+    Item.num = DiagramMaxNum + 1;
     Arr.push(Item);
 }
 
@@ -2332,8 +2332,11 @@ function GetStrFromDiagrArr(Arr)
     var Arr2 = [];
     for(var i = 0; i < Arr.length; i++)
     {
+        var Item = Arr[i];
+        if(Item.Extern || Item.Delete)
+            continue;
         var obj = {};
-        CopyObjKeys(obj, Arr[i]);
+        CopyObjKeys(obj, Item);
         if(obj.arr)
             delete obj.arr;
         Arr2.push(obj);

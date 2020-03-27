@@ -38,11 +38,6 @@ function InitClass(Engine)
         }
     };
     
-    Engine.GetBlockArrFromNum = function (BlockNum,bBody)
-    {
-        return Engine.DB.GetChainArrByNum(BlockNum, bBody);
-    };
-    
     Engine.GetHeaderForChild = function (LoadNum,LoadHash)
     {
         if(LoadNum < JINN_CONST.BLOCK_GENESIS_COUNT)
@@ -58,7 +53,7 @@ function InitClass(Engine)
         if(!LoadHash)
             return undefined;
         
-        var Arr = Engine.GetBlockArrFromNum(LoadNum);
+        var Arr = Engine.DB.GetChainArrByNum(LoadNum);
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
@@ -78,7 +73,7 @@ function InitClass(Engine)
             return undefined;
         
         var RetBlock = undefined;
-        var Arr = Engine.GetBlockArrFromNum(BlockNum, 1);
+        var Arr = Engine.DB.GetChainArrByNum(BlockNum);
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
@@ -255,7 +250,7 @@ function InitClass(Engine)
         
         if(!Data.DataHash || IsZeroArr(Data.DataHash))
             ToLogTrace("ZERO DataHash on block:" + BlockNum);
-        Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash));
+        Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash), 10);
         Data.Power = GetPowPower(Data.Hash);
     };
     
@@ -453,11 +448,13 @@ function InitClass(Engine)
 
 function CanProcessBlock(Engine,BlockNum,Step)
 {
+    
     var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - Step;
     var Delta = CurBlockNum - BlockNum;
     if(Math.abs(Delta) <= JINN_CONST.MAX_DELTA_PROCESSING)
         return 1;
     
+    JINN_STAT.ErrProcessBlock++;
     return 0;
 }
 

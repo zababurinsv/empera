@@ -279,7 +279,7 @@ function CreateTxID(body,BlockNum,Nonce)
     body.writeUIntLE(BlockNum, body.length - 12, 6);
     body.writeUIntLE(Nonce, body.length - 6, 6);
     
-    var HASH = sha3(body);
+    var HASH = sha3(body, 31);
     var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     for(var i = 0; i < TX_TICKET_HASH_LENGTH; i++)
         FullHashTicket[i] = HASH[i];

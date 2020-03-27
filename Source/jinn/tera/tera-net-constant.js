@@ -100,7 +100,7 @@ function Init(Engine)
     Engine.GetSignCheckNetConstant = function (Data)
     {
         var Buf = SerializeLib.GetBufferFromObject(Data, FormatForSign, {});
-        return sha3(Buf);
+        return sha3(Buf, 12);
     };
     
     Engine.DoNetConst = function ()

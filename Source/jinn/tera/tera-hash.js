@@ -23,7 +23,7 @@ function Init(Engine)
             Tx.HASH = HASH;
         else
             if(Tx.num >= global.BLOCKNUM_TICKET_ALGO)
-                Tx.HASH = sha3(body);
+                Tx.HASH = sha3(body, 16);
             else
                 Tx.HASH = shaarr(body);
         
@@ -37,6 +37,7 @@ function Init(Engine)
         }
         else
         {
+            
             Engine.FillTicket(Tx);
         }
         

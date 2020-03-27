@@ -293,7 +293,7 @@ function StartChildProcess(Item)
                 });
                 ITEM.Worker.on('close', function (code)
                 {
-                    ToError("CLOSE " + ITEM.Name);
+                    ToLog("CLOSE " + ITEM.Name, 2);
                 });
             }
         }

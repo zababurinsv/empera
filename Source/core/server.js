@@ -1351,7 +1351,7 @@ module.exports = class CTransport extends require("./connect")
                 ToLogClient("Run TCP server on " + SELF.ip + ":" + SELF.port)
             SELF.CanSend++
             var Hash;
-            Hash = sha3(SELF.addrStr)
+            Hash = sha3(SELF.addrStr, 26)
             
             SELF.ServerSign = secp256k1.sign(Buffer.from(Hash), SELF.KeyPair.getPrivateKey('')).signature
         })

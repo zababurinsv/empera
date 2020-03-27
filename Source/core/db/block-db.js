@@ -1096,7 +1096,7 @@ module.exports = class CDB extends require("../code")
             
             WriteUintToArrOnPos(FullHashTicket, Tr.num, global.TX_TICKET_HASH_LENGTH)
             
-            Tr.HashPow = sha3(FullHashTicket)
+            Tr.HashPow = sha3(FullHashTicket, 32)
             Tr.power = GetPowPower(Tr.HashPow)
             Tr.TimePow = Tr.power
             
@@ -1115,7 +1115,7 @@ module.exports = class CDB extends require("../code")
             Tr.num = ReadUintFromArr(Body, Body.length - 12)
             
             if(Tr.num >= global.BLOCKNUM_TICKET_ALGO)
-                Tr.HASH = sha3(Body)
+                Tr.HASH = sha3(Body, 33)
             else
                 Tr.HASH = shaarr(Body)
             

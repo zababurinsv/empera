@@ -505,7 +505,7 @@ function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
     {
         if(global.DEV_MODE)
         {
-            ToLogOne("**********Find error size on format: " + format + " " + Arr.len + "/" + Arr.length);
+            ToLogOne("**********Find error size on format: " + format, " " + Arr.len + "/" + Arr.length);
         }
     }
     
@@ -878,7 +878,7 @@ function ReadUintFromArr(arr,len)
     
     if(glError && arr.len > arr.length)
     {
-        ToLog("**********Error Uint buf len: " + arr.len + "/" + arr.length);
+        ToLogOne("**********Error Uint buf len", "+: " + arr.len + "/" + arr.length);
         return 0;
     }
     
@@ -898,7 +898,7 @@ function ReadUint32FromArr(arr,len)
     
     if(glError && arr.len > arr.length)
     {
-        ToLog("**********Error Uint32 buf len: " + arr.len + "/" + arr.length);
+        ToLogOne("**********Error Uint32 buf len", "+: " + arr.len + "/" + arr.length);
         return 0;
     }
     
@@ -914,7 +914,7 @@ function ReadUint16FromArr(arr,len)
     
     if(glError && arr.len > arr.length)
     {
-        ToLog("**********Error Uint16 buf len: " + arr.len + "/" + arr.length);
+        ToLogOne("**********Error Uint16 buf len", "+: " + arr.len + "/" + arr.length);
         return 0;
     }
     
@@ -930,7 +930,7 @@ function ReadByte(arr,len)
     
     if(glError && arr.len > arr.length)
     {
-        ToLog("**********Error Uint8 buf len: " + arr.len + "/" + arr.length);
+        ToLogOne("**********Error Uint8 buf len", "+: " + arr.len + "/" + arr.length);
         return 0;
     }
     

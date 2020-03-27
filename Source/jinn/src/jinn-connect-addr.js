@@ -72,6 +72,9 @@ function InitClass(Engine)
                 var Item = Data.Arr[i];
                 if(Item.ip && Item.port)
                 {
+                    if(IsLocalIP(Item.ip))
+                        continue;
+                    
                     if(Engine.AddNodeAddr(Item, Child) === 1)
                         Count++;
                 }
@@ -105,7 +108,7 @@ function InitClass(Engine)
         for(var i = 0; i < JINN_CONST.MAX_RET_NODE_LIST; i++)
         {
             var Item = Engine.GetNextNodeAddr(Data.Iterator, 0);
-            if(Item)
+            if(Item && !Item.IsLocal)
             {
                 Arr.push(Item);
             }
@@ -124,8 +127,6 @@ function InitClass(Engine)
             ToLogOne("AddNodeAddr:Error ip from " + ChildName(Child));
             return 0;
         }
-        if(IsLocalIP(AddrItem.ip))
-            return 0;
         
         if(!Engine.IsCorrectNode(AddrItem.ip, AddrItem.port))
         {
@@ -168,6 +169,8 @@ function InitClass(Engine)
             Arr.splice(0, 1);
             Arr.DeltaPos++;
         }
+        
+        AddrItem.IsLocal = IsLocalIP(AddrItem.ip);
         
         Arr.push(AddrItem);
         
@@ -351,7 +354,8 @@ function GetHashFromNum2(Value1,Value2)
     var MeshArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     WriteUintToArrOnPos(MeshArr, Value1, 0);
     WriteUintToArrOnPos(MeshArr, Value2, 6);
-    return sha3(MeshArr);
+    
+    return sha3(MeshArr, 1);
 }
 function GetHashFromArrNum2(Arr,Value1,Value2)
 {
@@ -360,7 +364,8 @@ function GetHashFromArrNum2(Arr,Value1,Value2)
     WriteArrToArrOnPos(MeshArr, Arr, 0, 32);
     WriteUintToArrOnPos(MeshArr, Value1, 32);
     WriteUintToArrOnPos(MeshArr, Value2, 38);
-    return sha3(MeshArr);
+    
+    return sha3(MeshArr, 2);
     
     function WriteArrToArrOnPos(arr,arr2,Pos,ConstLength)
     {
@@ -395,7 +400,7 @@ function FNodeAddr(a,b)
 function CalcIDArr(ip,port)
 {
     var HostName = String(ip) + ":" + port;
-    var IDArr = sha3(HostName);
+    var IDArr = sha3(HostName, 3);
     return IDArr;
 }
 

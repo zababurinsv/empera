@@ -11,6 +11,9 @@ module.exports.Init = Init;
 
 const os = require('os');
 
+global.MAX_BUSY_VALUE = 105;
+global.MAX_SHA3_VALUE = 70000;
+
 var GlSumUser;
 var GlSumSys;
 var GlSumIdle;
@@ -207,10 +210,51 @@ function Init(Engine)
         
         ADD_TO_STAT("SHA3", global.glKeccakCount);
         
+        ADD_TO_STAT("MAX:Busy", GetBusy());
+        
         global.glKeccakCount = 0;
         
         global.TERA_STAT = {};
         CopyObjKeys(global.TERA_STAT, JINN_STAT);
         JINN_STAT.Clear();
     };
+    
+    Engine.CanUploadData = function (CurBlockNum,LoadBlockNum)
+    {
+        if(global.glKeccakCount < global.MAX_SHA3_VALUE && GetBusy() <= global.MAX_BUSY_VALUE)
+        {
+            return 1;
+        }
+        
+        return 0;
+    };
+}
+
+global.ArrIdle = [];
+function OnTimeIdleBusy()
+{
+    if(ArrIdle.length >= 20)
+        ArrIdle.splice(0, 10);
+    ArrIdle.push(Date.now());
+    
+    setTimeout(OnTimeIdleBusy, 45);
+}
+OnTimeIdleBusy();
+
+function GetBusy()
+{
+    var Time = Date.now();
+    var SumTime = 0;
+    var Count = 0;
+    for(var i = ArrIdle.length - 1; i >= 0; i--)
+    {
+        SumTime += Time - ArrIdle[i];
+        Time = ArrIdle[i];
+        
+        Count++;
+        if(Count >= 5)
+            break;
+    }
+    
+    return SumTime / 2.5;
 }

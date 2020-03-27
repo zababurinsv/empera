@@ -87,7 +87,7 @@ function InitClass(Engine)
         {
             var StrData = JSON.stringify(DataObj);
             Child.ToLog(Method + " - ERROR SEND - NOT WAS CONNECT: State=" + State + " IsHot:" + Child.IsHot() + " IsOpen=" + Child.IsOpen(),
-            3);
+            4);
             return ;
         }
         

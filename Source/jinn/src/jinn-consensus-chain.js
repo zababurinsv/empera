@@ -270,7 +270,7 @@ function InitClass(Engine)
     Engine.GetMaxPowerBlockFromChain = function (BlockNum)
     {
         
-        var ArrBlock = Engine.DB.GetChainArrByNum(BlockNum, 0);
+        var ArrBlock = Engine.DB.GetChainArrByNum(BlockNum);
         if(ArrBlock.length === 0)
             ToLogTrace("Error ArrBlock.length===0 on Block=" + BlockNum);
         

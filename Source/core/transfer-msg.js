@@ -67,7 +67,7 @@ module.exports = class CMessages extends require("./transaction-validator")
     {
         if(!Msg.HashPow)
         {
-            Msg.HASH = sha3(Msg.body)
+            Msg.HASH = sha3(Msg.body, 27)
             Msg.HashPow = GetHashWithValues(Msg.HASH, Msg.nonce, Msg.time)
             Msg.power = GetPowPower(Msg.HashPow)
             Msg.TimePow = Msg.time + Msg.power - Math.log2(Msg.body.length / 128)
@@ -79,7 +79,7 @@ module.exports = class CMessages extends require("./transaction-validator")
     
     CreateMsgFromBody(Body, ToAddr)
     {
-        var HASH = sha3(Body);
+        var HASH = sha3(Body, 28);
         var Msg = {HASH:HASH, body:Body, addrArr:ToAddr, nonce:CreateNoncePOWExtern(HASH, this.CurrentBlockNum, 3 * (1 << MIN_POWER_POW_MSG)),
             time:this.CurrentBlockNum, };
         this.CheckCreateMsgHASH(Msg)

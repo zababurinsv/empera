@@ -46,7 +46,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
         {
             for(var i = 0; i < arr.length; i++)
             {
-                var HASH = sha3(arr[i]);
+                var HASH = sha3(arr[i], 35);
                 this.BufHashTree.insert(HASH)
             }
         }
@@ -58,7 +58,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
         {
             for(var i = 0; i < arr.length; i++)
             {
-                var HASH = sha3(arr[i]);
+                var HASH = sha3(arr[i], 36);
                 this.BufHashTree.remove(HASH)
             }
         }
@@ -127,7 +127,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
         if(arr)
             for(var i = 0; i < arr.length; i++)
             {
-                var HASH = sha3(arr[i]);
+                var HASH = sha3(arr[i], 37);
                 
                 if(this.BufHashTree.find(HASH))
                 {
@@ -324,7 +324,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
         
         if(global.TX_PROCESS.Worker)
         {
-            var StrHex = GetHexFromArr(sha3(Tr.body));
+            var StrHex = GetHexFromArr(sha3(Tr.body, 38));
             global.TX_PROCESS.Worker.send({cmd:"FindTX", TX:StrHex})
         }
         

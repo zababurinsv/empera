@@ -104,7 +104,10 @@ function InitClass(Engine)
             Engine.DB.WriteBlock(Block);
         }
         Engine.FindSaveMaxBlock(Block.BlockNum);
-        Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
+        
+        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING;
+        if(Block.BlockNum >= CurBlockNum)
+            Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
     };
     
     Engine.FindSaveMaxBlock = function (BlockNum)
@@ -252,7 +255,7 @@ function InitClass(Engine)
         if(!Buf.length)
             throw "Error Buf CalcTreeHash";
         
-        var arr = sha3(Buf);
+        var arr = sha3(Buf, 4);
         return arr;
     };
     
@@ -354,7 +357,7 @@ function InitClass(Engine)
         if(Block.PrevSumPow === undefined)
             ToLogTrace("Error No Block.PrevSumPow on Block=" + Block.BlockNum);
         
-        Block.DataHash = sha3(Block.LinkSumHash.concat(Block.TreeHash));
+        Block.DataHash = sha3(Block.LinkSumHash.concat(Block.TreeHash), 5);
         
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
@@ -364,7 +367,7 @@ function InitClass(Engine)
         }
         else
         {
-            Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash));
+            Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash), 6);
         }
         
         Block.Power = GetPowPower(Block.Hash);
@@ -385,7 +388,7 @@ function InitClass(Engine)
             
             var arr_sum_pow = [];
             WriteUintToArr(arr_sum_pow, Block.SumPow);
-            Block.SumHash = sha3(Block.PrevSumHash.concat(Block.Hash).concat(arr_sum_pow));
+            Block.SumHash = sha3(Block.PrevSumHash.concat(Block.Hash).concat(arr_sum_pow), 7);
         }
     };
     
@@ -395,7 +398,8 @@ function InitClass(Engine)
         for(var i = 0; i < JINN_CONST.TX_TICKET_HASH_LENGTH; i++)
             FullHashTicket[i] = Tx.HashTicket[i];
         WriteUintToArrOnPos(FullHashTicket, Tx.num, JINN_CONST.TX_TICKET_HASH_LENGTH);
-        Tx.HashPow = sha3(FullHashTicket);
+        
+        Tx.HashPow = sha3(FullHashTicket, 8);
         Tx.TimePow = GetPowPower(Tx.HashPow);
     };
     
@@ -417,7 +421,7 @@ function InitClass(Engine)
         if(HASH)
             Tx.HASH = HASH;
         else
-            Tx.HASH = sha3(body);
+            Tx.HASH = sha3(body, 9);
         
         Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
         Tx.KEY = GetHexFromArr(Tx.HashTicket);

@@ -632,7 +632,7 @@ function CheckHashSmarts(LastSumHash)
         var WasSumHash = Item.SumHash;
         Item.SumHash = [];
         var Buf = BufLib.GetBufferFromObject(Item, DApps.Smart.FORMAT_ROW, 20000, WorkStruct);
-        var Hash = sha3(Buf);
+        var Hash = sha3(Buf, 39);
         
         var SumHash = sha3arr2(PrevItem.SumHash, Hash);
         if(CompareArr(SumHash, WasSumHash) !== 0)

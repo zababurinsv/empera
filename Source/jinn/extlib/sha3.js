@@ -180,7 +180,7 @@
 
   function Keccak(bits, padding, outputBits)
   {
-      root.glKeccakCount++;
+    root.glKeccakCount++;
 
     this.blocks = [];
     this.s = [];

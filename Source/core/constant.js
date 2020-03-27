@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 1633;
+global.UPDATE_CODE_VERSION_NUM = 1640;
 global.MIN_CODE_VERSION_NUM = 1364;
 global.MINING_VERSION_NUM = 0;
 
@@ -99,7 +99,7 @@ global.USE_NET_FOR_SERVER_ADDRES = 1;
 
 global.NET_WORK_MODE = undefined;
 global.STAT_MODE = 0;
-global.MAX_STAT_PERIOD = 1 * 3600;
+global.MAX_STAT_PERIOD = 500;
 global.WALLET_NAME = "TERA";
 global.WALLET_DESCRIPTION = "";
 global.USE_MINING = 0;

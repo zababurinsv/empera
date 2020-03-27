@@ -377,7 +377,7 @@ function CalcMerkl3FromArray(Arr,Tree0)
             if(Arr[0].length === 32)
                 Tree.Root = Arr[0];
             else
-                Tree.Root = sha3(Arr[0]);
+                Tree.Root = sha3(Arr[0], 20);
         }
         
         return Tree;
@@ -479,7 +479,7 @@ function CalcTreeHashFromArrBody(BlockNum,arrContent)
                 HASH = Item.HASH;
             else
                 if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
-                    HASH = sha3(Item);
+                    HASH = sha3(Item, 31);
                 else
                     HASH = shaarr(Item);
             arrHASH.push(HASH);
@@ -497,7 +497,7 @@ function TestMerklTree()
 {
     
     var h1 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    var h2 = sha3("2");
+    var h2 = sha3("2", 22);
     var h3 = sha3("3");
     var h4 = sha3("4");
     var h5 = sha3("5");
@@ -548,7 +548,7 @@ function TestMerkleProof(CountTest)
         for(var i = 0; i < CountItems; i++)
         {
             CalcMap[i] = 1;
-            Tree.LevelsHash[0][i] = sha3("" + i + "-" + R);
+            Tree.LevelsHash[0][i] = sha3("" + i + "-" + R, 23);
         }
         UpdateMerklTree(Tree, CalcMap, 0);
         ToLog("Hash1=" + GetHexFromArr(Tree.Root) + " CountItems:" + CountItems);
@@ -614,7 +614,7 @@ function CheckMerkleProof(ArrL,ArrM,ArrR)
         Arr2 = [];
         for(i = 0; i < length2; i++)
         {
-            var Hash = sha3(arr2(Arr[i * 2], Arr[i * 2 + 1]));
+            var Hash = sha3(arr2(Arr[i * 2], Arr[i * 2 + 1]), 24);
             Arr2.push(Hash);
         }
         if(Arr.length / 2 > length2)
@@ -664,7 +664,7 @@ function UpdateMerklTree(Tree,CalcMap,NumLevel)
                 {
                     Count++;
                     CalcMap2[i2] = 1;
-                    HashArr2[i2] = sha3(arr2(HashArr[i2 * 2], HashArr[i2 * 2 + 1]));
+                    HashArr2[i2] = sha3(arr2(HashArr[i2 * 2], HashArr[i2 * 2 + 1]), 25);
                 }
                 else
                 {

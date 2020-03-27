@@ -455,28 +455,85 @@
         }
 
 
-        DiagramArr.push(ExternDiagramItem);
+        DiagramArr.unshift(ExternDiagramItem);
         DiagramMap[ExternDiagramItem.name]=ExternDiagramItem;
         DiagramMapId[ExternDiagramItem.id]=ExternDiagramItem;
-        InitDiagramByArr(DiagramArr,1100);
+        InitDiagramByArr(DiagramArr,1100,1);
 
         localStorage["ExternSetDiagramArr"]="";
     }
 
 
 
+    function FindDiagramInArray(id)
+    {
+        for(var i=0;i<DiagramArr.length;i++)
+        {
+            var Item = DiagramArr[i];
+            if (Item.id === id)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function GetDiagramById(id)
+    {
+        var Index=FindDiagramInArray(id);
+        if(Index>=0)
+            return DiagramArr[Index];
+        else
+            return undefined;
+    }
 
     function DeleteDiagram(id)
     {
-        var Item=DiagramMapId[id];
-        if(Item)
-        {
-            var element2=document.getElementById("B"+id);
-            element2.innerHTML="";
+        var Index=FindDiagramInArray(id);
+        if(Index==-1)
+            return;
+        var element2=document.getElementById("B"+id);
+        element2.outerHTML="";
 
-            Item.Delete=1;
+        DiagramArr.splice(Index,1);
+        delete DiagramMapId[Item.id];
+        delete DiagramMap[Item.name];
+
+        localStorage["DiagramArr"]=GetStrFromDiagrArr(DiagramArr);
+    }
+
+    function MoveDiagram(id,direct)
+    {
+        var Index=FindDiagramInArray(id);
+        if(Index==-1)
+            return;
+        var Index2=Index+direct;
+
+        //ok - found
+        var Item=DiagramArr[Index];
+        var Item2=DiagramArr[Index2];
+        if(Item2)
+        {
+            if(Item2.Extern || Item2.Delete)
+                return;
+
+            var Element=$("B"+Item.id);
+            var Element2=$("B"+Item2.id);
+            if(!Element2)
+                return;
+
+            Element.externHM
+            var ElementHTML=Element.outerHTML;
+            var ElementHTML2=Element2.outerHTML;
+
+            DiagramArr[Index2]=Item;
+            DiagramArr[Index]=Item2;
+            Element.outerHTML=ElementHTML2;
+            Element2.outerHTML=ElementHTML;
+
             localStorage["DiagramArr"]=GetStrFromDiagrArr(DiagramArr);
         }
+
     }
 
     function AddDiagram()
@@ -495,7 +552,7 @@
         }
 
         AddDiagramToArr(DiagramArr,Item);
-        SetHTMLDiagramItem(Item,1100);
+        SetHTMLDiagramItem(Item,1100,1);
 
         localStorage["DiagramArr"]=GetStrFromDiagrArr(DiagramArr);
     }
@@ -754,14 +811,14 @@
     {
         font-family: monospace;
     }
-    .delete
+    .move
     {
         margin: 2px;
         border: 0px;
         background: #FFF;
         color: #cffffa;
     }
-    .delete:hover
+    .move:hover
     {
         margin: 2px;
         border: 1px solid #000;
@@ -794,9 +851,10 @@
 <DIV align='center'>
 
     <DIV id="topframe">
-        <INPUT type="button" style="float:left" onclick="SetPause()" id="idRun">
         <INPUT type="button" style="float:left" onclick="ClearStat()" id="idClearStat" value="Clear stat">
+        <INPUT type="button" style="float:left" onclick="SetPause()" id="idRun">
         <INPUT type="button" style="float:left" onclick="SetStatMode()" id="idStatButton">
+        <INPUT type="button" style="float:left" onclick="window.Open('./HTML/stat.html','counters',920)" value="=LIST=">
 
         <DIV align='left'><B id="idStatInfo"></B></DIV>
     </DIV>
@@ -836,7 +894,6 @@
     <INPUT type="button" onclick="ResetDiagrams()" value="Reset">
     <INPUT type="button" onclick="ClearDiagrams()" value="Clear">
 
-    <INPUT type="button" onclick="window.Open('./HTML/stat.html','counters',920)" value="Counters List">
 
 
     <BR>

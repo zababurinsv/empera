@@ -12,12 +12,14 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Stat"});
 
-var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderSend:"Head", BodySend:"Body", BodyTxSend:"BodyTx", ReadRowsDB:"Reads",
+var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderLoad:"Head", BodyLoad:"Body", BodyTxSend:"BodyTx", ReadRowsDB:"Reads",
     WriteRowsDB:"Writes", TeraReadRowsDB:"-TReads", TeraWriteRowsDB:"-TWrites", LoadBody:"LoadB", LoadHeader:"LoadH", SaveBlock:"SaveH",
     SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBlockLength:"-CacheD", MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache",
     CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty",
     HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs", NoValidateTx:0, AddToTreeTx:"-AddTreeTx",
-    WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", };
+    WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", MaxReq0:"-MaxReq0", MaxReq1:"-MaxReq1", MaxReq2:"-MaxReq2",
+    MaxReq3:"-MaxReq3", MaxLoad:"-MaxLoad", MaxReqAll:"-MaxReqAll", MaxLoadAll:"-MaxLoadAll", MaxReqErr:"-MaxReqErr", WantHeader:"-WantHeader",
+    UploadHeader:"-UploadHeader", MaxIteration:"-MaxIteration", ErrProcessBlock:"-ErrProcessBlock", };
 if(typeof process === "object")
 {
 }
@@ -29,7 +31,9 @@ JINN_STAT.Keys = StatKeys;
 JINN_STAT.Clear = function ()
 {
     for(var key in StatKeys)
+    {
         JINN_STAT[key] = 0;
+    }
     
     JINN_STAT.AllTraffic = 0;
     JINN_STAT.MINHots =  - 1;

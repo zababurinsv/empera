@@ -849,7 +849,7 @@ HTTPCaller.SendTransactionHex = function (Params)
     var final = false;
     if(Res <= 0 && Res !==  - 3)
         final = true;
-    ToLogClient("Send: " + Result.text, GetHexFromArr(sha3(body)), final);
+    ToLogClient("Send: " + Result.text, GetHexFromArr(sha3(body, 29)), final);
     return Result;
 }
 

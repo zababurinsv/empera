@@ -26,7 +26,7 @@ function Rigth(Str,Count)
         return Str.substr(Str.length - Count);
 }
 
-function SetHTMLDiagramItem(Item,width)
+function SetHTMLDiagramItem(Item,width,Param)
 {
     Item.mouseX = width - 50;
     
@@ -41,27 +41,47 @@ function SetHTMLDiagramItem(Item,width)
     DiagramMap[Item.name] = Item;
     DiagramMapId[Item.id] = Item;
     
+    var Str;
     if(Item.isLine)
     {
         if(Item.text)
-            Str = "<BR><B>" + Item.text + '</B><INPUT type="button" class="delete" onclick="DeleteDiagram(\'' + Item.id + '\')" value="X">';
+            Str = "<BR>" + GetDiagramHeadHTML(Item, Param);
         else
             Str = "<HR>";
     }
     else
     {
-        Str = '<BR><DIV>' + Item.text + '<INPUT type="button" class="delete" onclick="DeleteDiagram(\'' + Item.id + '\')" value="X"></DIV>\
-            <BR><canvas  class="DIAGRAM" width="' + width + '" height="' + MinHeight + '" id="' + Item.id + '"></canvas>';
+        Str = '<BR><DIV>' + GetDiagramHeadHTML(Item, Param) + '<BR><canvas  class="DIAGRAM" width="' + width + '" height="' + MinHeight + '" id="' + Item.id + '"></canvas>';
     }
     
     var ElBlock = document.getElementById("B" + Item.id);
     if(ElBlock)
+    {
         ElBlock.innerHTML = toStaticHTML(Str);
+    }
     else
     {
         var diargams = document.getElementById("diargams");
         diargams.innerHTML = toStaticHTML(diargams.innerHTML + "<DIV id='B" + Item.id + "'>" + Str + "</DIV>");
     }
+}
+
+function GetDiagramHeadHTML(Item,Param)
+{
+    var Str = "";
+    if(Item.isLine)
+        Str += "<B>";
+    Str += Item.text;
+    if(Item.isLine)
+        Str += '</B>';
+    if(Param)
+    {
+        Str += '<INPUT type="button" class="move" onclick="MoveDiagram(\'' + Item.id + '\',1)" value="↓">';
+        Str += '<INPUT type="button" class="move" onclick="MoveDiagram(\'' + Item.id + '\',-1)" value="↑">';
+        Str += '<INPUT type="button" class="move" onclick="DeleteDiagram(\'' + Item.id + '\')" value="X">';
+    }
+    
+    return Str;
 }
 
 function SetDiagramMouseX(event,mode)
@@ -245,6 +265,22 @@ function DrawDiagram(Item)
                 if(Pow2)
                     Value = Math.pow(2, Value) / 1000000;
             }
+            var x = StartX + ctx.lineWidth / 2 + (i) * KX;
+            
+            if(mouseX)
+            {
+                var deltaCur = Math.abs(x - mouseX);
+                var deltaWas = Math.abs(mouseValueX - mouseX);
+                if(deltaCur < deltaWas)
+                {
+                    mouseValueX = x;
+                    mouseValue = Value;
+                    
+                    if(Item.zero)
+                        mouseValue -= Item.zero;
+                    mouseColor = color;
+                }
+            }
             
             if(mode === "green")
             {
@@ -267,8 +303,6 @@ function DrawDiagram(Item)
             if(VX1 === VX2)
                 VX1 -= 2;
             
-            var x = StartX + ctx.lineWidth / 2 + (i) * KX;
-            
             if(bLine)
             {
                 if(!WasMove0)
@@ -285,21 +319,6 @@ function DrawDiagram(Item)
             {
                 ctx.moveTo(x, StartY - VX1);
                 ctx.lineTo(x, StartY - VX2);
-            }
-            
-            if(mouseX)
-            {
-                var deltaCur = Math.abs(x - mouseX);
-                var deltaWas = Math.abs(mouseValueX - mouseX);
-                if(deltaCur < deltaWas)
-                {
-                    mouseValueX = x;
-                    mouseValue = Value;
-                    
-                    if(Item.zero)
-                        mouseValue -= Item.zero;
-                    mouseColor = color;
-                }
             }
         }
         ctx.stroke();
@@ -470,12 +489,18 @@ function GetValueByItemProperty(Value,Item)
     return RetValue;
 }
 
-function InitDiagramByArr(Arr,width)
+function InitDiagramByArr(Arr,width,Param)
 {
     for(var i = 0; i < Arr.length; i++)
     {
-        Arr[i].num = i + 1;
-        SetHTMLDiagramItem(Arr[i], width);
+        var Item = Arr[i];
+        Item.num = i + 1;
+        Item.id = "DgrmId" + Item.num;
+    }
+    
+    for(var i = 0; i < Arr.length; i++)
+    {
+        SetHTMLDiagramItem(Arr[i], width, Param);
     }
     
     window.addEventListener('mousedown', function (event)

@@ -182,6 +182,7 @@
   {
       root.glKeccakCount++;
 
+
     this.blocks = [];
     this.s = [];
     this.padding = padding;

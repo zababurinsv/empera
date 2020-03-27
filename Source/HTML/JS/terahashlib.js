@@ -137,7 +137,7 @@ function GetHashFromNum2(Value1,Value2)
     var MeshArr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     WriteUintToArrOnPos(MeshArr, Value1, 0);
     WriteUintToArrOnPos(MeshArr, Value2, 6);
-    return sha3(MeshArr);
+    return sha3(MeshArr, 41);
 }
 
 function GetHashFromArrNum2(Arr,Value1,Value2)
@@ -147,7 +147,7 @@ function GetHashFromArrNum2(Arr,Value1,Value2)
     WriteArrToArrOnPos(MeshArr, Arr, 0, 32);
     WriteUintToArrOnPos(MeshArr, Value1, 32);
     WriteUintToArrOnPos(MeshArr, Value2, 38);
-    return sha3(MeshArr);
+    return sha3(MeshArr, 42);
 }
 
 function GetHashFromNum3(Value1,Value2,Value3)
@@ -157,7 +157,7 @@ function GetHashFromNum3(Value1,Value2,Value3)
     WriteUintToArrOnPos(MeshArr, Value2, 6);
     WriteUintToArrOnPos(MeshArr, Value3, 12);
     
-    return sha3(MeshArr);
+    return sha3(MeshArr, 43);
 }
 
 
@@ -390,7 +390,7 @@ function shaarr2(Value1,Value2)
 }
 function sha3arr2(Value1,Value2)
 {
-    return sha3(arr2(Value1, Value2));
+    return sha3(arr2(Value1, Value2), 44);
 }
 
 function GetBlockArrFromBuffer(BufRead,Info)
@@ -502,7 +502,7 @@ function CalcDataHash(PrevHash,TreeHash,BlockNum)
     if(BlockNum >= global.UPDATE_CODE_JINN_1)
     {
         // new code
-        return sha3(PrevHash.concat(TreeHash));
+        return sha3(PrevHash.concat(TreeHash), 45);
     }
     else
     {
@@ -534,7 +534,7 @@ function CalcSumHash(PrevSumHash,Hash,BlockNum,SumPow)
         
         var arr_sum_pow = [];
         WriteUintToArr(arr_sum_pow, SumPow);
-        return sha3(PrevSumHash.concat(Hash).concat(arr_sum_pow));
+        return sha3(PrevSumHash.concat(Hash).concat(arr_sum_pow), 46);
     }
     else
     {

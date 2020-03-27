@@ -88,7 +88,7 @@ class CApp
         if(!global.TX_PROCESS.Worker)
             return 0;
         
-        var StrHex = GetHexFromArr(sha3(Tr.body));
+        var StrHex = GetHexFromArr(sha3(Tr.body, 30));
         global.TX_PROCESS.Worker.send({cmd:"FindTX", TX:StrHex})
         
         return SERVER.AddTransaction(Tr, 1);

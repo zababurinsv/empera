@@ -170,6 +170,7 @@ function InitClass(Engine)
         {
             Engine.DB.LoadBlockTx(Block);
         }
+        var Count = 0;
         for(var i = 0; Block.TxData && i < Block.TxData.length; i++)
         {
             var Item = Block.TxData[i];
@@ -178,6 +179,7 @@ function InitClass(Engine)
             var Tx = Engine.GetTx(Item.body);
             Block.TxData[i] = Tx;
             CheckTx("GetBlock", Tx, Block.BlockNum);
+            Count++;
         }
     };
     

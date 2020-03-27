@@ -90,7 +90,7 @@ module.exports.Create = function (Node,MapName)
     require("./tera-mining").Init(Engine);
     require("./tera-stat").Init(Engine);
     
-    require("./tera-tests");
+    require("./tera-tests").Init(Engine);
     
     function StartRun(Engine,Period)
     {

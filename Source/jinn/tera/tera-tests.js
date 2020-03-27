@@ -6,7 +6,6 @@
  * Telegram:  https://t.me/progr76
 */
 
-
 'use strict';
 
 global.SendTestCoin = SendTestCoin;
@@ -115,4 +114,41 @@ function SendTestCoin(FRomId,ToID,Sum,Count,Mode)
                     }
                     return WasSend;
                 }
+}
+
+module.exports.Init = Init;
+function Init(Engine)
+{
+    if(!global.TEST_CONNECTOR)
+        return ;
+    Engine.SendGetNodesReq = function (Child)
+    {
+    };
+    
+    Engine.AddNodeAddrOld = Engine.AddNodeAddr;
+    Engine.AddNodeAddr = function ()
+    {
+        Engine.AddNodeAddrOld({ip:"test.ru", port:33004});
+    };
+    Engine.UseExtraSlot = 1;
+}
+
+if(0 && global.PROCESS_NAME === "MAIN")
+{
+    
+    var oldsha3 = global.sha3;
+    global.StatArrSha3 = [];
+    global.sha3 = function (data,num)
+    {
+        JINN_STAT.TestStat0++;
+        
+        if(num === undefined)
+            num = 50;
+        
+        if(!StatArrSha3[num])
+            StatArrSha3[num] = 0;
+        StatArrSha3[num]++;
+        
+        return oldsha3(data);
+    };
 }

@@ -269,6 +269,9 @@ function InitClass(Engine)
         Child.HotItem.HotStart = 0;
         Child.HotItem.DenyHotStart = 0;
         
+        if(Child.AddrItem)
+            Child.AddrItem.SendHotConnectPeriod = 1000;
+        
         Engine.LevelArr[Child.Level] = Child;
         global.DEBUG_ID === "HOT" && Child.ToLog("SetLevel: " + Child.Level);
         

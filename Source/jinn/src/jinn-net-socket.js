@@ -236,7 +236,7 @@ function InitAfter(Engine)
         }
         else
         {
-            Child.ToLog("ERROR SEND - NOT WAS CONNECT: State=" + State, 3);
+            Child.ToLog("ERROR SEND - NOT WAS CONNECT: State=" + State, 4);
         }
     };
     
