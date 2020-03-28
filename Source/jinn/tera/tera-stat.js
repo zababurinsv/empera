@@ -116,7 +116,8 @@ function Init(Engine)
     
     SERVER.OnStartSecond = function ()
     {
-        SERVER.CurrentBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var MaxCurNumTime = JINN_EXTERN.GetCurrentBlockNumByTime();
+        SERVER.CurrentBlockNum = MaxCurNumTime;
         PrepareStatEverySecond();
         
         var Arr = SERVER.GetActualNodes();
@@ -167,8 +168,8 @@ function Init(Engine)
         GlSumSys = SumSys;
         GlSumIdle = SumIdle;
         
-        var MaxNum = SERVER.GetMaxNumBlockDB();
-        var MaxBlock = Engine.GetBlockHeaderDB(MaxNum);
+        var MaxNumDB = SERVER.GetMaxNumBlockDB();
+        var MaxBlock = Engine.GetBlockHeaderDB(MaxNumDB);
         if(MaxBlock)
         {
             if(PrevSumPow)
@@ -188,7 +189,7 @@ function Init(Engine)
         var StrMode = " H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + "";
         Str += StrMode;
         if(global.DEV_MODE === 123)
-            console.log("" + SERVER.CurrentBlockNum + ":" + Str);
+            console.log("" + MaxCurNumTime + ":" + Str);
         ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.BlockTx);
         for(var key in JINN_STAT.Methods)
         {

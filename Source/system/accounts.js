@@ -122,7 +122,11 @@ class MerkleDBRow extends DBRow
                     break;
                 }
                 
-                this.MerkleArr[num] = shaarr(Buf)
+                if(UPDATE_CODE_NEW_ACCHASH)
+                    this.MerkleArr[num] = sha3(Buf)
+                else
+                    this.MerkleArr[num] = shaarr(Buf)
+                
                 this.MerkleCalc[num] = 1
             }
         }
@@ -140,7 +144,11 @@ class MerkleDBRow extends DBRow
         var bRes = DBRow.prototype.Write.call(this, Data, RetBuf);
         if(bRes)
         {
-            var Hash = shaarr(RetBuf.Buf);
+            var Hash;
+            if(UPDATE_CODE_NEW_ACCHASH)
+                Hash = sha3(RetBuf.Buf)
+            else
+                Hash = shaarr(RetBuf.Buf)
             this.MerkleArr[Data.Num] = Hash
             this.MerkleCalc[Data.Num] = 1
         }

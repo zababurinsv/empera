@@ -28,6 +28,14 @@ function RunOnUpdate()
         
         if(global.JINN_MODE)
         {
+            if(CurNum < 1648)
+            {
+                setTimeout(function ()
+                {
+                    ToLog("UPD: START RewriteAllTransactions");
+                    SERVER.RewriteAllTransactions();
+                }, 3000);
+            }
         }
         else
             if(global.LOCAL_RUN)

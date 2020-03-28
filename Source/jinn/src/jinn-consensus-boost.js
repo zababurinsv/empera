@@ -289,7 +289,7 @@ function InitClass(Engine)
             if(bWasCanntUpload || !Engine.CanUploadData(BlockNum, Status.LoadN))
             {
                 if(!bWasCanntUpload)
-                    ToLog("Cannt upload data to " + ChildName(Child), 3);
+                    ToLog("Cannt upload data to " + ChildName(Child), 4);
                 bWasCanntUpload = 1;
                 continue;
             }

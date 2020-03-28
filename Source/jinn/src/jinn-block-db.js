@@ -77,13 +77,16 @@ function InitClass(Engine)
     Engine.SaveToDB = function (Block)
     {
         Block.BlockNum = Math.floor(Block.BlockNum);
+        var MaxCurNumTime = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var MaxNumDB = Engine.GetMaxNumBlockDB();
+        var Delta = MaxCurNumTime - MaxNumDB;
+        JINN_STAT.DBDelta = Math.max(JINN_STAT.DBDelta, Delta);
         if(global.TEST_DB_BLOCK)
         {
             var BlockNum = Block.BlockNum;
-            var MaxNum = Engine.GetMaxNumBlockDB();
-            if(BlockNum > MaxNum + 1)
+            if(BlockNum > MaxNumDB + 1)
             {
-                ToLogTrace("Error SaveToDB Block.BlockNum>MaxNum+1   BlockNum=" + BlockNum + "  MaxNum=" + MaxNum);
+                ToLogTrace("Error SaveToDB Block.BlockNum>MaxNumDB+1   BlockNum=" + BlockNum + "  MaxNumDB=" + MaxNumDB);
                 return false;
             }
             

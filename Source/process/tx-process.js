@@ -322,7 +322,7 @@ class CTXProcess
                 this.ErrorAccHash++
                 ToLog("AccHash:DeleteTX on Block=" + PrevBlockNum)
                 BlockDeleteTX(PrevBlockNum)
-                return  - 1;
+                return 0;
             }
         }
         
