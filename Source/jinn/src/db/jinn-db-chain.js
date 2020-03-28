@@ -481,7 +481,8 @@ class CDBChain
             var PrevBlock = DB.GetPrevBlockDB(Block);
             if(!PrevBlock)
             {
-                ToLog("Error PrevBlock on Block=" + Block.BlockNum + " BlockHead=" + BlockHead.BlockNum + " PrevSumHash=" + GetHexFromArr(Block.PrevSumHash))
+                ToLog("Error PrevBlock on Block=" + Block.BlockNum + " BlockHead=" + BlockHead.BlockNum + " PrevSumHash=" + GetHexFromArr(Block.PrevSumHash),
+                4)
                 return  - 1;
             }
             Block = PrevBlock
@@ -519,7 +520,6 @@ class CDBChain
     
     TruncateChain(StartNum)
     {
-        ToLog("TruncateChain on " + StartNum)
         if(StartNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
             this.Clear()

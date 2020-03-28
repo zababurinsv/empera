@@ -11,7 +11,7 @@ module.exports.Init = Init;
 
 const os = require('os');
 
-global.MAX_BUSY_VALUE = 105;
+global.MAX_BUSY_VALUE = 120;
 global.MAX_SHA3_VALUE = 70000;
 
 var GlSumUser;
@@ -75,9 +75,9 @@ function Init(Engine)
             return ;
         
         var id = GetLocalNodeID(Node.IDStr);
-        var Item = {Hot:IsHot, id:id, ip:Node.ip, port:Node.port, Level:Node.Level, addrStr:Node.IDStr, BlockProcessCount:Node.BlockProcessCount,
-            LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0), DeltaTime:Node.DeltaTransfer, TransferCount:Node.TransferCount,
-            Info:Node.Info ? Node.Info : "", Active:IsOpen, };
+        var Item = {id:id, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port, Hot:IsHot, Level:Node.Level,
+            addrStr:Node.IDStr, BlockProcessCount:Node.BlockProcessCount, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
+            DeltaTime:Node.DeltaTransfer, TransferCount:Node.TransferCount, Info:Node.Info ? Node.Info : "", Active:IsOpen, };
         
         var ArrLevel = Arr[Item.Level];
         if(!ArrLevel)
@@ -226,32 +226,41 @@ function Init(Engine)
             return 1;
         }
         
+        var Delta = Math.abs(CurBlockNum - LoadBlockNum);
+        if(Delta < 8)
+            return 1;
+        
         return 0;
     };
 }
 
+const RUN_TIME_PERIOD = 50;
 global.ArrIdle = [];
 function OnTimeIdleBusy()
 {
-    if(ArrIdle.length >= 20)
-        ArrIdle.splice(0, 10);
-    ArrIdle.push(Date.now());
-    
-    setTimeout(OnTimeIdleBusy, 45);
+    if(ArrIdle.length >= 6)
+        ArrIdle.length = 6;
+    ArrIdle.unshift(Date.now());
 }
-OnTimeIdleBusy();
+setInterval(OnTimeIdleBusy, RUN_TIME_PERIOD);
 
 function GetBusy()
 {
     var Time = Date.now();
-    var SumTime = 0;
     var Count = 0;
-    for(var i = ArrIdle.length - 1; i >= 0; i--)
+    var SumTime = 0;
+    for(var i = 0; i < ArrIdle.length; i++)
     {
-        SumTime += Time - ArrIdle[i];
+        var Delta = Time - ArrIdle[i];
+        if(i === 0 && Delta < RUN_TIME_PERIOD)
+        {
+        }
+        else
+        {
+            SumTime += Time - ArrIdle[i];
+            Count++;
+        }
         Time = ArrIdle[i];
-        
-        Count++;
         if(Count >= 5)
             break;
     }

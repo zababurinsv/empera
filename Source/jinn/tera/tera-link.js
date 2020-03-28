@@ -154,4 +154,9 @@ function Init(Engine)
         global.DELTA_CURRENT_TIME = DeltaTime;
         SAVE_CONST(0);
     };
+    global.ON_USE_CONST = function ()
+    {
+        global.JINN_WARNING = global.LOG_LEVEL;
+    };
+    ON_USE_CONST();
 }

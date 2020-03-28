@@ -373,6 +373,9 @@ global.LOAD_CONST = function ()
                 global[key] = constants[key];
             }
         }
+        
+        if(global.ON_USE_CONST)
+            global.ON_USE_CONST();
     }
     return Count;
 }
@@ -403,6 +406,9 @@ global.SAVE_CONST = function (bForce)
             setTimeout(SaveConst, 10 * 1000);
         WasStartSaveConst = true;
     }
+    
+    if(global.ON_USE_CONST)
+        global.ON_USE_CONST();
 }
 
 

@@ -1319,14 +1319,15 @@ function GetCopyNode(Node,BlockCounts)
     if(BlockCounts !== 0)
         GetTiming = Math.trunc(Node.GetTiming / BlockCounts) / 1000;
     
-    var Item = {VersionNum:Node.VersionNum, VERSION:Node.VERSIONMAX, LoadHistoryMode:Node.LoadHistoryMode, BlockNumDBMin:Node.BlockNumDBMin,
-        BlockNumDB:Node.BlockNumDB, LevelsBit:Node.LevelsBit, NoSendTx:Node.NoSendTx, GetNoSendTx:Node.GetNoSendTx, DirectMAccount:Node.DirectMAccount,
-        id:Node.id, ip:Node.ip, portweb:Node.portweb, port:Node.port, TransferCount:Node.TransferCount, GetTiming:GetTiming, ErrCountAll:Node.ErrCountAll,
-        LevelCount:Node.LevelCount, LevelEnum:Node.LevelEnum, TimeTransfer:GetStrOnlyTimeUTC(new Date(Node.LastTimeTransfer)), BlockProcessCount:Node.BlockProcessCount,
-        DeltaTime:Node.DeltaTime, DeltaTimeM:Node.DeltaTimeM, DeltaGlobTime:Node.DeltaGlobTime, PingNumber:Node.PingNumber, NextConnectDelta:Node.NextConnectDelta,
-        NextGetNodesDelta:Node.NextGetNodesDelta, NextHotDelta:Node.NextHotDelta, Name:Node.Name, addrStr:Node.addrStr, CanHot:Node.CanHot,
-        Active:Node.Active, Hot:Node.Hot, Info:Node.PrevInfo + Node.Info, InConnectArr:Node.WasAddToConnect, Level:Node.Level, TransferBlockNum:Node.TransferBlockNum,
-        TransferSize:Node.TransferSize, TransferBlockNumFix:Node.TransferBlockNumFix, CurBlockNum:Node.CurBlockNum, };
+    var Item = {VersionNum:Node.VersionNum, NetConstVer:Node.NetConstVer, VERSION:Node.VERSIONMAX, LoadHistoryMode:Node.LoadHistoryMode,
+        BlockNumDBMin:Node.BlockNumDBMin, BlockNumDB:Node.BlockNumDB, LevelsBit:Node.LevelsBit, NoSendTx:Node.NoSendTx, GetNoSendTx:Node.GetNoSendTx,
+        DirectMAccount:Node.DirectMAccount, id:Node.id, ip:Node.ip, portweb:Node.portweb, port:Node.port, TransferCount:Node.TransferCount,
+        GetTiming:GetTiming, ErrCountAll:Node.ErrCountAll, LevelCount:Node.LevelCount, LevelEnum:Node.LevelEnum, TimeTransfer:GetStrOnlyTimeUTC(new Date(Node.LastTimeTransfer)),
+        BlockProcessCount:Node.BlockProcessCount, DeltaTime:Node.DeltaTime, DeltaTimeM:Node.DeltaTimeM, DeltaGlobTime:Node.DeltaGlobTime,
+        PingNumber:Node.PingNumber, NextConnectDelta:Node.NextConnectDelta, NextGetNodesDelta:Node.NextGetNodesDelta, NextHotDelta:Node.NextHotDelta,
+        Name:Node.Name, addrStr:Node.addrStr, CanHot:Node.CanHot, Active:Node.Active, Hot:Node.Hot, Info:Node.PrevInfo + Node.Info,
+        InConnectArr:Node.WasAddToConnect, Level:Node.Level, TransferBlockNum:Node.TransferBlockNum, TransferSize:Node.TransferSize,
+        TransferBlockNumFix:Node.TransferBlockNumFix, CurBlockNum:Node.CurBlockNum, };
     
     return Item;
 }

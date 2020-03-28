@@ -501,7 +501,7 @@ class AccountApp extends require("./dapp")
                     if(!this.TRCheckAccountHash(Body, BlockNum, TrNum))
                     {
                         Result = "BAD ACCOUNT HASH"
-                        ToLog("2. ****FIND BAD ACCOUNT HASH IN BLOCK: " + BlockNumHash + " DO BLOCK=" + BlockNum)
+                        ToLog("2. ****FIND BAD ACCOUNT HASH IN BLOCK: " + BlockNumHash + " DO BLOCK=" + BlockNum, 2)
                         if(global.DEBUG_EXIT_ON_BADS)
                         {
                             if(!StopTxProcess)

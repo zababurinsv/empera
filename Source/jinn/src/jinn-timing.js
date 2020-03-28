@@ -32,7 +32,6 @@ function InitClass(Engine)
             {
                 if(Math.abs(NewDelta) >= JINN_CONST.CORRECT_TIME_TRIGGER)
                 {
-                    ToLog("NewDelta: " + NewDelta);
                     if(NewDelta < 0)
                         NewDelta =  - JINN_CONST.CORRECT_TIME_VALUE;
                     else

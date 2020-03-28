@@ -433,7 +433,7 @@ function InitClass(Engine)
         var Res = Engine.DB.SaveChainToDB(BlockHead, BlockSeed);
         if(Res !== 1)
         {
-            Engine.ToLog("Error on SaveChainToDB " + BlockHead.BlockNum + "-" + BlockSeed.BlockNum + " POW:" + BlockSeed.SumPow);
+            Engine.ToLog("Error on SaveChainToDB " + BlockHead.BlockNum + "-" + BlockSeed.BlockNum + " POW:" + BlockSeed.SumPow, 4);
             if(Res ==  - 1)
             {
                 Engine.TruncateChain(BlockHead.BlockNum);

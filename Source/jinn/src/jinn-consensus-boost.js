@@ -240,6 +240,8 @@ function InitClass(Engine)
         if(!Engine.ProcessMaxHashOnReceive(Child, BlockNum, Data.Arr))
             return ;
         
+        Child.NetConstVer = Data.NetConstVer;
+        Child.CodeVersionNum = Data.CodeVersionNum;
         if(Engine.StartGetNetConstant && Data.NetConstVer > JINN_NET_CONSTANT.NetConstVer)
         {
             Engine.StartGetNetConstant(Child, Data.NetConstVer);
@@ -250,16 +252,19 @@ function InitClass(Engine)
             Engine.StartGetNewVersion(Child, Data.CodeVersionNum);
         }
         
+        if(Data.CodeVersionNum < global.MIN_JINN_VERSION_NUM)
+            return {result:0};
+        
         Engine.AddMaxHashToTimeStat(Child, Data);
         
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
-            return ;
+            return {result:0};
         
         Child.LastTransferTime = Date.now();
         Engine.CheckHotConnection(Child);
         if(!Child || !Child.IsHot() || Child.HotStart)
         {
-            return ;
+            return {result:0};
         }
         if(Data.Arr.length > JINN_CONST.MAX_LEADER_COUNT)
             Data.Arr.length = JINN_CONST.MAX_LEADER_COUNT;
@@ -270,6 +275,7 @@ function InitClass(Engine)
         var BodyArr = [];
         var RetMode = 0;
         
+        var bWasCanntUpload = 0;
         for(var i = 0; i < Data.Arr.length; i++)
         {
             var Status = Data.Arr[i];
@@ -280,9 +286,11 @@ function InitClass(Engine)
             
             if(RetMode)
                 continue;
-            if(!Engine.CanUploadData(BlockNum, Status.LoadN))
+            if(bWasCanntUpload || !Engine.CanUploadData(BlockNum, Status.LoadN))
             {
-                ToLog("Cannt upload data to " + ChildName(Child), 2);
+                if(!bWasCanntUpload)
+                    ToLog("Cannt upload data to " + ChildName(Child), 3);
+                bWasCanntUpload = 1;
                 continue;
             }
             
