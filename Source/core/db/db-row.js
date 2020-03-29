@@ -183,7 +183,7 @@ module.exports = class CDBRow extends require("./db")
         
         var MaxNum = this.GetMaxNum();
         if(MaxNum ===  - 1)
-            return ;
+            return;
         
         for(var num = MaxNum; num >= 0; num--)
         {
@@ -197,7 +197,7 @@ module.exports = class CDBRow extends require("./db")
                 {
                     this.Truncate(num)
                 }
-                return ;
+                return;
             }
         }
         this.Truncate( - 1)
@@ -208,7 +208,7 @@ module.exports = class CDBRow extends require("./db")
         
         var MaxNum = this.GetMaxNum();
         if(MaxNum ===  - 1)
-            return ;
+            return;
         
         var StartNum = 0;
         var EndNum = MaxNum;
@@ -244,7 +244,7 @@ module.exports = class CDBRow extends require("./db")
             else
             {
                 throw "Error read num";
-                return ;
+                return;
             }
         }
         var num = CurNum;
@@ -264,7 +264,7 @@ module.exports = class CDBRow extends require("./db")
             else
             {
                 throw "Error read num";
-                return ;
+                return;
             }
         }
     }

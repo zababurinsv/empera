@@ -155,7 +155,7 @@ module.exports = class CCode extends require("./base")
         
         var VersionNum = Info.Context.VersionNum;
         if(!VersionNum || !START_LOAD_CODE.StartLoad)
-            return ;
+            return;
         
         if(!this.DownloadingNewCodeToPath(Info.Node, Info.Data, VersionNum))
             this.AddCheckErrCount(Info.Node, 1, "Error check hash of version code")
@@ -259,7 +259,7 @@ global.RestartNode = function RestartNode(bForce)
     {
         StopChildProcess();
         ToLog("********************************** FORCE RESTART!!!");
-        return ;
+        return;
     }
     
     if(this.ActualNodes)

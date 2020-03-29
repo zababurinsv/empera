@@ -37,9 +37,9 @@ var COUNT_LIST_LOOP = 3;
 function DoNode(Engine)
 {
     if(Engine.TickNum % 10 !== 0)
-        return ;
+        return;
     if(!Engine.ConnectArray.length)
-        return ;
+        return;
     for(var i = 0; i < COUNT_LIST_LOOP; i++)
     {
         Engine.IndexChildLoop++;
@@ -58,7 +58,7 @@ function InitClass(Engine)
     Engine.SendGetNodesReq = function (Child)
     {
         if(!CanTime(Child, "SendGetNodesReq", 1000))
-            return ;
+            return;
         
         if(!Child.Iterator)
             Child.Iterator = {Level:0, Arr:[]};
@@ -191,7 +191,7 @@ function InitClass(Engine)
     Engine.SetItemRndHash = function (AddrItem,RndHash)
     {
         if(IsZeroArr(RndHash))
-            return ;
+            return;
         
         var Find = Engine.NodesTree.find(AddrItem);
         if(Find)
@@ -257,7 +257,7 @@ function InitClass(Engine)
     {
         Engine.ip = ip;
         if(Engine.ip === "0.0.0.0")
-            return ;
+            return;
         Engine.AddrItem = {IDArr:Engine.IDArr, ip:Engine.ip, port:Engine.port, Nonce:0, NonceTest:0, BlockNum:0, AddrHashPOW:[255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255]};
@@ -265,13 +265,13 @@ function InitClass(Engine)
     Engine.CaclNextAddrHashPOW = function (Count)
     {
         if(!Engine.AddrItem)
-            return ;
+            return;
         
         var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
         var AddrItem = Engine.AddrItem;
         
         if(AddrItem.ip === "0.0.0.0")
-            return ;
+            return;
         
         for(var i = 0; i < Count; i++)
         {

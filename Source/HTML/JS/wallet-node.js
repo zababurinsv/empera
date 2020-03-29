@@ -14,7 +14,7 @@ function SavePrivateKey()
     if(Select.value === "brain")
     {
         ConvertToPrivateKey();
-        return ;
+        return;
     }
     
     var Str = document.getElementById("idKeyNew").value;
@@ -22,13 +22,13 @@ function SavePrivateKey()
     if(Select.value === "private" && (Str.length !== 64 || !IsHexStr(Str)))
     {
         SetError("Error: Length must 64 HEX chars. (Length=" + Str.length + ")");
-        return ;
+        return;
     }
     else
         if(Select.value !== "private" && (Str.length !== 66 || Str.substr(0, 1) !== "0" || !IsHexStr(Str)))
         {
             SetError("Error: Length must 66 HEX chars. (Length=" + Str.length + ")");
-            return ;
+            return;
         }
     
     if(Select.value === "private" && PrivKeyStr !== Str)
@@ -58,7 +58,7 @@ function CreateCheckPoint()
     if(!ServerBlockNumDB || ServerBlockNumDB < 16)
     {
         SetError("Not set ServerBlockNumDB");
-        return ;
+        return;
     }
     var BlockNum = ServerBlockNumDB - 10;
     SetCheckPoint(BlockNum);
@@ -135,12 +135,12 @@ function RunDevelopService()
     catch(e)
     {
         SetError("Error JSON format setting data");
-        return ;
+        return;
     }
     if(!Data.Service)
     {
         SetError("Error format setting - not found Service");
-        return ;
+        return;
     }
     
     if(Data.addrArr)
@@ -182,7 +182,7 @@ function UseMining()
     if(!MiningAccount)
     {
         SetError("Not set mining account");
-        return ;
+        return;
     }
     var Data = {USE_MINING:document.getElementById("idUseMining").checked, DoMining:1};
     
@@ -247,13 +247,13 @@ var WasHistoryMaxNum;
 var WasLastNumSound = 0;
 function CheckNewMoney()
 {
-    return ;
+    return;
     
     if(!$("idUseSoundHistory").checked)
-        return ;
+        return;
     
     if(WasHistoryMaxNum === HistoryMaxNum || !ServerBlockNumDB)
-        return ;
+        return;
     
     WasHistoryMaxNum = HistoryMaxNum;
     
@@ -423,7 +423,7 @@ function SaveConstant(bRestart)
     catch(e)
     {
         SetError("Error JSON format setting constant");
-        return ;
+        return;
     }
     
     Data.DoRestartNode = bRestart;
@@ -510,7 +510,7 @@ function DoBlockChainProcess(FuncName,Text,LastBlock)
     }
     var result = confirm(Text + "?");
     if(!result)
-        return ;
+        return;
     
     SetVisibleBlock("idServerBlock", 1);
     SetStatus("START: " + Text);

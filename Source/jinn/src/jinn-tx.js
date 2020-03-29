@@ -24,7 +24,7 @@ function InitClass(Engine)
     Engine.AddCurrentProcessingTx = function (BlockNum,TxArr)
     {
         if(BlockNum < JINN_CONST.START_ADD_TX)
-            return ;
+            return;
         
         var Tree = Engine.ListTreeTx[BlockNum];
         if(!Tree)
@@ -100,12 +100,12 @@ function InitClass(Engine)
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TX))
         {
             Engine.ToError(Child, "TRANSFERTX : CanProcessBlock Error BlockNum=" + BlockNum, 4);
-            return ;
+            return;
         }
         
         Engine.CheckHotConnection(Child);
         if(!Child || !Child.IsHot() || Child.HotStart)
-            return ;
+            return;
         
         Child.CheckCache(Data.Cache, BlockNum);
         
@@ -187,7 +187,7 @@ function InitClass(Engine)
     Engine.SendTest = function (Value)
     {
         if(Engine.SendTestMap[Value])
-            return ;
+            return;
         Engine.SendTestMap[Value] = 1;
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
@@ -229,7 +229,7 @@ var MapTT = {};
 function CheckTicketKey(Tx)
 {
     if(!global.JINN_WARNING)
-        return ;
+        return;
     
     if(MapTT[Tx.KEY])
     {

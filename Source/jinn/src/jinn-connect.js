@@ -8,19 +8,13 @@
 
 /**
  *
- * Dual connection protection algorithm:
- If two nodes have public Internet addresses, it is likely that they will simultaneously connect to each other
- In this case, you need to recognize this case and leave only one connection.
- The HANDSHAKE method contains ip+port as a parameter and is used to generate a 32-byte unique IDArr number
- If the nodes see that they already had a connection (Child) with the same value, it means that it is the same node
- In this case, the Engine arrays are compared.IDArr and Child.IDArr between and depending on this
- the incoming or outgoing connection with this node is deleted.
+ * Dual connection protection algorithm
  *
 **/
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Connect"});
 
-var MAX_CONNECT_TIMEOUT = 10 * 1000;
+var MAX_CONNECT_TIMEOUT = 20 * 1000;
 
 var glWorkConnect = 0;
 
@@ -29,7 +23,7 @@ var glWorkConnect = 0;
 function DoNode(Engine)
 {
     if(Engine.TickNum % 10 !== 0)
-        return ;
+        return;
     
     if(Engine.ROOT_NODE)
         return 0;

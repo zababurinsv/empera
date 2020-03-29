@@ -255,7 +255,7 @@ function IsMS()
 function LoadSignLib()
 {
     if(window.SignLib)
-        return ;
+        return;
     
     LoadLib("./JS/sign-lib-min.js");
 }
@@ -265,13 +265,13 @@ function ComputeSecretWithCheck(PubKey,StrPrivKey,SmartNum,F)
     if(!window.SignLib)
     {
         SetError("Error: SignLib not installed");
-        return ;
+        return;
     }
     
     if(!IsHexStr(StrPrivKey) || StrPrivKey.length !== 64)
     {
         SetError("Error set PrivKey");
-        return ;
+        return;
     }
     var PrivKey = Buffer.from(GetArrFromHex(StrPrivKey));
     if(typeof PubKey === "string")
@@ -279,7 +279,7 @@ function ComputeSecretWithCheck(PubKey,StrPrivKey,SmartNum,F)
         if(!IsHexStr(PubKey) || PubKey.length !== 66)
         {
             SetError("Error PubKey");
-            return ;
+            return;
         }
         PubKey = Buffer.from(GetArrFromHex(PubKey));
     }
@@ -314,7 +314,7 @@ function ComputeSecret(Account,PubKey,SmartNum,F)
         GetData("GetWalletInfo", {Account:Account}, function (Data)
         {
             if(!Data || !Data.result)
-                return ;
+                return;
             ComputeSecretWithCheck(PubKey, Data.PrivateKey, SmartNum, F);
         });
     }

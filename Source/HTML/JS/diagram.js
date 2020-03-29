@@ -31,7 +31,7 @@ function SetHTMLDiagramItem(Item,width,Param)
     Item.mouseX = width - 50;
     
     if(Item.Extern || Item.Delete)
-        return ;
+        return;
     
     var MinHeight = 80;
     
@@ -125,7 +125,7 @@ function SetDiagramMouseX(event,mode)
 function DrawDiagram(Item)
 {
     if(Item.Delete)
-        return ;
+        return;
     
     var arr = Item.arr;
     if(!arr)
@@ -148,7 +148,7 @@ function DrawDiagram(Item)
         KPrecision = 1;
     
     if(!arr)
-        return ;
+        return;
     
     var obj = document.getElementById(Item.id);
     var ctx = obj.getContext('2d');
@@ -176,7 +176,7 @@ function DrawDiagram(Item)
     }
     
     if(arr.length <= 0)
-        return ;
+        return;
     
     var Pow2 = 0;
     if(Item.name.substr(Item.name.length - 2) === "**")

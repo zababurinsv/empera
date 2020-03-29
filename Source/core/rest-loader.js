@@ -42,7 +42,7 @@ module.exports = class CRest extends require("./db/block-db")
                 else
                 {
                     this.LoadRestContext = undefined
-                    return ;
+                    return;
                 }
             
             this.LoadRestContext = {Mode:0, BlockNum:BlockNumRest, BlockNumRest:BlockNumRest, WasDelta:Delta, BlockNumProof:BlockNumRest + DELTA_BLOCK_ACCOUNT_HASH,
@@ -74,10 +74,10 @@ module.exports = class CRest extends require("./db/block-db")
             case 0:
                 if(!global.TX_PROCESS)
                 {
-                    return ;
+                    return;
                 }
                 if(Date.now() - this.StartTime < 60 * 1000)
-                    return ;
+                    return;
                 
                 var ArrNodes = this.GetActualNodes();
                 
@@ -127,7 +127,8 @@ module.exports = class CRest extends require("./db/block-db")
                 {
                     if(!Context.ConnectToAllTime)
                         Context.ConnectToAllTime = 0
-                    if(Date.now() - Context.ConnectToAllTime > 100 * 1000)
+                    var DeltaTime = Date.now() - Context.ConnectToAllTime;
+                    if(DeltaTime > 100 * 1000)
                     {
                         ToLog("ConnectToAll", 2)
                         this.ConnectToAll()
@@ -137,6 +138,14 @@ module.exports = class CRest extends require("./db/block-db")
                 }
                 if(Context.ArrProof.length < MinCount)
                     break;
+                var DeltaTimeStart = Date.now() - Context.StartTimeHistory;
+                if(DeltaTimeStart < 60 * 1000)
+                {
+                    if(!Context.WaitDeltaTimeStart)
+                        ToLog("Wait " + Math.floor(60 - DeltaTimeStart / 1000) + " sec")
+                    Context.WaitDeltaTimeStart = 1
+                    break;
+                }
                 
                 for(var i = 0; i < Context.ArrProof.length; i++)
                 {
@@ -151,6 +160,8 @@ module.exports = class CRest extends require("./db/block-db")
                             Context.BlockProof = Item.arr[0]
                             var Str = "OK SumPower: " + Item.SumPower + "/" + MaxPow;
                             ToLog(Str + " from: " + NodeName(Item.Node), 2)
+                            
+                            Item.Node.BlockNumProof = Context.BlockNumProof
                         }
                 }
                 
@@ -179,7 +190,7 @@ module.exports = class CRest extends require("./db/block-db")
                         if(Err)
                         {
                             ToLog("TX ERROR: " + Params)
-                            return ;
+                            return;
                         }
                         
                         Context.Mode++
@@ -208,22 +219,22 @@ module.exports = class CRest extends require("./db/block-db")
                             this.SendF(Item.Node, {"Method":"GETBLOCK", "Data":{BlockNum:BlockProof.BlockNum, TreeHash:BlockProof.TreeHash}, "Context":{F:function (Info)
                                     {
                                         if(Context.TxProof)
-                                            return ;
+                                            return;
                                         var Data = BufLib.GetObjectFromBuffer(Info.Data, FORMAT_BLOCK_TRANSFER, WRK_BLOCK_TRANSFER);
                                         Info.Data = undefined
                                         if(Data.BlockNum !== BlockProof.BlockNum || CompareArr(Data.TreeHash, BlockProof.TreeHash) !== 0)
                                         {
                                             ToLog("Error get proof block from " + NodeName(Item.Node), 2)
-                                            return ;
+                                            return;
                                         }
                                         var TreeHash = CalcTreeHashFromArrBody(Data.BlockNum, Data.arrContent);
                                         if(CompareArr(BlockProof.TreeHash, TreeHash) !== 0)
                                         {
                                             ToLog("Error TreeHash in proof block from " + NodeName(Item.Node), 2)
-                                            return ;
+                                            return;
                                         }
                                         
-                                        ToLog("GET BLOCK proof from " + NodeName(Item.Node), 2)
+                                        ToLog("GOT BLOCK proof from " + NodeName(Item.Node), 2)
                                         var FindTx = undefined;
                                         for(var n = 0; n < Data.arrContent.length; n++)
                                         {
@@ -246,7 +257,7 @@ module.exports = class CRest extends require("./db/block-db")
                                         if(!FindTx)
                                         {
                                             ToLog("Not find TX at block=" + BlockProof.BlockNum + " from " + NodeName(Item.Node) + " arr=" + Data.arrContent.length, 2)
-                                            return ;
+                                            return;
                                         }
                                         Context.TxProof = FindTx
                                         Context.Mode++
@@ -300,7 +311,7 @@ module.exports = class CRest extends require("./db/block-db")
                     var Delta = CurTime - Task.Time;
                     if(Delta > 5 * 1000 && !Task.OK)
                     {
-                        var Ret = this.GetNextNode(Task, "", 1);
+                        var Ret = this.GetNextNode(Task, "", 1, 0, FTestNode, Context);
                         if(Ret.Result)
                         {
                             ToLog("Send GETREST Num:" + Task.StartNum + "-" + Task.Count + " to " + NodeName(Ret.Node), 3)
@@ -309,22 +320,22 @@ module.exports = class CRest extends require("./db/block-db")
                                 "Context":{F:function (Info)
                                     {
                                         if(Task.OK)
-                                            return ;
+                                            return;
                                         var Data = SELF.DataFromF(Info);
                                         if(!Data.Result)
-                                            return ;
+                                            return;
                                         
                                         if(Data.Version !== 1)
                                         {
                                             ToLog("ERROR Version Result GETREST Num:" + Task.StartNum + " from " + NodeName(Info.Node), 2)
-                                            return ;
+                                            return;
                                         }
                                         
                                         if(CompareArrL(Data.ProofHash, Context.TxProof.AccHash) !== 0)
                                         {
                                             ToLog("ERROR PROOF HASH Result GETREST Num:" + Task.StartNum + "  Hash: " + GetHexFromArr(Data.ProofHash) + "/" + GetHexFromArr(Context.TxProof.AccHash) + " from " + NodeName(Info.Node),
                                             2)
-                                            return ;
+                                            return;
                                         }
                                         
                                         var ArrM = [];
@@ -337,14 +348,14 @@ module.exports = class CRest extends require("./db/block-db")
                                         {
                                             ToLog("ERROR CALC PROOF HASH Result GETREST Num:" + Task.StartNum + "  Hash: " + GetHexFromArr(GetHash) + "/" + GetHexFromArr(Context.TxProof.AccHash) + " from " + NodeName(Info.Node),
                                             2)
-                                            return ;
+                                            return;
                                         }
                                         
                                         ToLog("OK Result GETREST Num:" + Task.StartNum + " arr=" + Data.Arr.length + " from " + NodeName(Info.Node), 2)
                                         if(!global.TX_PROCESS || !global.TX_PROCESS.RunRPC)
                                         {
                                             ToLog("ERROR global.TX_PROCESS")
-                                            return ;
+                                            return;
                                         }
                                         
                                         Task.OK = 1
@@ -354,7 +365,7 @@ module.exports = class CRest extends require("./db/block-db")
                                             if(Err)
                                             {
                                                 ToLog("TX ERROR: " + Params)
-                                                return ;
+                                                return;
                                             }
                                             Context.AccTaskFinished++
                                         })
@@ -385,7 +396,7 @@ module.exports = class CRest extends require("./db/block-db")
                     var Delta = CurTime - Task.Time;
                     if(Delta > 3 * 1000 && !Task.OK)
                     {
-                        var Ret = this.GetNextNode(Task, "", 1);
+                        var Ret = this.GetNextNode(Task, "", 1, 0, FTestNode, Context);
                         if(Ret.Result)
                         {
                             ToLog("Send GETSMART Num:" + Task.StartNum + "-" + Task.Count + " to " + NodeName(Ret.Node), 2)
@@ -394,15 +405,15 @@ module.exports = class CRest extends require("./db/block-db")
                                 "Context":{F:function (Info)
                                     {
                                         if(Task.OK)
-                                            return ;
+                                            return;
                                         var Data = SELF.DataFromF(Info);
                                         if(!Data.Result)
-                                            return ;
+                                            return;
                                         ToLog("Result GETSMART Num:" + Task.StartNum + " arr=" + Data.Arr.length + " from " + NodeName(Info.Node), 2)
                                         
                                         Task.Node = Info.Node
                                         if(!global.TX_PROCESS || !global.TX_PROCESS.RunRPC)
-                                            return ;
+                                            return;
                                         
                                         Task.OK = 1
                                         global.TX_PROCESS.RunRPC("TXWriteSmartArr", {StartNum:Task.StartNum, Arr:Data.Arr}, function (Err,Params)
@@ -410,7 +421,7 @@ module.exports = class CRest extends require("./db/block-db")
                                             if(Err)
                                             {
                                                 ToLog("TX ERROR: " + Params)
-                                                return ;
+                                                return;
                                             }
                                             Context.SmartTaskFinished++
                                         })
@@ -426,7 +437,7 @@ module.exports = class CRest extends require("./db/block-db")
                 
             case 9:
                 if(!global.TX_PROCESS || !global.TX_PROCESS.RunRPC)
-                    return ;
+                    return;
                 
                 var ErrSmartNum = CheckHashSmarts(Context.TxProof.SmartHash);
                 if(ErrSmartNum > 0)
@@ -458,10 +469,10 @@ module.exports = class CRest extends require("./db/block-db")
                     if(Err)
                     {
                         ToLog("TX ERROR: " + Params)
-                        return ;
+                        return;
                     }
                     if(!Params)
-                        return ;
+                        return;
                     
                     if(CompareArr(Context.TxProof.AccHash, Params.AccHash) === 0 && CompareArr(Context.TxProof.SmartHash, Params.SmartHash) === 0)
                     {
@@ -484,7 +495,7 @@ module.exports = class CRest extends require("./db/block-db")
                             if(Err)
                             {
                                 ToLog("TX ERROR: " + Params)
-                                return ;
+                                return;
                             }
                         })
                         
@@ -507,6 +518,10 @@ module.exports = class CRest extends require("./db/block-db")
                 
                 Context.Mode = 200
                 
+                global.LOAD_TO_BEGIN = 0
+                global.REST_START_COUNT = 0
+                SAVE_CONST()
+                
                 break;
             case 200:
                 ToLog("Error state!")
@@ -517,7 +532,7 @@ module.exports = class CRest extends require("./db/block-db")
     RETBLOCKHEADER_REST(Info, CurTime)
     {
         if(Info.Node.SendRestGetHeader === 2)
-            return ;
+            return;
         Info.Node.SendRestGetHeader = 2
         
         var Context = this.LoadRestContext;
@@ -578,39 +593,7 @@ module.exports = class CRest extends require("./db/block-db")
     SendLoadToBegin()
     {
         
-        return ;
-        
-        if(!this.BlockNumDBMin)
-            return ;
-        
-        if(!this.ContextSendLoadToBegin)
-            this.ContextSendLoadToBegin = {Time:0, MapSend:{}}
-        var Context = this.ContextSendLoadToBegin;
-        
-        var CurTime = Date.now();
-        var Delta = CurTime - Context.Time;
-        if(Delta < 2 * 1000)
-            return ;
-        var BlockDB = this.ReadBlockHeaderDB(this.BlockNumDBMin + 1);
-        if(!BlockDB)
-            return ;
-        
-        Context.BlockNum = BlockDB.BlockNum
-        
-        var Ret = this.GetNextNode(Context, Context.BlockNum, 1, Context.BlockNum);
-        if(Ret.Result)
-        {
-            var Node = Ret.Node;
-            ToLog("LOAD_TO_BEGIN - from: " + BlockDB.BlockNum + "  to " + NodeName(Node), 2)
-            
-            Context.Time = CurTime
-            this.SendF(Node, {"Method":"GETBLOCKHEADER", "Data":{Foward:0, BlockNum:Context.BlockNum, Hash:BlockDB.Hash, IsSum:0, Count:global.COUNT_HISTORY_BLOCKS_FOR_LOAD},
-                "Context":{F:function (Info)
-                    {
-                        
-                        ToLog("GET LOAD_TO_BEGIN  from " + NodeName(Info.Node) + " Length=" + Info.Data.length, 2)
-                    }}})
-        }
+        return;
     }
 }
 function CheckHashSmarts(LastSumHash)
@@ -642,4 +625,12 @@ function CheckHashSmarts(LastSumHash)
     }
     
     return 0;
+}
+
+function FTestNode(Context,Node)
+{
+    if(Node.BlockNumProof === Context.BlockNumProof)
+        return 1;
+    else
+        return 0;
 }

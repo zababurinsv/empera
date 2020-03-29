@@ -39,14 +39,14 @@ function RestPush(RestData,ArrRest,BlockNum,Index)
     {
         var RestNum = ArrRest[Index - 2];
         if(Prev.BlockNum > RestNum)
-            return ;
+            return;
     }
     
     if((Cur.BlockNum && Cur.BlockNum >= BlockNum) || Prev.BlockNum >= BlockNum)
     {
         Cur.BlockNum = 0;
         Cur.Value = {};
-        return ;
+        return;
     }
     
     if(Cur.BlockNum)

@@ -72,7 +72,7 @@ function Init(Engine)
             Node.Level = Engine.AddrLevelArr(Engine.IDArr, Node.IDArr, 1);
         }
         if(IsEqArr(Engine.IDArr, Node.IDArr))
-            return ;
+            return;
         
         var id = GetLocalNodeID(Node.IDStr);
         var Item = {id:id, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port, Hot:IsHot, Level:Node.Level,

@@ -180,7 +180,7 @@ function OnFindServer()
         CONNECT_STATUS =  - 1;
         SetStatus("Server not found");
         Storage.setItem("MainServer", undefined);
-        return ;
+        return;
     }
     
     CONNECT_STATUS = 2;
@@ -363,15 +363,15 @@ function SetDataUpdateTime(PeriodSec)
 function UpdatesAccountsData(bGetData)
 {
     if(IsVisibleClass(".accounts-info__add"))
-        return ;
+        return;
     
     if(!CONNECT_STATUS)
-        return ;
+        return;
     
     var Str = GetPubKey();
     if(!Str)
     {
-        return ;
+        return;
     }
     
     if(!bGetData)
@@ -383,17 +383,17 @@ function UpdatesAccountsData(bGetData)
     }
     
     if(!bGetData)
-        return ;
+        return;
     
     GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData}, function (Data,responseText)
     {
         if(!Data || !Data.result || !Data.arr)
-            return ;
+            return;
         
         if(AccountsCount === Data.arr.length)
         {
             if(IsVisibleClass(".accounts-info__add2"))
-                return ;
+                return;
         }
         
         AccountsCount = Data.arr.length;
@@ -442,7 +442,7 @@ function OnAddAccount()
     if(!Name)
     {
         SetError("Enter the account name");
-        return ;
+        return;
     }
     var Smart = 0;
     var Currency = GetCurrencyByName($("idCurrency").value);
@@ -469,10 +469,10 @@ function SetAccountsCard(Data,AccountsDataStr)
     
     if(!Data || !Data.result)
     {
-        return ;
+        return;
     }
     if(AccountsDataStr === WasAccountsDataStr)
-        return ;
+        return;
     WasAccountsDataStr = AccountsDataStr;
     
     var arr = [];
@@ -672,7 +672,7 @@ function UpdatesExplorerData(bGetData)
     }
     
     if(!bGetData)
-        return ;
+        return;
     
     var WasSendTr = 0;
     for(var key in MapSendTransaction)
@@ -688,7 +688,7 @@ function UpdatesExplorerData(bGetData)
     GetData("GetCurrentInfo", {Diagram:bDiagram, ArrLog:WasSendTr}, function (Data)
     {
         if(!Data || !Data.result)
-            return ;
+            return;
         
         SetExplorerData(Data);
         SetBlockChainConstant(Data);
@@ -715,7 +715,7 @@ var FirstCallDiagram = 1;
 function SetExplorerData(Data)
 {
     if(!Data || !Data.result)
-        return ;
+        return;
     CONFIG_DATA = Data;
     window.FIRST_TIME_BLOCK = Data.FIRST_TIME_BLOCK;
     if(FirstCallDiagram)
@@ -737,7 +737,7 @@ function SetExplorerData(Data)
 function SetArrLog(arr)
 {
     if(!arr)
-        return ;
+        return;
     
     for(var i = 0; i < arr.length; i++)
     {
@@ -809,7 +809,7 @@ setInterval(CheckSending, 1000);
 
 function OpenAddressBook()
 {
-    return ;
+    return;
     var bVisible = IsVisibleBlock("idAddressBook");
     SetVisibleBlock("idAddressBook", !bVisible);
 }
@@ -855,7 +855,7 @@ function openModal(id)
 function closeModal()
 {
     if(NotModalClose)
-        return ;
+        return;
     glConfirmF = undefined;
     
     glWasModal = 0;
@@ -923,14 +923,14 @@ function InitPrivKey()
 function SendMobileBefore()
 {
     if($("idSendButton").disabled)
-        return ;
+        return;
     
     var FromID = ParseNum($("idAccount").value);
     var Item = MapAccounts[FromID];
     if(!Item)
     {
         SetError("Error FROM ID");
-        return ;
+        return;
     }
     $("idConfirmFromID").innerText = Item.Num;
     $("idConfirmFromName").innerText = Item.Name + " (" + STRING_FROM_COIN(Item.Value) + " " + CurrencyNameItem(Item) + ")";
@@ -1000,7 +1000,7 @@ function SetNewPassword()
     if(Str1 !== Str2)
     {
         SetError("Wrong passwords");
-        return ;
+        return;
     }
     
     var Key = GetPrivKey();
@@ -1201,7 +1201,7 @@ function OpenDappCard(Num)
 {
     var Item = CardMapList[Num];
     if(!Item)
-        return ;
+        return;
     
     var Str = FillDappCard(StrDappCardTemplate, Item);
     Str = Str.replace("$Item.Account", RetBaseAccount(Item));
@@ -1277,7 +1277,7 @@ function OpenHistoryPage(Num)
     if(!UseInnerPage() || isOS())
     {
         OpenWindow("./history.html#" + Num, 'history', 800, 800);
-        return ;
+        return;
     }
     
     SetVisibleFrame("idHistoryPage", 1);
@@ -1289,7 +1289,7 @@ function OpenBlockViewerPage(Num)
     if(!UseInnerPage() || isOS())
     {
         OpenWindow("./blockviewer.html#" + Num);
-        return ;
+        return;
     }
     
     SetVisibleFrame("idBlockViewerPage", 1);
@@ -1325,7 +1325,7 @@ function OnMessage(event)
 {
     var Data = event.data;
     if(!Data || typeof Data !== "object")
-        return ;
+        return;
     
     var cmd = Data.cmd;
     if(cmd === "Close")

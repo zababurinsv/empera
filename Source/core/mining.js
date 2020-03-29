@@ -37,7 +37,7 @@ function RunStopPOWProcess(Mode)
 {
     
     if(!GetCountMiningCPU() || GetCountMiningCPU() <= 0)
-        return ;
+        return;
     if(!StartCheckMining)
     {
         StartCheckMining = 1;
@@ -46,7 +46,7 @@ function RunStopPOWProcess(Mode)
     }
     
     if(global.NeedRestart)
-        return ;
+        return;
     
     if(global.USE_MINING && global.MINING_START_TIME && global.MINING_PERIOD_TIME)
     {
@@ -77,7 +77,7 @@ function RunStopPOWProcess(Mode)
         {
             ToLog("------------ MINING MUST STOP ON TIME");
             ClearArrMining();
-            return ;
+            return;
         }
         else
             if(!ArrMiningWrk.length && !global.MiningPaused)
@@ -86,7 +86,7 @@ function RunStopPOWProcess(Mode)
             }
             else
             {
-                return ;
+                return;
             }
     }
     else
@@ -97,29 +97,29 @@ function RunStopPOWProcess(Mode)
     if(!global.USE_MINING || Mode === "STOP")
     {
         ClearArrMining();
-        return ;
+        return;
     }
     
     if(global.USE_MINING && ArrMiningWrk.length)
-        return ;
+        return;
     
     if(SERVER.LoadHistoryMode)
-        return ;
+        return;
     
     if(GENERATE_BLOCK_ACCOUNT < 8)
-        return ;
+        return;
     
     var PathMiner = GetCodePath("../miner.js");
     if(!fs.existsSync(PathMiner))
         PathMiner = "./process/pow-process.js";
     
     if(ArrMiningWrk.length >= GetCountMiningCPU())
-        return ;
+        return;
     
     if(GrayConnect())
     {
         ToLog("CANNOT START MINER IN NOT DIRECT IP MODE");
-        return ;
+        return;
     }
     
     var Memory;
@@ -131,7 +131,7 @@ function RunStopPOWProcess(Mode)
         if(Memory < 0)
         {
             ToLog("Not enough memory to start processes.");
-            return ;
+            return;
         }
     }
     ProcessMemorySize = Math.trunc(Memory / GetCountMiningCPU());
@@ -171,7 +171,7 @@ function RunStopPOWProcess(Mode)
         Worker.on('error', function (err)
         {
             if(!ArrMiningWrk.length)
-                return ;
+                return;
             ToError('ERROR IN PROCESS: ' + err);
         });
         
@@ -193,10 +193,10 @@ function RunStopPOWProcess(Mode)
 function SetCalcPOW(Block,cmd)
 {
     if(!global.USE_MINING)
-        return ;
+        return;
     
     if(ArrMiningWrk.length !== GetCountMiningCPU())
-        return ;
+        return;
     
     BlockMining = Block;
     for(var i = 0; i < ArrMiningWrk.length; i++)

@@ -107,12 +107,12 @@ function InitClass(Engine)
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TICKET))
         {
             Engine.ToError(Child, "TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum, 4);
-            return ;
+            return;
         }
         
         Engine.CheckHotConnection(Child);
         if(!Child || !Child.IsHot() || Child.HotStart)
-            return ;
+            return;
         
         Child.CheckCache(Data.Cache, BlockNum);
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);

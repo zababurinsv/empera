@@ -343,7 +343,7 @@ function DoGetData(Name,Params,Func)
             if(Params.Account >= VM_ACCOUNTS.length)
             {
                 GetData(Name, Params, Func);
-                return ;
+                return;
             }
             else
             {

@@ -180,10 +180,10 @@ else
 function MainHTTPFunction(request,response)
 {
     if(!request.headers)
-        return ;
+        return;
     
     if(!request.socket || !request.socket.remoteAddress)
-        return ;
+        return;
     
     SetSafeResponce(response);
     
@@ -250,7 +250,7 @@ function RunListenServer()
         {
             TimeToRerun = Math.floor(TimeToRerun * 1.1);
             if(TimeToRerun > 1000000 * 1000)
-                return ;
+                return;
             ToLog('Port ' + global.HTTP_HOSTING_PORT + ' in use, retrying...');
             if(HostingServer.Server)
                 HostingServer.Server.close();
@@ -261,7 +261,7 @@ function RunListenServer()
                     if(!bWasRun)
                         RunListenServer();
                 }, TimeToRerun);
-            return ;
+            return;
         }
         
         ToError("H##6");
@@ -383,7 +383,7 @@ function DoCommandNew(request,response,Type,Path,Params)
     if(global.AddonCommand)
     {
         if(!global.AddonCommand(request, response, Type, Path, Params, ArrPath))
-            return ;
+            return;
     }
     
     var Caller = HostingCaller;
@@ -398,7 +398,7 @@ function DoCommandNew(request,response,Type,Path,Params)
             {
                 response.writeHead(200, {'Content-Type':'text/plain', 'Access-Control-Allow-Origin':"*"});
                 response.end(JSON.stringify({result:0, text:"You must set const USE_HARD_API_V2:1"}));
-                return ;
+                return;
             }
             Caller = WebApi2;
         }
@@ -423,7 +423,7 @@ function DoCommandNew(request,response,Type,Path,Params)
         if(!global.USE_API_V1 && !APIv2)
         {
             response.end(JSON.stringify({result:0, text:"This node not use USE_API_V1"}));
-            return ;
+            return;
         }
         
         var Ret;
@@ -436,7 +436,7 @@ function DoCommandNew(request,response,Type,Path,Params)
             Ret = {result:0, text:e.message, text2:e.stack};
         }
         if(Ret === null)
-            return ;
+            return;
         
         try
         {
@@ -459,7 +459,7 @@ function DoCommandNew(request,response,Type,Path,Params)
             ToLog(e);
             response.end();
         }
-        return ;
+        return;
     }
     
     Method = Method.toLowerCase();
@@ -507,7 +507,7 @@ function DoCommandNew(request,response,Type,Path,Params)
                             Name += "/" + ArrPath[i];
                     Name = PrefixPath + Name;
                     SendWebFile(request, response, Name, "", 0, 1000);
-                    return ;
+                    return;
                 }
                 else
                     if(LangPathMap[Method])

@@ -44,14 +44,14 @@ if(process.send)
 function CheckAlive()
 {
     if(global.NOALIVE)
-        return ;
+        return;
     
     var Delta = Date.now() - LastAlive;
     if(Delta > CHECK_STOP_CHILD_PROCESS)
     {
         ToLog("ALIVE TIMEOUT. Stop and exit: " + Delta + "/" + global.CHECK_STOP_CHILD_PROCESS);
         Exit();
-        return ;
+        return;
     }
 }
 

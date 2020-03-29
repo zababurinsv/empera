@@ -34,7 +34,7 @@ function InitClass(Engine)
     Engine.StartSendLiderArr = function (BlockNum)
     {
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
-            return ;
+            return;
         
         let Context = {WasReturn:0};
         for(var i = 0; i < Engine.LevelArr.length; i++)
@@ -119,7 +119,7 @@ function InitClass(Engine)
     Engine.SendMaxHashToOneNode = function (BlockNum,Child,Context,IterationNum,bNext)
     {
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
-            return ;
+            return;
         
         Child.SetLastCache(BlockNum);
         
@@ -130,7 +130,7 @@ function InitClass(Engine)
             {
                 JINN_STAT.MaxReqErr++;
             }
-            return ;
+            return;
         }
         
         Engine.ProcessMaxHashOnSend(Child, BlockNum, Arr);
@@ -159,7 +159,7 @@ function InitClass(Engine)
         JINN_STAT.MaxIteration = Math.max(JINN_STAT.MaxIteration, 1 + MAX_ITERATION_MAX_HASH - IterationNum);
         
         if(BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT - 1)
-            return ;
+            return;
         
         let DeltaForSend = JINN_EXTERN.GetCurrentBlockNumByTime() - BlockNum;
         
@@ -167,7 +167,7 @@ function InitClass(Engine)
             NetConstVer:JINN_NET_CONSTANT.NetConstVer, Arr:Arr, Debug:global.TEST_CONNECTOR}, function (Child,Data)
         {
             if(!Data)
-                return ;
+                return;
             
             JINN_STAT.MaxLoadAll += Data.HeaderArr.length + Data.BodyArr.length;
             
@@ -177,7 +177,7 @@ function InitClass(Engine)
             Child.CheckCache(Data.Cache, BlockNum);
             var Store = Engine.GetLiderArrAtNum(BlockNum);
             if(!Store)
-                return ;
+                return;
             
             var bWas = 0;
             var CountReceive = 0;
@@ -212,13 +212,13 @@ function InitClass(Engine)
             if(bWas)
             {
                 if(IterationNum <= 1)
-                    return ;
+                    return;
                 
                 if(Context.WasReturn && Context.WasReturn !== Child)
                 {
                     if(global.TEST_CONNECTOR)
                         Child.ToLog("WAS RETURN BY ANOTHER CHILD Got:" + Context.WasCountReceive + " now got:" + CountReceive);
-                    return ;
+                    return;
                 }
                 
                 Context.WasReturn = Child;
@@ -238,7 +238,7 @@ function InitClass(Engine)
     {
         var BlockNum = Data.BlockNum;
         if(!Engine.ProcessMaxHashOnReceive(Child, BlockNum, Data.Arr))
-            return ;
+            return;
         
         Child.NetConstVer = Data.NetConstVer;
         Child.CodeVersionNum = Data.CodeVersionNum;
@@ -247,7 +247,7 @@ function InitClass(Engine)
             Engine.StartGetNetConstant(Child, Data.NetConstVer);
         }
         
-        if(Engine.StartGetNewVersion && Data.CodeVersionNum > CODE_VERSION.VersionNum)
+        if(Engine.StartGetNewVersion && (Data.CodeVersionNum > CODE_VERSION.VersionNum || Data.CodeVersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash)))
         {
             Engine.StartGetNewVersion(Child, Data.CodeVersionNum);
         }

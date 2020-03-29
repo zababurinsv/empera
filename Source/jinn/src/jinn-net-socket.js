@@ -31,7 +31,7 @@ function InitClass(Engine)
             if(Engine.WasBanIP({address:Socket.remoteAddress}))
             {
                 Engine.CloseSocket(Socket, "WAS BAN", true);
-                return ;
+                return;
             }
             
             var Child = Engine.RetNewConnectByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
@@ -92,13 +92,13 @@ function InitClass(Engine)
         });
         
         if(!bAll)
-            return ;
+            return;
         Engine.LinkSocketToChild(SOCKET, Child, StrConnect);
         SOCKET.on('data', function (data)
         {
             if(SOCKET.WasClose)
             {
-                return ;
+                return;
             }
             if(SOCKET.Child)
             {
@@ -117,7 +117,7 @@ function InitClass(Engine)
     Engine.CloseSocket = function (Socket,StrError,bSilently)
     {
         if(!Socket || Socket.WasClose)
-            return ;
+            return;
         
         if(!bSilently && Socket.remoteAddress)
             Engine.ToLog("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError, 4);
@@ -214,16 +214,19 @@ function InitAfter(Engine)
         if(Child.Close)
         {
             Engine.ToError(Child, "Socket was closed", "t");
-            return ;
+            return;
         }
         if(!Child.IsOpen())
         {
             Engine.ToError(Child, "Socket not was opened", "t");
-            return ;
+            return;
         }
         
         if(Child.Socket)
             Child.ToLog("CloseSocket: " + Child.Socket.remoteAddress + ":" + Child.Socket.remotePort + " " + StrError, 4);
+        else
+            Child.ToLog(StrError, 4);
+        
         Engine.CloseSocket(Child.Socket, "", 1);
     };
     

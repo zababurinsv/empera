@@ -523,7 +523,7 @@ class CDBChain
         if(StartNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
             this.Clear()
-            return ;
+            return;
         }
         
         this.TruncateIndex(StartNum)

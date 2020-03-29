@@ -21,7 +21,7 @@ function DoNode(Engine)
 {
     var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_CLEAR_MEM;
     if(Engine.CacheLastCurBlockNum === BlockNum)
-        return ;
+        return;
     Engine.CacheLastCurBlockNum = BlockNum;
     
     Engine.NetCacheClear();
@@ -233,7 +233,7 @@ function InitClass(Engine)
     Engine.ProcessMaxHashOnSend = function (Child,BlockNum,Arr)
     {
         if(!glUsePackMaxHash)
-            return ;
+            return;
         
         for(var a = 0; a < Arr.length; a++)
         {
@@ -496,7 +496,7 @@ function InitAfter(Engine)
     Engine.AddTxToReceiveCache = function (Child,BlockNum,Tx,bCheck)
     {
         if(Child.ReceiveTxMap[Tx.KEY] !== undefined)
-            return ;
+            return;
         
         if(Tx.Index === undefined)
             throw "Error Tx.Index";

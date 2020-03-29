@@ -150,7 +150,7 @@ function InitClass(Engine)
         {
             if(global.DEBUG_ID !== "ALL")
                 if(Engine.ID !== global.DEBUG_ID)
-                    return ;
+                    return;
             
             Child.ToLog(Str);
         };

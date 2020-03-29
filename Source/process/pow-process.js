@@ -68,26 +68,26 @@ PROCESS.on('message', function (msg)
 function CheckAlive()
 {
     if(global.NOALIVE)
-        return ;
+        return;
     
     var Delta = Date.now() - LastAlive;
     if(Math.abs(Delta) > CHECK_STOP_CHILD_PROCESS)
     {
         PROCESS.exit(0);
-        return ;
+        return;
     }
 }
 
 function CalcPOWHash()
 {
     if(!Block.SeqHash)
-        return ;
+        return;
     
     if(new Date() - Block.Time > Block.Period)
     {
         clearInterval(idInterval);
         idInterval = undefined;
-        return ;
+        return;
     }
     
     try
@@ -123,7 +123,7 @@ var EndTime = 0;
 function PumpHash()
 {
     if(!BlockPump)
-        return ;
+        return;
     
     var CurTime = Date.now();
     if(StartTime > EndTime)
@@ -133,7 +133,7 @@ function PumpHash()
         if(PeriodPercent >= BlockPump.Percent)
         {
             EndTime = CurTime;
-            return ;
+            return;
         }
         CreatePOWVersionX(BlockPump, 1);
     }

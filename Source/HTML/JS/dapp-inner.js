@@ -187,7 +187,7 @@ function CurrencyName(Num)
         GetSmartList({StartNum:Num, CountNum:1, TokenGenerate:1}, function (Err,Arr)
         {
             if(Err || Arr.length === 0)
-                return ;
+                return;
             
             var Smart = Arr[0];
             Name = GetTokenName(Smart.Num, Smart.ShortName);
@@ -217,7 +217,7 @@ function FindAllCurrencyNext(StartNum)
     {
         SendCountUpdate--;
         if(Err)
-            return ;
+            return;
         var MaxNum = 0;
         for(var i = 0; i < Arr.length; i++)
         {
@@ -266,13 +266,13 @@ function GetState(AccNum,F,FErr)
             if(Item)
             {
                 F(Item);
-                return ;
+                return;
             }
         }
         if(FErr)
         {
             FErr();
-            return ;
+            return;
         }
     });
 }
@@ -294,7 +294,7 @@ function GetDappBlock(Block,Tr,F)
             if(Params)
             {
                 F(0, Params, Data.MethodName, Data.FromNum);
-                return ;
+                return;
             }
         }
         F(1);
@@ -316,7 +316,7 @@ function UpdateListArr(Block,Tr,Arr,StopBlock,IgnoreTailBlock,MaxDepth,F)
 function UpdateRowArr(Block,Tr,Arr,StopMinBlock,IgnoreTailBlock,MaxDepth,F)
 {
     if(Block <= StopMinBlock || !MaxDepth)
-        return ;
+        return;
     
     SendCountUpdate++;
     GetDappBlock(Block, Tr, function (Err,Params)
@@ -338,7 +338,7 @@ function UpdateRowArr(Block,Tr,Arr,StopMinBlock,IgnoreTailBlock,MaxDepth,F)
                     {
                         if(F(Params))
                         {
-                            return ;
+                            return;
                         }
                     }
                     else
@@ -388,7 +388,7 @@ function GetKeyInner(Key,DBBlock,DBTr,F)
                 {
                     F(1, Elem, PathArr);
                 }
-                return ;
+                return;
             }
         }
         F(0, undefined, PathArr);
@@ -495,12 +495,12 @@ function FindItemNext(Block,Tr,Key,KeyNum,PathArr,Level,F)
                     {
                         break;
                     }
-                    return ;
+                    return;
                 }
             }
             
             F(1, PathArr);
-            return ;
+            return;
         }
         
         if(GetBlockKeyCount === 0)
@@ -517,7 +517,7 @@ function LoadElement(Element,Level,PathArr,F)
         if(!Err)
         {
             F(1, Params.Arr[Level], PathArr);
-            return ;
+            return;
         }
         if(GetBlockKeyCount === 0)
             F(0);
@@ -578,7 +578,7 @@ var glKeyF = 0;
 function SendData(Data,F)
 {
     if(!window.parent)
-        return ;
+        return;
     
     if(F)
     {
@@ -595,7 +595,7 @@ function OnMessage(event)
     var Data = event.data;
     if(!Data || typeof Data !== "object")
     {
-        return ;
+        return;
     }
     
     var CallID = Data.CallID;
@@ -741,7 +741,7 @@ function GetDappParams(BNum,TrNum,F,bAll)
     {
         if(bAll)
             F();
-        return ;
+        return;
     }
     
     SendCountDappParams++;
@@ -751,7 +751,7 @@ function GetDappParams(BNum,TrNum,F,bAll)
         if(!Err)
         {
             F(Params, MethodName, FromNum);
-            return ;
+            return;
         }
         if(bAll)
             F();
@@ -795,7 +795,7 @@ function UpdateDappInfo()
     {
         if(Err)
         {
-            return ;
+            return;
         }
         INFO = Data;
         SMART = Data.Smart;
@@ -908,7 +908,7 @@ function TranslateElement(elem)
         return StrText;
     
     if(glTranslateMap2[StrText])
-        return ;
+        return;
     
     glTranslateNum++;
     var StrKey = "id" + GetHexFromArr(sha3(StrText));
@@ -917,14 +917,14 @@ function TranslateElement(elem)
     {
         glTranslateMap2[Text] = 1;
         elem.textContent = Text;
-        return ;
+        return;
     }
     
     var Data = {cmd:"translate", Key:StrKey, Str:StrText};
     SendData(Data, function (Str,Str2)
     {
         if(!Str2)
-            return ;
+            return;
         
         glTranslateMap[StrKey] = Str2;
         glTranslateMap2[Str2] = 1;

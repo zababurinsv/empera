@@ -97,7 +97,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
         if(Type !== "POST")
         {
             response.end();
-            return ;
+            return;
         }
         
         var Headers = {'Content-Type':'text/plain'};
@@ -106,7 +106,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
         if(Ret === null)
         {
             response.writeHead(200, Headers);
-            return ;
+            return;
         }
         
         try
@@ -120,7 +120,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
             ToLog(e);
             response.end();
         }
-        return ;
+        return;
     }
     
     var method = params[0];
@@ -236,7 +236,7 @@ function DappTemplateFile(request,response,StrNum)
             Str = Str.replace(/.\/tera.ico/g, "/file/" + Data.IconBlockNum + "/" + Data.IconTrNum);
             
             SendGZipData(request, response, Headers, Str);
-            return ;
+            return;
         }
     }
     
@@ -255,7 +255,7 @@ function DappSmartCodeFile(response,StrNum)
         {
             response.writeHead(200, {'Content-Type':'application/javascript', "Access-Control-Allow-Origin":"*"});
             response.end(Data.Code);
-            return ;
+            return;
         }
     }
     
@@ -273,7 +273,7 @@ function DappClientCodeFile(response,StrNum)
         {
             response.writeHead(200, {'Content-Type':"text/plain", "X-Content-Type-Options":"nosniff"});
             response.end(Data.HTML);
-            return ;
+            return;
         }
     }
     
@@ -307,7 +307,7 @@ function SendBlockFile(request,response,BlockNum,TrNum)
         if(Block && Block.arrContent)
         {
             SendToResponceFile(request, response, Block, TrNum);
-            return ;
+            return;
         }
         else
             if(!Block || !Block.TrDataPos)
@@ -323,7 +323,7 @@ function SendBlockFile(request,response,BlockNum,TrNum)
                         SendToResponceFile(request, response, Block, TrNum);
                     }
                 });
-                return ;
+                return;
             }
     }
     SendToResponce404(response);
@@ -1007,12 +1007,12 @@ var CountCheckPow = 0;
 function RunSetCheckPoint()
 {
     if(!SERVER.BlockNumDB)
-        return ;
+        return;
     if(SERVER.BlockNumDB < 2100000)
-        return ;
+        return;
     var Delta = GetCurrentBlockNumByTime() - SERVER.BlockNumDB;
     if(Delta > 16)
-        return ;
+        return;
     
     var BlockNum = SERVER.BlockNumDB - global.CheckPointDelta;
     var Block = SERVER.ReadBlockHeaderDB(BlockNum);
@@ -1022,7 +1022,7 @@ function RunSetCheckPoint()
         if(Power < 30)
         {
             ToLog("CANNOT SET CHECK POINT Power=" + Power + "  BlockNum=" + BlockNum);
-            return ;
+            return;
         }
         
         CountCheckPow++;
@@ -1033,7 +1033,7 @@ function RunSetCheckPoint()
             if(Power < AvgPow - 2)
             {
                 ToLog("**************** CANNOT SET CHECK POINT Power=" + Power + "/" + AvgPow + "  BlockNum=" + BlockNum);
-                return ;
+                return;
             }
         }
         
@@ -1133,7 +1133,7 @@ var StartCheckTimeNum = 0;
 function RunAutoCorrTime()
 {
     if(WALLET.WalletOpen === false)
-        return ;
+        return;
     
     if(GetCurrentBlockNumByTime() > StartCheckTimeNum && Math.abs(global.DELTA_CURRENT_TIME) >= 120)
     {
@@ -1305,7 +1305,7 @@ HTTPCaller.GetHotArray = function (Param)
 function GetCopyNode(Node,BlockCounts)
 {
     if(!Node)
-        return ;
+        return;
     
     if(Node.Socket && Node.Socket.Info)
     {
@@ -1789,10 +1789,10 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
         {
             response.writeHead(404, {'Content-Type':'text/html'});
             response.end();
-            return ;
+            return;
         }
         response.end("Not found: " + name);
-        return ;
+        return;
     }
     
     var StrContentType = ContenTypeMap[type];
@@ -1838,7 +1838,7 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
     {
         var data = GetFileHTMLWithParsing(Path);
         SendGZipData(request, response, Headers, data);
-        return ;
+        return;
     }
     else
         if("image/jpeg,image/vnd.microsoft.icon,image/svg+xml,image/png,application/javascript,text/css,text/html".indexOf(StrContentType) >  - 1)
@@ -1846,7 +1846,7 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
             response.writeHead(200, Headers);
             var data = GetFileSimpleBin(Path);
             SendGZipData(request, response, Headers, data);
-            return ;
+            return;
         }
     const stream = fs.createReadStream(Path);
     let acceptEncoding = request.headers['accept-encoding'];
@@ -2180,9 +2180,9 @@ if(global.HTTP_PORT_NUMBER)
     var HTTPServer = http.createServer(function (request,response)
     {
         if(!request.headers)
-            return ;
+            return;
         if(!request.socket || !request.socket.remoteAddress)
-            return ;
+            return;
         
         var remoteAddress = request.socket.remoteAddress.replace(/^.*:/, '');
         
@@ -2207,7 +2207,7 @@ if(global.HTTP_PORT_NUMBER)
         if(CheckPassword && !Password)
         {
             if(remoteAddress !== "127.0.0.1")
-                return ;
+                return;
             if(!global.NWMODE)
             {
                 var Delta = Date.now() - TimeStartServer;
@@ -2224,7 +2224,7 @@ if(global.HTTP_PORT_NUMBER)
         }
         
         if(global.HTTP_IP_CONNECT && remoteAddress !== "127.0.0.1" && global.HTTP_IP_CONNECT.indexOf(remoteAddress) < 0)
-            return ;
+            return;
         
         SetSafeResponce(response);
         
@@ -2232,7 +2232,7 @@ if(global.HTTP_PORT_NUMBER)
         {
             response.writeHead(404, {'Content-Type':'text/html'});
             response.end("");
-            return ;
+            return;
         }
         
         if(global.NWMODE)
@@ -2243,7 +2243,7 @@ if(global.HTTP_PORT_NUMBER)
                 if(!Password)
                 {
                     SendWebFile(request, response, "/HTML/wallet.html", "NW_TOKEN=" + global.NW_TOKEN + ";path=/");
-                    return ;
+                    return;
                 }
                 else
                 {
@@ -2260,7 +2260,7 @@ if(global.HTTP_PORT_NUMBER)
                 }
                 else
                 {
-                    return ;
+                    return;
                 }
             }
         }
@@ -2301,7 +2301,7 @@ if(global.HTTP_PORT_NUMBER)
             if(bSendPSW)
             {
                 SendPasswordFile(request, response, Path, StrPort);
-                return ;
+                return;
             }
             else
                 if(request.method === "POST")
@@ -2324,7 +2324,7 @@ if(global.HTTP_PORT_NUMBER)
                                 ToLog("Invalid API token: " + request.method + "   path: " + Path + "  token:" + TokenHash + "/" + hash2);
                             response.writeHead(203, {'Content-Type':'text/html'});
                             response.end("Invalid API token");
-                            return ;
+                            return;
                         }
                     }
                 }

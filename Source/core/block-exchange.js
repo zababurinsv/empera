@@ -170,12 +170,12 @@ module.exports = class CConsensus extends require("./block-exchange2")
     StartConsensus()
     {
         if(!CAN_START)
-            return ;
+            return;
         
         var StartBlockNum = GetCurrentBlockNumByTime();
         
         if(StartBlockNum < BLOCK_PROCESSING_LENGTH2)
-            return ;
+            return;
         
         this.CurrentBlockNum = StartBlockNum
         
@@ -214,14 +214,14 @@ module.exports = class CConsensus extends require("./block-exchange2")
         Node.CurBlockNum = Data.BaseBlockNum + Data.BlockNum
         
         if(Data.Version !== 5)
-            return ;
+            return;
         
         var Block = this.GetBlockContext(Data.BlockNum);
         if(!Block || Block.StartLevel === undefined)
         {
             ADD_TO_STAT("TRANSFER_ERR_STARTLEVEL")
             this.AddCheckErrCount(Node, 1, "Err GetBlockContext")
-            return ;
+            return;
         }
         if(!Block.Active)
             this.StartBlock(Block)
@@ -232,7 +232,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         {
             ADD_TO_STAT("NO_TRANSFER")
             this.AddCheckErrCount(Node, 1, "Err Transfer")
-            return ;
+            return;
         }
         
         Transfer.WasGet = true
@@ -355,7 +355,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
     CheckEndExchange(Block)
     {
         if(Block.EndExchange)
-            return ;
+            return;
         
         this.CreateTreeHash(Block)
     }
@@ -511,7 +511,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             var POW = Block.MaxPOW;
             
             if(!Block.PrevHash)
-                return ;
+                return;
             
             item.BlockNum = Block.BlockNum
             item.PrevHash = Block.PrevHash
@@ -996,16 +996,16 @@ module.exports = class CConsensus extends require("./block-exchange2")
     CreateTreeHash(Block)
     {
         if(Block.EndExchange)
-            return ;
+            return;
         Block.EndExchange = true
         if(Block.bSave)
-            return ;
+            return;
         
         var PrevBlock = this.GetBlock(Block.BlockNum - 1);
         if(PrevBlock && !PrevBlock.EndExchange && !PrevBlock.bSave)
         {
             AddInfoBlock(Block, "Prev Not End Exchange")
-            return ;
+            return;
         }
         
         AddInfoBlock(Block, "End Exchange,N=" + Block.TransferNodesCount)
@@ -1035,7 +1035,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         if(!Block)
         {
             ToLog("#1 WatchdogSaved: no BlockNum=" + BlockNum)
-            return ;
+            return;
         }
         
         if(Block.bSave)
@@ -1044,25 +1044,25 @@ module.exports = class CConsensus extends require("./block-exchange2")
             if(!BlockDB)
             {
                 Block.bSave = false
-                return ;
+                return;
             }
             if(CompareArr(BlockDB.Hash, Block.Hash) !== 0)
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
                 ToLog("#3 WatchdogSaved: Error Hash on Num=" + BlockNum)
-                return ;
+                return;
             }
             if(CompareArr(BlockDB.SumHash, Block.SumHash) !== 0)
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
                 ToLog("#4 WatchdogSaved: Error SumHash on Num=" + BlockNum)
-                return ;
+                return;
             }
             if(CompareArr(BlockDB.SeqHash, Block.SeqHash) !== 0)
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
                 ToLog("#5 WatchdogSaved: Error SeqHash on Num=" + BlockNum)
-                return ;
+                return;
             }
             
             var PrevHash = this.GetLinkHash(Block);
@@ -1070,14 +1070,14 @@ module.exports = class CConsensus extends require("./block-exchange2")
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
                 ToLog("#6 WatchdogSaved: Error PrevHash on Num=" + BlockNum)
-                return ;
+                return;
             }
             var SeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
             if(CompareArr(SeqHash, Block.SeqHash) !== 0)
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
                 ToLog("#7 WatchdogSaved: Error SeqHash on Num=" + BlockNum)
-                return ;
+                return;
             }
             
             PrevHash = this.GetLinkHashDB(BlockDB)
@@ -1087,7 +1087,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
             {
                 AddInfoBlock(Block, "=ERR:WATCHDOG=")
                 ToLog("#8 WatchdogSaved: Error SeqHash on Num=" + BlockNum)
-                return ;
+                return;
             }
         }
     }
@@ -1096,9 +1096,9 @@ module.exports = class CConsensus extends require("./block-exchange2")
     {
         
         if(glStopNode)
-            return ;
+            return;
         if(!CAN_START)
-            return ;
+            return;
         
         this.StartConsensus()
         var CURRENTBLOCKNUM = this.CurrentBlockNum;
@@ -1107,10 +1107,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
         {
             if(!this.LoadHistoryMode)
                 this.StartSyncBlockchain(undefined, 1)
-            return ;
+            return;
         }
         if(this.LoadHistoryMode)
-            return ;
+            return;
         
         var bWasSave = false;
         var LoadBlockNum;
@@ -1307,7 +1307,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                                     ToLog("START RESYNC CONDITION")
                                     this.OwnBlockCount = 0
                                     this.StartSyncBlockchain()
-                                    return ;
+                                    return;
                                 }
                             }
                         }
@@ -1407,11 +1407,11 @@ module.exports = class CConsensus extends require("./block-exchange2")
         var BlockMining = this.GetBlock(msg.BlockNum);
         if(!BlockMining)
         {
-            return ;
+            return;
         }
         
         if(!BlockMining.StartMining || BlockMining.bSave)
-            return ;
+            return;
         
         if(BlockMining && BlockMining.Hash && BlockMining.SeqHash && CompareArr(BlockMining.SeqHash, msg.SeqHash) === 0)
         {
@@ -1443,7 +1443,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
                 bWas += 2
             }
             if(!bWas)
-                return ;
+                return;
             
             var ValueNew = GetHashFromSeqAddr(BlockMining.SeqHash, BlockMining.AddrHash, BlockMining.BlockNum);
             

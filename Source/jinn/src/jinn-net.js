@@ -72,7 +72,7 @@ function InitClass(Engine)
         Engine.ReceiveTraffic += Data.length;
         
         if(!Engine.CanProcessPacket(Child, Data))
-            return ;
+            return;
         
         if(Engine.PrepareOnReceiveZip && global.glUseZip && Child.UseZip)
             Engine.PrepareOnReceiveZip(Child, Data);
@@ -88,7 +88,7 @@ function InitClass(Engine)
             var StrData = JSON.stringify(DataObj);
             Child.ToLog(Method + " - ERROR SEND - NOT WAS CONNECT: State=" + State + " IsHot:" + Child.IsHot() + " IsOpen=" + Child.IsOpen(),
             4);
-            return ;
+            return;
         }
         
         if(bCall)
@@ -136,7 +136,7 @@ function InitClass(Engine)
         
         var Arr = Child.ReceiveDataArr;
         if(Arr.length < 5)
-            return ;
+            return;
         
         var Length;
         var Pos;
@@ -144,7 +144,7 @@ function InitClass(Engine)
         {
             if(Arr.length < 8)
             {
-                return ;
+                return;
             }
             
             var PacketNum = ReadUint32FromArr(Arr, 0);
@@ -168,7 +168,7 @@ function InitClass(Engine)
         if(Length > JINN_CONST.MAX_PACKET_SIZE)
         {
             Engine.ToError(Child, "Bad packet size = " + Length, 0);
-            return ;
+            return;
         }
         
         if(Arr.length === Length)
@@ -202,7 +202,7 @@ function InitClass(Engine)
         if(Obj.Error)
         {
             Engine.ToError(Child, "Bad receive data", 0);
-            return ;
+            return;
         }
         
         if(!Obj.Call)
@@ -212,7 +212,7 @@ function InitClass(Engine)
             if(!Cont || Cont.Method !== Obj.Method)
             {
                 Engine.ToError(Child, "Bad context " + Obj.Method + " key=" + Key, 0);
-                return ;
+                return;
             }
             
             delete Child.ContextCallMap[Key];
@@ -221,13 +221,13 @@ function InitClass(Engine)
         else
         {
             if(!Engine.CanProcessMethod(Child, Obj))
-                return ;
+                return;
             
             var F = Engine[Obj.Method];
             if(typeof F !== "function")
             {
                 Engine.ToError(Child, "Not fount method " + Obj.Method, 0);
-                return ;
+                return;
             }
             var RetObj = Engine.RunMethod(Obj.Method, F, Child, Obj.Data, 1);
             if(RetObj !== undefined && Obj.RetContext)

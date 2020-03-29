@@ -113,7 +113,7 @@ function Init(Engine)
     Engine.ConvertToTera = function (Block,bBody)
     {
         if(!Block)
-            return ;
+            return;
         
         if(!Block.LinkSumHash)
             ToLogTrace("!Block.LinkSumHash on Block=" + Block.BlockNum);
@@ -143,7 +143,7 @@ function Init(Engine)
     Engine.ConvertFromTera = function (Block,bBody,bCalc)
     {
         if(!Block)
-            return ;
+            return;
         
         if(!Block.PrevHash)
             ToLogTrace("!Block.PrevHash on Block=" + Block.BlockNum);

@@ -51,7 +51,7 @@ class CDBResult
     CheckLoadResult(Block)
     {
         if(!Block.TxData || Block.VersionBody)
-            return ;
+            return;
         var Data = this.ReadBodyResult(Block.BlockNum);
         if(Data && Data.Arr.length > 0)
         {

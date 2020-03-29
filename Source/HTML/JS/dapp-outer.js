@@ -89,7 +89,7 @@ function SendMessage(Data)
         {
             win.postMessage(Data, "*");
         }, 200);
-        return ;
+        return;
     }
     win.postMessage(Data, "*");
 }
@@ -98,7 +98,7 @@ function DappListener(event)
 {
     var Data = event.data;
     if(!Data || typeof Data !== "object")
-        return ;
+        return;
     
     var CurStorage = Storage;
     var CurSessionStorage = sessionStorage;
@@ -219,7 +219,7 @@ function DappListener(event)
                         Data.arr = SetData.arr;
                         Data.Body = SetData.Body;
                         SendMessage(Data);
-                        return ;
+                        return;
                     }
                 }
                 

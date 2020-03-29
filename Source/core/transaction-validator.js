@@ -66,7 +66,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
     OnWriteBlock(Block)
     {
         if(Block.BlockNum < GetCurrentBlockNumByTime() - 1000)
-            return ;
+            return;
         
         this.AddToSenderMap(Block)
     }
@@ -79,7 +79,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
     {
         var BlockNum = Block.BlockNum;
         if(BlockNum <= 0)
-            return ;
+            return;
         
         var COUNT_MEM_BLOCKS = 0;
         var NUM1 = 1240000;
@@ -333,7 +333,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
     AddToSenderMap(Block)
     {
         if(!global.START_SERVER)
-            return ;
+            return;
         
         var BlockNum = Block.BlockNum;
         var StrBlockHash = GetHexFromArr(Block.Hash);
@@ -405,7 +405,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
     ReloadSenderMapFromDB()
     {
         if(!global.START_SERVER)
-            return ;
+            return;
         
         this.SenderMap = {}
         this.SenderBlockHashMap = {}
@@ -427,7 +427,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
     ClearOldSenderMapItem()
     {
         if(!global.START_SERVER)
-            return ;
+            return;
         
         var MinBlockNum = GetCurrentBlockNumByTime() - (MAX_LENGTH_SENDER_MAP + COUNT_BLOCKS_FOR_LOAD);
         var ArrForDel = [];

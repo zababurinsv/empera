@@ -48,7 +48,7 @@ module.exports = class CDB extends require("../code")
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
         
         if(global.JINN_MODE)
-            return ;
+            return;
         
         var bWriteMode = (global.PROCESS_NAME === "MAIN");
         
@@ -122,7 +122,7 @@ module.exports = class CDB extends require("../code")
         {
             this.BlockNumDB = this.CheckBlocksOnStartFoward(BlockNum - 2, 0)
             ToLog("START_BLOCK_NUM:" + this.BlockNumDB, 2)
-            return ;
+            return;
         }
         BlockNum = this.CheckBlocksOnStartReverse(BlockNum)
         this.BlockNumDB = this.CheckBlocksOnStartFoward(BlockNum - 2000, 0)
@@ -438,9 +438,9 @@ module.exports = class CDB extends require("../code")
     
     WriteBlockHeader100(Block)
     {
-        return ;
+        return;
         if(Block.BlockNum % 100 !== 0)
-            return ;
+            return;
         var Hash100;
         var Num = Block.BlockNum / 100;
         if(Num <= 0)
@@ -460,7 +460,7 @@ module.exports = class CDB extends require("../code")
                 {
                     
                     ToLog("NOT FIND PEVHASH100   BlockNum=" + Block.BlockNum, 2)
-                    return ;
+                    return;
                 }
             
             Hash100 = sha3arr2(PrevHash100, Block.Hash)
@@ -471,7 +471,7 @@ module.exports = class CDB extends require("../code")
     
     TruncateBlockDBInner100(LastBlock)
     {
-        return ;
+        return;
         this.DBHeader100.Truncate(Math.trunc(LastBlock.BlockNum / 100))
     }
     CheckLoadBody(Block)
@@ -664,7 +664,7 @@ module.exports = class CDB extends require("../code")
         {
             if(LastBlockNum >= 0)
                 ToLog("************ ERROR TruncateBlockDB - not found block=" + LastBlockNum, 2)
-            return ;
+            return;
         }
         this.WriteBlockDB(Block)
     }
@@ -709,7 +709,7 @@ module.exports = class CDB extends require("../code")
     Close()
     {
         if(global.JINN_MODE)
-            return ;
+            return;
         
         this.ClearBufMap()
         this.ReadStateTX()
@@ -1279,7 +1279,7 @@ module.exports = class CDB extends require("../code")
 function AddInfo(Block,Str,BlockNumStart)
 {
     if(!global.STAT_MODE)
-        return ;
+        return;
     
     if(!Block.Info)
         Block.Info = Str;
@@ -1299,7 +1299,7 @@ function AddInfo(Block,Str,BlockNumStart)
 global.AddInfoChain = function (Str)
 {
     if(!global.STAT_MODE)
-        return ;
+        return;
     
     if(this.BlockNumStart > GetCurrentBlockNumByTime() - HISTORY_BLOCK_COUNT)
         AddInfo(this, Str, this.BlockNumStart);
@@ -1307,7 +1307,7 @@ global.AddInfoChain = function (Str)
 global.AddInfoBlock = function (Block,Str)
 {
     if(!global.STAT_MODE)
-        return ;
+        return;
     
     if(Block && Block.BlockNum && Block.BlockNum > GetCurrentBlockNumByTime() - HISTORY_BLOCK_COUNT)
         AddInfo(Block, Str, Block.BlockNum);

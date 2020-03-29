@@ -105,9 +105,9 @@ function FindItem(Buf,Size,FindValue)
 function Init()
 {
     if(!fs.existsSync(FileIp))
-        return ;
+        return;
     if(!fs.existsSync(FileNames))
-        return ;
+        return;
     BufIP = fs.readFileSync(FileIp);
     var Buf = fs.readFileSync(FileNames);
     var index2 = 0;

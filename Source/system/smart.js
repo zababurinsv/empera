@@ -125,7 +125,7 @@ class SmartApp extends require("./dapp")
     Start()
     {
         if(this.GetMaxNum() + 1 >= 7)
-            return ;
+            return;
         
         this.DBSmartWrite({Num:0, ShortName:"TERA", Name:"TERA", Description:"TERA", BlockNum:0, TokenGenerate:1, Account:0, Category1:0})
         for(var i = 1; i < 8; i++)
@@ -172,14 +172,14 @@ class SmartApp extends require("./dapp")
     OnDeleteBlock(Block)
     {
         if(Block.BlockNum < 1)
-            return ;
+            return;
         this.DBSmart.DeleteHistory(Block.BlockNum)
     }
     
     OnWriteBlockStart(Block)
     {
         if(Block.BlockNum < 1)
-            return ;
+            return;
         this.OnDeleteBlock(Block)
     }
     
@@ -630,7 +630,7 @@ class SmartApp extends require("./dapp")
     AddCurrencyTokenDescription(Smart)
     {
         if(!Smart || !Smart.Num)
-            return ;
+            return;
         
         if(!this.MapTokenDescription)
             this.MapTokenDescription = {}

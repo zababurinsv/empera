@@ -149,7 +149,7 @@ module.exports = class CNode
         {
             if(NODE.ConnectStatus() === 100)
                 SERVER.AddNodeToActive(NODE)
-            return ;
+            return;
         }
         AddNodeInfo(NODE, "===CreateConnect===")
         
@@ -205,7 +205,7 @@ module.exports = class CNode
     SwapSockets()
     {
         if(!this.Socket2)
-            return ;
+            return;
         
         var SocketOld = this.Socket;
         
@@ -234,7 +234,7 @@ module.exports = class CNode
         SOCKET.on('data', function (data)
         {
             if(Socket.WasClose)
-                return ;
+                return;
             
             if(GetSocketStatus(SOCKET) === 2)
             {
@@ -246,7 +246,7 @@ module.exports = class CNode
                     var Res = NODE.SendPOWFromClientToServer(SOCKET, Buf.Data);
                     if(Res)
                     {
-                        return ;
+                        return;
                     }
                 }
                 
@@ -294,7 +294,7 @@ module.exports = class CNode
                                         SERVER.AddNodeToActive(NODE)
                                 }
                                 
-                                return ;
+                                return;
                             }
                             else
                                 if(Str === "SELF")
@@ -389,7 +389,7 @@ module.exports = class CNode
             Node.Self = true
             AddNodeInfo(Node, "END: SELF")
             SERVER.SendCloseSocket(Socket, "SELF")
-            return ;
+            return;
         }
         
         var addrStr = GetHexFromAddres(Buf.addrArr);
@@ -398,7 +398,7 @@ module.exports = class CNode
         {
             AddNodeInfo(Node, "END: CHANGED ADDR: " + Node.addrStr.substr(0, 16) + "->" + addrStr.substr(0, 16))
             SERVER.SendCloseSocket(Socket, "ADDRESS_HAS_BEEN_CHANGED")
-            return ;
+            return;
         }
         
         if(Node.addrStrTemp)
@@ -424,7 +424,7 @@ module.exports = class CNode
             AddNodeInfo(Node, "END: ERROR_SIGN_SERVER ADDR: " + addrStr.substr(0, 16) + " from ip: " + Socket.remoteAddress)
             
             SERVER.SendCloseSocket(Socket, "ERROR_SIGN_SERVER")
-            return ;
+            return;
         }
         
         if(Buf.MIN_POWER_POW_HANDSHAKE > 1 + MIN_POWER_POW_HANDSHAKE)
@@ -514,7 +514,7 @@ module.exports = class CNode
     write(BufWrite)
     {
         if(!this.Socket)
-            return ;
+            return;
         
         socketWrite(this.Socket, BufWrite)
         
@@ -535,7 +535,7 @@ module.exports = class CNode
 global.socketInit = function (Socket,Str)
 {
     if(!Socket)
-        return ;
+        return;
     
     Socket.GetBytes = 0;
     Socket.SendBytes = 0;
@@ -561,7 +561,7 @@ global.CloseSocket = function (Socket,StrError,bHide)
     {
         if(Socket)
             Socket.SocketStatus = 0;
-        return ;
+        return;
     }
     
     var Node = Socket.Node;
@@ -585,7 +585,7 @@ function SetSocketStatus(Socket,Status)
         if(Status === 100 && (Socket.SocketStatus !== 3 && Socket.SocketStatus !== 200))
         {
             ToLogTrace("===================ERROR=================== " + Status);
-            return ;
+            return;
         }
         if(Status === 100 && Socket.Node)
             Socket.Node.LastTime = GetCurrentTime() - 0;
@@ -683,10 +683,10 @@ function FindNodeByAddr(Addr,bConnect)
 function AddNodeInfo(Node,Str,bSet)
 {
     if(!global.STAT_MODE)
-        return ;
+        return;
     
     if(!Node)
-        return ;
+        return;
     if(!Node.Info)
         Node.Info = "";
     if(bSet)

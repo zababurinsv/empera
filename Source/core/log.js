@@ -40,7 +40,7 @@ global.ToLog = function (Str,Level)
     if(Level === undefined)
         Level = 1;
     if(Level && Level > global.LOG_LEVEL)
-        return ;
+        return;
     
     if(global.ALL_LOG_TO_CLIENT)
         ToLogClient(Str, undefined, undefined);
@@ -111,7 +111,7 @@ function ToLogFile(file_name,Str,bNoFile)
     if(global.PROCESS_NAME !== "MAIN" && process.send)
     {
         process.send({cmd:"log", message:Str});
-        return ;
+        return;
     }
     else
     {
@@ -120,7 +120,7 @@ function ToLogFile(file_name,Str,bNoFile)
     }
     
     if(bNoFile)
-        return ;
+        return;
     
     SaveToLogFileSync(file_name, Str);
 }
@@ -129,7 +129,7 @@ global.ArrLogClient = [];
 function ToLogClient(Str,StrKey,bFinal)
 {
     if(!Str)
-        return ;
+        return;
     
     ToLogFile(file_name_log, Str);
     
@@ -206,7 +206,7 @@ global.ADD_TO_STAT_TIME = function (Name,startTime,bDetail)
     if(global.STAT_MODE)
     {
         if(bDetail && global.STAT_MODE !== 2)
-            return ;
+            return;
         
         var Time = process.hrtime(startTime);
         var deltaTime = Time[0] * 1000 + Time[1] / 1e6;
@@ -219,7 +219,7 @@ global.ADD_TO_STAT = function (Key,Count,bDetail)
     if(global.STAT_MODE)
     {
         if(bDetail && global.STAT_MODE !== 2)
-            return ;
+            return;
         
         AddToStatContext(CONTEXT_STATS, Key, Count);
     }
@@ -319,7 +319,7 @@ global.GET_STATS = function (Key)
 global.StartCommonStat = function ()
 {
     for(var key in CONTEXT_STATS.Total)
-        return ;
+        return;
     ClearCommonStat();
 }
 
@@ -494,7 +494,7 @@ if(DEBUG_MODE)
     global.TO_DEBUG_LOG = function (Str,type,data1,data2)
     {
         if(!DEBUG_MODE)
-            return ;
+            return;
         
         if(type === "rinfo")
             Str += " from: " + data1.address + ':' + data1.port + ' - ' + data2.length;
@@ -594,7 +594,7 @@ function CheckSizeLogFile(FILE_NAME_LOG,FILE_NAME_LOG_PREV)
         fs.stat(FILE_NAME_LOG, function (err,stat)
         {
             if(err)
-                return ;
+                return;
             
             if(stat.size > MAX_SIZE_LOG)
             {

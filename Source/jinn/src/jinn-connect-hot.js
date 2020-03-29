@@ -30,7 +30,7 @@ function DoNode(Engine)
     if(Engine.ROOT_NODE)
         return 0;
     if(Engine.TickNum % 5 !== 0)
-        return ;
+        return;
     
     Engine.CaclNextAddrHashPOW(50);
     for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION + JINN_CONST.EXTRA_SLOTS_COUNT; L++)

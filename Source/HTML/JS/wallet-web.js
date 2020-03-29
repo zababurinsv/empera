@@ -110,7 +110,7 @@ function ConnectWebWallet()
     if(window.BrowserIE && !IsLocalClient())
     {
         MainServer = undefined;
-        return ;
+        return;
     }
     
     CountConnect = 0;
@@ -157,13 +157,13 @@ function DoNodeList(Item)
     if(!IsCorrectDomenName(Item.ip))
     {
         console.log("Not correct ip: " + Item.ip);
-        return ;
+        return;
     }
     
     if(window.location.protocol === "https:" && Item.port !== 443)
-        return ;
+        return;
     if(Item.port === 443 && IsIPAddres(Item.ip))
-        return ;
+        return;
     
     Item.SendHandShake = 1;
     Item.StartTime = Date.now();
@@ -245,9 +245,9 @@ function LoopWalletInfo()
 function DoWalletInfo(Item)
 {
     if(window.location.protocol === "https:" && Item.port !== 443)
-        return ;
+        return;
     if(Item.port === 443 && IsIPAddres(Item.ip))
-        return ;
+        return;
     
     CountDoWalletInfoAll++;
     Item.StartTime = Date.now();
@@ -255,7 +255,7 @@ function DoWalletInfo(Item)
     GetData(GetProtocolServerPath(Item) + "/GetCurrentInfo", {BlockChain:1}, function (Data)
     {
         if(!idTimeFindLider)
-            return ;
+            return;
         
         if(Data && Data.result && Data.BlockChain && Data.NETWORK === NETWORK_NAME)
         {

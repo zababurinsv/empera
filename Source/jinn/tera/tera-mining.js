@@ -65,7 +65,7 @@ function Init(Engine)
     {
         var BlockDB = Engine.GetBlockHeaderDB(msg.BlockNum);
         if(!BlockDB)
-            return ;
+            return;
         
         var Block = CopyObjKeys({}, BlockDB);
         var SeqHash = Block.DataHash;
@@ -101,12 +101,12 @@ function Init(Engine)
                 bWas += 2;
             }
             if(!bWas)
-                return ;
+                return;
             
             Block.MinerHash = AddrHash;
             Engine.CalcBlockData(Block);
             if(Block.Power < 10)
-                return ;
+                return;
             Engine.AddBlockToChain(Block);
             
             ADD_TO_STAT("MAX:POWER", Block.Power);

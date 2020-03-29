@@ -419,7 +419,7 @@ function CheckGlobalTime()
         if(err)
         {
             TO_ERROR_LOG("MAINLIB", 110, err);
-            return ;
+            return;
         }
         
         var curTime = new Date;

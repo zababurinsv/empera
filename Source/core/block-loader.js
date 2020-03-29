@@ -102,7 +102,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         
         if(global.TEST_JINN)
-            return ;
+            return;
         
         GenerateStartedBlocks()
         
@@ -169,17 +169,17 @@ module.exports = class CBlock extends require("./rest-loader.js")
     StartSyncBlockchain(Node, bSilent, bCheckPoint, PrevStartedBlockNum)
     {
         if(Date.now() - this.StartTime < 10 * 1000)
-            return ;
+            return;
         
         this.FREE_ALL_MEM_CHAINS()
         if(global.NO_HISTORY_MODE)
         {
             this.LoadHistoryMode = 0
-            return ;
+            return;
         }
         
         if(global.CREATE_ON_START && !LOCAL_RUN)
-            return ;
+            return;
         
         if(!GrayConnect())
             this.RelayMode = true
@@ -239,7 +239,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     LoopSyncBlockchain()
     {
         if(!this.ActualNodes.size)
-            return ;
+            return;
         
         var Context;
         if(this.LoadRestContext && this.LoadRestContext.Mode < 200)
@@ -253,7 +253,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             {
                 ToLog("DETECT TIMEOUT LOAD")
                 this.StartSyncBlockchain(undefined, undefined, undefined, Context.BlockNum)
-                return ;
+                return;
             }
         }
         else
@@ -265,14 +265,14 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(Context.LoopSyncRest)
         {
             this.LoopSyncRest()
-            return ;
+            return;
         }
         
         if(Context.Pause)
         {
             if(this.LoadedChainList.length)
             {
-                return ;
+                return;
             }
             
             Context.Pause = 0
@@ -288,7 +288,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 ToLog("Finish synchronization")
             
             if(!BlockDB)
-                return ;
+                return;
         }
         
         var Ret = this.GetNextNode(Context, Context.BlockNum, 1, Context.BlockNum);
@@ -333,15 +333,15 @@ module.exports = class CBlock extends require("./rest-loader.js")
     StartLoadBlockHeader(LoadHash, Num, StrInfo, bIsSum)
     {
         if(this.LoadHistoryMode)
-            return ;
+            return;
         if(global.NO_HISTORY_MODE)
-            return ;
+            return;
         
         this.StartLoadBlockTime = Date.now()
         
         if(Num > this.CurrentBlockNum + TIME_START_SAVE)
         {
-            return ;
+            return;
         }
         
         bIsSum = bIsSum || false
@@ -384,7 +384,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     LoopChainLoad()
     {
         if(glStopNode)
-            return ;
+            return;
         
         if(this.UseTruncateBlockDB)
             this.TruncateBlockDB(this.UseTruncateBlockDB)
@@ -392,12 +392,12 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(this.LoadHistoryMode)
         {
             this.LoopSyncBlockchain()
-            return ;
+            return;
         }
         if(this.BlockNumDB < this.CurrentBlockNum - BLOCK_PROCESSING_LENGTH2)
         {
             this.StartSyncBlockchain()
-            return ;
+            return;
         }
         if(global.LOAD_TO_BEGIN && this.BlockNumDBMin)
         {
@@ -434,7 +434,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         chain.StopSend = true
                         chain.AddInfo("Stop load #1")
                         this.FREE_ALL_MEM_CHAINS()
-                        return ;
+                        return;
                     }
                     else
                         if(chain.BlockNumMax < min_num)
@@ -483,7 +483,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
     }
     
-    GetNextNode(task, keyid, checktime, BlockNum)
+    GetNextNode(task, keyid, checktime, BlockNum, FTestNode, Context)
     {
         
         var CurTime = GetCurrentTime(0) - 0;
@@ -529,6 +529,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
             }
             NodeCount2++
             NodeCount3++
+            
+            if(FTestNode && !FTestNode(Context, Node))
+                continue;
             if(Node.Active)
             {
                 NodeCount4++
@@ -738,7 +741,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 var keysend = "" + Info.Node.addrStr + ":" + chain.BlockNum;
                 chain.MapSend[keysend] = 1
                 chain.AddInfo("NO:" + GetNodeStrPort(Info.Node))
-                return ;
+                return;
             }
             chain.AddInfo("L=" + arr.length + " from:" + GetNodeStrPort(Info.Node))
             
@@ -884,11 +887,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
     CheckToStartLoadBlockData(chain)
     {
         if(chain.Deleted)
-            return ;
+            return;
         
         var arr = this.GetArrFromChain(chain);
         if(arr.length < 2)
-            return ;
+            return;
         
         var BlockMax = arr[arr.length - 1];
         var BlockMin = arr[0];
@@ -905,7 +908,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             var Str = "Low SumPow";
             chain.AddInfo(Str)
-            return ;
+            return;
         }
         
         var Str = "Start Load blocks: " + (BlockMin.BlockNum + 1) + "  -  " + BlockMax.BlockNum;
@@ -950,7 +953,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     LoopBlockLoad()
     {
         if(glStopNode)
-            return ;
+            return;
         
         var CountSend = 0;
         for(var num = 0; num < this.LoadedChainList.length; num++)
@@ -991,7 +994,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         {
                             CountSend++
                             if(CountSend >= MAX_BLOCK_SEND)
-                                return ;
+                                return;
                         }
                     }
                     else
@@ -1055,7 +1058,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
     WriteLoadedBlockArr(arr)
     {
         if(!arr.length)
-            return ;
+            return;
         
         var startTime = process.hrtime();
         
@@ -1079,7 +1082,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     if(global.WATCHDOG_DEV)
                         ToError("******** ERROR LOADED DATA Count:" + arr.length + "  AT BLOCK NUM:" + Block.BlockNum + "  (" + arr[0].BlockNum + "-" + arr[arr.length - 1].BlockNum + ")")
                     this.FREE_ALL_MEM_CHAINS()
-                    return ;
+                    return;
                 }
             }
             var Res = 0;
@@ -1099,14 +1102,14 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 {
                     ToLogTrace("IsZeroArr(Block.TreeHash)")
                     this.FREE_ALL_MEM_CHAINS()
-                    return ;
+                    return;
                 }
             }
             if(!Res)
             {
                 ToLog("ERROR WRITE DB, NUM=" + Block.BlockNum)
                 this.FREE_ALL_MEM_CHAINS()
-                return ;
+                return;
             }
             Block.LoadDB = true
             
@@ -1313,11 +1316,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
     
     RecalcLoadBlockStatictic()
     {
-        return ;
+        return;
         
         var TimeNum = Math.floor(Date.now() / STAT_BLOCK_LOAD_PERIOD);
         if(this.LoadBlockStatNum === TimeNum)
-            return ;
+            return;
         this.LoadBlockStatNum = TimeNum
         
         const PeriodSec = 5;
@@ -1744,7 +1747,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         this.MapBlockBodyLoad = {}
         if(!arr.length)
-            return ;
+            return;
         
         var chain = {StopSend:1, WriteToDBAfterLoad:1, BodyLoad:1};
         this.ChainBindMethods(chain)
@@ -1761,18 +1764,18 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             ToLog("BAD DeltaDB  " + NodeName(Node), 3)
             Node.BlockProcessCount -= DeltaScore
-            return ;
+            return;
         }
         var DeltaDB = this.BlockNumDB - this.BlockNumDBMin;
         var Margin = 1000;
         var Delta = Math.min(DeltaNode, DeltaDB) - Margin;
         if(DeltaDB <= 0)
-            return ;
+            return;
         var BlockNum = this.BlockNumDB - random(Delta) - Margin;
         var BlockDB = this.ReadBlockHeaderDB(BlockNum);
         if(!BlockDB)
         {
-            return ;
+            return;
         }
         this.CheckBlockProcess(Node, "CheckBotNet")
         Node.BlockProcessCount -= DeltaScore
@@ -1807,7 +1810,7 @@ global.LoadBlockFromNetwork = function (Params,F)
     {
         ToLog("Cant LoadBlockFromNetwork:" + BlockNum, 2);
         F(1);
-        return ;
+        return;
     }
     
     ToLog("Start DownloadBlockFromNetwork:" + BlockNum, 2);
@@ -1827,7 +1830,7 @@ global.LoadBlockFromNetwork = function (Params,F)
                     {
                         ToLog("Error get BlockNum:" + Params.BlockNum + " from " + NodeName(Info.Node), 2);
                         F(1);
-                        return ;
+                        return;
                     }
                     
                     ToLog("Got BlockFromNetwork:" + Params.BlockNum + " from " + NodeName(Info.Node), 2);
@@ -1895,7 +1898,7 @@ function GenerateStartedBlocks()
 function TransactionGenerate()
 {
     if(!global.TEST_TRANSACTION_GENERATE)
-        return ;
+        return;
     
     var start = SERVER.TreePoolTr.size;
     for(var n = start; n < TEST_TRANSACTION_GENERATE; n++)

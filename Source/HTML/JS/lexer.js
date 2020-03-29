@@ -216,7 +216,7 @@ module.exports = function ()
             else
             {
                 this.NotBackPos();
-                return ;
+                return;
             }
         }
         throw Str;
@@ -303,7 +303,7 @@ module.exports = function ()
             if(s == separator)
             {
                 this.pos++;
-                return ;
+                return;
             }
             else
                 if(s == "\\")
@@ -315,7 +315,7 @@ module.exports = function ()
                     if(s == "\n")
                     {
                         this.Error("Found end of line during calculate string");
-                        return ;
+                        return;
                     }
             this.pos++;
         }
@@ -324,7 +324,7 @@ module.exports = function ()
     this.PosRegExp = function ()
     {
         this.Error("RegExp not support");
-        return ;
+        return;
         
         var separator = "/";
         this.pos++;
@@ -334,7 +334,7 @@ module.exports = function ()
             if(s == separator)
             {
                 this.pos++;
-                return ;
+                return;
             }
             else
                 if(s == "[")
@@ -356,7 +356,7 @@ module.exports = function ()
                             if(s == "\n")
                             {
                                 this.Error("Found end of line during calculate regexp");
-                                return ;
+                                return;
                             }
             this.pos++;
         }
@@ -408,7 +408,7 @@ module.exports = function ()
                 {
                     this.PosCurrentType(this.lexTypeNumbers);
                 }
-            return ;
+            return;
         }
         this.PosCurrentType(this.lexTypeNumbers);
         if(this.buf[this.pos] == ".")
@@ -1497,21 +1497,21 @@ module.exports = function ()
     {
         this.AddToStream("break");
         if(this.HasEnter())
-            return ;
+            return;
         this.RequireIndenifierOptional();
     };
     this.Parse_continue = function ()
     {
         this.AddToStream("continue");
         if(this.HasEnter())
-            return ;
+            return;
         this.RequireIndenifierOptional();
     };
     this.Parse_return = function ()
     {
         this.AddToStream("return ");
         if(this.HasEnter())
-            return ;
+            return;
         this.ParseExpressionWithComma(false, true);
     };
     this.Parse_typeof = function ()
@@ -1640,7 +1640,7 @@ module.exports = function ()
     this.Parse_try = function ()
     {
         this.Error("try-catch not support");
-        return ;
+        return;
         
         this.RequireChar("{");
         this.AddToStream("try\n");
@@ -1682,7 +1682,7 @@ module.exports = function ()
     {
         this.AddToStream("throw ");
         if(this.HasEnter())
-            return ;
+            return;
         var type = this.ParseExpressionWithComma();
     };
     this.AddCheckLineToStream = function (Count)

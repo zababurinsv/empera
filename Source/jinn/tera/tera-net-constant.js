@@ -39,11 +39,11 @@ function Init(Engine)
     Engine.StartGetNetConstant = function (Child,Version)
     {
         if(Version > GetCurrentBlockNumByTime() + 3000)
-            return ;
+            return;
         
         var Delta = Date.now() - Child.LastGetNetConstant;
         if(Delta < 15000)
-            return ;
+            return;
         
         Child.LastGetNetConstant = Date.now();
         
@@ -51,7 +51,7 @@ function Init(Engine)
         {
             Child.LastGetNetConstant = Date.now();
             if(!Data)
-                return ;
+                return;
             
             if(Data.NetConstVer > JINN_NET_CONSTANT.NetConstVer)
             {

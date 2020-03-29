@@ -168,7 +168,7 @@ function StartChildProcess(Item)
 {
     if(Item.NodeOnly && global.NET_WORK_MODE && NET_WORK_MODE.NOT_RUN)
     {
-        return ;
+        return;
     }
     
     let ITEM = Item;
@@ -306,7 +306,7 @@ function StartChildProcess(Item)
     ITEM.RunRPC = function (Name,Params,F)
     {
         if(!ITEM.Worker)
-            return ;
+            return;
         
         if(F)
         {

@@ -209,12 +209,12 @@ class AccountApp extends require("./dapp")
         this.DBStateTX = new DBRow("accounts-tx", 6 + 6 + 88, "{BlockNum:uint, BlockNumMin:uint, Reserve: arr88}", bReadOnly)
         
         if(global.READ_ONLY_DB)
-            return ;
+            return;
         this.DBAccountsHash = new DBRow("accounts-hash3", 6 + 32 + 32 + 32 + 6 + 6 + 14, "{BlockNum:uint, AccHash:hash, SumHash:hash, SmartHash:hash, AccountMax:uint, SmartCount:uint, Reserve: arr14}",
         bReadOnly)
         
         if(global.START_SERVER)
-            return ;
+            return;
         
         if(!bReadOnly)
             this.Start()
@@ -226,7 +226,7 @@ class AccountApp extends require("./dapp")
     {
         
         if(!bClean && this.DBState.GetMaxNum() + 1 >= BLOCK_PROCESSING_LENGTH2)
-            return ;
+            return;
         
         this.DBState.MerkleTree = undefined
         this.DBState.Truncate( - 1)
@@ -281,9 +281,9 @@ class AccountApp extends require("./dapp")
     CheckRestDB()
     {
         if(!global.SERVER)
-            return ;
+            return;
         if(this.WasCheckRestDB)
-            return ;
+            return;
         this.WasCheckRestDB = 1
         var MaxNumBlock = SERVER.GetMaxNumBlockDB();
         if(this.DBState.GetMaxNum() >= 0 && this.DBRest.GetMaxNum() < 0 && MaxNumBlock > 0)
@@ -368,7 +368,7 @@ class AccountApp extends require("./dapp")
                 catch(e)
                 {
                     ToErrorTx("Can-t rename for delete act-file: " + FileNameFull2)
-                    return ;
+                    return;
                 }
                 
                 fs.unlinkSync(FileNameFull2)
@@ -381,7 +381,7 @@ class AccountApp extends require("./dapp")
             catch(e)
             {
                 ToErrorTx("Can-t rename act-file!")
-                return ;
+                return;
             }
         }
     }
@@ -416,7 +416,7 @@ class AccountApp extends require("./dapp")
     OnDeleteBlock(Block)
     {
         if(Block.BlockNum < 1)
-            return ;
+            return;
         this.DeleteAct(Block.BlockNum)
     }
     
@@ -424,7 +424,7 @@ class AccountApp extends require("./dapp")
     {
         this.CreateTrCount = 0
         if(Block.BlockNum < 1)
-            return ;
+            return;
         this.OnDeleteBlock(Block)
         
         this.BeginBlock()
@@ -533,14 +533,14 @@ class AccountApp extends require("./dapp")
     DoCoinBaseTR(Block)
     {
         if(Block.BlockNum < global.START_MINING)
-            return ;
+            return;
         
         var SysData = this.ReadStateTR(0);
         var SysBalance = SysData.Value.SumCOIN;
         const REF_PERIOD_START = global.START_MINING;
         var AccountID = ReadUintFromArr(Block.AddrHash, 0);
         if(AccountID < 8)
-            return ;
+            return;
         
         var Data = this.ReadStateTR(AccountID);
         
@@ -1072,7 +1072,7 @@ class AccountApp extends require("./dapp")
     {
         var MaxNum = DBAct.GetMaxNum();
         if(MaxNum ===  - 1)
-            return ;
+            return;
         
         for(var num = MaxNum; num >= 0; num--)
         {
@@ -1087,7 +1087,7 @@ class AccountApp extends require("./dapp")
             if(ItemCheck.BlockNum < BlockNum)
             {
                 this.ProcessingDeleteAct(DBAct, num + 1)
-                return ;
+                return;
             }
         }
         this.ProcessingDeleteAct(DBAct, 0)
@@ -1429,7 +1429,7 @@ class AccountApp extends require("./dapp")
     CalcHash(Block, BlockMaxAccount)
     {
         if(Block.BlockNum % PERIOD_ACCOUNT_HASH !== 0)
-            return ;
+            return;
         var Hash = this.GetCalcHash();
         
         var SmartHash;
@@ -1934,10 +1934,10 @@ DAppByType[TYPE_TRANSACTION_ACC_HASH] = App;
 
 function TestStateFiles(Size,Format)
 {
-    return ;
+    return;
     
     if(global.PROCESS_NAME !== "MAIN")
-        return ;
+        return;
     
     var DBState1 = new DBRow("state-ok", Size, Format, 0);
     var DBState2 = new DBRow("state-no", Size, Format, 0);

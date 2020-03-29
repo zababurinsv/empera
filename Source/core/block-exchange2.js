@@ -25,7 +25,7 @@ module.exports = class CConsensus2 extends require("./block-loader")
     OnStartSecond()
     {
         if(!this.CanSend || this.CanSend < 2)
-            return ;
+            return;
         
         PrepareStatEverySecond()
         this.AddStatOnTimer()
@@ -44,9 +44,9 @@ module.exports = class CConsensus2 extends require("./block-loader")
     {
         
         if(glStopNode)
-            return ;
+            return;
         if(!CAN_START)
-            return ;
+            return;
         
         if(global.PROTOCOL_VER === 2)
         {
@@ -62,9 +62,9 @@ module.exports = class CConsensus2 extends require("./block-loader")
     {
         
         if(glStopNode)
-            return ;
+            return;
         if(!CAN_START)
-            return ;
+            return;
         
         this.StartConsensus()
         var CURRENTBLOCKNUM = this.CurrentBlockNum;
@@ -73,10 +73,10 @@ module.exports = class CConsensus2 extends require("./block-loader")
         {
             if(!this.LoadHistoryMode)
                 this.StartSyncBlockchain(undefined, 1)
-            return ;
+            return;
         }
         if(this.LoadHistoryMode)
-            return ;
+            return;
         
         var bWasSave = false;
         var LoadBlockNum;

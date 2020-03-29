@@ -26,13 +26,13 @@ var WasAccountsDataStr;
 function SetAccountsData(Data,AccountsDataStr)
 {
     if(!Data || !Data.result)
-        return ;
+        return;
     
     if($("idBtRun"))
         $("idBtRun").style.display = (Data.arr.length ? '' : 'none');
     
     if(AccountsDataStr === WasAccountsDataStr)
-        return ;
+        return;
     WasAccountsDataStr = AccountsDataStr;
     
     var arr = Data.arr;
@@ -122,7 +122,7 @@ function SetNameAccTo()
     if(!ToID || ToID === "0")
     {
         element.innerText = "";
-        return ;
+        return;
     }
     
     if(element && element.innerText !== StrTo)
@@ -177,7 +177,7 @@ function SetCurCurencyName()
 {
     var idCoin = $("idCoinName");
     if(!idCoin)
-        return ;
+        return;
     
     var Num = ParseNum($("idAccount").value);
     var Item = MapAccounts[Num];
@@ -205,7 +205,7 @@ function CreateTransaction(F,CheckErr,Run)
     if(CheckErr && FromID === 0)
     {
         SetError("Select valid 'From account'");
-        return ;
+        return;
     }
     
     var StrTo = $("idTo").value.trim();
@@ -225,14 +225,14 @@ function CreateTransaction(F,CheckErr,Run)
         {
             if(CheckErr)
                 SetError("Valid 'Pay to' - required!");
-            return ;
+            return;
         }
     }
     
     if(CheckErr && ToID <= 0 && ToPubKey === "" && !AttachItem)
     {
         SetError("Valid 'Pay to' - required!");
-        return ;
+        return;
     }
     
     var Description = $("idDescription").value.substr(0, 200);
@@ -280,7 +280,7 @@ function CreateTransaction(F,CheckErr,Run)
     {
         if(F)
             F(CurrentTR);
-        return ;
+        return;
     }
     
     CurrentTR = TR;
@@ -295,11 +295,11 @@ function CreateTransaction(F,CheckErr,Run)
 function SignJSON(F)
 {
     if($("idSignJSON").disabled)
-        return ;
+        return;
     
     var TR = GetTransactionFromJSON();
     if(!TR)
-        return ;
+        return;
     CurrentTR = TR;
     
     GetSignTransaction(TR, "", function (TR)
@@ -354,7 +354,7 @@ function AddWhiteList()
 function SendMoneyBefore()
 {
     if($("idSendButton").disabled)
-        return ;
+        return;
     
     var ToID = ParseNum($("idTo").value);
     var Item = MapAccounts[ToID];
@@ -388,12 +388,12 @@ function SendMoney(F)
     if(!CanSendTransaction)
     {
         SetError("Can't Send transaction");
-        return ;
+        return;
     }
     
     CheckSending(true);
     if($("idSendButton").disabled)
-        return ;
+        return;
     
     SetVisibleBlock("idBlockOnSend", 0);
     
@@ -453,12 +453,12 @@ function SendMoneyJSON()
     if(!CanSendTransaction)
     {
         SetError("Can't Send transaction");
-        return ;
+        return;
     }
     
     var TR = GetTransactionFromJSON();
     if(!TR)
-        return ;
+        return;
     
     SendMoneyTR(TR);
 }
@@ -531,7 +531,7 @@ function SendMoneyTR(TR)
     SendTransaction(Body, TR, undefined, function (Err,TR,Body)
     {
         if(Err)
-            return ;
+            return;
         var Item = MapAccounts[TR.FromID];
         if(Item)
         {
@@ -617,7 +617,7 @@ function CheckSendList(bRedraw)
     
     var Str = Storage.getItem("InvoiceList");
     if(!Str && !bRedraw)
-        return ;
+        return;
     
     if(!bRedraw)
     {

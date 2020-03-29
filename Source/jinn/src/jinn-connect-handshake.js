@@ -41,7 +41,10 @@ function InitClass(Engine)
         
         var StrError;
         if(Data.Protocol !== JINN_CONST.PROTOCOL_NAME)
+        {
             StrError = "ERROR PROTOCOL_NAME";
+            Engine.OnDeleteConnect(Child, StrError);
+        }
         else
             if(IsEqArr(Engine.RndHash, Data.RndHash))
             {
@@ -53,7 +56,10 @@ function InitClass(Engine)
             }
             else
                 if(!Engine.CanConnect(Child))
-                    StrError = "ERROR: NOT CANCONNECT";
+                {
+                    StrError = "ERROR: NOT CAN CONNECT";
+                    Engine.OnDeleteConnect(Child, StrError);
+                }
                 else
                     if(Engine.FindConnectByHash(Data.RndHash))
                         StrError = "ERROR: FIND IN CONNECT";
@@ -104,11 +110,12 @@ function InitClass(Engine)
         
         if(!Data.result || !Engine.CanConnect(Child))
         {
-            Child.ToLog("OnHandShakeReturn : Not connect to " + Child.Name() + " result=" + Data.result, 4);
+            Child.ToLog("OnHandShakeReturn : Not can connect to " + Child.Name() + " result=" + Data.result, 4);
             
             Engine.OnDeleteConnect(Child, "OnHandShakeReturn");
-            return ;
+            return;
         }
+        
         Engine.OnAddConnect(Child);
         
         if(Engine.InHotStart(Child))

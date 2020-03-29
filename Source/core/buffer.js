@@ -29,7 +29,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
 {
     if(buf.len >= buf.length)
     {
-        return ;
+        return;
     }
     
     if(typeof StringFormat === "number")
@@ -60,7 +60,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     if(data)
                         buf.write(data, buf.len, length);
                     buf.len += length;
-                    return ;
+                    return;
                 }
         
         switch(format)

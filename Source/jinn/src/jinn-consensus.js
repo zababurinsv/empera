@@ -109,7 +109,7 @@ function InitClass(Engine)
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
             Engine.DoMaxStatus(Store);
-            return ;
+            return;
         }
         
         //block header arrived
@@ -157,7 +157,7 @@ function InitClass(Engine)
         if(Engine.ProcessBlockOnReceive)
         {
             if(!Engine.ProcessBlockOnReceive(Child, Block))
-                return ;
+                return;
         }
         
         Child.ToDebug("Receive Body Block:" + Block.BlockNum);
@@ -206,7 +206,7 @@ function InitClass(Engine)
     Engine.SetStatusInfoH = function (NodeStatus,Num)
     {
         if(Num !== 0)
-            return ;
+            return;
         Engine.Header1 = NodeStatus.LoadNum;
         if(NodeStatus.BlockSeed)
             Engine.Header2 = NodeStatus.BlockSeed.BlockNum;
@@ -216,7 +216,7 @@ function InitClass(Engine)
     Engine.SetStatusInfoB = function (NodeStatus,Num)
     {
         if(Num !== 0)
-            return ;
+            return;
         
         if(NodeStatus.LoadBlockHead)
             Engine.Block1 = NodeStatus.LoadBlockHead.BlockNum;
@@ -373,7 +373,7 @@ function InitClass(Engine)
                     continue;
                 var Res = Engine.CheckAndSaveChainToDB(BlockHead, BlockSeed);
                 if(Res ==  - 1)
-                    return ;
+                    return;
                 
                 if(n === 0)
                 {

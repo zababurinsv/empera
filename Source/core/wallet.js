@@ -190,7 +190,7 @@ class CApp
         if(this.WalletOpen === false)
         {
             ToLogClient("Wallet is close by password")
-            return ;
+            return;
         }
         
         this.Password = StrPassword
@@ -224,7 +224,7 @@ class CApp
     {
         if(this.WalletOpen === false)
         {
-            return ;
+            return;
         }
         
         var Params = {};

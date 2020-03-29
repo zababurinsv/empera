@@ -122,7 +122,7 @@ function ReWriteDAppTransactions(Params,bSilent)
         {
             ToLog("Find LastBlockNum=" + LastBlockNum);
             RewriteAllTransactions(1);
-            return ;
+            return;
         }
         if(LastBlockNum >= StartNum)
         {
@@ -229,13 +229,13 @@ class CTXProcess
     Run()
     {
         if(StopTxProcess)
-            return ;
+            return;
         
         var StartTime = Date.now();
         if(this.TimeWait)
         {
             if(StartTime - this.TimeWait < 600)
-                return ;
+                return;
         }
         this.TimeWait = 0
         if(this.ErrorAccHash >= 10000)
@@ -243,7 +243,7 @@ class CTXProcess
             this.ErrorAccHash = 0
             ToLog("FORCE CalcMerkleTree")
             DApps.Accounts.CalcMerkleTree(1)
-            return ;
+            return;
         }
         
         var StateTX = DApps.Accounts.DBStateTX.Read(0);
@@ -255,11 +255,11 @@ class CTXProcess
             if(!Result)
             {
                 this.TimeWait = Date.now()
-                return ;
+                return;
             }
             
             if(Date.now() - StartTime > 1000)
-                return ;
+                return;
         }
     }
     

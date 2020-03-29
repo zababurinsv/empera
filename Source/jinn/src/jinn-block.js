@@ -69,7 +69,7 @@ function InitClass(Engine)
             if(BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
             {
                 Engine.WriteGenesisDB();
-                return ;
+                return;
             }
             var TxArr = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
             Block = Engine.GetNewBlock(BlockNum, TxArr);
@@ -128,13 +128,13 @@ function InitClass(Engine)
     {
         
         if(Engine.GetBlockHeaderDB(BlockNum))
-            return ;
+            return;
         
         var TxArr = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
         var Block = Engine.GetNewBlock(BlockNum, TxArr, 1);
         if(!Block)
         {
-            return ;
+            return;
         }
         
         Engine.DB.WriteBlock(Block);
@@ -262,7 +262,7 @@ function InitClass(Engine)
     Engine.SortBlock = function (Block)
     {
         if(!Block || !Block.TxData)
-            return ;
+            return;
         for(var i = 0; i < Block.TxData.length; i++)
             Engine.CheckHashExist(Block.TxData[i]);
         Block.TxData.sort(function (a,b)

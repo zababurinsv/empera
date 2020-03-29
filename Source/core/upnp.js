@@ -50,7 +50,7 @@ function StartUseUPNP(ip,port,F)
         {
             ToLog("----------- Cannt port mapping: " + port);
             StartUseStun(ip, port, F);
-            return ;
+            return;
         }
         
         if(F)
@@ -60,7 +60,7 @@ function StartUseUPNP(ip,port,F)
         {
             if(F)
                 F(ip);
-            return ;
+            return;
         }
         
         ClientUPNP.externalIp(function (err,ip2)
@@ -84,7 +84,7 @@ function StartUseStun(ip,port,F)
     {
         if(F)
             F(ip);
-        return ;
+        return;
     }
     
     let server = Stun.createServer();

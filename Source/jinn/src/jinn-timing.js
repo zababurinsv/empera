@@ -44,8 +44,9 @@ function InitClass(Engine)
             }
             if(NewDelta)
             {
-                ToLog("SET TIME DELTA: " + NewDelta + " ms");
-                Engine.SetTimeDelta(global.DELTA_CURRENT_TIME + NewDelta);
+                var Value = global.DELTA_CURRENT_TIME + NewDelta;
+                ToLog("SET TIME DELTA: " + Value + " ms");
+                Engine.SetTimeDelta(Value);
             }
             Engine.MapStatArray = {};
             Engine.WasCorrectTime = 1;
@@ -60,11 +61,11 @@ function InitClass(Engine)
     Engine.DoTimeCorrect = function (CurBlockNum)
     {
         if(!global.JINN_AUTO_CORRECT_TIME)
-            return ;
+            return;
         
         var MaxItem = Engine.MaxTimeStatus;
         if(!MaxItem.BlockNum)
-            return ;
+            return;
         
         var Delta = CurBlockNum - MaxItem.BlockNum - JINN_CONST.STEP_MAXHASH;
         var Value = Engine.MapStatArray[Delta];
@@ -97,7 +98,7 @@ function InitClass(Engine)
         var SMW = MaxValue1 * (MaxK - 1) + MaxValue * (MaxK) + MaxValue2 * (MaxK + 1);
         var SM = MaxValue1 + MaxValue + MaxValue2;
         if(!SM)
-            return ;
+            return;
         var AvgKey = Math.floor(1000 * SMW / SM);
         
         Engine.UseTimeCorrect( - AvgKey, SM);
@@ -106,18 +107,18 @@ function InitClass(Engine)
     Engine.AddMaxHashToTimeStat = function (Child,Data)
     {
         if(!global.JINN_AUTO_CORRECT_TIME)
-            return ;
+            return;
         
         var BlockNum = Data.BlockNum;
         var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
         var Delta = CurBlockNum - BlockNum;
         if(Engine.WasCorrectTime && Math.abs(Delta) > 2000)
-            return ;
+            return;
         
         if(Engine.MapStatWasBlockNum[BlockNum])
-            return ;
+            return;
         if(!Data.Arr.length)
-            return ;
+            return;
         
         var Item = Data.Arr[0];
         Engine.CalcHashMaxLider(Item, BlockNum);
@@ -137,9 +138,9 @@ function InitClass(Engine)
 function DoNode(Engine)
 {
     if(Engine.Del)
-        return ;
+        return;
     if(Engine.ROOT_NODE)
-        return ;
+        return;
     
     var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
     Engine.MaxLinkedBlockDB2 = CurBlockNum - JINN_CONST.STEP_MINING - JINN_CONST.LINK_HASH_DELTA;

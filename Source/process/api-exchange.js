@@ -408,7 +408,7 @@ function SendTransaction(Body,TR,Wait,F)
         TR._result = 0;
         TR._text = "Error length transaction =" + Body.length + " (max size=16000)";
         F(1, TR, Body);
-        return ;
+        return;
     }
     
     global.GlobalRunID++;
@@ -422,7 +422,7 @@ function SendTransaction(Body,TR,Wait,F)
         if(NumNext > 10)
         {
             F(0, TR, Body);
-            return ;
+            return;
         }
         
         var nonce = CreateHashBodyPOWInnerMinPower(TR, Body, undefined, startnonce);
@@ -437,7 +437,7 @@ function SendTransaction(Body,TR,Wait,F)
             if(text === "Not add" || text === "Bad PoW")
             {
                 CreateNonceAndSend(nonce + 1, NumNext + 1);
-                return ;
+                return;
             }
             else
                 if(text === "Bad time")
@@ -447,7 +447,7 @@ function SendTransaction(Body,TR,Wait,F)
                         DELTA_FOR_TIME_TX++;
                         ToLog("New set Delta time: " + DELTA_FOR_TIME_TX);
                         CreateNonceAndSend(0, NumNext + 1);
-                        return ;
+                        return;
                     }
                 }
             

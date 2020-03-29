@@ -230,7 +230,7 @@ module.exports = class CMessages extends require("./transaction-validator")
     {
         
         if(!Tr.ToAll)
-            return ;
+            return;
         
         var CurTime = GetCurrentTime(0) - 0;
         var Count;

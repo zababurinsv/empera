@@ -79,7 +79,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
                     var length = parseInt(format.substr(3));
                     WriteStr(buf, data, length);
                     
-                    return ;
+                    return;
                 }
         
         switch(format)

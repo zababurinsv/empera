@@ -89,7 +89,7 @@ module.exports = class CTransport extends require("./connect")
         this.port = RunPort
         
         if(global.TEST_JINN)
-            return ;
+            return;
         
         this.CanSend = 0
         
@@ -258,7 +258,7 @@ module.exports = class CTransport extends require("./connect")
     {
         var TimeNum = Math.floor(Date.now() / STAT_PERIOD);
         if(this.SendStatNum === TimeNum)
-            return ;
+            return;
         this.SendStatNum = TimeNum
         
         var Period = CONSENSUS_PERIOD_TIME / STAT_PERIOD;
@@ -311,7 +311,7 @@ module.exports = class CTransport extends require("./connect")
         {
             var StrOK = ",HAND,GETNODES,";
             if(StrOK.indexOf("," + Info.Method + ",") ===  - 1)
-                return ;
+                return;
         }
         
         Info.Node.LastTime = CurTime - 0
@@ -410,11 +410,11 @@ module.exports = class CTransport extends require("./connect")
     AddToBan(Node, Str)
     {
         if(global.NeedRestart)
-            return ;
+            return;
         this.DeleteNodeFromActive(Node)
         
         if(!Node.ip)
-            return ;
+            return;
         
         var Key = "" + Node.ip.trim();
         
@@ -549,7 +549,7 @@ module.exports = class CTransport extends require("./connect")
     OnGetFromTCP(Node, Socket, Buf)
     {
         if(!Node)
-            return ;
+            return;
         if(!Node.Socket)
             Node.Socket = Socket
         
@@ -576,10 +576,10 @@ module.exports = class CTransport extends require("./connect")
     {
         var Socket = this.LoadBufSocketList.min();
         if(!Socket)
-            return ;
+            return;
         this.LoadBufSocketList.remove(Socket)
         if(Socket.WasClose)
-            return ;
+            return;
         
         while(true)
         {
@@ -655,7 +655,7 @@ module.exports = class CTransport extends require("./connect")
             if(Param && Param.Period === 0 && Buf.Method !== "RETBLOCKHEADER")
             {
                 this.AddCheckErrCount(Node, 1)
-                return ;
+                return;
             }
             Buf.Context = {}
         }
@@ -695,11 +695,11 @@ module.exports = class CTransport extends require("./connect")
     MethodTimeProcess(Node, Method, Context)
     {
         if(Method != "RETBLOCKHEADER" && Method != "RETGETBLOCK")
-            return ;
+            return;
         
         var Time1 = Context.TimeMethodSend;
         if(!Time1)
-            return ;
+            return;
         var Arr = Node.TimeArr;
         
         var Time2 = GetCurrentTime(0) - 0;
@@ -796,7 +796,7 @@ module.exports = class CTransport extends require("./connect")
                 var Info = this.HardPacketForSend.min();
                 this.RiseBusyLevelByInfo(Info)
             }
-            return ;
+            return;
         }
         if(this.BusyLevel)
             this.BusyLevel = this.BusyLevel / 1.1
@@ -810,7 +810,7 @@ module.exports = class CTransport extends require("./connect")
     RiseBusyLevelByInfo(Info)
     {
         if(!Info)
-            return ;
+            return;
         
         if(!this.BusyLevel)
             this.BusyLevel = 1
@@ -822,7 +822,7 @@ module.exports = class CTransport extends require("./connect")
     DropBusyLevelByInfo(Info)
     {
         if(!Info)
-            return ;
+            return;
         
         if(this.BusyLevel > Info.BlockProcessCount)
             this.BusyLevel = Info.BlockProcessCount - 1
@@ -836,7 +836,7 @@ module.exports = class CTransport extends require("./connect")
         if(!Info)
         {
             this.BusyLevel = 0
-            return ;
+            return;
         }
         this.DropBusyLevelByInfo(Info)
         
@@ -851,7 +851,7 @@ module.exports = class CTransport extends require("./connect")
         {
             ADD_TO_STAT("DELETE_HARD_PACKET_OLD", this.HardPacketForSend.size)
             this.HardPacketForSend.clear()
-            return ;
+            return;
         }
         
         var MaxCount = 20;
@@ -887,7 +887,7 @@ module.exports = class CTransport extends require("./connect")
         if(!Node.Socket)
         {
             this.DeleteNodeFromActive(Node)
-            return ;
+            return;
         }
         
         if(Info.Context)
@@ -1043,20 +1043,20 @@ module.exports = class CTransport extends require("./connect")
         catch(e)
         {
             this.SendCloseSocket(Socket, "FORMAT_POW_TO_SERVER")
-            return ;
+            return;
         }
         
         if(Info.DEF_NETWORK !== GetNetworkName())
         {
             this.SendCloseSocket(Socket, "DEF_NETWORK=" + Info.DEF_NETWORK + " MUST:" + GetNetworkName())
-            return ;
+            return;
         }
         
         if(CompareArr(Info.addrArr, this.addrArr) === 0)
         {
             AddNodeInfo(Node, "SERV: GET SELF")
             this.SendCloseSocket(Socket, "SELF")
-            return ;
+            return;
         }
         
         if(Info.GrayConnect)
@@ -1072,7 +1072,7 @@ module.exports = class CTransport extends require("./connect")
             if(!this.IsCorrectNode(Info.FromIP, Info.FromPort))
                 StrDop = " Not correct ip=" + Info.FromIP + ":" + Info.FromPort
             this.SendCloseSocket(Socket, "Error Node Context" + StrDop)
-            return ;
+            return;
         }
         var Hash = shaarr2(this.addrArr, Socket.HashRND);
         var hashInfo = GetHashWithValues(Hash, Info.nonce, 0);
@@ -1103,7 +1103,7 @@ module.exports = class CTransport extends require("./connect")
                     Socket.Node = Node
                     
                     Socket.write(this.GetBufFromData("POW_CONNECT0", "OK", 2))
-                    return ;
+                    return;
                 }
                 else
                 {
@@ -1115,7 +1115,7 @@ module.exports = class CTransport extends require("./connect")
             AddNodeInfo(Node, "SERV: ERROR_RECONNECT")
             Socket.end(this.GetBufFromData("POW_CONNEC11", "ERROR_RECONNECT", 2))
             CloseSocket(Socket, "ERROR_RECONNECT")
-            return ;
+            return;
         }
         else
         {
@@ -1125,7 +1125,7 @@ module.exports = class CTransport extends require("./connect")
                 AddNodeInfo(Node, "SERV: ERR MIN_POWER_POW_HANDSHAKE")
                 Socket.end(this.GetBufFromData("POW_CONNECT2", "MIN_POWER_POW_HANDSHAKE", 2))
                 CloseSocket(Socket, "MIN_POWER_POW_HANDSHAKE")
-                return ;
+                return;
             }
             else
             {
@@ -1138,7 +1138,7 @@ module.exports = class CTransport extends require("./connect")
                     AddNodeInfo(Node, "SERV: ERROR_MAX_CLIENTS")
                     Socket.end(this.GetBufFromData("POW_CONNECT8", "ERROR_MAX_CLIENTS", 2))
                     CloseSocket(Socket, "ERROR_MAX_CLIENTS")
-                    return ;
+                    return;
                 }
                 
                 var Result = false;
@@ -1150,7 +1150,7 @@ module.exports = class CTransport extends require("./connect")
                     Socket.end(this.GetBufFromData("POW_CONNECT8", "ERROR_SIGN_CLIENT", 2))
                     CloseSocket(Socket, "ERROR_SIGN_CLIENT")
                     this.AddToBanIP(Socket.remoteAddress, "ERROR_SIGN_CLIENT")
-                    return ;
+                    return;
                 }
                 AddNodeInfo(Node, "1. SERVER OK POW for client node " + SocketInfo(Socket))
                 
@@ -1172,7 +1172,7 @@ module.exports = class CTransport extends require("./connect")
                     Socket.Node = Node
                     
                     Socket.write(this.GetBufFromData("POW_CONNECT0", "OK", 2))
-                    return ;
+                    return;
                 }
                 
                 if(!Node.WasAddToReconnect)
@@ -1196,11 +1196,11 @@ module.exports = class CTransport extends require("./connect")
         if(GrayConnect())
         {
             this.CanSend++
-            return ;
+            return;
         }
         if(global.NET_WORK_MODE && NET_WORK_MODE.NOT_RUN)
         {
-            return ;
+            return;
         }
         
         let SELF = this;
@@ -1212,7 +1212,7 @@ module.exports = class CTransport extends require("./connect")
             {
                 sock.ConnectID = "new"
                 CloseSocket(sock, "WAS BAN", true)
-                return ;
+                return;
             }
             
             let SOCKET = sock;
@@ -1235,14 +1235,14 @@ module.exports = class CTransport extends require("./connect")
             {
                 ToError(e)
                 SOCKET = undefined
-                return ;
+                return;
             }
             
             SOCKET.on('data', function (data)
             {
                 if(SOCKET.WasClose)
                 {
-                    return ;
+                    return;
                 }
                 if(!SOCKET.Node)
                 {
@@ -1251,7 +1251,7 @@ module.exports = class CTransport extends require("./connect")
                     {
                         SELF.CheckPOWTicketConnect(SOCKET, Buf.Data)
                         SOCKET.ConnectToServer = 0
-                        return ;
+                        return;
                     }
                     CloseSocket(SOCKET, "=SERVER ON DATA=")
                 }
@@ -1315,7 +1315,7 @@ module.exports = class CTransport extends require("./connect")
                 {
                     SELF.RunListenServer()
                 }, 5000)
-                return ;
+                return;
             }
             
             ADD_TO_STAT("ERRORS")
@@ -1368,7 +1368,7 @@ module.exports = class CTransport extends require("./connect")
         AddNodeInfo(Socket.Node, "CLOSE_SOCKET " + SocketInfo(Socket) + " - " + Str)
         if(Socket.WasClose)
         {
-            return ;
+            return;
         }
         this.AddCheckErrCount(Socket.Node, 1, "SendCloseSocket")
         
@@ -1386,7 +1386,7 @@ module.exports = class CTransport extends require("./connect")
     AddCheckErrCount(Node, Count, StrErr)
     {
         if(!Node)
-            return ;
+            return;
         if(!Count)
             Count = 1
         

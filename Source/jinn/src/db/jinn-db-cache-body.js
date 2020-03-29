@@ -37,13 +37,13 @@ class CDBBodyCache extends global.CDBChain
     LoadBlockTx(Block)
     {
         if(!Block || !Block.TreeHash || !Block.TxPosition || IsZeroArr(Block.TreeHash))
-            return ;
+            return;
         
         var Find = this.CacheBody.FindItemInCache(Block.TreeHash);
         if(Find && Find.TxData)
         {
             Block.TxData = Find.TxData
-            return ;
+            return;
         }
         
         super.LoadBlockTx(Block)

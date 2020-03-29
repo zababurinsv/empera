@@ -136,7 +136,7 @@ class CDBRow extends global.CDBFile
         
         var MaxNum = this.GetMaxNum();
         if(MaxNum ===  - 1)
-            return ;
+            return;
         
         for(var num = MaxNum; num >= 0; num--)
         {
@@ -150,7 +150,7 @@ class CDBRow extends global.CDBFile
                 {
                     this.Truncate(num)
                 }
-                return ;
+                return;
             }
         }
         this.Truncate( - 1)
@@ -161,7 +161,7 @@ class CDBRow extends global.CDBFile
         
         var MaxNum = this.GetMaxNum();
         if(MaxNum ===  - 1)
-            return ;
+            return;
         
         var StartNum = 0;
         var EndNum = MaxNum;
@@ -197,7 +197,7 @@ class CDBRow extends global.CDBFile
             else
             {
                 throw "Error read num";
-                return ;
+                return;
             }
         }
         var num = CurNum;
@@ -217,7 +217,7 @@ class CDBRow extends global.CDBFile
             else
             {
                 throw "Error read num";
-                return ;
+                return;
             }
         }
     }

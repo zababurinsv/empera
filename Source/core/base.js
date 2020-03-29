@@ -61,7 +61,7 @@ module.exports = class CCommon
         }
         global.CountAllNode = CountAll
         if(!global.STAT_MODE)
-            return ;
+            return;
         
         var StateTX = DApps.Accounts.DBStateTX.Read(0);
         if(StateTX)
@@ -301,7 +301,7 @@ class SMemBuffer
     ShiftMapDirect()
     {
         if(glStopNode)
-            return ;
+            return;
         
         if(this.CheckName)
         {

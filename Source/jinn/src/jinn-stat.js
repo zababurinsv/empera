@@ -68,13 +68,13 @@ function GetJinnStatInfo(JinnStat)
 function DoNode(Engine)
 {
     if(Engine.Del)
-        return ;
+        return;
     if(Engine.ROOT_NODE)
-        return ;
+        return;
     
     var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_LAST;
     if(Engine.StatLastCurBlockNum === BlockNum)
-        return ;
+        return;
     Engine.StatLastCurBlockNum = BlockNum;
     
     JINN_STAT.ActiveCount += Engine.ConnectArray.length;

@@ -33,7 +33,7 @@ function Init(Engine)
     {
         var Delta = Date.now() - Child.LastGetCodeVersion;
         if(Delta < 15000)
-            return ;
+            return;
         
         Child.LastGetCodeVersion = Date.now();
         
@@ -41,9 +41,9 @@ function Init(Engine)
         {
             Child.LastGetCodeVersion = Date.now();
             if(!Data)
-                return ;
+                return;
             
-            if(Data.VersionNum > CODE_VERSION.VersionNum)
+            if(Data.VersionNum > CODE_VERSION.VersionNum || VersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash))
             {
                 Engine.CheckCodeVersion(Data, Child);
             }
@@ -78,7 +78,7 @@ function Init(Engine)
                 var SignArr = arr2(CodeVersion.Hash, GetArrFromValue(CodeVersion.VersionNum));
                 if(CheckDevelopSign(SignArr, CodeVersion.Sign))
                 {
-                    ToLog("Got new CodeVersion = " + CodeVersion.VersionNum + " HASH:" + GetHexFromArr(CodeVersion.Hash).substr(0, 20));
+                    ToLog("Got new CodeVersion = " + CodeVersion.VersionNum + " HASH:" + GetHexFromArr(CodeVersion.Hash).substr(0, 20), 2);
                     
                     if(CodeVersion.VersionNum > CODE_VERSION.VersionNum && CodeVersion.VersionNum > START_LOAD_CODE.StartLoadVersionNum)
                     {
@@ -106,7 +106,7 @@ function Init(Engine)
     {
         var Delta = Date.now() - Child.LastGetCode;
         if(Delta < 40000)
-            return ;
+            return;
         
         Child.LastGetCode = Date.now();
         
@@ -115,7 +115,7 @@ function Init(Engine)
             Child.LastGetCode = Date.now();
             
             if(!Data || !Data.result || Data.VersionNum !== VersionNum || !START_LOAD_CODE.StartLoad)
-                return ;
+                return;
             
             if(!SERVER.DownloadingNewCodeToPath(Child, Data.file, VersionNum))
                 Engine.AddCheckErrCount(Child, 1, "Error check hash of version code");

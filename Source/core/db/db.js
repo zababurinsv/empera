@@ -115,9 +115,9 @@ const LibDBFile = new module.exports();
 function CheckStartOneProcess(Name)
 {
     if(global.UpdateMode)
-        return ;
+        return;
     if(global.READ_ONLY_DB || DBMapCheckProcess[Name])
-        return ;
+        return;
     DBMapCheckProcess[Name] = 1;
     
     var path = GetDataPath("DB/" + Name);

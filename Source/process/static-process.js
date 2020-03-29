@@ -80,12 +80,12 @@ setInterval(function ()
 
 function GETBLOCKHEADER100(msg)
 {
-    return ;
+    return;
     
     var Data = msg.Data;
     var BlockNum = Data.BlockNum;
     if(BlockNum % 100 !== 0)
-        return ;
+        return;
     var EndNum100 = BlockNum / 100;
     
     var LoadHash100 = Data.Hash;
@@ -93,7 +93,7 @@ function GETBLOCKHEADER100(msg)
     
     var Count = Data.Count;
     if(!Count || Count < 0 || !EndNum100)
-        return ;
+        return;
     
     if(Count > COUNT_BLOCKS_FOR_LOAD)
         Count = COUNT_BLOCKS_FOR_LOAD;
@@ -148,7 +148,7 @@ function GETBLOCKHEADER(msg)
         var IsSum = Data.IsSum;
         var Count = Data.Count;
         if(!Count || Count < 0 || BlockNum < 0)
-            return ;
+            return;
         
         if(Count > COUNT_BLOCKS_FOR_LOAD)
             Count = COUNT_BLOCKS_FOR_LOAD;
@@ -177,7 +177,7 @@ function GETBLOCK(msg)
     
     if(msg.Context.SendCount)
     {
-        return ;
+        return;
     }
     
     var BufWrite;
@@ -219,10 +219,10 @@ function GETREST(msg)
 {
     var Data = msg.Data;
     if(!Data.BlockNum)
-        return ;
+        return;
     if(IsZeroArr(Data.AccHash))
     {
-        return ;
+        return;
     }
     
     var BlockNumRest = Data.BlockNum;
@@ -230,7 +230,7 @@ function GETREST(msg)
     var BlockDB = SERVER.ReadBlockHeaderDB(BlockNumRest);
     if(!BlockDB)
     {
-        return ;
+        return;
     }
     
     var RestIndexArr = GetCurrentRestArr();
@@ -294,7 +294,7 @@ function GETSMART(msg)
 {
     var Data = msg.Data;
     if(!Data.Count)
-        return ;
+        return;
     
     var BufLength = 1000;
     var SizeForSend = 200 * 1024;

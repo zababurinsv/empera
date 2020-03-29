@@ -167,7 +167,7 @@ function InitClass(Engine)
     Engine.CheckLoadBody = function (Block)
     {
         if(!Block)
-            return ;
+            return;
         
         if(NeedLoadBodyFromDB(Block))
         {

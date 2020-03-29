@@ -120,7 +120,7 @@ module.exports.Init = Init;
 function Init(Engine)
 {
     if(!global.TEST_CONNECTOR)
-        return ;
+        return;
     Engine.SendGetNodesReq = function (Child)
     {
     };

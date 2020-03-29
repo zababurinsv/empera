@@ -514,15 +514,17 @@
             {
                 if(JinnStat)
                 {
-                    var LoadedH=(JinnStat.Header2-JinnStat.Header1)/2;
+                    var LoadedH=JinnStat.Header2-JinnStat.Header1;
                     var LoadedB=JinnStat.Block2-JinnStat.Block1;
-                    var Loaded=LoadedH+LoadedB;
-                    //var DeltaNeedLoad=MaxNum-Data.BlockNumDB-Loaded;
+                    if(LoadedB>0)//was loaded headers
+                    {
+                        LoadedH=MaxNum-Data.BlockNumDB;
+                    }
 
-                    Percent=100*(Data.BlockNumDB+Loaded)/MaxNum;
+                    var Loaded=(LoadedH+LoadedB)/2;
+                    Percent=100*(Data.BlockNumDB+Loaded*0.95)/MaxNum;
                     if(Percent>=100)
                         Percent=99.99;
-                    //StrMode = "(H:"+JinnStat.Header1+" B:"+JinnStat.Block1+")";
                     StrMode = "(H:"+(JinnStat.Header2-JinnStat.Header1)+" B:"+(JinnStat.Block2-JinnStat.Block1)+")";
                 }
                 else
@@ -541,7 +543,7 @@
                 StrMode = " " + Percent + "% "+StrMode;
             }
 
-            if(!JinnStat || Percent>LastLoadPercent || Date.now()-LastLoadPercentTime>10*1000)
+            if(!JinnStat || Percent>LastLoadPercent || Date.now()-LastLoadPercentTime>12*1000)
             {
                 SetMainStatus("<DIV align='center' style='color:red'><big><B>Waiting for synchronization " + StrMode + "</B></big></DIV>");
                 LastLoadPercent = Percent;
@@ -1541,7 +1543,7 @@
                                 <TEXTAREA id="idDevService" rows="15" cols="70"> </TEXTAREA><BR>
                             </td>
                             <td style="width: 200px">
-                                <INPUT type="button" class="bt btdoit" style="background-color: #f4f542;color:black;font-weight: bold;height: 50px;width: 100px;" onclick="RunDevelopService()" value="RUN">
+                                <INPUT type="button" class="bt btdoit" style="background-color: #f4f542;color:black;font-weight: bold;height: 50px;width: 100px;" onclick="RunDevelopService()" value="SEND">
                             </td>
                         </tr>
                     </table>

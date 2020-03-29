@@ -133,19 +133,19 @@ setInterval(function run2()
 
 if(global.ADDRLIST_MODE)
 {
-    return ;
+    return;
 }
 
 
 function DoGetNodes()
 {
     if(!SERVER)
-        return ;
+        return;
     if(!GrayConnect() && SERVER.CanSend < 2)
-        return ;
+        return;
     
     if(!SERVER.NodesArrUnSort || !SERVER.NodesArrUnSort.length)
-        return ;
+        return;
     
     var Num = glCurNumFindArr % SERVER.NodesArrUnSort.length;
     var Node = SERVER.NodesArrUnSort[Num];
@@ -154,13 +154,13 @@ function DoGetNodes()
     glCurNumFindArr++;
     
     if(Node.Delete)
-        return ;
+        return;
     
     if(SERVER.NodeInBan(Node))
-        return ;
+        return;
     
     if(SERVER.BusyLevel && Node.BlockProcessCount <= SERVER.BusyLevel)
-        return ;
+        return;
     
     if(GetSocketStatus(Node.Socket) === 100)
     {
@@ -172,14 +172,14 @@ function DoGetNodes()
 function DoConnectToNodes(Arr,Mode)
 {
     if(!SERVER || global.TEST_JINN)
-        return ;
+        return;
     if(!GrayConnect() && SERVER.CanSend < 2)
     {
-        return ;
+        return;
     }
     
     if(GrayConnect() && SERVER.ActualNodes.size > GetGrayServerConnections())
-        return ;
+        return;
     
     if(Arr.length)
     {
@@ -266,7 +266,7 @@ function RunServer()
     if(global.TEST_JINN)
     {
         StartJinn();
-        return ;
+        return;
     }
     
     DoStartFindList();

@@ -40,7 +40,7 @@ var WALLET_KEY_EXIT = "WALLET_EXIT";
 window.onstorage = function (event)
 {
     if(!window.sessionStorage)
-        return ;
+        return;
     
     var Value = event.newValue;
     switch(event.key)
@@ -179,7 +179,7 @@ else
             else
             {
                 if(IsLocalClient())
-                    return ;
+                    return;
             }
         }
         
@@ -781,7 +781,7 @@ function ViewGrid(APIName,Params,nameid,bClear,TotalSum)
     GetData(APIName, Params, function (Data)
     {
         if(!Data || !Data.result)
-            return ;
+            return;
         SetGridData(Data.arr, nameid, TotalSum, bClear);
     });
 }
@@ -820,7 +820,7 @@ function ViewCurrent(Def,flag,This)
         }
         
         if(!ResVisible)
-            return ;
+            return;
     }
     
     var item = $(Def.NumName);
@@ -888,7 +888,7 @@ function ViewEnd(Def,MaxNum,bInitOnly)
 {
     document.getElementById(Def.NumName).value = MaxNum - MaxNum % GetCountViewRows(Def);
     if(bInitOnly)
-        return ;
+        return;
     ViewCurrent(Def);
 }
 function GetCountViewRows(Def)
@@ -903,7 +903,7 @@ function DoStableScroll()
 {
     var item = $("idStableScroll");
     if(!item)
-        return ;
+        return;
     
     var scrollHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight,
     document.documentElement.offsetHeight, document.body.clientHeight, document.documentElement.clientHeight);
@@ -934,7 +934,7 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
     if(!htmlTable)
     {
         console.log("Error id_name: " + id_name);
-        return ;
+        return;
     }
     
     if(bclear)
@@ -1267,7 +1267,7 @@ function SetCheckPoint(BlockNum)
     if(!BlockNum)
     {
         SetError("Not set BlockNum");
-        return ;
+        return;
     }
     GetData("SetCheckPoint", BlockNum, function (Data)
     {
@@ -1302,7 +1302,7 @@ function SetVisibleBlock(name,bSet)
 {
     var Item = document.getElementById(name);
     if(!Item)
-        return ;
+        return;
     
     if(bSet && typeof bSet === "string")
         Item.style.display = bSet;
@@ -1615,7 +1615,7 @@ function FillSelect(IdName,arr,bNatural)
     
     var strJSON = JSON.stringify(arr);
     if(Select.strJSON === strJSON)
-        return ;
+        return;
     Select.strJSON = strJSON;
     
     var Value = Select.value;
@@ -1711,7 +1711,7 @@ function AddToInvoiceList(Item)
 function OpenDapps(Num,AccountNum,HTMLLength)
 {
     if(!Num || !HTMLLength)
-        return ;
+        return;
     
     var StrPath = '/dapp/' + Num;
     if(IsLocalClient())
@@ -1733,7 +1733,7 @@ function OpenWindow(StrPath,bCheck)
         {
             SetError("Error link!");
             ToLog("Error path:\n" + StrPath);
-            return ;
+            return;
         }
     }
     
@@ -1768,7 +1768,7 @@ function SendTransaction(Body,TR,SumPow,F)
         if(F)
             F(1, TR, Body);
         
-        return ;
+        return;
     }
     
     if(window.SetStatus)
@@ -1789,7 +1789,7 @@ function SendTransaction(Body,TR,SumPow,F)
         {
             if(window.SetError)
                 SetError("Not sending. Cannt calc pow.");
-            return ;
+            return;
         }
         
         GetData("SendTransactionHex", {Hex:StrHex}, function (Data)
@@ -1849,13 +1849,13 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
             {
                 if(window.SetError)
                     SetError("Error account number: " + Account);
-                return ;
+                return;
             }
             if(Data.Item.Value.Smart !== FromSmartNum)
             {
                 if(window.SetError)
                     SetError("Error - The account:" + Account + " does not belong to a smart contract:" + FromSmartNum + " (have: " + Data.Item.Value.Smart + ")");
-                return ;
+                return;
             }
             
             GetData("GetAccount", FromNum, function (Data)
@@ -1864,13 +1864,13 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
                 {
                     if(window.SetError)
                         SetError("Error account number: " + FromNum);
-                    return ;
+                    return;
                 }
                 if(Data.Item.Num != FromNum)
                 {
                     if(window.SetError)
                         SetError("Error read from account number: " + FromNum + " read data=" + Data.Item.Num);
-                    return ;
+                    return;
                 }
                 
                 var OperationID;

@@ -142,7 +142,7 @@ function CreatePOWVersion3(Block,bHashPump)
     Block.LastNonce += RunCount;
     
     if(bHashPump)
-        return ;
+        return;
     var Ret = 0;
     var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
     if(Block.BlockNum >= BLOCKNUM_HASH_FIX)

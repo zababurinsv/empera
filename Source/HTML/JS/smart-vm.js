@@ -920,7 +920,7 @@ function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,M
             if(bPublic)
                 throw "Smart does not exist. Error id number: " + SmartOrSmartID;
             else
-                return ;
+                return;
         }
     }
     
@@ -935,7 +935,7 @@ function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,M
         if(bPublic)
             throw "Method '" + MethodName + "' not found in smart contract";
         else
-            return ;
+            return;
     }
     
     var context = {};
