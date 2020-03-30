@@ -224,7 +224,8 @@ function InitClass(Engine)
                 Context.WasReturn = Child;
                 Context.WasCountReceive = CountReceive;
                 var BlockNum2 = JINN_EXTERN.GetCurrentBlockNumByTime() - DeltaForSend;
-                Engine.SendMaxHashToOneNode(BlockNum2, Child, Context, IterationNum - 1, 1);
+                
+                Engine.SendMaxHashNextTime(BlockNum2, Child, Context, IterationNum - 1, 1);
             }
         });
     };
@@ -376,6 +377,13 @@ function InitClass(Engine)
             {
                 break;
             }
+            
+            if(global.MAX_SHA3_VALUE && global.glKeccakCount > global.MAX_SHA3_VALUE)
+            {
+                var Delta = Math.abs(Status.LoadN - BlockNum);
+                if(Delta > 8)
+                    break;
+            }
         }
         
         return ArrRet;
@@ -417,6 +425,13 @@ function InitClass(Engine)
                 if(SizeRet >= JINN_CONST.MAX_PACKET_SIZE_RET_DATA)
                 {
                     break;
+                }
+                
+                if(global.MAX_SHA3_VALUE && global.glKeccakCount > global.MAX_SHA3_VALUE)
+                {
+                    var Delta = Math.abs(Status.LoadN - BlockNum);
+                    if(Delta > 8)
+                        break;
                 }
             }
         }

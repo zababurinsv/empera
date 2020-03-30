@@ -246,3 +246,4 @@ function GetCopyObj(Obj)
         Obj2[key] = Obj[key];
     return Obj2;
 }
+

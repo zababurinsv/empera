@@ -84,6 +84,10 @@ global.ToLogOne = function (Str,Str2)
     }
 }
 
+global.ToLogInfo = function (Str)
+{
+    ToLogFile(file_name_info, Str);
+}
 global.ToInfo = function (Str)
 {
     ToLogFile(file_name_info, Str, 1);

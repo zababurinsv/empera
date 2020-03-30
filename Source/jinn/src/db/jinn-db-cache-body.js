@@ -6,7 +6,6 @@
  * Telegram:  https://t.me/progr76
 */
 
-
 'use strict';
 
 class CDBBodyCache extends global.CDBChain
@@ -14,7 +13,7 @@ class CDBBodyCache extends global.CDBChain
     constructor(EngineID, FCalcBlockHash)
     {
         super(EngineID, FCalcBlockHash)
-        this.CacheBody = new CCache(JINN_CONST.MAX_CACHE_DB_LENGTH, function (a,b)
+        this.CacheBody = new CCache(JINN_CONST.MAX_CACHE_BODY_LENGTH, function (a,b)
         {
             return CompareArr(a.CacheIndex, b.CacheIndex);
         })
@@ -23,9 +22,9 @@ class CDBBodyCache extends global.CDBChain
     {
         super.DoNode()
         
-        this.CacheBody.SetMaxSizeCache(JINN_CONST.MAX_CACHE_DB_LENGTH)
+        this.CacheBody.SetMaxSizeCache(JINN_CONST.MAX_CACHE_BODY_LENGTH)
         
-        var Size = this.CacheBody.CheckDBBlockCacheSize(JINN_CONST.CACHE_BODY_LENGTH);
+        var Size = this.CacheBody.CheckDBBlockCacheSize(JINN_CONST.MAX_CACHE_BODY_LENGTH);
         JINN_STAT.MAXCacheBodyLength = Math.max(JINN_STAT.MAXCacheBodyLength, Size)
     }
     Clear()

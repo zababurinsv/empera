@@ -12,7 +12,7 @@ module.exports.Init = Init;
 const os = require('os');
 
 global.MAX_BUSY_VALUE = 120;
-global.MAX_SHA3_VALUE = 70000;
+global.MAX_SHA3_VALUE = 1000;
 
 var GlSumUser;
 var GlSumSys;
@@ -188,8 +188,8 @@ function Init(Engine)
         var JinnStat = Engine;
         var StrMode = " H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + "";
         Str += StrMode;
-        if(global.DEV_MODE === 123)
-            console.log("" + MaxCurNumTime + ":" + Str);
+        if(global.DEV_MODE || global.TEST_CONNECTOR)
+            ToLogInfo("" + MaxCurNumTime + ":" + Str);
         ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.BlockTx);
         for(var key in JINN_STAT.Methods)
         {
@@ -209,12 +209,6 @@ function Init(Engine)
             }
         }
         
-        ADD_TO_STAT("SHA3", global.glKeccakCount);
-        
-        ADD_TO_STAT("MAX:Busy", GetBusy());
-        
-        global.glKeccakCount = 0;
-        
         global.TERA_STAT = {};
         CopyObjKeys(global.TERA_STAT, JINN_STAT);
         JINN_STAT.Clear();
@@ -222,49 +216,22 @@ function Init(Engine)
     
     Engine.CanUploadData = function (CurBlockNum,LoadBlockNum)
     {
-        if(global.glKeccakCount < global.MAX_SHA3_VALUE && GetBusy() <= global.MAX_BUSY_VALUE)
-        {
-            return 1;
-        }
-        
-        var Delta = Math.abs(CurBlockNum - LoadBlockNum);
-        if(Delta < 8)
-            return 1;
-        
-        return 0;
+        return 1;
     };
 }
 
-const RUN_TIME_PERIOD = 50;
-global.ArrIdle = [];
+var LastTimeIdle = 0;
 function OnTimeIdleBusy()
 {
-    if(ArrIdle.length >= 6)
-        ArrIdle.length = 6;
-    ArrIdle.unshift(Date.now());
-}
-setInterval(OnTimeIdleBusy, RUN_TIME_PERIOD);
-
-function GetBusy()
-{
-    var Time = Date.now();
-    var Count = 0;
-    var SumTime = 0;
-    for(var i = 0; i < ArrIdle.length; i++)
-    {
-        var Delta = Time - ArrIdle[i];
-        if(i === 0 && Delta < RUN_TIME_PERIOD)
-        {
-        }
-        else
-        {
-            SumTime += Time - ArrIdle[i];
-            Count++;
-        }
-        Time = ArrIdle[i];
-        if(Count >= 5)
-            break;
-    }
+    LastTimeIdle = Date.now();
+    ADD_TO_STAT("SHA3", global.glKeccakCount);
+    global.glKeccakCount = 0;
     
-    return SumTime / 2.5;
+    setTimeout(OnTimeIdleBusy, global.MAXHASH_TIMING);
+}
+OnTimeIdleBusy();
+
+function GetBusyTime()
+{
+    return (Date.now() - LastTimeIdle) * (100 / global.MAXHASH_TIMING);
 }

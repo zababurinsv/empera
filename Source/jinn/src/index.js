@@ -74,6 +74,8 @@ global.JINN_WARNING = 3;
 global.DEBUG_ID = 0;
 
 
+
+
 global.JINN_EXTERN = {GetCurrentBlockNumByTime:function ()
     {
         return 0;

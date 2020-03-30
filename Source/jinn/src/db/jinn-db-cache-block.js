@@ -13,33 +13,34 @@
 **/
 'use strict';
 
+const HEADER_FORMAT_CACHE = {VersionDB:"byte", BlockNum:"uint", PrevPosition:"uint", TreeHash:"hash", MinerHash:"hash", PrevSumPow:"uint",
+    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", Hash:"hash", PowHash:"hash", SumHash:"hash",
+    Power:"uint", SumPow:"uint", DataHash:"hash", };
+const WORKSTRUCT_CACHE = {};
+
 class CDBBlockCache extends global.CDBBodyCache
 {
     constructor(EngineID, FCalcBlockHash)
     {
         super(EngineID, FCalcBlockHash)
         
-        this.CacheBlock = new CCache(JINN_CONST.MAX_CACHE_DB_LENGTH)
-        this.CacheMainIndex = new CCache(100000)
-        this.CacheChainIndex = new CCache(100000)
+        this.CacheBlock = new CCache(100000)
+        this.CacheMainIndex = new CCache(1000000)
+        this.CacheChainIndex = new CCache(1000000)
     }
     
     DoNode()
     {
         super.DoNode()
-        
-        this.CacheBlock.SetMaxSizeCache(JINN_CONST.MAX_CACHE_DB_LENGTH)
-        
-        var Size = this.CacheBlock.CheckDBBlockCacheSize(JINN_CONST.CACHE_DB_LENGTH);
-        JINN_STAT.MAXCacheBlockLength = Math.max(JINN_STAT.MAXCacheBlockLength, Size)
     }
     WriteBlock(Block)
     {
         var Result = super.WriteBlock(Block);
         if(Result)
         {
-            Block.CacheIndex = Block.Position
-            this.CacheBlock.AddItemToCache(Block)
+            var Block2 = BlockToArr(Block);
+            Block2.CacheIndex = Block.Position
+            this.CacheBlock.AddItemToCache(Block2)
         }
         return Result;
     }
@@ -48,14 +49,17 @@ class CDBBlockCache extends global.CDBBodyCache
         var Find = this.CacheBlock.FindItemInCache(Position);
         if(Find)
         {
-            return Find;
+            var Block = ArrToBlock(Find);
+            Block.Position = Position
+            return Block;
         }
         
         var Block = super.ReadBlock(Position, bRaw);
         if(Block)
         {
-            Block.CacheIndex = Block.Position
-            this.CacheBlock.AddItemToCache(Block)
+            var Block2 = BlockToArr(Block);
+            Block2.CacheIndex = Block.Position
+            this.CacheBlock.AddItemToCache(Block2)
         }
         
         return Block;
@@ -140,3 +144,25 @@ class CDBBlockCache extends global.CDBBodyCache
 };
 
 global.CDBBlockCache = CDBBlockCache;
+
+
+function BlockToArr(Block)
+{
+    var Arr = SerializeLib.GetBufferFromObject(Block, HEADER_FORMAT_CACHE, WORKSTRUCT_CACHE, 1);
+    return Arr;
+}
+function ArrToBlock(Arr)
+{
+    var Block = SerializeLib.GetObjectFromBuffer(Arr, HEADER_FORMAT_CACHE, WORKSTRUCT_CACHE);
+    
+    if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
+    {
+        Block.LinkSumHash = ZERO_ARR_32;
+    }
+    else
+    {
+        Block.LinkSumHash = Block.PrevSumHash;
+    }
+    
+    return Block;
+}
