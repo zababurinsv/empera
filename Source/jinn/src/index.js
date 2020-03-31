@@ -42,8 +42,6 @@ if(typeof window !== "object")
     require("./db/cache.js");
     require("./db/jinn-db-cache-body.js");
     require("./db/jinn-db-cache-block.js");
-    require("./db/jinn-db-cache-hot.js");
-    require("./db/jinn-db-cache-jump.js");
     
     require("./db/jinn-db-result.js");
     require("./jinn-block-db.js");
@@ -140,6 +138,7 @@ JINN_CONST.CACHE_DB_LENGTH = 50;
 JINN_CONST.MAX_CACHE_DB_LENGTH = 120;
 
 JINN_CONST.HOT_CACHE_DELTA = 10;
+global.JINN_MAX_MEMORY_USE = 500;
 
 
 JINN_CONST.MAX_ITEMS_FOR_LOAD = 100;

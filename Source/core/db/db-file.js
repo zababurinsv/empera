@@ -51,7 +51,7 @@ module.exports = class CDBFile extends require("./db")
         return this.ReadInner(Position, DataSize);
     }
     
-    WriteInner(BufWrite, Position, CheckSize)
+    WriteInner(BufWrite, Position, CheckSize, MaxSize)
     {
         
         var FI = this.OpenDBFile(this.FileName, 1);
@@ -63,10 +63,15 @@ module.exports = class CDBFile extends require("./db")
             Position = FI.size
         }
         
-        var written = fs.writeSync(FI.fd, BufWrite, 0, BufWrite.length, Position);
-        if(written !== BufWrite.length)
+        if(!MaxSize)
+            MaxSize = BufWrite.length
+        else
+            MaxSize = Math.min(BufWrite.length, MaxSize)
+        
+        var written = fs.writeSync(FI.fd, BufWrite, 0, MaxSize, Position);
+        if(written !== MaxSize)
         {
-            ToLog("DB-FILE: Error write to file:" + written + " <> " + BufWrite.length)
+            ToLog("DB-FILE: Error write to file:" + written + " <> " + MaxSize)
             return false;
         }
         

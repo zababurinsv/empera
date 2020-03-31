@@ -141,6 +141,8 @@ function Init(Engine)
             ToLog("******************************** SET NEW BlockNumDB = " + BlockNum + "/" + SERVER.BlockNumDB);
             SERVER.TruncateBlockDB(BlockNum);
         }
+        
+        global.glKeccakCount = 0;
     };
     
     SERVER.GetLinkHash = ErrorAPICall;

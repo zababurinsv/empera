@@ -53,18 +53,28 @@ function InitClass(Engine)
         if(!LoadHash)
             return undefined;
         
-        var Arr = Engine.DB.GetChainArrByNum(LoadNum);
-        for(var i = 0; i < Arr.length; i++)
-        {
-            var Block = Arr[i];
-            if(Block && Block.SumHash && IsEqArr(Block.SumHash, LoadHash))
-                return Engine.CalcBlockHeader(Block);
-            
-            if(Block && Block.Hash && IsEqArr(Block.Hash, LoadHash))
-                return Engine.CalcBlockHeader(Block);
-        }
+        var Block = Engine.DB.FindBlockByHash(LoadNum, LoadHash);
+        return Engine.CalcBlockHeader(Block);
+    };
+    
+    Engine.GetBodyByHash2 = function (BlockNum,Hash)
+    {
+        if(IsZeroArr(Hash))
+            return undefined;
         
-        return undefined;
+        var Block = Engine.DB.FindBlockByHash(BlockNum, Hash);
+        if(!Block)
+            return undefined;
+        
+        if(NeedLoadBodyFromDB(Block))
+            Engine.DB.LoadBlockTx(Block);
+        
+        if(Block.TxData && Block.TxData.length)
+            return Engine.CalcBlockBody(Block);
+        else
+        {
+            return {PrevSumHash:Block.PrevSumHash, BlockNum:Block.BlockNum};
+        }
     };
     
     Engine.GetBodyByHash = function (BlockNum,Hash)
@@ -340,7 +350,6 @@ function InitClass(Engine)
             {
                 if(BlockHead.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT)
                 {
-                    
                     if(BlockHead.BlockNum === JINN_CONST.BLOCK_GENESIS_COUNT)
                     {
                         

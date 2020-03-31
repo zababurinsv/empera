@@ -188,9 +188,10 @@ function Init(Engine)
         var JinnStat = Engine;
         var StrMode = " H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + "";
         Str += StrMode;
-        if(global.DEV_MODE || global.TEST_CONNECTOR)
+        if(global.DEV_MODE === 123)
             ToLogInfo("" + MaxCurNumTime + ":" + Str);
         ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.BlockTx);
+        ADD_TO_STAT("MAX:SUM_POW", Engine.MaxSumPow % 1000);
         for(var key in JINN_STAT.Methods)
         {
             var StatNum = Math.floor(JINN_STAT.Methods[key]);
@@ -216,7 +217,16 @@ function Init(Engine)
     
     Engine.CanUploadData = function (CurBlockNum,LoadBlockNum)
     {
-        return 1;
+        if(global.glKeccakCount < global.MAX_SHA3_VALUE && GetBusyTime() <= global.MAX_BUSY_VALUE)
+        {
+            return 1;
+        }
+        
+        var Delta = Math.abs(CurBlockNum - LoadBlockNum);
+        if(Delta < 8)
+            return 1;
+        
+        return 0;
     };
 }
 

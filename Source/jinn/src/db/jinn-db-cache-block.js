@@ -13,9 +13,16 @@
 **/
 'use strict';
 
-const HEADER_FORMAT_CACHE = {VersionDB:"byte", BlockNum:"uint", PrevPosition:"uint", TreeHash:"hash", MinerHash:"hash", PrevSumPow:"uint",
-    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", Hash:"hash", PowHash:"hash", SumHash:"hash",
-    Power:"uint", SumPow:"uint", DataHash:"hash", };
+var HEADER_FORMAT_CACHE = CopyObjKeys(global.DB_HEADER_FORMAT);
+
+
+HEADER_FORMAT_CACHE.Hash = "hash";
+HEADER_FORMAT_CACHE.PowHash = "hash";
+HEADER_FORMAT_CACHE.SumHash = "hash";
+HEADER_FORMAT_CACHE.Power = "uint";
+HEADER_FORMAT_CACHE.SumPow = "uint";
+HEADER_FORMAT_CACHE.DataHash = "hash";
+
 const WORKSTRUCT_CACHE = {};
 
 class CDBBlockCache extends global.CDBBodyCache
@@ -24,9 +31,9 @@ class CDBBlockCache extends global.CDBBodyCache
     {
         super(EngineID, FCalcBlockHash)
         
-        this.CacheBlock = new CCache(100000)
-        this.CacheMainIndex = new CCache(1000000)
-        this.CacheChainIndex = new CCache(1000000)
+        this.CacheBlock = new CCache(50000)
+        this.CacheMainIndex = new CCache(500000)
+        this.CacheChainIndex = new CCache(500000)
     }
     
     DoNode()
@@ -38,31 +45,40 @@ class CDBBlockCache extends global.CDBBodyCache
         var Result = super.WriteBlock(Block);
         if(Result)
         {
-            var Block2 = BlockToArr(Block);
-            Block2.CacheIndex = Block.Position
-            this.CacheBlock.AddItemToCache(Block2)
+            this.AddBlockToCache(Block)
         }
         return Result;
     }
     ReadBlock(Position, bRaw)
     {
+        var Block;
         var Find = this.CacheBlock.FindItemInCache(Position);
         if(Find)
         {
             var Block = ArrToBlock(Find);
             Block.Position = Position
-            return Block;
         }
-        
-        var Block = super.ReadBlock(Position, bRaw);
-        if(Block)
+        else
         {
-            var Block2 = BlockToArr(Block);
-            Block2.CacheIndex = Block.Position
-            this.CacheBlock.AddItemToCache(Block2)
+            Block = super.ReadBlock(Position, bRaw)
+            if(!Block)
+                return undefined;
+            
+            this.AddBlockToCache(Block)
         }
         
+        if(!bRaw && (!Block.Hash || IsZeroArr(Block.Hash)))
+        {
+            this.CalcBlockHash(Block)
+            this.AddBlockToCache(Block)
+        }
         return Block;
+    }
+    AddBlockToCache(Block)
+    {
+        var Block2 = BlockToArr(Block);
+        Block2.CacheIndex = Block.Position
+        this.CacheBlock.AddItemToCache(Block2)
     }
     ReadIndex(BlockNum)
     {
@@ -153,6 +169,7 @@ function BlockToArr(Block)
 }
 function ArrToBlock(Arr)
 {
+    
     var Block = SerializeLib.GetObjectFromBuffer(Arr, HEADER_FORMAT_CACHE, WORKSTRUCT_CACHE);
     
     if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)

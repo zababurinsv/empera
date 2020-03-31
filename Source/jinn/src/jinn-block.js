@@ -47,12 +47,12 @@ function InitClass(Engine)
             var LastBlockNum = Engine.GetMaxNumBlockDB();
             if(LastBlockNum >= 0)
             {
-                if(!Engine.GetBlockHeaderDB(LastBlockNum, 1))
+                if(!Engine.GetBlockHeaderDB(LastBlockNum))
                 {
                     ToLog("--------------1 Error DB in Block=" + LastBlockNum);
                     return 0;
                 }
-                if(!Engine.GetBlockHeaderDB(LastBlockNum - 1, 1))
+                if(!Engine.GetBlockHeaderDB(LastBlockNum - 1))
                 {
                     ToLog("--------------2 Error DB in Block=" + (LastBlockNum - 1));
                     return 0;
@@ -203,13 +203,13 @@ function InitClass(Engine)
     
     Engine.CalcBlockHeader = function (Block)
     {
-        if(Block.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT && IsZeroArr(Block.LinkSumHash))
-            ToLog("ZeroArr LinkSumHash on BlockNum=" + Block.BlockNum);
-        if(Block.BlockNum > 0 && IsZeroArr(Block.SumHash))
-            ToLog("ZeroArr SumHash on BlockNum=" + Block.BlockNum);
+        if(!Block)
+            return undefined;
         
-        var Data = {BlockNum:Block.BlockNum, LinkSumHash:Block.LinkSumHash, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash, PrevSumPow:Block.PrevSumPow,
-            PrevSumHash:Block.PrevSumHash, Hash:Block.Hash, Size:4 * 32 + 6, };
+        if(Block.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT && IsZeroArr(Block.PrevSumHash))
+            ToLog("ZeroArr PrevSumHash on BlockNum=" + Block.BlockNum);
+        var Data = {BlockNum:Block.BlockNum, LinkSumHash:Block.PrevSumHash, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash, PrevSumPow:Block.PrevSumPow,
+            PrevSumHash:Block.PrevSumHash, Size:4 * 32 + 2 * 6, };
         
         return Data;
     };
@@ -286,7 +286,7 @@ function InitClass(Engine)
             return 0;
         else
         {
-            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1, 1);
+            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
             if(PrevBlock)
                 return PrevBlock.SumPow;
             else
@@ -301,7 +301,7 @@ function InitClass(Engine)
             return ZERO_ARR_32;
         else
         {
-            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1, 1);
+            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
             if(PrevBlock)
                 return PrevBlock.SumHash;
             else
@@ -317,7 +317,7 @@ function InitClass(Engine)
         else
         {
             var PrevNum = BlockNum - JINN_CONST.LINK_HASH_DELTA;
-            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1, 1);
+            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
             if(PrevBlock)
                 return PrevBlock.SumHash;
             else
@@ -325,10 +325,6 @@ function InitClass(Engine)
         }
     };
     
-    Engine.GetPrevSumHashFromDB = function (Block)
-    {
-        return Engine.GetPrevSumHashFromDBNum(Block.BlockNum);
-    };
     Engine.GetLinkDataFromDB = function (Block)
     {
         return Engine.GetLinkDataFromDBNum(Block.BlockNum);

@@ -333,7 +333,7 @@ function InitClass(Engine)
         setTimeout(function ()
         {
             Engine.SendMaxHashToOneNode(BlockNum, Child, Context, IterationNum, bNext);
-        }, global.MAXHASH_TIMING);
+        }, global.MAXHASH_TIMING / 2);
     };
     Engine.StartSendLiderArrNextTime = function (BlockNum)
     {
@@ -348,6 +348,22 @@ function InitClass(Engine)
         return 1;
     };
     
+    Engine.CheckPacketSize = function (BlockNum,BlockNumLoad,Size)
+    {
+        if(Size >= JINN_CONST.MAX_PACKET_SIZE_RET_DATA)
+        {
+            return 0;
+        }
+        
+        if(global.MAX_SHA3_VALUE && global.glKeccakCount > global.MAX_SHA3_VALUE)
+        {
+            var Delta = Math.abs(BlockNumLoad - BlockNum);
+            if(Delta > 8)
+                return 0;
+        }
+        return 1;
+    };
+    
     Engine.GetHeaderArrForChild = function (BlockNum,Status,Child)
     {
         var Size = 0;
@@ -355,7 +371,30 @@ function InitClass(Engine)
         var LoadNum = Status.LoadN;
         var LoadHash = Status.LoadH;
         
-        var CacheHeaderMap = Child.GetCache("CacheHeaderMap", BlockNum);
+        var MainItem = Engine.DB.ReadMainIndex(LoadNum);
+        var TestHeader = Engine.DB.FindBlockByHash(LoadNum, LoadHash);
+        if(TestHeader && MainItem && TestHeader.Position === MainItem.MainPosition)
+        {
+            for(var n = 0; n < Status.CountItem; n++)
+            {
+                var Num = LoadNum - n;
+                if(Num <= 0)
+                    break;
+                
+                var BlockHeader = Engine.DB.ReadBlockMain(Num, 1);
+                if(!BlockHeader || BlockHeader.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT - 1)
+                    break;
+                
+                BlockHeader = Engine.CalcBlockHeader(BlockHeader);
+                
+                ArrRet.push(BlockHeader);
+                Size += BlockHeader.Size;
+                
+                if(!Engine.CheckPacketSize(BlockNum, LoadNum, Size))
+                    break;
+            }
+            return ArrRet;
+        }
         
         for(var n = 0; n < Status.CountItem; n++)
         {
@@ -366,24 +405,11 @@ function InitClass(Engine)
                 break;
             LoadNum = BlockHeader.BlockNum - 1;
             LoadHash = BlockHeader.PrevSumHash;
-            var StrHash = GetHexFromArr(BlockHeader.Hash);
-            if(glUseBHCache && CacheHeaderMap[StrHash])
-                continue;
-            CacheHeaderMap[StrHash] = 1;
             
             ArrRet.push(BlockHeader);
             Size += BlockHeader.Size;
-            if(Size >= JINN_CONST.MAX_PACKET_SIZE_RET_DATA)
-            {
+            if(!Engine.CheckPacketSize(BlockNum, LoadNum, Size))
                 break;
-            }
-            
-            if(global.MAX_SHA3_VALUE && global.glKeccakCount > global.MAX_SHA3_VALUE)
-            {
-                var Delta = Math.abs(Status.LoadN - BlockNum);
-                if(Delta > 8)
-                    break;
-            }
         }
         
         return ArrRet;
@@ -391,18 +417,55 @@ function InitClass(Engine)
     
     Engine.GetBodyArrForChild = function (BlockNum,Status,Child)
     {
-        
         var CacheBodyMap = Child.GetCache("CacheBodyMap", BlockNum);
-        
-        var SizeRet = 0;
+        var Size = 0;
         var ArrRet = [];
+        var LoadNum = Status.LoadN;
+        var LoadHash = Status.LoadH;
+        
+        var MainItem = Engine.DB.ReadMainIndex(LoadNum);
+        var TestHeader = Engine.DB.FindBlockByHash(LoadNum, LoadHash);
+        if(TestHeader && MainItem && TestHeader.Position === MainItem.MainPosition)
+        {
+            for(var n = 0; n < Status.CountItem; n++)
+            {
+                var Num = LoadNum - n;
+                if(Num <= 0)
+                    break;
+                var Block = Engine.DB.ReadBlockMain(Num, 1);
+                if(!Block)
+                    break;
+                if(IsZeroArr(Block.TreeHash))
+                    continue;
+                
+                if(NeedLoadBodyFromDB(Block))
+                    Engine.DB.LoadBlockTx(Block);
+                
+                if(Block.TxData && Block.TxData.length)
+                {
+                    Block = Engine.CalcBlockBody(Block);
+                    var StrHash = GetHexFromArr(Block.TreeHash);
+                    if(!glUseBHCache || !CacheBodyMap[StrHash])
+                    {
+                        Size = Engine.AddBodyBlockToArr(Child, ArrRet, Block, Size);
+                        CacheBodyMap[StrHash] = 1;
+                    }
+                    
+                    if(!Engine.CheckPacketSize(BlockNum, LoadNum, Size))
+                        break;
+                }
+            }
+            
+            return ArrRet;
+        }
+        
         var BlockBody = Engine.GetBodyByHash(Status.LoadN, Status.LoadH);
         if(BlockBody)
         {
             var StrHash = GetHexFromArr(BlockBody.TreeHash);
             if(!glUseBHCache || BlockBody.TxData && !CacheBodyMap[StrHash])
             {
-                SizeRet = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, SizeRet);
+                Size = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, Size);
                 CacheBodyMap[StrHash] = 1;
             }
             
@@ -419,20 +482,11 @@ function InitClass(Engine)
                 StrHash = GetHexFromArr(BlockBody.TreeHash);
                 if(!glUseBHCache || !CacheBodyMap[StrHash])
                 {
-                    SizeRet = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, SizeRet);
+                    Size = Engine.AddBodyBlockToArr(Child, ArrRet, BlockBody, Size);
                     CacheBodyMap[StrHash] = 1;
                 }
-                if(SizeRet >= JINN_CONST.MAX_PACKET_SIZE_RET_DATA)
-                {
+                if(!Engine.CheckPacketSize(BlockNum, Status.LoadN, Size))
                     break;
-                }
-                
-                if(global.MAX_SHA3_VALUE && global.glKeccakCount > global.MAX_SHA3_VALUE)
-                {
-                    var Delta = Math.abs(Status.LoadN - BlockNum);
-                    if(Delta > 8)
-                        break;
-                }
             }
         }
         

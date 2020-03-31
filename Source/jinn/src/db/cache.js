@@ -91,6 +91,16 @@ class CCache
         this.VersionDBTree.insert(Block)
         
         this.CheckDBBlockCacheSize(this.MaxCacheSize)
+        
+        if(typeof process === "object" && this.CacheDBTree.size % 10 === 0 && (this.CacheDBTree.size > 1000 || this.CacheDBTree.size > this.MaxCacheSize / 4))
+        {
+            var Mem = process.memoryUsage().heapTotal / 1024 / 1024;
+            if(Mem > global.JINN_MAX_MEMORY_USE)
+            {
+                var NewSize = Math.floor(this.CacheDBTree.size / 2);
+                this.CheckDBBlockCacheSize(NewSize)
+            }
+        }
     }
     
     FindItemInCache(CacheIndex)

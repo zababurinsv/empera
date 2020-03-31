@@ -53,18 +53,18 @@ function InitClass(Engine)
         return Block;
     };
     
-    Engine.GetBlockHeaderDB = function (BlockNum,bRawMode,bMustHave)
+    Engine.GetBlockHeaderDB = function (BlockNum,bMustHave)
     {
-        var Block = Engine.GetBlockHeaderDBNext(BlockNum, bRawMode);
+        var Block = Engine.GetBlockHeaderDBNext(BlockNum);
         if(!Block && bMustHave)
         {
             ToLogTrace("Error find block in DB on Num = " + BlockNum);
-            var Block2 = Engine.GetBlockHeaderDBNext(BlockNum, bRawMode);
+            var Block2 = Engine.GetBlockHeaderDBNext(BlockNum);
         }
         return Block;
     };
     
-    Engine.GetBlockHeaderDBNext = function (BlockNum,bRawMode)
+    Engine.GetBlockHeaderDBNext = function (BlockNum)
     {
         var MaxNum = Engine.GetMaxNumBlockDB();
         if(BlockNum > MaxNum)
@@ -74,6 +74,8 @@ function InitClass(Engine)
         return Block;
     };
     
+    Engine.MaxSumPow = 0;
+    Engine.MaxSumPowNum = 0;
     Engine.SaveToDB = function (Block)
     {
         Block.BlockNum = Math.floor(Block.BlockNum);
@@ -81,9 +83,26 @@ function InitClass(Engine)
         var MaxNumDB = Engine.GetMaxNumBlockDB();
         var Delta = MaxCurNumTime - MaxNumDB;
         JINN_STAT.DBDelta = Math.max(JINN_STAT.DBDelta, Delta);
+        if(MaxNumDB < Engine.MaxSumPowNum)
+            Engine.MaxSumPow = 0;
+        
+        if(Block.BlockNum >= Engine.MaxSumPowNum)
+        {
+            if(global.TEST_DB_BLOCK && Engine.MaxSumPow > Block.SumPow)
+            {
+                Engine.ToLog("Error SumPow was " + Engine.MaxSumPow + ":" + Engine.MaxSumPowNum + " new set " + Block.SumPow + ":" + Block.BlockNum,
+                2);
+                return 0;
+            }
+            
+            Engine.MaxSumPowNum = Block.BlockNum;
+            Engine.MaxSumPow = Block.SumPow;
+        }
+        JINN_STAT.MaxSumPow = Engine.MaxSumPow;
         if(global.TEST_DB_BLOCK)
         {
             var BlockNum = Block.BlockNum;
+            
             if(BlockNum > MaxNumDB + 1)
             {
                 ToLogTrace("Error SaveToDB Block.BlockNum>MaxNumDB+1   BlockNum=" + BlockNum + "  MaxNumDB=" + MaxNumDB);
@@ -106,11 +125,11 @@ function InitClass(Engine)
             
             if(BlockNum > 0)
             {
-                var PrevBlock = Engine.GetBlockHeaderDB(BlockNum - 1, 1, 1);
+                var PrevBlock = Engine.GetBlockHeaderDB(BlockNum - 1, 1);
                 if(!PrevBlock)
                 {
                     ToLogTrace("SaveToDB: Error PrevBlock on Block=" + BlockNum);
-                    var PrevBlock2 = Engine.GetBlockHeaderDB(BlockNum - 1, 1, 1);
+                    var PrevBlock2 = Engine.GetBlockHeaderDB(BlockNum - 1, 1);
                     return 0;
                 }
                 
@@ -205,6 +224,8 @@ function InitClass(Engine)
         
         Engine.InitDB();
         Engine.InitBlockList();
+        
+        Engine.GenesisArr = [];
         
         Engine.WriteGenesisDB();
         for(var i = 0; i < Engine.LevelArr.length; i++)

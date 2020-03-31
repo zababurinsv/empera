@@ -15,7 +15,7 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Filter"});
 
-global.MAXHASH_TIMING = 30;
+global.MAXHASH_TIMING = 20;
 
 //Engine context
 var MapM = {};

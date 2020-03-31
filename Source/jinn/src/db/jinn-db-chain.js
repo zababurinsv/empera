@@ -15,8 +15,10 @@ var BWRITE_MODE = (global.PROCESS_NAME === "MAIN");
 const JINN_VERSION_DB = 3;
 const NUM_FOR_MAX_BLOCK =  - 1;
 
-const HEADER_FORMAT = {VersionDB:"byte", BlockNum:"uint", PrevPosition:"uint", TreeHash:"hash", MinerHash:"hash", PrevSumPow:"uint",
-    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", };
+
+global.DB_HEADER_FORMAT = {VersionDB:"byte", BlockNum:"uint", PrevPosition:"uint", TreeHash:"hash", MinerHash:"hash", PrevSumPow:"uint",
+    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", PrevBlockPosition:"uint", Reserv:"arr9",
+};
 
 const BODY_FORMAT = {PrevPosition:"uint", PrevCountTx:"uint16", TxArr:[{body:"tr"}], TxIndex:["uint16"]};
 
@@ -29,7 +31,7 @@ class CDBChain
         
         this.DBMainIndex = new CDBRow("main-index", {MainPosition:"uint"}, !BWRITE_MODE, "BlockNum", 10, EngineID)
         this.DBChainIndex = new CDBRow("chain-index", {LastPosition:"uint"}, !BWRITE_MODE, "BlockNum", 10, EngineID)
-        this.DBBlockHeader = new CDBItem("block-data", HEADER_FORMAT, !BWRITE_MODE, EngineID, 1)
+        this.DBBlockHeader = new CDBItem("block-data", DB_HEADER_FORMAT, !BWRITE_MODE, EngineID, 1)
         this.DBBlockBody = new CDBItem("block-data", BODY_FORMAT, !BWRITE_MODE, EngineID)
     }
     DoNode()
@@ -108,7 +110,8 @@ class CDBChain
             return undefined;
         }
         
-        this.CalcBlockHash(Block)
+        if(!bRaw)
+            this.CalcBlockHash(Block)
         
         return Block;
     }
@@ -141,14 +144,14 @@ class CDBChain
         return 1;
     }
     
-    ReadBlockMain(BlockNum)
+    ReadBlockMain(BlockNum, bRaw)
     {
         var Item = this.ReadMainIndex(BlockNum);
         if(!Item)
             return undefined;
         else
         {
-            var Block = this.ReadBlock(Item.MainPosition);
+            var Block = this.ReadBlock(Item.MainPosition, bRaw);
             return Block;
         }
     }
@@ -375,6 +378,10 @@ class CDBChain
             {
                 return Block;
             }
+            if(IsEqArr(Hash, Block.TreeHash))
+            {
+                return Block;
+            }
             
             Position = Block.PrevPosition
         }
@@ -384,7 +391,23 @@ class CDBChain
         return undefined;
     }
     
-    GetPrevBlockDB(Block)
+    GetPrevBlockDB(Block, bRaw)
+    {
+        if(Block.PrevBlockPosition)
+        {
+            return this.ReadBlock(Block.PrevBlockPosition, bRaw);
+        }
+        
+        var PrevBlock = this.GetPrevBlockDBInner(Block);
+        if(PrevBlock)
+        {
+            Block.PrevBlockPosition = PrevBlock.Position
+            this.WriteBlock(Block)
+        }
+        return PrevBlock;
+    }
+    
+    GetPrevBlockDBInner(Block)
     {
         if(!Block.BlockNum)
             return undefined;
@@ -452,22 +475,12 @@ class CDBChain
         {
             if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
                 break;
-            if(IsEqArr(Block.SumHash, BlockHead.SumHash))
+            if(Block.BlockNum <= BlockHead.BlockNum)
                 break;
             
             if(!Block.Position)
             {
                 ToLogTrace("Error Block.Position on " + Block.BlockNum)
-                return 0;
-            }
-            if(!Block.Hash)
-            {
-                ToLogTrace("Error Hash")
-                return 0;
-            }
-            if(Block.Power === undefined)
-            {
-                ToLogTrace("Error Block.Power")
                 return 0;
             }
             ArrNum.push(Block.BlockNum)
@@ -478,7 +491,7 @@ class CDBChain
                     return 0;
             }
             
-            var PrevBlock = DB.GetPrevBlockDB(Block);
+            var PrevBlock = DB.GetPrevBlockDB(Block, 1);
             if(!PrevBlock)
             {
                 ToLog("Error PrevBlock on Block=" + Block.BlockNum + " BlockHead=" + BlockHead.BlockNum + " PrevSumHash=" + GetHexFromArr(Block.PrevSumHash),

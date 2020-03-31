@@ -55,7 +55,7 @@ class CDBFile
         return ReadUint32FromArr(BufForSize);
     }
     
-    WriteInner(BufWrite, Position, CheckSize)
+    WriteInner(BufWrite, Position, CheckSize, MaxSize)
     {
         var FI = this.OpenDBFile();
         if(Position === undefined)
@@ -65,12 +65,17 @@ class CDBFile
             Position = FI.size
         }
         
-        for(var i = 0; i < BufWrite.length; i++)
+        if(!MaxSize)
+            MaxSize = BufWrite.length
+        else
+            MaxSize = Math.min(BufWrite.length, MaxSize)
+        
+        for(var i = 0; i < MaxSize; i++)
             FI.buf[Position + i] = BufWrite[i]
         
         FI.size = FI.buf.length
         
-        if(CheckSize && FI.size !== Position + written)
+        if(CheckSize && FI.size !== Position + MaxSize)
         {
             ToLogTrace("Error FI.size = " + FI.size)
             return false;

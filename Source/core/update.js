@@ -36,6 +36,14 @@ function RunOnUpdate()
                     SERVER.RewriteAllTransactions();
                 }, 3000);
             }
+            if(CurNum < 1665)
+            {
+                setTimeout(function ()
+                {
+                    ToLog("UPD: START ClearDataBase");
+                    SERVER.ClearDataBase();
+                }, 3000);
+            }
         }
         else
             if(global.LOCAL_RUN)

@@ -33,11 +33,26 @@ class CDBItem extends global.CDBFile
         {
             ToLogTrace("Error SerializeLib")
         }
-        var Position = this.WriteUint32(BufWrite.length, Data.Position);
-        if(!Position)
-            return 0;
-        Data.Position = Position
-        if(this.WriteInner(BufWrite, Data.Position + 4, 0))
+        
+        var DataSize = BufWrite.length;
+        
+        if(Data.Position)
+        {
+            DataSize = this.ReadUint32(Data.Position)
+            if(DataSize !== BufWrite.length)
+            {
+                ToLogTrace("Error Read DataSize: " + DataSize + "/" + BufWrite.length)
+                return 0;
+            }
+        }
+        else
+        {
+            var Position = this.WriteUint32(DataSize, Data.Position);
+            if(!Position)
+                return 0;
+            Data.Position = Position
+        }
+        if(this.WriteInner(BufWrite, Data.Position + 4, 0, DataSize))
             return 1;
         else
             return 0;
@@ -54,6 +69,7 @@ class CDBItem extends global.CDBFile
         if(this.DataSize && this.DataSize !== DataSize)
         {
             ToLogTrace("Error Read DataSize: " + DataSize + "/" + this.DataSize)
+            return 0;
         }
         
         var BufRead = this.ReadInner(Position + 4, DataSize);

@@ -13,8 +13,8 @@
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Stat"});
 
 var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderLoad:"Head", BodyLoad:"Body", BodyTxSend:"BodyTx", DBDelta:"-DB-Delta",
-    ReadRowsDB:"Reads", WriteRowsDB:"Writes", TeraReadRowsDB:"-TReads", TeraWriteRowsDB:"-TWrites", LoadBody:"LoadB", LoadHeader:"LoadH",
-    SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBlockLength:"-CacheD", MAXCacheBodyLength:"CacheB", MAXCacheLength:"-Cache",
+    MaxSumPow:"-SumPow", ReadRowsDB:"Reads", WriteRowsDB:"Writes", TeraReadRowsDB:"-TReads", TeraWriteRowsDB:"-TWrites", LoadBody:"LoadB",
+    LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBodyLength:"-CacheB", MAXCacheLength:"-Cache",
     CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty",
     HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs", NoValidateTx:0, AddToTreeTx:"-AddTreeTx",
     WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", MaxReq0:"-MaxReq0", MaxReq1:"-MaxReq1", MaxReq2:"-MaxReq2",

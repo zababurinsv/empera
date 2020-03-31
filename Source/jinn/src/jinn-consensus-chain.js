@@ -178,9 +178,9 @@ function InitClass(Engine)
                     PrevBlock = CurBlock;
                 }
             }
-            if(Count > 100)
+            if(Count > 2000)
                 Engine.ToLog("[" + Count + "/" + nSet + "]" + "  jump: " + Delta + "   " + BlockSeed0.BlockNum + "->" + Block.BlockNum + "   " + GetHexFromArr(BlockSeed0.SumHash).substr(0,
-                8) + "->" + GetHexFromArr(Block.SumHash).substr(0, 8) + Engine.GetStrFromJumpArr(ArrJump) + "  " + StrSet);
+                8) + "->" + GetHexFromArr(Block.SumHash).substr(0, 8) + Engine.GetStrFromJumpArr(ArrJump) + "  " + StrSet, 3);
         }
         
         JINN_STAT.FindHeadCount += Count;
