@@ -123,25 +123,23 @@ function InitClass(Engine)
         if(Block.TTTransfer.length)
         {
             var ChildMap = Child.GetCacheByBlockNum(BlockNum);
-            var TreeTX = Engine.ListTreeTx[BlockNum];
+            var TreeTX = Engine.GetTreeTx(BlockNum);
+            var TreeAll = Engine.GetTreeTicketAll(BlockNum);
+            
             var Tx;
             for(var i = 0; i < Block.TTTransfer.length; i++)
             {
                 var HashTicket = Block.TTTransfer[i];
                 var KeyTicket = GetHexFromArr(HashTicket);
                 
-                var Tt = Engine.GetTicket(HashTicket, KeyTicket, BlockNum);
-                if(TreeTX)
-                    Tx = TreeTX.find(Tt);
-                else
-                    Tx = undefined;
+                var TItem = TreeAll.find({Hash:HashTicket});
+                if(TItem)
+                    Tx = TItem.Tx;
                 
                 if(!Tx || !CheckTx("" + Engine.ID + ". #2 ProcessBlockOnReceive", Tx, BlockNum, 1))
                 {
                     if(global.JINN_WARNING >= 4)
-                        Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Key=" + KeyTicket + " . DO INCREMENT, TT: " + ChildMap.ReceiveTicketMap[KeyTicket] + "/" + ChildMap.SendTicketMap[KeyTicket],
-                        3);
-                    Child.CahcheVersion++;
+                        Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Key=" + KeyTicket, 1);
                     return 0;
                 }
                 Block.TxData.push(Tx);
@@ -287,23 +285,6 @@ function InitClass(Engine)
             
             return Map;
         };
-        Child.GetCacheByBlockNum22 = function (BlockNum)
-        {
-            var Map = Child.CacheBlockNumAll[BlockNum];
-            if(!Map)
-            {
-                Map = {};
-                Map.ReceiveTicketMap = {};
-                Map.SendTicketMap = {};
-                
-                Map.SendHashMap = {};
-                Map.ReceiveHashArr = [];
-                Map.SendHashIndex = 0;
-                
-                Child.CacheBlockNumAll[BlockNum] = Map;
-            }
-            return Map;
-        };
         
         Child.GetCacheByBlockNum = function (BlockNum)
         {
@@ -430,27 +411,9 @@ function InitClass(Engine)
     Engine.NetCacheClear = function ()
     {
         var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
-        for(var key in Engine.ListTreeTx)
-        {
-            var BlockNum =  + key;
-            if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
-                continue;
-            
-            var Value = Engine.ListTreeTx[key];
-            Value.clear();
-            delete Engine.ListTreeTx[key];
-        }
-        if(Engine.ListTreeTicket)
-            for(var key in Engine.ListTreeTicket)
-            {
-                var BlockNum =  + key;
-                if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
-                    continue;
-                
-                var Value = Engine.ListTreeTicket[key];
-                Value.clear();
-                delete Engine.ListTreeTicket[key];
-            }
+        ClearListTree(Engine.ListTreeTx, LastBlockNum);
+        ClearListTree(Engine.ListTreeTicket, LastBlockNum);
+        ClearListTree(Engine.ListTreeTicketAll, LastBlockNum);
         for(var key in Engine.MaxLiderList)
         {
             var Store = Engine.MaxLiderList[key];
@@ -467,6 +430,21 @@ function InitClass(Engine)
                 Child.InvalidateOldChildCache();
                 Child.InvalidateOldBlockNumCache();
             }
+        }
+    };
+    function ClearListTree(Tree,LastBlockNum)
+    {
+        if(!Tree)
+            return;
+        for(var key in Tree)
+        {
+            var BlockNum =  + key;
+            if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
+                continue;
+            
+            var Value = Tree[key];
+            Value.clear();
+            delete Tree[key];
         }
     };
 }

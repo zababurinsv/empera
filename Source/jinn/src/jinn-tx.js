@@ -21,17 +21,24 @@ var glTxNum = 0;
 function InitClass(Engine)
 {
     Engine.ListTreeTx = {};
-    Engine.AddCurrentProcessingTx = function (BlockNum,TxArr)
+    
+    Engine.GetTreeTx = function (BlockNum)
     {
-        if(BlockNum < JINN_CONST.START_ADD_TX)
-            return;
-        
         var Tree = Engine.ListTreeTx[BlockNum];
         if(!Tree)
         {
             Tree = new RBTree(FSortTx);
             Engine.ListTreeTx[BlockNum] = Tree;
         }
+        return Tree;
+    };
+    Engine.AddCurrentProcessingTx = function (BlockNum,TxArr)
+    {
+        if(BlockNum < JINN_CONST.START_ADD_TX)
+            return;
+        
+        var Tree = Engine.GetTreeTx(BlockNum);
+        var TreeAll = Engine.GetTreeTicketAll(BlockNum);
         
         for(var t = 0; t < TxArr.length; t++)
         {
@@ -40,6 +47,9 @@ function InitClass(Engine)
                 continue;
             
             Engine.AddTxToTree(Tree, Tx);
+            
+            TreeAll.remove({Hash:Tx.HashTicket});
+            TreeAll.insert({Hash:Tx.HashTicket, Tx:Tx});
         }
     };
     

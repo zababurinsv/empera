@@ -20,8 +20,6 @@ function SendTestCoin(FRomId,ToID,Sum,Count,Mode)
     
     var Params = {"FromID":FRomId, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Тест", "Confirm":0};
     
-    var BlockNum = 2 + global.DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime();
-    
     var WasSend = 0;
     if(!Mode)
     {
@@ -40,81 +38,6 @@ function SendTestCoin(FRomId,ToID,Sum,Count,Mode)
         }
         return WasSend;
     }
-    else
-        if(Mode === 1)
-        {
-            var Res = WebApi2.Send(Params, 0, 0, 0, 1);
-            if(Res.result)
-            {
-                var TR = Res.Tx;
-                for(var i = 0; i < Count; i++)
-                {
-                    TR.Body = [i];
-                    TR.Sign = DApps.Accounts.GetSignTransferTx(TR, GetArrFromHex(Params.FromPrivKey));
-                    var Body = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER3, 140, {}, 1);
-                    Body = Body.slice(0, Body.len + 12);
-                    CreateHashBodyPOWInnerMinPower(TR, Body, undefined, 0);
-                    
-                    var Res2 = SERVER.AddTransaction({body:Body}, 1);
-                    if(Res2 ===  - 3)
-                        global.DELTA_FOR_TIME_TX++;
-                    if(Res2 === 1)
-                        WasSend++;
-                }
-            }
-            return WasSend;
-        }
-        else
-            if(Mode === 2)
-            {
-                for(var i = 0; i < Count; i++)
-                {
-                    var Body = Buffer.alloc(120);
-                    var TX = {body:Body};
-                    TX.body.writeUIntLE(BlockNum, TX.body.length - 12, 6);
-                    TX.body.writeUIntLE(i, TX.body.length - 6, 6);
-                    TX.body.writeUIntLE(i, 0, 6);
-                    
-                    var Res2 = SERVER.AddTransaction(TX, (i === 10));
-                    if(Res2 ===  - 3)
-                    {
-                        global.DELTA_FOR_TIME_TX++;
-                        break;
-                    }
-                    else
-                        if(Res2 === 1)
-                            WasSend++;
-                }
-                return WasSend;
-            }
-            else
-                if(Mode === 3)
-                {
-                    var Res = WebApi2.Send(Params, 0, 0, 0, 2);
-                    if(!Res.result)
-                        return Res;
-                    var Body0 = Buffer.concat([Buffer.from(Res.Body), Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]);
-                    for(var i = 0; i < Count; i++)
-                    {
-                        var Body = Buffer.from(Body0);
-                        Body.writeUIntLE(i, Body.length - 20, 6);
-                        
-                        CreateHashBodyPOWInnerMinPower({}, Body, undefined, 0);
-                        
-                        var Res2 = SERVER.AddTransaction({body:Body});
-                        if(Res2 ===  - 3)
-                        {
-                            global.DELTA_FOR_TIME_TX++;
-                            break;
-                        }
-                        else
-                            if(Res2 === 1)
-                            {
-                                WasSend++;
-                            }
-                    }
-                    return WasSend;
-                }
 }
 
 module.exports.Init = Init;
@@ -134,11 +57,13 @@ function Init(Engine)
     Engine.UseExtraSlot = 1;
 }
 
-if(0 && global.PROCESS_NAME === "MAIN")
+function InitTestSha3()
 {
-    
-    var oldsha3 = global.sha3;
     global.StatArrSha3 = [];
+    if(global.oldsha3)
+        return;
+    
+    global.oldsha3 = global.sha3;
     global.sha3 = function (data,num)
     {
         JINN_STAT.TestStat0++;
@@ -153,3 +78,7 @@ if(0 && global.PROCESS_NAME === "MAIN")
         return oldsha3(data);
     };
 }
+global.InitTestSha3 = InitTestSha3;
+
+if(0 && global.PROCESS_NAME === "MAIN")
+    InitTestSha3();

@@ -34,6 +34,7 @@ global.OLD_TICKET = "OLD";
 function InitClass(Engine)
 {
     Engine.ListTreeTicket = {};
+    Engine.ListTreeTicketAll = {};
     
     Engine.GetTreeTicket = function (BlockNum)
     {
@@ -45,11 +46,25 @@ function InitClass(Engine)
         }
         return Tree;
     };
+    Engine.GetTreeTicketAll = function (BlockNum)
+    {
+        var Tree = Engine.ListTreeTicketAll[BlockNum];
+        if(!Tree)
+        {
+            Tree = new RBTree(function (a,b)
+            {
+                return CompareArr(a.Hash, b.Hash);
+            });
+            Engine.ListTreeTicketAll[BlockNum] = Tree;
+        }
+        return Tree;
+    };
     
     Engine.InitTicket = function (BlockNum)
     {
         
         var Tree = Engine.GetTreeTicket(BlockNum);
+        var TreeAll = Engine.GetTreeTicketAll(BlockNum);
         var ArrTx = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
         
         for(var i = 0; i < ArrTx.length; i++)
@@ -58,6 +73,9 @@ function InitClass(Engine)
             CheckTx("InitTicket", Tx, BlockNum, 1);
             
             Engine.AddTxToTree(Tree, Tx);
+            
+            if(!TreeAll.find({Hash:Tx.HashTicket}))
+                TreeAll.insert({Hash:Tx.HashTicket, Tx:Tx});
         }
     };
     
@@ -117,6 +135,7 @@ function InitClass(Engine)
         Child.CheckCache(Data.Cache, BlockNum);
         var ChildMap = Child.GetCacheByBlockNum(BlockNum);
         var Tree = Engine.GetTreeTicket(BlockNum);
+        var TreeAll = Engine.GetTreeTicketAll(BlockNum);
         
         Engine.CheckSizeTXArray(Child, TxArr);
         
@@ -127,15 +146,17 @@ function InitClass(Engine)
             
             if(ChildMap.ReceiveTicketMap[Key] !== undefined)
                 continue;
-            
-            var Tt = Engine.GetTicket(HashTicket, Key, BlockNum);
-            if(Tree.find(Tt))
+            if(TreeAll.find({Hash:HashTicket}))
             {
                 ChildMap.ReceiveTicketMap[Key] = OLD_TICKET;
             }
             else
             {
+                TreeAll.insert({Hash:HashTicket});
+                
                 ChildMap.ReceiveTicketMap[Key] = FRESH_TIKET;
+                
+                var Tt = Engine.GetTicket(HashTicket, Key, BlockNum);
                 Engine.AddTxToTree(Tree, Tt);
             }
         }
@@ -149,7 +170,7 @@ function InitClass(Engine)
     Engine.GetTicket = function (HashTicket,Key,Num)
     {
         var Tx = {HashTicket:HashTicket, KEY:Key, num:Num};
-        Engine.FillTicket(Tx);
+        Engine.FillTicket(Tx, 9);
         return Tx;
     };
 }

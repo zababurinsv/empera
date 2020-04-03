@@ -264,6 +264,7 @@ function InitClass(Engine)
         for(var n = 0; n < TxArr.length; n++)
         {
             var Tx = TxArr[n];
+            
             CheckTx("=CalcTreeHash=", Tx, BlockNum, 1);
             
             var Hash = Tx.HASH;
@@ -406,14 +407,14 @@ function InitClass(Engine)
         }
     };
     
-    Engine.FillTicket = function (Tx)
+    Engine.FillTicket = function (Tx,Sha3Num)
     {
         var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         for(var i = 0; i < JINN_CONST.TX_TICKET_HASH_LENGTH; i++)
             FullHashTicket[i] = Tx.HashTicket[i];
         WriteUintToArrOnPos(FullHashTicket, Tx.num, JINN_CONST.TX_TICKET_HASH_LENGTH);
         
-        Tx.HashPow = sha3(FullHashTicket, 8);
+        Tx.HashPow = sha3(FullHashTicket, Sha3Num);
         Tx.TimePow = GetPowPower(Tx.HashPow);
     };
     
@@ -447,7 +448,7 @@ function InitClass(Engine)
         }
         else
         {
-            Engine.FillTicket(Tx);
+            Engine.FillTicket(Tx, 8);
         }
         
         return Tx;

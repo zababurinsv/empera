@@ -440,7 +440,9 @@ function InitClass(Engine)
                     continue;
                 
                 if(NeedLoadBodyFromDB(Block))
+                {
                     Engine.DB.LoadBlockTx(Block);
+                }
                 
                 if(Block.TxData && Block.TxData.length)
                 {
@@ -517,7 +519,13 @@ function InitClass(Engine)
         Arr.push(Item);
         Size += BlockBody.Size;
         
-        JINN_STAT.BodyTxSend += Engine.ProcessBlockOnSend(Child, Item);
+        var TxCount = Engine.ProcessBlockOnSend(Child, Item);
+        JINN_STAT.BodyTxSend += TxCount;
+        
+        if(TxCount)
+        {
+            Engine.DB.SetTxDataCache(BlockBody.TreeHash, BlockBody.TxData);
+        }
         
         return Size;
     };

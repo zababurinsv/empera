@@ -189,6 +189,21 @@ function InitClass(Engine)
     Engine.CanDoNextBodyLoad = function (NodeStatus,BlockHead,BlockSeed,Num)
     {
         var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead.BlockNum, BlockSeed);
+        while(BodyForLoad)
+        {
+            var TxData = Engine.DB.GetTxDataCache(BodyForLoad.TreeHash);
+            if(TxData)
+            {
+                BodyForLoad.TxData = TxData;
+                Engine.DB.WriteBlock(BodyForLoad);
+                
+                BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead.BlockNum, BlockSeed);
+                continue;
+            }
+            
+            break;
+        }
+        
         if(BodyForLoad)
         {
             if(BodyForLoad.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)

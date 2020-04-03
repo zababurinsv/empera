@@ -33,25 +33,63 @@ class CDBBodyCache extends global.CDBChain
         this.CacheBody.Clear()
     }
     
+    SetTxDataCache(TreeHash, TxData)
+    {
+        if(!IsZeroArr(TreeHash) && TxData)
+        {
+            this.CacheBody.AddItemToCache({CacheIndex:TreeHash, TxData:TxData})
+        }
+    }
+    
+    GetTxDataCache(TreeHash)
+    {
+        if(!TreeHash || IsZeroArr(TreeHash))
+            return undefined;
+        
+        var Find = this.CacheBody.FindItemInCache(TreeHash);
+        if(Find && Find.TxData)
+        {
+            return Find.TxData;
+        }
+        return undefined;
+    }
+    
+    WriteBlock(Block)
+    {
+        this.SetTxDataCache(Block.TreeHash, Block.TxData)
+        
+        return super.WriteBlock(Block);
+    }
+    
+    SetTxData(BlockNum, TreeHash, TxData)
+    {
+        if(IsZeroArr(TreeHash))
+            return 0;
+        
+        this.SetTxDataCache(TreeHash, TxData)
+        
+        var Result = super.SetTxData(BlockNum, TreeHash, TxData);
+        return Result;
+    }
+    
     LoadBlockTx(Block)
     {
-        if(!Block || !Block.TreeHash || !Block.TxPosition || IsZeroArr(Block.TreeHash))
-            return;
+        if(!Block || !Block.TreeHash || IsZeroArr(Block.TreeHash))
+            return 0;
         
         var Find = this.CacheBody.FindItemInCache(Block.TreeHash);
         if(Find && Find.TxData)
         {
             Block.TxData = Find.TxData
-            return;
+            return 1;
         }
         
-        super.LoadBlockTx(Block)
-        if(Block.TxData)
-        {
-            this.CacheBody.AddItemToCache({CacheIndex:Block.TreeHash, TxData:Block.TxData})
-        }
+        var Ret = super.LoadBlockTx(Block);
         
-        return Block;
+        if(Ret)
+            this.SetTxDataCache(Block.TreeHash, Block.TxData)
+        
+        return Ret;
     }
 };
 

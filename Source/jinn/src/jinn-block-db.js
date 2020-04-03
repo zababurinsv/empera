@@ -200,7 +200,9 @@ function InitClass(Engine)
         Engine.Block2 = 0;
         
         Engine.ListTreeTx = {};
+        
         Engine.ListTreeTicket = {};
+        Engine.ListTreeTicketAll = {};
         Engine.BAN_IP = {};
         
         if(Engine.DB)

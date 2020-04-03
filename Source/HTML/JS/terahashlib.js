@@ -595,7 +595,7 @@ function CalcHash3FromArray(ArrHashes,bOriginalSeq)
         if(Buf.length === 32)
             return Buf;
     
-    var Hash = sha3(Buf);
+    var Hash = sha3(Buf, 47);
     return Hash;
 }
 

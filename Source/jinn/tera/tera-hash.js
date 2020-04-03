@@ -23,9 +23,13 @@ function Init(Engine)
             Tx.HASH = HASH;
         else
             if(Tx.num >= global.BLOCKNUM_TICKET_ALGO)
-                Tx.HASH = sha3(body, 16);
+            {
+                Tx.HASH = sha3(body, 10);
+            }
             else
+            {
                 Tx.HASH = shaarr(body);
+            }
         
         Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
         Tx.KEY = GetHexFromArr(Tx.HashTicket);
@@ -38,7 +42,7 @@ function Init(Engine)
         else
         {
             
-            Engine.FillTicket(Tx);
+            Engine.FillTicket(Tx, 11);
         }
         
         return Tx;

@@ -34,6 +34,8 @@ class CCache
     
     SetMaxSizeCache(MaxCacheSize)
     {
+        if(typeof MaxCacheSize !== "number")
+            ToLogTrace("Error type of MaxCacheSize = " + MaxCacheSize)
         this.MaxCacheSize = MaxCacheSize
     }
     
