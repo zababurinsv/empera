@@ -35,10 +35,17 @@ var file_name_error_txPrev = GetDataPath("err-tx-prev.log");
 CheckSizeLogFile(file_name_error_tx, file_name_error_txPrev);
 
 
+global.MaxLogLevel = 0;
 global.ToLog = function (Str,Level)
 {
     if(Level === undefined)
         Level = 1;
+    Level =  + Level;
+    if(Level > global.MaxLogLevel)
+        global.MaxLogLevel = Level;
+    if(global.MaxLogLevel > 50)
+        ToLogTrace("global.MaxLogLevel=" + global.MaxLogLevel);
+    
     if(Level && Level > global.LOG_LEVEL)
         return;
     

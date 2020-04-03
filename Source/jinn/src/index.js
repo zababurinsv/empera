@@ -33,7 +33,6 @@ if(typeof window !== "object")
     require("./terabuf.js");
     require("./jinn-log.js");
     require("./jinn-stat.js");
-    require("./jinn-timing.js");
     if(global.EMULATE_FILE)
         require("./db/jinn-db-file.js");
     require("./db/jinn-db-row.js");
@@ -66,6 +65,8 @@ if(typeof window !== "object")
     require("./jinn-zip.js");
     require("./jinn-filter.js");
     require("./jinn-net-socket.js");
+    
+    require("./jinn-timing.js");
 }
 
 global.JINN_WARNING = 3;
@@ -91,8 +92,9 @@ global.JINN_CONST = {};
 
 JINN_CONST.UNIQUE_IP_MODE = 0;
 JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME = 30;
-JINN_CONST.CORRECT_TIME_VALUE = 50;
 JINN_CONST.CORRECT_TIME_TRIGGER = 1200;
+JINN_CONST.CORRECT_TIME_VALUE = 50;
+JINN_CONST.INFLATION_TIME_VALUE = 1;
 
 JINN_CONST.START_CHECK_BLOCKNUM = 20;
 JINN_CONST.START_ADD_TX = 20;

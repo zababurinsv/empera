@@ -414,16 +414,19 @@ function ViewConstant()
         document.getElementById("idConstant").value = JSON.stringify(CONFIG_DATA.CONSTANTS, "", 2);
     }
 }
-function SaveConstant(bRestart)
+function SaveConstant(bRestart,Data)
 {
-    try
+    if(!Data)
     {
-        var Data = JSON.parse(document.getElementById("idConstant").value);
-    }
-    catch(e)
-    {
-        SetError("Error JSON format setting constant");
-        return;
+        try
+        {
+            Data = JSON.parse(document.getElementById("idConstant").value);
+        }
+        catch(e)
+        {
+            SetError("Error JSON format setting constant");
+            return;
+        }
     }
     
     Data.DoRestartNode = bRestart;

@@ -97,6 +97,7 @@ function InitClass(Engine)
         var Delta = BlockSeed.BlockNum - Block.BlockNum;
         if(Delta > 0)
         {
+            
             var Level = Math.floor(Math.log10(Delta));
             
             if(!Arr[Level])
@@ -119,7 +120,7 @@ function InitClass(Engine)
             {
                 break;
             }
-            var BlockHead = Engine.DB.GetBlockJump(Block, "H");
+            var BlockHead = Engine.DB.GetBlockJump(Block, "H", 1);
             if(BlockHead)
             {
                 Engine.AddJumpToArr(BlockSeed0, BlockHead, ArrJump);
@@ -185,7 +186,8 @@ function InitClass(Engine)
         
         JINN_STAT.FindHeadCount += Count;
         JINN_STAT.MAXFindHeadCount = Math.max(JINN_STAT.MAXFindHeadCount, Count);
-        
+        if(Block && !Block.Hash)
+            Engine.CalcBlockData(Block);
         return Block;
     };
     
@@ -208,7 +210,8 @@ function InitClass(Engine)
             {
                 break;
             }
-            var FirstBlock = Engine.DB.GetBlockJump(Block, "B");
+            
+            var FirstBlock = Engine.DB.GetBlockJump(Block, "B", 1);
             if(FirstBlock)
             {
                 JumpBlock = Block;
@@ -219,7 +222,7 @@ function InitClass(Engine)
                 continue;
             }
             
-            Block = Engine.GetPrevBlock(Block);
+            Block = Engine.GetPrevBlock(Block, 1);
         }
         JINN_STAT.FindEmptyCount += Count;
         JINN_STAT.MAXFindEmptyCount = Math.max(JINN_STAT.MAXFindEmptyCount, Count);
@@ -240,6 +243,9 @@ function InitClass(Engine)
             Engine.DB.SetBlockJump(BlockSeed, BlockSet, "B");
         }
         
+        if(Block && !Block.Hash)
+            Engine.CalcBlockData(Block);
+        
         return Block;
     };
     
@@ -249,22 +255,19 @@ function InitClass(Engine)
         if(Block.BlockNum > Engine.GetMaxNumBlockDB())
             return 0;
         
-        if(Block.BlockNum > 0 && IsZeroArr(Block.SumHash))
-        {
-            ToLogTrace("IsExistBlockDB: IsZeroArr(Block.SumHash) on Block.BlockNum=" + Block.BlockNum);
+        var BlockDB = Engine.DB.ReadBlockMain(Block.BlockNum, 1);
+        if(!BlockDB)
             return 0;
-        }
+        if(!IsEqArr(Block.TreeHash, BlockDB.TreeHash))
+            return 0;
+        if(!IsEqArr(Block.MinerHash, BlockDB.MinerHash))
+            return 0;
+        if(!IsEqArr(Block.PrevSumHash, BlockDB.PrevSumHash))
+            return 0;
+        if(Block.PrevSumPow !== BlockDB.PrevSumPow)
+            return 0;
         
-        var BlockDB = Engine.GetBlockHeaderDB(Block.BlockNum);
-        if(BlockDB)
-        {
-            if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT && IsEqArr(BlockDB.Hash, Block.Hash))
-                return 1;
-            
-            if(IsEqArr(BlockDB.SumHash, Block.SumHash))
-                return 1;
-        }
-        return 0;
+        return 1;
     };
     
     Engine.GetMaxPowerBlockFromChain = function (BlockNum)

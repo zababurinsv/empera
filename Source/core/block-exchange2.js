@@ -24,7 +24,7 @@ module.exports = class CConsensus2 extends require("./block-loader")
     
     OnStartSecond()
     {
-        if(!this.CanSend || this.CanSend < 2)
+        if(!this.CanSend)
             return;
         
         PrepareStatEverySecond()

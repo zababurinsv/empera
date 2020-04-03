@@ -256,7 +256,8 @@ function InitClass(Engine)
         if(Data.CodeVersionNum < global.MIN_JINN_VERSION_NUM)
             return {result:0};
         
-        Engine.AddMaxHashToTimeStat(Child, Data);
+        if(Data.Arr.length)
+            Engine.AddMaxHashToTimeStat(Data.Arr[0], BlockNum);
         
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
             return {result:0};

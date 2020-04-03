@@ -135,6 +135,8 @@ function ReWriteDAppTransactions(Params,bSilent)
     }
     
     ToLog("Start num = " + StartNum, 2);
+    
+    DApps.Accounts.ErrSumHashCount = 0;
 }
 
 function TXPrepareLoadRest(BlockNum)
@@ -226,9 +228,31 @@ class CTXProcess
         this.TimeWait = 0
     }
     
+    CheckError()
+    {
+        if(DApps.Accounts.ErrSumHashCount >= 1000)
+        {
+            if(!this.WasSetRecalc)
+                setTimeout(function ()
+                {
+                    ToLog("#SUMHASH: Recalc Mercle Trr. Err count=" + DApps.Accounts.ErrSumHashCount)
+                    DApps.Accounts.CalcMerkleTree(1)
+                }, 2000)
+            this.WasSetRecalc = 1
+            return 0;
+        }
+        else
+        {
+            this.WasSetRecalc = 0
+            return 1;
+        }
+    }
     Run()
     {
         if(StopTxProcess)
+            return;
+        
+        if(!this.CheckError())
             return;
         
         var StartTime = Date.now();

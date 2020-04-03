@@ -357,8 +357,19 @@ table.keys
     top:40px;
     left:10px;
     text-align: left;
-    width:800px; /* ширина блока */
+    width:800px;
     color:blue;
+}
+#idServerLogHeader
+{
+    margin-top: -5px;
+    padding: 4px 0 4px 0;
+}
+#idLogLevel
+{
+    width: 788px;
+    margin-top: -5px;
+    float: right;
 }
 
 #idServerLog

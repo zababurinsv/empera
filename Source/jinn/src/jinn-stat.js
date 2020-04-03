@@ -19,7 +19,7 @@ var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderLoad:"Head", 
     HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs", NoValidateTx:0, AddToTreeTx:"-AddTreeTx",
     WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", MaxReq0:"-MaxReq0", MaxReq1:"-MaxReq1", MaxReq2:"-MaxReq2",
     MaxReq3:"-MaxReq3", MaxLoad:"-MaxLoad", MaxReqAll:"-MaxReqAll", MaxLoadAll:"-MaxLoadAll", MaxReqErr:"-MaxReqErr", WantHeader:"-WantHeader",
-    UploadHeader:"-UploadHeader", MaxIteration:"-MaxIteration", ErrProcessBlock:"-ErrProcessBlock", };
+    UploadHeader:"-UploadHeader", MaxIteration:"-MaxIteration", DeltaTime:"-DeltaTime", ErrProcessBlock:"-ErrProcessBlock", };
 if(typeof process === "object")
 {
 }

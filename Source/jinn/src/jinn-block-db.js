@@ -74,8 +74,6 @@ function InitClass(Engine)
         return Block;
     };
     
-    Engine.MaxSumPow = 0;
-    Engine.MaxSumPowNum = 0;
     Engine.SaveToDB = function (Block)
     {
         Block.BlockNum = Math.floor(Block.BlockNum);
@@ -85,20 +83,6 @@ function InitClass(Engine)
         JINN_STAT.DBDelta = Math.max(JINN_STAT.DBDelta, Delta);
         if(MaxNumDB < Engine.MaxSumPowNum)
             Engine.MaxSumPow = 0;
-        
-        if(Block.BlockNum >= Engine.MaxSumPowNum)
-        {
-            if(global.TEST_DB_BLOCK && Engine.MaxSumPow > Block.SumPow)
-            {
-                Engine.ToLog("Error SumPow was " + Engine.MaxSumPow + ":" + Engine.MaxSumPowNum + " new set " + Block.SumPow + ":" + Block.BlockNum,
-                2);
-                return 0;
-            }
-            
-            Engine.MaxSumPowNum = Block.BlockNum;
-            Engine.MaxSumPow = Block.SumPow;
-        }
-        JINN_STAT.MaxSumPow = Engine.MaxSumPow;
         if(global.TEST_DB_BLOCK)
         {
             var BlockNum = Block.BlockNum;

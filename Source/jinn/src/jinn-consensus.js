@@ -147,10 +147,10 @@ function InitClass(Engine)
         
         var Find = Engine.DB.FindBlockByHash(Block.BlockNum, Block.SumHash);
         if(!Find)
-            Engine.DB.WriteBlock(Block);
-        
-        if(!Find)
         {
+            Engine.DB.WriteBlock(Block);
+            Child.ToDebug("Save Header to DB");
+            
             //making a new entry in the array
             
             Engine.DoMaxStatus(Store);
@@ -170,11 +170,11 @@ function InitClass(Engine)
                 return;
         }
         
-        Child.ToDebug("Receive Body Block:" + Block.BlockNum);
-        
         //we calculate the sent data hash
         
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+        
+        Child.ToDebug("Receive Body Block:" + Block.BlockNum + "  TreeHash=" + Block.TreeHash);
         
         //making an entry in the array of loaded blocks
         
@@ -186,7 +186,7 @@ function InitClass(Engine)
         }
     };
     
-    Engine.CanDoNextBodyLoad = function (BlockHead,NodeStatus,BlockSeed,Num)
+    Engine.CanDoNextBodyLoad = function (NodeStatus,BlockHead,BlockSeed,Num)
     {
         var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead.BlockNum, BlockSeed);
         if(BodyForLoad)
@@ -200,7 +200,7 @@ function InitClass(Engine)
             NodeStatus.LoadTreeHash = BodyForLoad.TreeHash;
             NodeStatus.LoadBlockHead = BodyForLoad;
             
-            Engine.SetStatusInfoB(NodeStatus, Num);
+            Engine.SetStatusInfoB(NodeStatus, BodyForLoad, BlockSeed, Num);
             
             return 1;
         }
@@ -213,26 +213,25 @@ function InitClass(Engine)
         }
     };
     
-    Engine.SetStatusInfoH = function (NodeStatus,Num)
+    Engine.SetStatusInfoH = function (Store,Num)
     {
+        var NodeStatus = Store.LiderArr[Num];
+        
         if(Num !== 0)
             return;
         Engine.Header1 = NodeStatus.LoadNum;
-        if(NodeStatus.BlockSeed)
-            Engine.Header2 = NodeStatus.BlockSeed.BlockNum;
-        else
-            Engine.Header2 = NodeStatus.LoadNum;
+        Engine.Header2 = Store.BlockNum;
     };
-    Engine.SetStatusInfoB = function (NodeStatus,Num)
+    Engine.SetStatusInfoB = function (NodeStatus,LoadBlockHead,BlockSeed,Num)
     {
         if(Num !== 0)
             return;
         
-        if(NodeStatus.LoadBlockHead)
-            Engine.Block1 = NodeStatus.LoadBlockHead.BlockNum;
+        if(LoadBlockHead)
+            Engine.Block1 = LoadBlockHead.BlockNum;
         else
-            Engine.Block1 = NodeStatus.BlockSeed.BlockNum;
-        Engine.Block2 = NodeStatus.BlockSeed.BlockNum;
+            Engine.Block1 = BlockSeed.BlockNum;
+        Engine.Block2 = BlockSeed.BlockNum;
     };
     
     Engine.GetLiderArrAtNum = function (BlockNum)
@@ -257,16 +256,27 @@ function InitClass(Engine)
     
     Engine.CalcHashMaxLider = function (Data,BlockNum)
     {
+        if(Data.WasHashLider)
+            return;
+        Data.BlockNum = BlockNum;
+        Engine.CalcHashMaxLiderInner(Data, BlockNum);
+        Data.WasHashLider = 1;
+    };
+    
+    Engine.CalcHashMaxLiderInner = function (Data,BlockNum)
+    {
         
         if(!Data.DataHash || IsZeroArr(Data.DataHash))
             ToLogTrace("ZERO DataHash on block:" + BlockNum);
-        Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash), 10);
+        Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash).concat(GetArrFromValue(Data.BlockNum)), 10);
+        Data.PowHash = Data.Hash;
         Data.Power = GetPowPower(Data.Hash);
     };
     
     Engine.CompareMaxLider = function (Data1,Data2)
     {
-        if(Data1.Power < Data2.Power || (Data1.Power === Data2.Power && CompareArr(Data2.Hash, Data1.Hash) <= 0))
+        
+        if(Data1.Power < Data2.Power || (Data1.Power === Data2.Power && CompareArr(Data2.PowHash, Data1.PowHash) <= 0))
         {
             return  - 1;
         }
@@ -278,8 +288,10 @@ function InitClass(Engine)
     
     Engine.AddHashToMaxLider = function (Data,BlockNum,bFromCreateNew)
     {
-        if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
+        if(!bFromCreateNew && !CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
             return  - 1;
+        
+        Engine.AddMaxHashToTimeStat(Data, BlockNum);
         
         Engine.CalcHashMaxLider(Data, BlockNum);
         Engine.FillDataMaxLider(Data, BlockNum);
@@ -309,9 +321,9 @@ function InitClass(Engine)
         
         if(Ret >= 0)
         {
-            var NodeStatus2 = {Power:Data.Power, Hash:Data.Hash, PrevSumHash:Data.PrevSumHash, SumHash:Data.SumHash, LinkSumHash:Data.LinkSumHash,
-                TreeHash:Data.TreeHash, DataHash:Data.DataHash, MinerHash:Data.MinerHash, BlockSeed:undefined, LoadNum:0, LoadHash:[], LoadTreeNum:0,
-                LoadTreeHash:[], };
+            var NodeStatus2 = {Power:Data.Power, Hash:Data.Hash, PowHash:Data.PowHash, PrevSumHash:Data.PrevSumHash, SumHash:Data.SumHash,
+                LinkSumHash:Data.LinkSumHash, TreeHash:Data.TreeHash, DataHash:Data.DataHash, MinerHash:Data.MinerHash, LoadNum:0, LoadHash:[],
+                LoadTreeNum:0, LoadTreeHash:[], };
             LiderArr.splice(Ret, 0, NodeStatus2);
             if(LiderArr.length > JINN_CONST.MAX_LEADER_COUNT)
                 LiderArr.length = JINN_CONST.MAX_LEADER_COUNT;
@@ -329,17 +341,13 @@ function InitClass(Engine)
         for(var n = 0; n < Store.LiderArr.length; n++)
         {
             var NodeStatus = Store.LiderArr[n];
-            if(!NodeStatus.BlockSeed)
-            {
-                NodeStatus.BlockSeed = Engine.DB.FindBlockByHash(BlockNum, NodeStatus.Hash);
-            }
+            var BlockSeed = Engine.DB.FindBlockByHash(BlockNum, NodeStatus.Hash);
             
-            var BlockSeed = NodeStatus.BlockSeed;
             if(!BlockSeed)
             {
                 NodeStatus.LoadNum = BlockNum;
                 NodeStatus.LoadHash = NodeStatus.Hash;
-                Engine.SetStatusInfoH(NodeStatus, n);
+                Engine.SetStatusInfoH(Store, n);
                 continue;
             }
             
@@ -350,22 +358,10 @@ function InitClass(Engine)
             {
                 if(BlockHead.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT)
                 {
-                    if(BlockHead.BlockNum === JINN_CONST.BLOCK_GENESIS_COUNT)
-                    {
-                        
-                        var Block2 = Engine.GetBlockHeaderDB(BlockHead.BlockNum - 1);
-                        if(!Block2 || !IsEqArr(BlockHead.PrevSumHash, Block2.SumHash))
-                        {
-                            ToLogTrace("Error BlockHead at BlockNum = " + BlockHead.BlockNum);
-                            
-                            var BlockHead2 = Engine.CalcHead(BlockSeed);
-                            var PrevBlock2 = Engine.GetPrevBlock(BlockHead2);
-                        }
-                    }
                     NodeStatus.LoadNum = BlockHead.BlockNum - 1;
                     NodeStatus.LoadHash = BlockHead.PrevSumHash;
                     NodeStatus.LoadBlockHead = BlockHead;
-                    Engine.SetStatusInfoH(NodeStatus, n);
+                    Engine.SetStatusInfoH(Store, n);
                 }
             }
             else
@@ -378,7 +374,7 @@ function InitClass(Engine)
                 NodeStatus.LoadNum = 0;
                 NodeStatus.LoadHash = [];
                 NodeStatus.LoadBlockHead = undefined;
-                if(Engine.CanDoNextBodyLoad(BlockHead, NodeStatus, BlockSeed, n))
+                if(Engine.CanDoNextBodyLoad(NodeStatus, BlockHead, BlockSeed, n))
                     continue;
                 var Res = Engine.CheckAndSaveChainToDB(BlockHead, BlockSeed);
                 if(Res ==  - 1)
@@ -443,10 +439,9 @@ function InitClass(Engine)
         if(Res !== 1)
         {
             Engine.ToLog("Error on SaveChainToDB " + BlockHead.BlockNum + "-" + BlockSeed.BlockNum + " POW:" + BlockSeed.SumPow, 4);
-            if(Res ==  - 1)
             {
                 Engine.TruncateChain(BlockHead.BlockNum);
-                return  - 1;
+                return Res;
             }
         }
         

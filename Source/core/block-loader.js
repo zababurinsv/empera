@@ -231,7 +231,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             
             if(this.LoadHistoryMessage)
             {
-                ToLog("Start synchronization")
+                ToLog("Start synchronization", 2)
             }
         }
     }
@@ -251,7 +251,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             var DeltaTime = Date.now() - Context.StartTimeHistory;
             if(DeltaTime > Context.MaxTimeOut)
             {
-                ToLog("DETECT TIMEOUT LOAD")
+                ToLog("DETECT TIMEOUT LOAD", 2)
                 this.StartSyncBlockchain(undefined, undefined, undefined, Context.BlockNum)
                 return;
             }
@@ -285,7 +285,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             this.LoadHistoryMode = false
             if(this.LoadHistoryMessage)
-                ToLog("Finish synchronization")
+                ToLog("Finish synchronization", 2)
             
             if(!BlockDB)
                 return;
@@ -324,6 +324,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     Node.DeltaTimeAvg += 1000
                     Node.BlockProcessCount--
                     SELF.CheckBlockProcess(Node, "")
+                    
+                    if(GrayConnect())
+                        Context.BlockNum--
                 }
                 ToLog("RETBLOCKHEADER_FOWARD: " + BLOCKNUM + " from " + NodeName(Node) + " Result=" + Result + " ltime=" + Node.LastDeltaTime,
                 3)

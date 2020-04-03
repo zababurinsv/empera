@@ -35,6 +35,7 @@ function DoNode(Engine)
 function InitClass(Engine)
 {
     Engine.TickNum = 0;
+    Engine.MaxLiderTaskArr = [];
     
     Engine.DoBlockMining = function (CurBlockNum)
     {
@@ -105,9 +106,26 @@ function InitClass(Engine)
         }
         Engine.FindSaveMaxBlock(Block.BlockNum);
         
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING;
-        if(Block.BlockNum >= CurBlockNum)
+        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        if(Block.BlockNum < CurBlockNum - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING)
+            return;
+        if(Block.BlockNum <= CurBlockNum - JINN_CONST.STEP_MAXHASH)
             Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
+        else
+            Engine.MaxLiderTaskArr.push(Block);
+    };
+    Engine.DoMaxLiderTaskArr = function (BlockNum)
+    {
+        for(var i = 0; i < Engine.MaxLiderTaskArr.length; i++)
+        {
+            var Block = Engine.MaxLiderTaskArr[i];
+            if(Block.BlockNum <= BlockNum)
+            {
+                Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
+                Engine.MaxLiderTaskArr.splice(i, 1);
+                i--;
+            }
+        }
     };
     
     Engine.FindSaveMaxBlock = function (BlockNum)
@@ -363,7 +381,7 @@ function InitClass(Engine)
         }
         else
         {
-            Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash), 6);
+            Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash).concat(GetArrFromValue(Block.BlockNum)), 6);
         }
         
         Block.Power = GetPowPower(Block.Hash);

@@ -188,10 +188,10 @@ function Init(Engine)
         var JinnStat = Engine;
         var StrMode = " H:" + (JinnStat.Header2 - JinnStat.Header1) + " B:" + (JinnStat.Block2 - JinnStat.Block1) + "";
         Str += StrMode;
-        if(global.DEV_MODE === 123)
+        if(global.DEV_MODE === 12)
             ToLogInfo("" + MaxCurNumTime + ":" + Str);
         ADD_TO_STAT("MAX:TRANSACTION_COUNT", JINN_STAT.BlockTx);
-        ADD_TO_STAT("MAX:SUM_POW", Engine.MaxSumPow % 1000);
+        ADD_TO_STAT("MAX:SUM_POW", Engine.DB.MaxSumPow % 1000);
         for(var key in JINN_STAT.Methods)
         {
             var StatNum = Math.floor(JINN_STAT.Methods[key]);

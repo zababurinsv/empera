@@ -151,7 +151,7 @@ function InitClass(Engine)
             Length = ReadUint32FromArr(Arr, 4);
             if(PacketNum !== Child.ReceivePacketCount)
             {
-                Engine.ToError(Child, "Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, 0);
+                Engine.ToError(Child, "Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, 4);
                 Child.ReceivePacketCount = PacketNum;
             }
             
@@ -167,7 +167,7 @@ function InitClass(Engine)
         
         if(Length > JINN_CONST.MAX_PACKET_SIZE)
         {
-            Engine.ToError(Child, "Bad packet size = " + Length, 0);
+            Engine.ToError(Child, "Bad packet size = " + Length, 4);
             return;
         }
         

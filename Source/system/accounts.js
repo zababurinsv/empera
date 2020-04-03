@@ -208,6 +208,7 @@ class AccountApp extends require("./dapp")
         
         this.DBStateTX = new DBRow("accounts-tx", 6 + 6 + 88, "{BlockNum:uint, BlockNumMin:uint, Reserve: arr88}", bReadOnly)
         
+        this.ErrSumHashCount = 0
         if(global.READ_ONLY_DB)
             return;
         this.DBAccountsHash = new DBRow("accounts-hash3", 6 + 32 + 32 + 32 + 6 + 6 + 14, "{BlockNum:uint, AccHash:hash, SumHash:hash, SmartHash:hash, AccountMax:uint, SmartCount:uint, Reserve: arr14}",
@@ -248,11 +249,11 @@ class AccountApp extends require("./dapp")
         
         this.DBStateTX.Write({Num:0, BlockNum:0})
         
-        this.CalcMerkleTree(1)
-        
         var FileItem = HistoryDB.OpenDBFile(FILE_NAME_HISTORY, 1);
         fs.ftruncateSync(FileItem.fd, 0)
         FileItem.size = 0
+        
+        this.CalcMerkleTree(1)
         
         ToLog("MAX_NUM:" + this.DBState.GetMaxNum())
     }
@@ -1460,6 +1461,9 @@ class AccountApp extends require("./dapp")
     {
         this.DBState.MerkleHash = this.DBState.CalcMerkleTree(bForce)
         this.DBState.WasUpdate = 0
+        
+        if(bForce)
+            this.ErrSumHashCount = 0
     }
     GetAdviserByMiner(Map, Id)
     {
@@ -1516,7 +1520,12 @@ class AccountApp extends require("./dapp")
         var SumHash = CalcSumHash(PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
         if(!Block.NoChechkSumHash && !IsEqArr(Block.SumHash, SumHash))
         {
-            ToLog("Error sum hash on Block=" + Block.BlockNum, 2)
+            ToLogOne("#SUMHASH: Error sum hash on Block=" + Block.BlockNum)
+            this.ErrSumHashCount++
+        }
+        else
+        {
+            this.ErrSumHashCount = 0
         }
         for(var i = 0; i < DBChanges.BlockHistory.length; i++)
         {

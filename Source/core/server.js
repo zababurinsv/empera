@@ -529,7 +529,7 @@ module.exports = class CTransport extends require("./connect")
         if(CompareArr(Hash, Meta.Hash) !== 0)
         {
             if(global.WATCHDOG_DEV)
-                ToLog("TRANSPORT", 645, "Error hash Buffer", 2)
+                ToLog("TRANSPORT: Error hash Buffer", 2)
             return undefined;
         }
         

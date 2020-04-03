@@ -33,6 +33,9 @@ class CDBChain
         this.DBChainIndex = new CDBRow("chain-index", {LastPosition:"uint"}, !BWRITE_MODE, "BlockNum", 10, EngineID)
         this.DBBlockHeader = new CDBItem("block-data", DB_HEADER_FORMAT, !BWRITE_MODE, EngineID, 1)
         this.DBBlockBody = new CDBItem("block-data", BODY_FORMAT, !BWRITE_MODE, EngineID)
+        
+        this.MaxSumPow = 0
+        this.MaxSumPowNum = 0
     }
     DoNode()
     {
@@ -126,6 +129,28 @@ class CDBChain
             ToLogTrace("Error - empty TxData on Block=" + Block.BlockNum)
             return 0;
         }
+        if(Block.BlockNum > JINN_CONST.BLOCK_GENESIS_COUNT)
+        {
+            var PrevBlock = this.ReadBlockMain(Block.BlockNum - 1);
+            if(!PrevBlock)
+            {
+                ToLogTrace("Error read PrevBlock on block=" + Block.BlockNum)
+                return 0;
+            }
+            if(!IsEqArr(PrevBlock.SumHash, Block.PrevSumHash))
+            {
+                ToLog("Error PrevSumHash on block=" + Block.BlockNum, 3)
+                return 0;
+            }
+        }
+        
+        if(Block.BlockNum >= this.MaxSumPowNum)
+        {
+            
+            this.MaxSumPowNum = Block.BlockNum
+            this.MaxSumPow = Block.SumPow
+        }
+        JINN_STAT.MaxSumPow = this.MaxSumPow
         
         if(!this.WriteBlock(Block))
             return 0;
@@ -395,7 +420,9 @@ class CDBChain
     {
         if(Block.PrevBlockPosition)
         {
-            return this.ReadBlock(Block.PrevBlockPosition, bRaw);
+            var PrevBlock = this.ReadBlock(Block.PrevBlockPosition, bRaw);
+            if(IsEqArr(Block.PrevSumHash, PrevBlock.SumHash))
+                return PrevBlock;
         }
         
         var PrevBlock = this.GetPrevBlockDBInner(Block);
@@ -426,10 +453,7 @@ class CDBChain
     {
         
         if(!Block.BlockNum)
-            ToLogTrace("SetBlockJump: Block.BlockNum on BlockNum=" + BlockSeed.BlockNum)
-        
-        if(IsZeroArr(Block.SumHash))
-            ToLogTrace("SetBlockJump: IsZeroArr(Block.SumHash) on BlockNum=" + BlockSeed.BlockNum)
+            ToLogTrace("SetBlockJump: Block.BlockNum on BlockNum=" + BlockSeed.BlockNum + " to " + Block.BlockNum)
         
         if(!Block.Position)
         {
@@ -450,17 +474,17 @@ class CDBChain
         return 1;
     }
     
-    GetBlockJump(BlockSeed, StrType)
+    GetBlockJump(BlockSeed, StrType, bRaw)
     {
         
         var BlockPosJump = BlockSeed["HeadPos" + StrType];
         if(!BlockPosJump)
             return undefined;
         
-        var Block = this.ReadBlock(BlockPosJump);
+        var Block = this.ReadBlock(BlockPosJump, bRaw);
         return Block;
     }
-    SaveChainToDB(BlockHead, BlockSeed)
+    SaveChainToDBInner(BlockHead, BlockSeed)
     {
         var DB = this;
         
@@ -541,6 +565,40 @@ class CDBChain
         
         this.TruncateIndex(StartNum)
         this.TruncateMain(StartNum)
+    }
+    
+    SaveChainToDB(BlockHead, BlockSeed)
+    {
+        var StartHotBlockNum = BlockSeed.BlockNum - 10;
+        
+        var Arr = [];
+        while(BlockSeed.BlockNum >= StartHotBlockNum)
+        {
+            Arr.push(BlockSeed)
+            var PrevBlockSeed = this.GetPrevBlockDB(BlockSeed);
+            if(!PrevBlockSeed)
+            {
+                ToLog("#2 SaveChainToDB: Error PrevBlock on Block=" + BlockSeed.BlockNum)
+                return  - 1;
+            }
+            BlockSeed = PrevBlockSeed
+        }
+        var Result = 1;
+        if(BlockSeed.BlockNum > BlockHead.BlockNum)
+        {
+            Result = this.SaveChainToDBInner(BlockHead, BlockSeed)
+        }
+        
+        if(Result <= 0)
+            return Result;
+        for(var i = Arr.length - 1; i >= 0; i--)
+        {
+            if(!this.WriteBlockMain(Arr[i]))
+            {
+                return 0;
+            }
+        }
+        return Result;
     }
 };
 

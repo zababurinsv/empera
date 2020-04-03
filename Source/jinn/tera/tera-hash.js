@@ -103,7 +103,7 @@ function Init(Engine)
             Block.SumHash = CalcSumHash(Block.PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
         }
     };
-    Engine.CalcHashMaxLider = function (Data,BlockNum)
+    Engine.CalcHashMaxLiderInner = function (Data,BlockNum)
     {
         if(!Data.DataHash || IsZeroArr(Data.DataHash))
             ToLogTrace("ZERO DataHash on block:" + BlockNum);

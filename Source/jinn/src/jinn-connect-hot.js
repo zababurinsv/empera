@@ -212,7 +212,7 @@ function InitClass(Engine)
                 return Engine.SendConnectReq(Child);
             }
             
-            if(Engine.TickNum >= JINN_CONST.EXTRA_SLOTS_START_TIME)
+            if(Engine.TickNum >= JINN_CONST.EXTRA_SLOTS_START_TIME || global.DEV_MODE)
                 Engine.UseExtraSlot = 1;
             Engine.Send("CONNECTLEVEL", Child, {UseExtraSlot:Engine.UseExtraSlot}, function (Child,Data)
             {

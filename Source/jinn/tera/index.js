@@ -92,18 +92,6 @@ module.exports.Create = function (Node,MapName)
     
     require("./tera-tests").Init(Engine);
     
-    function StartRun(Engine,Period)
-    {
-        setInterval(function ()
-        {
-            SERVER.NodeSyncStatus = {Header1:Engine.Header1, Header2:Engine.Header2, Block1:Engine.Block1, Block2:Engine.Block2, };
-            
-            NextRunEngine(Engine);
-        }, Period);
-    };
-    
-    StartRun(Engine, 100);
-    
     if(Engine.AddNodeAddr)
     {
         if(global.LOCAL_RUN)
@@ -113,8 +101,28 @@ module.exports.Create = function (Node,MapName)
         else
         {
             Engine.AddNodeAddr({ip:"dappsgate.com", port:33000});
+            Engine.AddNodeAddr({ip:"212.80.217.95", port:33006});
         }
     }
     
+    global.Engine = Engine;
     global.JINN = Engine;
+    
+    StartRun();
+}
+
+const PERIOD_FOR_RUN = 100;
+
+function StartRun()
+{
+    SERVER.NodeSyncStatus = {Header1:Engine.Header1, Header2:Engine.Header2, Block1:Engine.Block1, Block2:Engine.Block2, };
+    NextRunEngine(global.JINN);
+    
+    var CurTimeNum =  + GetCurrentTime();
+    var StartTimeNum = Math.floor((CurTimeNum + PERIOD_FOR_RUN) / PERIOD_FOR_RUN) * PERIOD_FOR_RUN;
+    var DeltaForStart = StartTimeNum - CurTimeNum;
+    if(DeltaForStart < PERIOD_FOR_RUN / 10)
+        DeltaForStart += PERIOD_FOR_RUN;
+    
+    setTimeout(StartRun, DeltaForStart);
 }

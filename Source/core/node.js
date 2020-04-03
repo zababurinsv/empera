@@ -655,7 +655,7 @@ function NodeName(Node)
     if(!Node)
         return "";
     if(Node.Name)
-        return Node.Name + "(" + Node.BlockProcessCount + ")";
+        return Node.Name;
     
     if(LOCAL_RUN)
         return "" + Node.port;

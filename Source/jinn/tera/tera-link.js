@@ -138,6 +138,7 @@ function Init(Engine)
         
         if(BlockNum < SERVER.BlockNumDB)
         {
+            BlockNum--;
             ToLog("******************************** SET NEW BlockNumDB = " + BlockNum + "/" + SERVER.BlockNumDB);
             SERVER.TruncateBlockDB(BlockNum);
         }
@@ -156,9 +157,18 @@ function Init(Engine)
         global.DELTA_CURRENT_TIME = DeltaTime;
         SAVE_CONST(0);
     };
+    
     global.ON_USE_CONST = function ()
     {
         global.JINN_WARNING = global.LOG_LEVEL;
     };
     ON_USE_CONST();
+    
+    if(global.LOCAL_RUN)
+    {
+        global.DELTA_CURRENT_TIME = 0;
+        JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME = 10;
+        JINN_CONST.CORRECT_TIME_VALUE = 50;
+        JINN_CONST.CORRECT_TIME_TRIGGER = 5;
+    }
 }

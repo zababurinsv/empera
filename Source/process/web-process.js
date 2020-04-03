@@ -585,10 +585,11 @@ HostingCaller.GetCurrentInfo = function (Params)
             return {result:0};
     }
     var MaxNumBlockDB = SERVER.GetMaxNumBlockDB();
-    var Ret = {result:1, VersionNum:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK, MaxNumBlockDB:MaxNumBlockDB, CurBlockNum:GetCurrentBlockNumByTime(),
-        MaxAccID:DApps.Accounts.GetMaxAccount(), MaxDappsID:DApps.Smart.GetMaxNum(), CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME,
-        MIN_POWER_POW_TR:MIN_POWER_POW_TR, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME,
-        PRICE_DAO:PRICE_DAO(MaxNumBlockDB), };
+    var Ret = {result:1, VersionNum:global.START_CODE_VERSION_NUM, VersionUpd:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK,
+        MaxNumBlockDB:MaxNumBlockDB, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:DApps.Accounts.GetMaxAccount(), MaxDappsID:DApps.Smart.GetMaxNum(),
+        CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
+        CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME, PRICE_DAO:PRICE_DAO(MaxNumBlockDB), GrayConnect:GrayConnect(),
+    };
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {
@@ -893,7 +894,7 @@ HostingCaller.SendTransactionHex = function (Params,response,ArrPath,request)
     if(Item.Count > global.MAX_TX_FROM_WEB_IP)
     {
         var Str = "Too many requests from the user";
-        ToLogOne("AddTransactionFromWeb: " + Str + " from ip: " + ip, 2);
+        ToLogOne("AddTransactionFromWeb: " + Str + " from ip: " + ip);
         
         var Result = {result:0, text:Str};
         response.end(JSON.stringify(Result));

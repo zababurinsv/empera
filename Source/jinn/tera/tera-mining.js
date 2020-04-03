@@ -48,14 +48,19 @@ function Init(Engine)
         CreateHashMinimal(Block, GENERATE_BLOCK_ACCOUNT);
         Engine.ConvertFromTera(Block, 0, !bInMemory);
         Engine.CalcBlockData(Block);
-        if(!bInMemory && global.USE_MINING && !Block.StartMining && Block.BlockNum > 0)
-        {
-            Block.StartMining = true;
-            Engine.ConvertToTera(Block);
-            global.SetCalcPOW(Block, "FastCalcBlock");
-        }
         
-        if(!global.USE_MINING)
+        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        if(Block.BlockNum > CurBlockNum - JINN_CONST.STEP_MAXHASH)
+            if(!bInMemory && global.USE_MINING && !Block.StartMining && Block.BlockNum > 0)
+            {
+                var Delta = CurBlockNum - Block.BlockNum;
+                ToLog("Run mining BlockNum=" + Block.BlockNum + ", Delta=" + Delta, 4);
+                Block.StartMining = true;
+                Engine.ConvertToTera(Block);
+                global.SetCalcPOW(Block, "FastCalcBlock");
+            }
+        
+        if(!Block.StartMining)
             Engine.AddBlockToChain(Block);
         
         return Block;
@@ -63,6 +68,14 @@ function Init(Engine)
     
     SERVER.MiningProcess = function (msg)
     {
+        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        if(msg.BlockNum <= CurBlockNum - JINN_CONST.STEP_MAXHASH)
+        {
+            var Delta = CurBlockNum - msg.BlockNum;
+            ToLog("BAD mining BlockNum=" + msg.BlockNum + ", Delta=" + Delta, 4);
+            return;
+        }
+        
         var BlockDB = Engine.GetBlockHeaderDB(msg.BlockNum);
         if(!BlockDB)
             return;
@@ -105,8 +118,11 @@ function Init(Engine)
             
             Block.MinerHash = AddrHash;
             Engine.CalcBlockData(Block);
-            if(Block.Power < 10)
+            if(Block.Power < 1)
                 return;
+            
+            Engine.ToLog("Mining = " + Block.BlockNum + " Power=" + Block.Power, 4);
+            
             Engine.AddBlockToChain(Block);
             
             ADD_TO_STAT("MAX:POWER", Block.Power);

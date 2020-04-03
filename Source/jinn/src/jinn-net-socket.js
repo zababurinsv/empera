@@ -18,6 +18,8 @@ const net = require("net");
 
 global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, Name:"NetSocket"});
 
+global.StopNetwork = 0;
+
 //Engine context
 
 function InitClass(Engine)
@@ -28,6 +30,8 @@ function InitClass(Engine)
     {
         Engine.Server = net.createServer(function (Socket)
         {
+            if(global.StopNetwork)
+                return;
             if(Engine.WasBanIP({address:Socket.remoteAddress}))
             {
                 Engine.CloseSocket(Socket, "WAS BAN", true);
@@ -78,6 +82,7 @@ function InitClass(Engine)
     
     Engine.SetEventsProcessing = function (SOCKET,Child,StrConnect,bAll)
     {
+        
         SOCKET.on('close', function (err)
         {
             Engine.ClearSocket(SOCKET);
@@ -96,6 +101,8 @@ function InitClass(Engine)
         Engine.LinkSocketToChild(SOCKET, Child, StrConnect);
         SOCKET.on('data', function (data)
         {
+            if(global.StopNetwork)
+                return;
             if(SOCKET.WasClose)
             {
                 return;
@@ -180,6 +187,8 @@ function InitAfter(Engine)
     
     Engine.CreateConnectionToChild = function (Child,F)
     {
+        if(global.StopNetwork)
+            return;
         
         var State = Engine.GetSocketStatus(Child);
         if(State === 100)
@@ -232,6 +241,9 @@ function InitAfter(Engine)
     
     Engine.SENDTONETWORK = function (Child,Data)
     {
+        if(global.StopNetwork)
+            return;
+        
         var State = Engine.GetSocketStatus(Child);
         if(State === 100)
         {
