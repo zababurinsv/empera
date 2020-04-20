@@ -34,6 +34,7 @@
 <script type="text/javascript" src="/HTML/JS/wallet-node.js"></script>
 <script type="text/javascript" src="/HTML/JS/terahashlib.js"></script>
 
+<script type="text/javascript" src="/HTML/JS/wallet-hash-info.js"></script>
 
 
 
@@ -45,7 +46,7 @@
     var ServerCurBlockNum=0;
     var ServerTime=0;
     var MiningAccount=0;
-    //var min_power_pow_acc_create=0;
+
     var WalletStatus;
     var BLOCK_PROCESSING_LENGTH=8;
     var PubKeyStr;
@@ -585,7 +586,7 @@
         MaxActNum=Data.MaxActNum;
 
 
-        //min_power_pow_acc_create=Data.MIN_POWER_POW_ACC_CREATE+3;
+
         PubKeyStr=Data.PublicKey;
         PrivKeyStr=Data.PrivateKey;
 
@@ -868,12 +869,20 @@
         }
     }
 
-    function SelectTab(name)
+    function SelectTab(name,bNoHistory)
     {
+        if(!name)
+            name="TabAccounts";
         CurTabName=name;
         OnSelectTab(name);
-        history.pushState(null,null,"#"+name);
-        //window.location.hash="#"+name;
+        if(!bNoHistory)
+        {
+            if(name==="TabAccounts")
+                history.pushState(null,null,"#");
+            else
+                history.pushState(null,null,"#"+name);
+        }
+
 
         SetVisibleTab();
         SaveValues();
@@ -958,6 +967,7 @@
     //INIT
     function SelectStyle(value)
     {
+
         var Select=document.getElementById("idSelStyle");
         if(value)
             Select.value=value;
@@ -982,6 +992,13 @@
         localStorage["BIGWALLET"]=1;
 
         window.OnInitWallet();
+
+        window.addEventListener("popstate", function(event)
+        {
+            var Name=window.location.hash.substr(1);
+            SelectTab(Name,1);
+        }, false);
+
     }
     if(!window.OnInitWallet)
     window.OnInitWallet=function()
@@ -991,7 +1008,8 @@
         UpdatesConfigData();
         UpdatesData();
         setInterval(UpdatesData,1000);
-        setInterval(UpdatesConfigData,335);
+        //setInterval(UpdatesConfigData,335);
+        setInterval(UpdatesConfigData,1000);
         setInterval(CheckNewMoney,1000);
         setInterval(SaveValues,2000);
         setTimeout(CheckNameAccTo,100);
@@ -1191,236 +1209,9 @@
 </script>
 
 
-<script>
-    var ArrInfo;
-    var MapInfo={};
-    function InitArrInfo()
-    {
-        MapInfo={};
-        ArrInfo=
-            [
-                {Name:"Hashrate from the beginning of the chain",  Delta:1000000000,   DX:310},
-                {Name:"month",     Delta:30.5*24*3600, DX:200, Mult:10000},
-                {Name:"day",       Delta:24*3600,      DX:140, Mult:1000},
-                {Name:"hour",      Delta:3600,         DX:90,  Mult:100},
-                {Name:"minute",    Delta:60,           DX:60, Mult:2},
-            ];
-
-        for(var i=0;i<ArrInfo.length;i++)
-        {
-            var Item=ArrInfo[i];
-            MapInfo[Item.Name]=Item;
-        }
-
-    }
-    InitArrInfo();
-    function DrawBlockInfo()
-    {
-        var TimeBlockNum=GetCurrentBlockNumByTime();
-        var CurBlockNum=TimeBlockNum;
-        if(CurBlockNum<ServerBlockNumDB+8)
-            CurBlockNum=ServerBlockNumDB;
 
 
-        var WasArr=0;
-        var Arr=[];
-        for(var i=ArrInfo.length-1;i>=0;i--)
-        {
-            var Item=ArrInfo[i];
-            Item.BlockNum2=CurBlockNum;
-            Item.BlockNum1=Item.BlockNum2-Item.Delta;
-            if(Item.BlockNum1<0)
-                Item.BlockNum1=0;
 
-            CurBlockNum=Math.floor(Item.BlockNum1/Item.Mult)*Item.Mult;
-
-            var MustUpdate=0;
-            if(Item.PowerArr)
-            for(var n=0;n<Item.PowerArr.length;n++)
-            {
-                if(!Item.PowerArr[n])//есть нули
-                {
-                    //ToLog("n="+n+" Item.BlockNum1="+Item.BlockNum1);
-                    MustUpdate=1;
-                    break;
-                }
-            }
-            if(Item.TimeBlockNum)
-            {
-                var DeltaTime=Math.abs(Item.TimeBlockNum-TimeBlockNum);
-                if(DeltaTime>Item.Delta/20)
-                {
-                    MustUpdate=1;
-                }
-            }
-
-            if(!Item.PowerArr || Item.PowerArr.length===0 ||MustUpdate || i===ArrInfo.length-1)
-            {
-                WasArr=1;
-                Arr[i]={BlockNum1:Item.BlockNum1,BlockNum2:Item.BlockNum2};
-            }
-        }
-
-
-        if(!WasArr)
-            return;
-        //ToLog("GetHashRate: "+JSON.stringify(ArrInfo));
-        GetData("GetHashRate",Arr, function (Data)
-        {
-            //ToLog("GetHashRate: ")
-            var TimeBlockNum=GetCurrentBlockNumByTime();
-            if(Data && Data.result)
-            {
-                for(var i=0;i<Data.ItervalArr.length;i++)
-                {
-                    var Item=ArrInfo[i];
-                    if(Data.ItervalArr[i])
-                    {
-                        Item.TimeBlockNum=TimeBlockNum;
-                        Item.PowerArr=Data.ItervalArr[i];
-                        Item.AvgPow=CalcAvg(Item.PowerArr);
-                    }
-                }
-
-                DrawBlockInfoByArr();
-            }
-        });
-    }
-    function CalcAvg(Arr)
-    {
-        var Sum=0;
-        var Count=0;
-        for(var i=0;i<Arr.length;i++)
-        {
-            if(Arr[i])
-            {
-                Sum+=Arr[i];
-                Count++;
-            }
-        }
-        if(!Count)
-            return 0;
-        return Math.floor((Sum/Count)*10)/10;
-    }
-
-    function DrawBlockInfoByArr()
-    {
-        var obj = document.getElementById("idBlockInfo");
-        var ctx     = obj.getContext('2d');
-
-        var bodystyles = window.getComputedStyle(document.body, null);
-
-        ctx.fillStyle = bodystyles.backgroundColor;
-        ctx.fillRect(0, 0, obj.width, obj.height);
-        ctx.fillStyle = "#000";
-        ctx.strokeStyle = "#040";
-        ctx.lineWidth=2;
-
-        var Month=MapInfo["month"];
-        if(!Month)
-            return;
-
-
-        var AvgTotal=0;
-        for(var i=0;i<ArrInfo.length;i++)
-        {
-            var Item=ArrInfo[i];
-            AvgTotal+=Item.AvgPow;
-        }
-        AvgTotal=AvgTotal/ArrInfo.length;
-
-        function ValueToY(Value)
-        {
-            var Y=Value-3*AvgTotal/4;
-            if(Y<0)
-                if(Value>=2)
-                    Y=1;
-                else
-                    Y=0;
-
-            return obj.height-Y*2;
-        }
-
-        var x=0;
-        var lastx=x;
-        var lastvalue=0;
-        var WasRed=0;
-        for(var i=0;i<ArrInfo.length;i++)
-        {
-            var firstx=lastx;
-
-            ctx.beginPath();
-            var path = new Path2D();
-            path.moveTo(firstx,obj.height);
-            path.lineTo(firstx,ValueToY(lastvalue));
-
-
-            var Item=ArrInfo[i];
-
-            var Arr=Item.PowerArr;
-            var DeltaX=Item.DX/(Arr.length?Arr.length:1);
-            var x2=0;
-            for(var n=0;n<Arr.length;n++)
-            {
-                if(Arr[n] && Arr[n]>lastvalue/3)
-                {
-                    if(!lastvalue || lastvalue<Arr[n]/3)
-                        path.moveTo(x+x2,obj.height);
-                    path.lineTo(x+x2,ValueToY(Arr[n]));
-                }
-                else
-                {
-                    path.lineTo(lastx,ValueToY(Arr[n]));
-                }
-                lastvalue=Arr[n];
-
-                lastx=x+x2;
-                x2+=DeltaX;
-            }
-            Item.x=x;
-            x+=Item.DX;
-
-            path.lineTo(lastx,obj.height);
-            path.lineTo(firstx,obj.height);
-            ctx.stroke(path);
-
-            var Delta=Month.AvgPow-Item.AvgPow;
-            if(i>1 && Delta>=1)
-            {
-                WasRed=1;
-                ctx.fillStyle = "#ff791a";
-            }
-            else
-            if(i>1 && Delta>=2)
-            {
-                WasRed=1;
-                ctx.fillStyle = "#e22317";
-            }
-            else
-            {
-                ctx.fillStyle = "#080";
-            }
-            ctx.fill(path);
-
-        }
-
-
-        ctx.lineWidth=0.5;
-        ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = ctx.fillStyle;
-        ctx.beginPath();
-        ctx.moveTo(obj.width,0);
-        ctx.lineTo(obj.width,obj.height);
-        for(var i=0;i<ArrInfo.length;i++)
-        {
-            var Item=ArrInfo[i];
-            ctx.fillText(""+Item.Name+(WasRed?"-"+Item.AvgPow:""),Item.x+Item.DX/2-4*Item.Name.length/2-16,25);
-        }
-        ctx.stroke();
-
-    }
-
-</script>
 <style>
 
     table.password
@@ -1961,7 +1752,7 @@
                             <th id="(DateFromBlock(Item.BlockNum,1))" class="date">Date</th>
                             <th id="GetHexFromArr(Item.TreeHash)" class="hash">Tx Hash</th>
                             <th id="GetHexFromArr(Item.PowHash)" class="hash">PowHash</th>
-<!--                            <th id="GetHexFromArr(Item.Hash)" class="hash">Hash</th>-->
+                            <th id="GetHexFromArr(Item.Hash)" class="hash">Hash</th>
 
 <!--                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
 <!--                            <th id="GetHexFromArr(Item.SeqHash)" class="hash">SeqHash</th>-->

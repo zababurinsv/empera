@@ -28,15 +28,21 @@ function InitClass(Engine)
     {
         
         var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
-            RndHash:Engine.RndHash, };
+            RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum};
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
     };
     
-    Engine.HANDSHAKE_SEND = {Protocol:"str20", Shard:"str5", ServerIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash"};
-    Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", ClientIP:"str30"};
+    Engine.HANDSHAKE_SEND = {Protocol:"str20", Shard:"str5", ServerIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash",
+        RunVersionNum:"uint", CodeVersionNum:"uint"};
+    Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", ClientIP:"str30", RunVersionNum:"uint", CodeVersionNum:"uint"};
     Engine.HANDSHAKE = function (Child,Data)
     {
-        var Ret = {result:0, RndHash:Engine.RndHash, ClientIP:Child.ip};
+        Child.ToLogNet("HANDSHAKE: " + JSON.stringify(Data));
+        
+        if(!Data)
+            return;
+        
+        var Ret = {result:0, RndHash:Engine.RndHash, ClientIP:Child.ip, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum};
         var AddrChild = {ip:Child.ip, port:Data.port, BlockNum:0, Nonce:0, RndHash:Data.RndHash};
         
         var StrError;
@@ -64,9 +70,14 @@ function InitClass(Engine)
                     if(Engine.FindConnectByHash(Data.RndHash))
                         StrError = "ERROR: FIND IN CONNECT";
         
+        if(Engine.StartGetNewVersion && (Data.CodeVersionNum > CODE_VERSION.VersionNum || Data.CodeVersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash)))
+        {
+            Engine.StartGetNewVersion(Child, Data.CodeVersionNum);
+        }
+        
         if(StrError)
         {
-            ToLog(StrError, 4);
+            Child.ToLogNet(StrError, 4);
             return Ret;
         }
         
@@ -89,6 +100,8 @@ function InitClass(Engine)
         {
             Child.AddrItem = AddrChild;
         }
+        if(!Child.AddrItem.Score || Child.AddrItem.Score <= 0)
+            Child.AddrItem.Score = 0;
         
         Child.RndHash = Data.RndHash;
         Child.myip = Data.ServerIP;

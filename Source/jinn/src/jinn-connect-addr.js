@@ -32,24 +32,6 @@ const POW_SHIFT_MASKA = 32 - POW_MEMORY_BIT_SIZE;
 var COUNT_LIST_LOOP = 3;
 
 
-//Engine context
-
-function DoNode(Engine)
-{
-    if(Engine.TickNum % 10 !== 0)
-        return;
-    if(!Engine.ConnectArray.length)
-        return;
-    for(var i = 0; i < COUNT_LIST_LOOP; i++)
-    {
-        Engine.IndexChildLoop++;
-        var Child = Engine.ConnectArray[Engine.IndexChildLoop % Engine.ConnectArray.length];
-        if(!Child || Child.Del || !Child.IsOpen())
-            continue;
-        Engine.SendGetNodesReq(Child);
-    }
-}
-
 function InitClass(Engine)
 {
     Engine.NodesArrByLevel = [];
@@ -65,6 +47,9 @@ function InitClass(Engine)
         
         Engine.Send("GETNODES", Child, {Iterator:Child.Iterator}, function (Child,Data)
         {
+            if(!Data)
+                return;
+            
             var Count = 0;
             Child.Iterator = Data.Iterator;
             for(var i = 0; i < Data.Arr.length; i++)
@@ -94,6 +79,8 @@ function InitClass(Engine)
     Engine.GETNODES_RET = {Iterator:{Level:"byte", Arr:["uint16"]}, Arr:[{ip:"str30", port:"uint16", BlockNum:"uint32", Nonce:"uint"}]};
     Engine.GETNODES = function (Child,Data)
     {
+        if(!Data)
+            return;
         
         var Arr = [];
         if(Engine.DirectIP && !Engine.ROOT_NODE)
@@ -341,6 +328,16 @@ function InitClass(Engine)
         
         return Count;
     };
+    Engine.FindAddrItemByArr = function (IDArr)
+    {
+        var it = Engine.NodesTree.iterator(), Item;
+        while((Item = it.next()) !== null)
+        {
+            if(Item.IDArr && IsEqArr(Item.IDArr, IDArr))
+                return Item;
+        }
+        return undefined;
+    };
 }
 
 
@@ -348,6 +345,24 @@ function InitAfter(Engine)
 {
 }
 
+
+//Engine context
+
+function DoNode(Engine)
+{
+    if(Engine.TickNum % 10 !== 0)
+        return;
+    if(!Engine.ConnectArray.length)
+        return;
+    for(var i = 0; i < COUNT_LIST_LOOP; i++)
+    {
+        Engine.IndexChildLoop++;
+        var Child = Engine.ConnectArray[Engine.IndexChildLoop % Engine.ConnectArray.length];
+        if(!Child || Child.Del || !Child.IsOpen())
+            continue;
+        Engine.SendGetNodesReq(Child);
+    }
+}
 
 function GetHashFromNum2(Value1,Value2)
 {
@@ -428,3 +443,4 @@ function IsLocalIP(addr)
 }
 
 global.ChildName = ChildName;
+global.IsLocalIP = IsLocalIP;

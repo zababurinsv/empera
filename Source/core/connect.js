@@ -1820,6 +1820,45 @@ module.exports = class CConnect extends require("./connect2")
         var Str = Utf8ArrayToStr(Arr);
         return Str;
     }
+    NetAddConnect(addrStr)
+    {
+        var Node = this.NodesMap[addrStr];
+        if(!Node)
+            return "NODE NOT FOUND";
+        
+        Node.NextConnectDelta = 1000
+        Node.CreateConnect()
+        return "OK";
+    }
+    NetAddBan(addrStr)
+    {
+        var Node = this.NodesMap[addrStr];
+        if(!Node)
+            return "NODE NOT FOUND";
+        
+        this.AddToBan(Node, "=BAN=")
+        return "OK";
+    }
+    
+    NetAddHot(addrStr)
+    {
+        var Node = this.NodesMap[addrStr];
+        if(!Node)
+            return "NODE NOT FOUND";
+        
+        this.StartAddLevelConnect(Node)
+        return "OK";
+    }
+    
+    NetDeleteNode(addrStr)
+    {
+        var Node = this.NodesMap[addrStr];
+        if(!Node)
+            return "NODE NOT FOUND";
+        
+        this.StartDisconnectHot(Node, "=DEL=", 1)
+        return "OK";
+    }
 };
 
 function PrepareBlockProcessSort(Arr)

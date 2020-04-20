@@ -20,6 +20,19 @@ global.JINN_MODULES.push({InitClass:InitClass, Name:"TxControl"});
 function InitClass(Engine)
 {
     
+    Engine.GetArrayFromTree = function (Tree)
+    {
+        if(!Tree)
+            return [];
+        var arr = [];
+        var it = Tree.iterator(), Item;
+        while((Item = it.next()) !== null)
+        {
+            arr.push(Item);
+        }
+        return arr;
+    };
+    
     Engine.GetTopTxArrayFromTree = function (Tree)
     {
         if(!Tree)
@@ -71,10 +84,9 @@ function InitClass(Engine)
     
     Engine.CheckSizeTXArray = function (Child,TxArr)
     {
-        
         if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
         {
-            Child.ToLog("Error Tx Arr length = " + TxArr.length, 4);
+            Child.ToError("Error Tx Arr length = " + TxArr.length, 4);
             TxArr.length = JINN_CONST.MAX_TRANSACTION_COUNT;
         }
     };
@@ -89,6 +101,14 @@ function InitClass(Engine)
 
 function FSortTx(a,b)
 {
+    if(typeof a.TimePow !== "number")
+        throw "Error typeof a.TimePow";
+    if(typeof b.TimePow !== "number")
+        throw "Error typeof b.TimePow";
+    if(!a.HashPow)
+        throw "Error a.HashPow";
+    if(!b.HashPow)
+        throw "Error b.HashPow";
     
     if(a.TimePow !== b.TimePow)
         return b.TimePow - a.TimePow;

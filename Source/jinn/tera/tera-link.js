@@ -142,8 +142,7 @@ function Init(Engine)
             ToLog("******************************** SET NEW BlockNumDB = " + BlockNum + "/" + SERVER.BlockNumDB);
             SERVER.TruncateBlockDB(BlockNum);
         }
-        
-        global.glKeccakCount = 0;
+        global.glStartStat = 1;
     };
     
     SERVER.GetLinkHash = ErrorAPICall;
@@ -161,6 +160,13 @@ function Init(Engine)
     global.ON_USE_CONST = function ()
     {
         global.JINN_WARNING = global.LOG_LEVEL;
+    };
+    
+    Engine.ChildIDCounter = 0;
+    Engine.SetChildID = function (Child)
+    {
+        Engine.ChildIDCounter++;
+        Child.ID = Engine.ChildIDCounter;
     };
     ON_USE_CONST();
     

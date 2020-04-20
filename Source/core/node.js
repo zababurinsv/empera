@@ -52,7 +52,7 @@ module.exports = class CNode
         this.DeltaBan = 300
         this.Name = ""
         
-        this.Info = ""
+        this.LogInfo = ""
         this.PrevInfo = ""
         
         this.StartTimeHot = 0
@@ -687,30 +687,30 @@ function AddNodeInfo(Node,Str,bSet)
     
     if(!Node)
         return;
-    if(!Node.Info)
-        Node.Info = "";
+    if(!Node.LogInfo)
+        Node.LogInfo = "";
     if(bSet)
     {
-        Node.Info = "";
+        Node.LogInfo = "";
     }
     else
     {
         if(Node.Socket && Node.Socket.Info)
         {
-            Node.Info += Node.Socket.Info + "\n";
+            Node.LogInfo += Node.Socket.Info + "\n";
             Node.Socket.Info = "";
         }
     }
     
-    if(Node.Info.length > 1000)
+    if(Node.LogInfo.length > 1000)
     {
-        Node.PrevInfo = Node.Info;
-        Node.Info = "";
+        Node.PrevInfo = Node.LogInfo;
+        Node.LogInfo = "";
     }
     {
         var timesend = GetStrOnlyTimeUTC();
         Str = timesend + " " + Str;
-        Node.Info += Str + "\n";
+        Node.LogInfo += Str + "\n";
     }
 }
 

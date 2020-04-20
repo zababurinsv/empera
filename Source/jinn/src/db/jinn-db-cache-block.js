@@ -31,9 +31,9 @@ class CDBBlockCache extends global.CDBBodyCache
     {
         super(EngineID, FCalcBlockHash)
         
-        this.CacheBlock = new CCache(50000)
-        this.CacheMainIndex = new CCache(500000)
-        this.CacheChainIndex = new CCache(500000)
+        this.CacheBlock = new CCache(20000)
+        this.CacheMainIndex = new CCache(200000)
+        this.CacheChainIndex = new CCache(200000)
     }
     
     DoNode()

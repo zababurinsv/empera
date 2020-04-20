@@ -123,6 +123,7 @@ function CreateHashBody(body,Num,Nonce)
 window.DELTA_POWER_POW_TR = 0;
 window.DELTA_FOR_TIME_TX = 0;
 window.MIN_POWER_POW_TR = 0;
+
 window.CONSENSUS_PERIOD_TIME = 1000;
 window.FIRST_TIME_BLOCK = 1530446400000;
 window.NEW_SIGN_TIME = 25500000;

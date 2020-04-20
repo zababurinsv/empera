@@ -19,15 +19,17 @@ const OLD_STAT_BLOCKNUM_PERIOD = 3600;
 //Engine context
 function InitClass(Engine)
 {
-    Engine.MaxLinkedBlockDB = 0;
-    Engine.MaxLinkedBlockDB2 = 0;
     
     Engine.WasCorrectTime = 0;
     Engine.StatArray = [];
-    Engine.MapStatWasBlockNum = {};
+    Engine.StepTaskTt = {};
+    Engine.StepTaskTx = {};
+    Engine.StepTaskMax = {};
     
     Engine.TreeTimeStat = new RBTree(function (a,b)
     {
+        if(a.BlockNum !== b.BlockNum)
+            return a.BlockNum - b.BlockNum;
         return CompareArr(a.Hash, b.Hash);
     });
     
@@ -63,11 +65,15 @@ function InitClass(Engine)
                 NewDelta = Math.floor(NewDelta / 2);
             }
         }
-        if(global.DELTA_CURRENT_TIME > 0)
-            NewDelta -= JINN_CONST.INFLATION_TIME_VALUE;
-        else
-            if(global.DELTA_CURRENT_TIME < 0)
-                NewDelta += JINN_CONST.INFLATION_TIME_VALUE;
+        
+        if(Math.abs(global.DELTA_CURRENT_TIME) > JINN_CONST.INFLATION_TIME_VALUE)
+        {
+            if(global.DELTA_CURRENT_TIME > 0)
+                NewDelta -= JINN_CONST.INFLATION_TIME_VALUE;
+            else
+                if(global.DELTA_CURRENT_TIME < 0)
+                    NewDelta += JINN_CONST.INFLATION_TIME_VALUE;
+        }
         
         if(NewDelta)
         {
@@ -81,7 +87,12 @@ function InitClass(Engine)
     
     Engine.CorrectTimeByArr = function (Arr)
     {
-        if(Arr.length < JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME)
+        
+        var MinCount = JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME;
+        if(!Engine.WasCorrectTime)
+            MinCount = MinCount * 2;
+        
+        if(Arr.length < MinCount)
             return;
         var Sum = 0;
         for(var i = 0; i < Arr.length; i++)
@@ -108,16 +119,31 @@ function InitClass(Engine)
             }
         }
         
-        if(Count < JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME / 2)
+        if(Count < MinCount / 2)
             return;
         var AvgSum2 = Sum / Count;
         Engine.CorrectTimeByDelta( - Math.floor(1000 * AvgSum2));
     };
     
+    Engine.GetTimeStatArr = function (StartBlockNum)
+    {
+        var Arr = [];
+        var find = {BlockNum:StartBlockNum, Hash:ZERO_ARR_32};
+        var it = Engine.TreeTimeStat.lowerBound(find);
+        while(it)
+        {
+            it.next();
+            var item = it.data();
+            if(!item)
+                break;
+            
+            Arr.push(item.Power);
+            Arr.push(item.BlockNum);
+        }
+        return Arr;
+    };
     Engine.DoTimeCorrect = function (bReglament)
     {
-        if(!global.JINN_AUTO_CORRECT_TIME)
-            return;
         
         if(bReglament)
             Engine.ClearOldStatTree();
@@ -125,13 +151,15 @@ function InitClass(Engine)
         var MaxItem = Engine.MaxTimeStatus;
         if(!MaxItem.BlockNum)
             return;
-        if(Engine.TreeTimeStat.find({Hash:MaxItem.Hash}))
+        
+        if(Engine.TreeTimeStat.find({Hash:MaxItem.Hash, BlockNum:MaxItem.BlockNum}))
             return;
         
         var DeltaStart = Date.now() - MaxItem.StartTime;
         if(DeltaStart < 1000)
             return;
-        Engine.TreeTimeStat.insert({Hash:MaxItem.Hash, BlockNum:MaxItem.BlockNum});
+        
+        Engine.TreeTimeStat.insert({Hash:MaxItem.Hash, BlockNum:MaxItem.BlockNum, Power:MaxItem.Power});
         
         JINN_STAT.DeltaTime = MaxItem.Delta;
         var Delta = MaxItem.Delta - JINN_CONST.STEP_MAXHASH;
@@ -144,8 +172,6 @@ function InitClass(Engine)
     
     Engine.AddMaxHashToTimeStat = function (Item,BlockNum)
     {
-        if(!global.JINN_AUTO_CORRECT_TIME)
-            return;
         if(!global.FIRST_TIME_BLOCK)
             return;
         
@@ -159,7 +185,7 @@ function InitClass(Engine)
         var MaxItem = Engine.MaxTimeStatus;
         if(!IsEqArr(Item.Hash, MaxItem.Hash) && Engine.CompareMaxLider(Item, MaxItem) > 0)
         {
-            if(Engine.TreeTimeStat.find({Hash:Item.Hash}))
+            if(Engine.TreeTimeStat.find({Hash:Item.Hash, BlockNum:BlockNum}))
                 return;
             
             MaxItem.Delta = (Date.now() - BlockNum * 1000 - global.FIRST_TIME_BLOCK + global.DELTA_CURRENT_TIME + 1000) / 1000;
@@ -183,80 +209,13 @@ function InitClass(Engine)
         
         var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
         var OldBlockNum = CurBlockNum - OLD_STAT_BLOCKNUM_PERIOD;
-        var it = Engine.TreeTimeStat.iterator(), Item;
-        while((Item = it.next()) !== null)
+        while(1)
         {
-            if(Item.BlockNum < OldBlockNum)
-            {
-                Engine.TreeTimeStat.remove(Item);
-            }
-        }
-    };
-    Engine.StartStatBlockNum = 0;
-    Engine.StartStatTime = 0;
-    Engine.MapStatArray = {};
-    Engine.AddMaxHashToTreeTimeStat = function (Data)
-    {
-        if(!Data.Arr.length)
-            return;
-        
-        if(Data.BlockNum <= Engine.StartStatBlockNum)
-            return;
-        
-        var NewItem = Data.Arr[0];
-        Engine.CalcHashMaxLider(NewItem, Data.BlockNum);
-        
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
-        
-        if(!Engine.TreeTimeStat.find(NewItem))
-        {
-            NewItem.Delta = CurBlockNum - NewItem.BlockNum;
-            Engine.TreeTimeStat.insert(NewItem);
-            if(Engine.TreeTimeStat.size > global.BlockStatCount * 20)
-            {
-                Engine.TreeTimeStat.remove(Engine.TreeTimeStat.max());
-            }
-        }
-        if(!Engine.StartStatTime)
-            Engine.StartStatTime = Date.now();
-        var Delta = Date.now() - Engine.StartStatTime;
-        if(Delta < global.BlockStatCountTime * 1000)
-            return;
-        var Arr = [];
-        var Map = {};
-        
-        var it = Engine.TreeTimeStat.iterator(), Item;
-        while((Item = it.next()) !== null)
-        {
-            if(Map[Item.BlockNum])
-                continue;
-            Map[Item.BlockNum] = 1;
-            Arr.push(Item);
-            
-            if(Arr.length >= global.BlockStatCount)
+            var Item = Engine.TreeTimeStat.max();
+            if(!Item || Item.BlockNum >= OldBlockNum)
                 break;
+            Engine.TreeTimeStat.remove(Item);
         }
-        
-        Engine.StartStatTime = Date.now();
-        if(Arr.length <= global.BlockStatCount / 2)
-        {
-            return;
-        }
-        
-        Arr.sort(function (a,b)
-        {
-            return a.BlockNum - b.BlockNum;
-        });
-        
-        Engine.MapStatArray = [];
-        
-        for(var i = 0; i < Arr.length; i++)
-        {
-            var Item = Arr[i];
-            Engine.MapStatArray[i] = Item.Delta;
-        }
-        Engine.TreeTimeStat.clear();
-        Engine.StartStatBlockNum = Arr[0].BlockNum;
     };
 }
 
@@ -271,8 +230,6 @@ function DoNode(Engine)
         return;
     
     var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
-    Engine.MaxLinkedBlockDB2 = CurBlockNum - JINN_CONST.STEP_MINING - JINN_CONST.LINK_HASH_DELTA;
-    Engine.MaxLinkedBlockDB = CurBlockNum + 100;
     
     if(Engine.LastCurBlockNum !== CurBlockNum)
     {
@@ -280,23 +237,33 @@ function DoNode(Engine)
         
         Engine.LastCurBlockNum = CurBlockNum;
         
-        if(Engine.SendTicket && global.glUseTicket)
-        {
-            Engine.InitTicket(CurBlockNum - JINN_CONST.STEP_TICKET);
-        }
-        
         Engine.DoBlockMining(CurBlockNum - JINN_CONST.STEP_MINING);
         Engine.DoMaxLiderTaskArr(CurBlockNum - JINN_CONST.STEP_MAXHASH);
     }
+    Engine.StepTaskTt[CurBlockNum - JINN_CONST.STEP_TICKET] = 1;
+    Engine.StepTaskTt[CurBlockNum - JINN_CONST.STEP_TICKET - 1] = 1;
     
-    Engine.SendTicket(CurBlockNum - JINN_CONST.STEP_TICKET - 1);
-    Engine.SendTicket(CurBlockNum - JINN_CONST.STEP_TICKET);
+    Engine.StepTaskTx[CurBlockNum - JINN_CONST.STEP_TX] = 1;
+    Engine.StepTaskTx[CurBlockNum - JINN_CONST.STEP_TX - 1] = 1;
     
-    Engine.SendTx(CurBlockNum - JINN_CONST.STEP_TX - 1);
-    Engine.SendTx(CurBlockNum - JINN_CONST.STEP_TX);
+    Engine.StepTaskMax[CurBlockNum - JINN_CONST.STEP_MAXHASH] = 1;
+    Engine.StepTaskMax[CurBlockNum - JINN_CONST.STEP_MAXHASH - 1] = 1;
+    Engine.StepTaskMax[CurBlockNum - JINN_CONST.STEP_MAXHASH - 2] = 1;
+    Engine.StepTaskMax[CurBlockNum - JINN_CONST.STEP_MAXHASH - 3] = 1;
     
-    for(var delta = JINN_CONST.MAX_DELTA_PROCESSING; delta >= 0; delta--)
+    for(var BlockNum = CurBlockNum - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING; BlockNum <= CurBlockNum - JINN_CONST.STEP_TICKET; BlockNum++)
     {
-        Engine.StartSendLiderArr(CurBlockNum - JINN_CONST.STEP_MAXHASH - delta);
+        
+        if(Engine.StepTaskTt[BlockNum])
+            Engine.SendTicket(BlockNum);
+        
+        if(Engine.StepTaskTx[BlockNum])
+            Engine.SendTx(BlockNum);
+        
+        if(Engine.StepTaskMax[BlockNum])
+            Engine.StartSendMaxHash(BlockNum);
     }
+    Engine.StepTaskTt = {};
+    Engine.StepTaskTx = {};
+    Engine.StepTaskMax = {};
 }

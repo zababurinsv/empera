@@ -57,8 +57,8 @@ function DoNode(Engine)
             if(DeltaTime > MAX_CONNECT_TIMEOUT)
             {
                 
-                var StrError = "MAX_CONNECT_TIMEOUT StartDisconnect #" + i + "  DeltaTime=" + DeltaTime;
-                global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+                var StrError = "MAX_CONNECT_TIMEOUT StartDisconnect #" + i;
+                Child.ToLogNet(StrError);
                 Engine.StartDisconnect(Child, 1, StrError);
             }
             continue;
@@ -89,7 +89,7 @@ function DoNode(Engine)
             if(Child.InComeConnect)
             {
                 var StrError = "StartDisconnect 1 Num:" + Child.ConnectNum + " port:" + Child._port;
-                global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+                Child.ToLogNet(StrError);
                 Engine.StartDisconnect(Child, 1, StrError);
                 Engine.DenyHotConnection(Child);
             }
@@ -99,7 +99,7 @@ function DoNode(Engine)
             if(!Child.InComeConnect)
             {
                 var StrError = "StartDisconnect 2 Num: " + Child.ConnectNum;
-                global.DEBUG_ID === "HOT" && Child.ToLog(StrError);
+                Child.ToLogNet(StrError);
                 Engine.StartDisconnect(Child, 1, StrError);
                 Engine.DenyHotConnection(Child);
             }
@@ -149,6 +149,7 @@ function InitClass(Engine)
         if(!Engine.CanConnect(Child))
             return 0;
         
+        Child.ToLogNet("Create connect");
         Engine.CreateConnectionToChild(Child, function (result)
         {
             if(result)
@@ -165,7 +166,11 @@ function InitClass(Engine)
         if(Engine.ROOT_NODE)
             return 1;
         if(Child.Self)
+        {
+            Child.ToLogNet("Cannt self connect");
+            
             return 0;
+        }
         
         return 1;
     };

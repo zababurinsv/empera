@@ -53,6 +53,9 @@ function InitClass(Engine)
         if(ip === "0.0.0.0")
             return undefined;
         
+        if(global.LOCAL_RUN && ip !== "127.0.0.1")
+            return undefined;
+        
         if(!port || typeof port !== "number")
             throw "NewConnect : Error port number = " + port;
         
@@ -70,6 +73,10 @@ function InitClass(Engine)
         return Child;
     };
     
+    Engine.SetChildID = function (Child,ip,port)
+    {
+        Child.ID = port % 1000;
+    };
     Engine.SetIPPort = function (Child,ip,port)
     {
         Child.IDArr = CalcIDArr(ip, port);
@@ -77,7 +84,7 @@ function InitClass(Engine)
         
         Child.ip = ip;
         Child.port = port;
-        Child.ID = port % 1000;
+        Engine.SetChildID(Child, ip, port);
         Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
         
         if(JINN_EXTERN.NodeRoot && ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)
@@ -104,7 +111,13 @@ function InitClass(Engine)
         Child.IDContextNum = 0;
         Child.ContextCallMap = {};
         Child.SendAddrMap = {};
-        Child.BlockProcessCount = 0;
+        Child.BlockProcessCount = function ()
+        {
+            if(Child.AddrItem)
+                return Child.AddrItem.Score;
+            else
+                return 0;
+        };
         
         Child.SendPacketCount = 0;
         Child.ReceivePacketCount = 0;
@@ -142,9 +155,10 @@ function InitClass(Engine)
         };
         Child.ToLog = function (Str,StartLevel)
         {
-            var ID = GetNodeID(Child);
+            var ID = GetNodeWarningID(Child);
             
             Engine.ToLog("<-->" + ID + ":  " + Str, StartLevel);
+            Child.ToLogNet(Str, 0);
         };
         Child.ToDebug = function (Str)
         {
@@ -158,6 +172,11 @@ function InitClass(Engine)
         {
             return Child.ip + ":" + Child.port;
         };
+        
+        Child.ToLogNet = function (Str,nLogLevel)
+        {
+            Engine.ToLogNet(Child, Str, nLogLevel);
+        };
     };
     
     Engine.RemoveConnect = function (Child)
@@ -167,8 +186,24 @@ function InitClass(Engine)
             if(Engine.ConnectArray[i] === Child)
             {
                 Engine.ConnectArray.splice(i, 1);
-                break;
+                i--;
             }
         }
+        
+        Engine.ClearChild(Child);
+    };
+    Engine.FindConnectedChildByArr = function (IDArr)
+    {
+        for(var i = 0; i < Engine.ConnectArray.length; i++)
+        {
+            var Child = Engine.ConnectArray[i];
+            if(!Child || !Child.IsOpen())
+                continue;
+            
+            if(IsEqArr(Child.IDArr, IDArr))
+                return Child;
+        }
+        
+        return undefined;
     };
 }

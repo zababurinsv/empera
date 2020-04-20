@@ -10,15 +10,15 @@
 'use strict';
 
 global.SendTestCoin = SendTestCoin;
-function SendTestCoin(FRomId,ToID,Sum,Count,Mode)
+function SendTestCoin(FromID,ToID,Sum,Count,Mode)
 {
     var PrivHex = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-    if(WALLET && WALLET.WalletOpen === true)
+    if(WALLET && WALLET.WalletOpen !== false)
     {
         PrivHex = WALLET.KeyPair.getPrivateKey('hex');
     }
     
-    var Params = {"FromID":FRomId, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Тест", "Confirm":0};
+    var Params = {"FromID":FromID, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Тест", "Confirm":0};
     
     var WasSend = 0;
     if(!Mode)

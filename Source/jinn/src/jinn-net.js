@@ -10,9 +10,9 @@
  *
  * Organization of data transmission/reception to the network
  *
-**/
+ **/
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, Name:"Net"});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Net"});
 
 global.TEST_NET_DEBUG = 1;
 const NET_STRING_MODE = 0;
@@ -98,7 +98,7 @@ function InitClass(Engine)
             {
                 Child.IDContextNum++;
                 RetContext = Child.IDContextNum;
-                Child.ContextCallMap[RetContext] = {Method:Method, F:F};
+                Child.ContextCallMap[RetContext] = {Method:Method, F:F, StartTime:Date.now()};
             }
         }
         
@@ -211,11 +211,14 @@ function InitClass(Engine)
             var Cont = Child.ContextCallMap[Key];
             if(!Cont || Cont.Method !== Obj.Method)
             {
-                Engine.ToError(Child, "Bad context " + Obj.Method + " key=" + Key, 0);
+                Engine.ToError(Child, "Bad context " + Obj.Method + " key=" + Key, 4);
                 return;
             }
             
             delete Child.ContextCallMap[Key];
+            
+            Child.RetDeltaTime = Date.now() - Cont.StartTime;
+            
             Engine.RunMethod(Obj.Method + "_RET", Cont.F, Child, Obj.Data, 0);
         }
         else
@@ -229,6 +232,7 @@ function InitClass(Engine)
                 Engine.ToError(Child, "Not fount method " + Obj.Method, 0);
                 return;
             }
+            
             var RetObj = Engine.RunMethod(Obj.Method, F, Child, Obj.Data, 1);
             if(RetObj !== undefined && Obj.RetContext)
             {
@@ -283,12 +287,12 @@ function InitClass(Engine)
     {
         if(NET_STRING_MODE)
         {
-            var Obj = {Cache:Child.CurrentCacheVersion, Method:Method, Call:bCall, RetContext:RetContext, Data:DataObj};
+            var Obj = {Method:Method, Call:bCall, RetContext:RetContext, Data:DataObj};
             return Engine.GetRAWFromJSON(JSON.stringify(Obj));
         }
         
         var Data = Engine.GetBufferFromData(Method, DataObj, bCall);
-        var Obj = {Cache:Child.CurrentCacheVersion, Method:Method, Call:bCall, RetContext:RetContext, Data:Data};
+        var Obj = {Method:Method, Call:bCall, RetContext:RetContext, Data:Data};
         return SerializeLib.GetBufferFromObject(Obj, NetFormat, NetFormatWrk);
     };
     
@@ -324,7 +328,7 @@ function InitClass(Engine)
             
             var Obj = Engine.GetObjectFromRAW(Data);
             var StrData = " DATA:" + JSON.stringify(Obj);
-            var ID = GetNodeID(Child);
+            var ID = GetNodeWarningID(Child);
             
             Engine.ToDebug(StrDirect + ID + " " + (Obj.Call ? "" : "RET ") + Obj.Method + StrData);
         }
@@ -344,19 +348,29 @@ function InitClass(Engine)
             Engine.Traffic = 0;
         }
     };
+}
+
+function DoNode(Engine)
+{
+    if(Engine.TickNum % 10 !== 0)
+        return;
     
-    Engine.AddCheckErrCount = function (Child,Count,StrErr,bSilent)
+    var TimeNow = Date.now();
+    for(var i = 0; i < Engine.LevelArr.length; i++)
     {
-        JINN_STAT.ErrorCount += Count;
-        Child.ErrCount += Count;
-        
-        if(Child.ErrCount > 10)
+        var Child = Engine.LevelArr[i];
+        if(Child)
         {
-            Child.ErrCount = 0;
-            Child.BlockProcessCount--;
+            for(var Key in Child.ContextCallMap)
+            {
+                var Item = Child.ContextCallMap[Key];
+                var Delta = TimeNow - Item.StartTime;
+                if(Delta > JINN_CONST.METHOD_ALIVE_TIME)
+                {
+                    delete Child.ContextCallMap[Key];
+                    Child.ToError("Delete old key " + Item.Method + " " + Key);
+                }
+            }
         }
-        
-        if(!bSilent)
-            Child.ToLog(StrErr, 4);
-    };
+    }
 }

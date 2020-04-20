@@ -24,7 +24,6 @@ global.StopNetwork = 0;
 
 function InitClass(Engine)
 {
-    Engine.BAN_IP = {};
     
     Engine.CreateServer = function ()
     {
@@ -34,15 +33,18 @@ function InitClass(Engine)
                 return;
             if(Engine.WasBanIP({address:Socket.remoteAddress}))
             {
-                Engine.CloseSocket(Socket, "WAS BAN", true);
+                Engine.CloseSocket(Socket, undefined, "WAS BAN", true);
                 return;
             }
             
             var Child = Engine.RetNewConnectByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
             if(Child)
+            {
+                Child.ToLogNet("Connect from " + Socket.remoteAddress + ":" + Socket.remotePort);
                 Engine.SetEventsProcessing(Socket, Child, "Client", 1);
+            }
             else
-                Engine.CloseSocket(Socket, "Error child");
+                Engine.CloseSocket(Socket, Child, "Error child");
         });
         
         Engine.Server.on('close', function ()
@@ -85,12 +87,12 @@ function InitClass(Engine)
         
         SOCKET.on('close', function (err)
         {
-            Engine.ClearSocket(SOCKET);
+            Engine.ClearSocket(SOCKET, Child);
         });
         
         SOCKET.on('error', function (err)
         {
-            Engine.CloseSocket(SOCKET, "ERRORS");
+            Engine.CloseSocket(SOCKET, Child, "ERRORS");
         });
         SOCKET.on('end', function ()
         {
@@ -107,34 +109,42 @@ function InitClass(Engine)
             {
                 return;
             }
-            if(SOCKET.Child)
-            {
-                if(Engine.GetSocketStatus(SOCKET.Child) === 100)
+            else
+                if(SOCKET.WasChild)
                 {
-                    Engine.ReceiveFromNetwork(Child, data);
+                    if(Engine.GetSocketStatus(Child) === 100)
+                    {
+                        Engine.ReceiveFromNetwork(Child, data);
+                    }
+                    else
+                    {
+                        Child.ToLog("CONNECT : Error GetSocketStatus");
+                    }
                 }
-                else
-                {
-                    Child.ToLog("CONNECT : Error GetSocketStatus");
-                }
-            }
         });
     };
     
-    Engine.CloseSocket = function (Socket,StrError,bSilently)
+    Engine.CloseSocket = function (Socket,Child,StrError,bSilently)
     {
         if(!Socket || Socket.WasClose)
             return;
         
         if(!bSilently && Socket.remoteAddress)
-            Engine.ToLog("CloseSocket: " + Socket.remoteAddress + ":" + Socket.remotePort + " " + StrError, 4);
-        Engine.ClearSocket(Socket);
+        {
+            var Name;
+            if(Child)
+                Name = ChildName(Child);
+            else
+                Name = Socket.remoteAddress + ":" + Socket.remotePort;
+            Engine.ToLog("CloseSocket: " + Name + " " + StrError, 4);
+        }
+        Engine.ClearSocket(Socket, Child);
         Socket.end();
     };
     
-    Engine.ClearSocket = function (Socket)
+    Engine.ClearSocket = function (Socket,Child)
     {
-        var Child = Socket.Child;
+        
         if(Child)
         {
             Child.Socket = undefined;
@@ -143,32 +153,16 @@ function InitClass(Engine)
         
         Socket.WasClose = 1;
         SetSocketStatus(Socket, 0);
-        Socket.Child = undefined;
-    };
-    
-    Engine.WasBanIP = function (rinfo)
-    {
-        if(!rinfo || !rinfo.address)
-            return 0;
-        
-        var Key = "" + rinfo.address.trim();
-        var Stat = Engine.BAN_IP[Key];
-        if(Stat)
-        {
-            if(Stat.TimeTo > Date.now())
-                return 1;
-        }
-        
-        return 0;
+        Socket.WasChild = 0;
     };
     
     Engine.LinkSocketToChild = function (Socket,Child,ConnectType)
     {
-        if(Socket.Child)
-            throw "Error LinkSocketToChild was Linked";
+        if(Socket.WasChild)
+            ToLogTrace("Error LinkSocketToChild was Linked");
         
         Child.ConnectType = ConnectType;
-        Socket.Child = Child;
+        Socket.WasChild = 1;
         Child.Socket = Socket;
         Child.DirectIP = (ConnectType === "Server");
         SetSocketStatus(Socket, 100);
@@ -177,7 +171,7 @@ function InitClass(Engine)
     Engine.OnDeleteConnectNext = function (Child,StrError)
     {
         if(Child.Socket)
-            Engine.CloseSocket(Child.Socket, StrError);
+            Engine.CloseSocket(Child.Socket, Child, StrError);
     };
 }
 
@@ -236,7 +230,7 @@ function InitAfter(Engine)
         else
             Child.ToLog(StrError, 4);
         
-        Engine.CloseSocket(Child.Socket, "", 1);
+        Engine.CloseSocket(Child.Socket, Child, "", 1);
     };
     
     Engine.SENDTONETWORK = function (Child,Data)
@@ -284,8 +278,6 @@ function SetSocketStatus(Socket,Status)
 {
     if(Socket && Socket.SocketStatus !== Status)
     {
-        if(Status === 100 && Socket.Child)
-            Socket.Child.LastTime = Date.now();
         
         Socket.SocketStatus = Status;
         Socket.TimeStatus = Date.now();

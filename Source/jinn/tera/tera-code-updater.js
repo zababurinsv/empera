@@ -38,9 +38,10 @@ function Init(Engine)
         
         Engine.Send("VERSION", Child, {VersionNum:VersionNum}, function (Child,Data)
         {
-            Child.LastGetCodeVersion = Date.now();
             if(!Data)
                 return;
+            
+            Child.LastGetCodeVersion = Date.now();
             
             if(Data.VersionNum > CODE_VERSION.VersionNum || VersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash))
             {
@@ -111,9 +112,12 @@ function Init(Engine)
         
         Engine.Send("CODE", Child, {VersionNum:VersionNum}, function (Child,Data)
         {
+            if(!Data)
+                return;
+            
             Child.LastGetCode = Date.now();
             
-            if(!Data || !Data.result || Data.VersionNum !== VersionNum || !START_LOAD_CODE.StartLoad)
+            if(!Data.result || Data.VersionNum !== VersionNum || !START_LOAD_CODE.StartLoad)
                 return;
             
             if(!SERVER.DownloadingNewCodeToPath(Child, Data.file, VersionNum))
@@ -123,6 +127,9 @@ function Init(Engine)
     
     Engine.CODE = function (Child,Data)
     {
+        if(!Data)
+            return;
+        
         var VersionNum = Data.VersionNum;
         var fname = GetDataPath("Update/wallet-" + VersionNum + ".zip");
         if(fs.existsSync(fname))

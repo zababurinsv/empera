@@ -109,10 +109,10 @@ function InitClass(Engine)
         var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
         if(Block.BlockNum < CurBlockNum - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING)
             return;
-        if(Block.BlockNum <= CurBlockNum - JINN_CONST.STEP_MAXHASH)
-            Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
-        else
+        if(Block.BlockNum >= CurBlockNum - JINN_CONST.STEP_MINING)
             Engine.MaxLiderTaskArr.push(Block);
+        else
+            Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
     };
     Engine.DoMaxLiderTaskArr = function (BlockNum)
     {
@@ -219,7 +219,7 @@ function InitClass(Engine)
     
     // Serylizing...
     
-    Engine.CalcBlockHeader = function (Block)
+    Engine.HeaderFromBlock = function (Block)
     {
         if(!Block)
             return undefined;
@@ -232,10 +232,10 @@ function InitClass(Engine)
         return Data;
     };
     
-    Engine.CalcBlockBody = function (Block)
+    Engine.BodyFromBlock = function (Block)
     {
         if(!IsZeroArr(Block.TreeHash) && (!Block.TxData || Block.TxData.length === 0))
-            ToLogTrace("CalcBlockBody : Error block tx data TreeHash=" + Block.TreeHash + " on block: " + Block.BlockNum);
+            ToLogTrace("BodyFromBlock : Error block tx data TreeHash=" + Block.TreeHash + " on block: " + Block.BlockNum);
         
         var Data = {BlockNum:Block.BlockNum, TreeHash:Block.TreeHash, PrevSumHash:Block.PrevSumHash, TxData:Block.TxData, };
         
@@ -407,6 +407,15 @@ function InitClass(Engine)
         }
     };
     
+    Engine.CheckHashExist = function (Tx)
+    {
+        if(!Tx.KEY)
+        {
+            var Tx2 = Engine.GetTx(Tx.body);
+            CopyObjKeys(Tx, Tx2);
+        }
+    };
+    
     Engine.FillTicket = function (Tx,Sha3Num)
     {
         var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -418,13 +427,20 @@ function InitClass(Engine)
         Tx.TimePow = GetPowPower(Tx.HashPow);
     };
     
-    Engine.CheckHashExist = function (Tx)
+    Engine.DoTicketFromTx = function (Tt,Tx)
     {
-        if(!Tx.KEY)
-        {
-            var Tx2 = Engine.GetTx(Tx.body);
-            CopyObjKeys(Tx, Tx2);
-        }
+        Tt.IsTx = Tx.IsTx;
+        Tt.HASH = Tx.HASH;
+        Tt.body = Tx.body;
+    };
+    
+    Engine.GetTicket = function (HashTicket,Key,Num)
+    {
+        
+        var Tx = {HashTicket:HashTicket, KEY:Key, num:Num};
+        Engine.FillTicket(Tx, 9);
+        
+        return Tx;
     };
     
     Engine.GetTx = function (body,HASH,HashPow)

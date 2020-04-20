@@ -54,7 +54,7 @@ function Init(Engine)
             if(!bInMemory && global.USE_MINING && !Block.StartMining && Block.BlockNum > 0)
             {
                 var Delta = CurBlockNum - Block.BlockNum;
-                ToLog("Run mining BlockNum=" + Block.BlockNum + ", Delta=" + Delta, 4);
+                ToLog("Run mining BlockNum=" + Block.BlockNum + ", Delta=" + Delta, 5);
                 Block.StartMining = true;
                 Engine.ConvertToTera(Block);
                 global.SetCalcPOW(Block, "FastCalcBlock");
@@ -121,7 +121,7 @@ function Init(Engine)
             if(Block.Power < 1)
                 return;
             
-            Engine.ToLog("Mining = " + Block.BlockNum + " Power=" + Block.Power, 4);
+            Engine.ToLog("Mining = " + Block.BlockNum + " Power=" + Block.Power, 5);
             
             Engine.AddBlockToChain(Block);
             

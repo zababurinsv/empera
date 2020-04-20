@@ -18,16 +18,21 @@
 
 global.JINN_MODULES.push({InitClass:InitClass, Name:"Consensus"});
 
+global.TEST_DOUBLE_LOAD_BLOCK = 0;
+
 //Engine context
 
 function InitClass(Engine)
 {
     Engine.MaxLiderList = {};
+    Engine.TestLoadMap = {};
     
     Engine.Header1 = 0;
     Engine.Header2 = 0;
     Engine.Block1 = 0;
     Engine.Block2 = 0;
+    
+    Engine.LiderIDCounter = 0;
     
     Engine.DoSaveMaxLider = function (CurBlockNum)
     {
@@ -48,13 +53,13 @@ function InitClass(Engine)
                 ToLogTrace("Cannt GetHeaderForChild Block=" + LoadNum);
                 return undefined;
             }
-            return Engine.CalcBlockHeader(Block);
+            return Engine.HeaderFromBlock(Block);
         }
         if(!LoadHash)
             return undefined;
         
         var Block = Engine.DB.FindBlockByHash(LoadNum, LoadHash);
-        return Engine.CalcBlockHeader(Block);
+        return Engine.HeaderFromBlock(Block);
     };
     
     Engine.GetBodyByHash2 = function (BlockNum,Hash)
@@ -70,7 +75,7 @@ function InitClass(Engine)
             Engine.DB.LoadBlockTx(Block);
         
         if(Block.TxData && Block.TxData.length)
-            return Engine.CalcBlockBody(Block);
+            return Engine.BodyFromBlock(Block);
         else
         {
             return {PrevSumHash:Block.PrevSumHash, BlockNum:Block.BlockNum};
@@ -99,7 +104,7 @@ function InitClass(Engine)
                         Engine.DB.LoadBlockTx(Block);
                     
                     if(Block.TxData && Block.TxData.length)
-                        return Engine.CalcBlockBody(Block);
+                        return Engine.BodyFromBlock(Block);
                 }
             }
         }
@@ -114,12 +119,43 @@ function InitClass(Engine)
         Engine.CalcBlockData(Block);
     };
     
-    Engine.AddBlockHeader = function (Child,Block,Store)
+    Engine.FindHashInStore = function (Store,Name,Hash1,Hash2)
     {
+        for(var n = 0; n < Store.LiderArr.length; n++)
+        {
+            var NodeStatus = Store.LiderArr[n];
+            var HashCompare = NodeStatus[Name];
+            
+            if((Hash1 && IsEqArr(Hash1, HashCompare)) || (Hash2 && IsEqArr(Hash2, HashCompare)))
+            {
+                return NodeStatus.ID;
+            }
+        }
+        return 0;
+    };
+    Engine.NeedStoreLoad = function (Store,Name,NameNum,BlockNum)
+    {
+        var ZeroCount = 0;
+        for(var n = 0; n < Store.LiderArr.length; n++)
+        {
+            var NodeStatus = Store.LiderArr[n];
+            if(NodeStatus[NameNum] !== BlockNum || IsZeroArr(NodeStatus[Name]))
+                ZeroCount++;
+        }
+        
+        if(Store.LiderArr.length === ZeroCount)
+            return 0;
+        else
+            return 1;
+    };
+    
+    Engine.AddBlockHeader = function (Context,Child,Block,Store)
+    {
+        
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
             Engine.DoMaxStatus(Store);
-            return;
+            return 0;
         }
         
         //block header arrived
@@ -127,23 +163,20 @@ function InitClass(Engine)
         Engine.PrepareBlockOnReceive(Block);
         
         Child.ToDebug("Receive Header Block:" + Block.BlockNum);
-        
-        var bWasInLoad = 0;
-        for(var n = 0; n < Store.LiderArr.length; n++)
-        {
-            var NodeStatus = Store.LiderArr[n];
-            if(IsEqArr(Block.SumHash, NodeStatus.LoadHash) || IsEqArr(Block.Hash, NodeStatus.LoadHash))
-            {
-                bWasInLoad = 1;
-                break;
-            }
-        }
-        
-        if(!bWasInLoad)
+        var LID = Engine.FindHashInStore(Store, "LoadHash", Block.SumHash, Block.Hash);
+        if(!LID)
             return 0;
         
+        if(0 && global.TEST_DOUBLE_LOAD_BLOCK)
+        {
+            if(Engine.TestLoadMap[GetHexFromArr(Block.Hash)])
+            {
+                Child.ToLog(Engine.GetContInfo(Context) + "  ********* WAS LOADED HEADER=" + Block.BlockNum);
+            }
+            Engine.TestLoadMap[GetHexFromArr(Block.Hash)] = 1;
+        }
+        
         //search in the array of loaded blocks
-        var WasInChain = 0;
         
         var Find = Engine.DB.FindBlockByHash(Block.BlockNum, Block.SumHash);
         if(!Find)
@@ -154,36 +187,73 @@ function InitClass(Engine)
             //making a new entry in the array
             
             Engine.DoMaxStatus(Store);
-            Child.BlockProcessCount++;
+            if(LID)
+            {
+                Engine.AddChildScore(Child, 1);
+                
+                for(var n = 0; n < Store.LiderArr.length; n++)
+                {
+                    var NodeStatus = Store.LiderArr[n];
+                    if(NodeStatus.ID === LID)
+                    {
+                        if(!NodeStatus.HeaderLoad)
+                            NodeStatus.HeaderLoad = 0;
+                        NodeStatus.HeaderLoad++;
+                    }
+                }
+            }
             
-            return 1;
+            return LID;
         }
         
         return 0;
     };
     
-    Engine.AddBlockBody = function (Child,Block,Store)
+    Engine.AddBlockBody = function (Context,Child,Block,Store)
     {
+        
         if(Engine.ProcessBlockOnReceive)
         {
             if(!Engine.ProcessBlockOnReceive(Child, Block))
-                return;
+                return 0;
         }
         
         //we calculate the sent data hash
-        
         Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+        
+        if(global.TEST_DOUBLE_LOAD_BLOCK)
+        {
+            var WasLoad = Engine.TestLoadMap[GetHexFromArr(Block.TreeHash)];
+            if(Engine.TestLoadMap[GetHexFromArr(Block.TreeHash)])
+            {
+                Child.ToLog(Engine.GetContInfo(Context) + " ********* WAS LOADED BODY=" + Block.BlockNum + " FROM " + WasLoad);
+            }
+            else
+            {
+                Engine.TestLoadMap[GetHexFromArr(Block.TreeHash)] = Child.ID;
+            }
+        }
         
         Child.ToDebug("Receive Body Block:" + Block.BlockNum + "  TreeHash=" + Block.TreeHash);
         
         //making an entry in the array of loaded blocks
+        var LID = Engine.FindHashInStore(Store, "LoadTreeHash", Block.TreeHash);
         
         var bSaveChain = Engine.DB.SetTxData(Block.BlockNum, Block.TreeHash, Block.TxData);
         if(bSaveChain)
         {
-            Child.BlockProcessCount++;
+            if(LID)
+                Engine.AddChildScore(Child, 1);
+            
             Engine.DoMaxStatus(Store);
         }
+        else
+        {
+            
+            Child.ToLog("B:" + Block.BlockNum + " Error block body  - not found TreeHash", 4);
+        }
+        
+        return LID;
     };
     
     Engine.CanDoNextBodyLoad = function (NodeStatus,BlockHead,BlockSeed,Num)
@@ -274,7 +344,34 @@ function InitClass(Engine)
         if(Data.WasHashLider)
             return;
         Data.BlockNum = BlockNum;
-        Engine.CalcHashMaxLiderInner(Data, BlockNum);
+        Data.TimeNum = BlockNum;
+        if(!Engine.MaxLiderTimeCache)
+        {
+            Engine.MaxLiderTimeCache = new CTimeCache(function (Val1,Val2)
+            {
+                var Comp1 = CompareArr(Val1.DataHash, Val2.DataHash);
+                if(Comp1)
+                    return Comp1;
+                var Comp2 = CompareArr(Val1.MinerHash, Val2.MinerHash);
+                if(Comp2)
+                    return Comp2;
+                return Val1.BlockNum - Val2.BlockNum;
+            });
+        }
+        
+        var Find = Engine.MaxLiderTimeCache.FindItemInCache(Data);
+        if(Find)
+        {
+            Data.Hash = Find.Hash;
+            Data.PowHash = Find.PowHash;
+            Data.Power = Find.Power;
+        }
+        else
+        {
+            Engine.CalcHashMaxLiderInner(Data, BlockNum);
+            Engine.MaxLiderTimeCache.AddItemToCache(Data);
+        }
+        
         Data.WasHashLider = 1;
     };
     
@@ -283,6 +380,7 @@ function InitClass(Engine)
         
         if(!Data.DataHash || IsZeroArr(Data.DataHash))
             ToLogTrace("ZERO DataHash on block:" + BlockNum);
+        
         Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash).concat(GetArrFromValue(Data.BlockNum)), 10);
         Data.PowHash = Data.Hash;
         Data.Power = GetPowPower(Data.Hash);
@@ -299,6 +397,20 @@ function InitClass(Engine)
         {
             return 1;
         }
+    };
+    
+    Engine.FindRowByDataHash = function (Arr,DataHash,Miner)
+    {
+        for(var n = 0; n < Arr.length; n++)
+        {
+            var NodeStatus = Arr[n];
+            var Miner2 = ReadUintFromArr(NodeStatus.MinerHash, 0);
+            if(Miner === Miner2 && IsEqArr(DataHash, NodeStatus.DataHash))
+            {
+                return n;
+            }
+        }
+        return  - 1;
     };
     
     Engine.AddHashToMaxLider = function (Data,BlockNum,bFromCreateNew)
@@ -328,6 +440,26 @@ function InitClass(Engine)
                 break;
             }
         }
+        var Miner = ReadUintFromArr(Data.MinerHash, 0);
+        var DataHashN = Engine.FindRowByDataHash(LiderArr, Data.DataHash, Miner);
+        if(DataHashN !==  - 1)
+        {
+            if(DataHashN < Ret)
+            {
+                return  - 1;
+            }
+            else
+            {
+                
+                var Item = LiderArr[DataHashN];
+                Data.LoadNum = Item.LoadNum;
+                Data.LoadHash = Item.LoadHash;
+                Data.LoadTreeNum = Item.LoadTreeNum;
+                Data.LoadTreeHash = Item.LoadTreeHash;
+                
+                LiderArr.splice(DataHashN, 1);
+            }
+        }
         
         if(Ret ===  - 1 && LiderArr.length < JINN_CONST.MAX_LEADER_COUNT)
         {
@@ -336,12 +468,28 @@ function InitClass(Engine)
         
         if(Ret >= 0)
         {
-            var NodeStatus2 = {Power:Data.Power, Hash:Data.Hash, PowHash:Data.PowHash, PrevSumHash:Data.PrevSumHash, SumHash:Data.SumHash,
-                LinkSumHash:Data.LinkSumHash, TreeHash:Data.TreeHash, DataHash:Data.DataHash, MinerHash:Data.MinerHash, LoadNum:0, LoadHash:[],
-                LoadTreeNum:0, LoadTreeHash:[], };
-            LiderArr.splice(Ret, 0, NodeStatus2);
+            Engine.LiderIDCounter++;
+            Data.ID = Engine.LiderIDCounter;
+            if(!Data.LoadHash)
+            {
+                Data.LoadNum = 0;
+                Data.LoadHash = [];
+                Data.LoadTreeNum = 0;
+                Data.LoadTreeHash = [];
+            }
+            LiderArr.splice(Ret, 0, Data);
             if(LiderArr.length > JINN_CONST.MAX_LEADER_COUNT)
                 LiderArr.length = JINN_CONST.MAX_LEADER_COUNT;
+        }
+        var MaxPower = LiderArr[0].Power;
+        for(var n = 1; n < LiderArr.length; n++)
+        {
+            var NodeStatus = LiderArr[n];
+            if(MaxPower >= NodeStatus.Power + 4)
+            {
+                LiderArr.splice(n, 1);
+                n--;
+            }
         }
         
         if(!bFromCreateNew)

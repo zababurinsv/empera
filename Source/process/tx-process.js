@@ -353,6 +353,13 @@ class CTXProcess
         var Block = SERVER.ReadBlockDB(BlockNum);
         if(!Block)
             return 0;
+        
+        if(Block.BlockNum !== BlockNum)
+        {
+            ToLogOne("Error read block on " + BlockNum)
+            return 0;
+        }
+        
         Block.PrevSumHash = PrevSumHash
         
         this.ErrorAccHash = 0

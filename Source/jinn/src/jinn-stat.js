@@ -12,14 +12,15 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Stat"});
 
-var StatKeys = {BlockTx:"BlockTx", TxSend:"Tx", TTSend:"Tt", HeaderLoad:"Head", BodyLoad:"Body", BodyTxSend:"BodyTx", DBDelta:"-DB-Delta",
-    MaxSumPow:"-SumPow", ReadRowsDB:"Reads", WriteRowsDB:"Writes", TeraReadRowsDB:"-TReads", TeraWriteRowsDB:"-TWrites", LoadBody:"LoadB",
-    LoadHeader:"LoadH", SaveBlock:"SaveH", SaveBody:"SaveB", MAXChainHeight:"Chains", MAXCacheBodyLength:"-CacheB", MAXCacheLength:"-Cache",
-    CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty", MAXFindEmptyCount:"MFEmpty",
-    HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs", NoValidateTx:0, AddToTreeTx:"-AddTreeTx",
-    WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", MaxReq0:"-MaxReq0", MaxReq1:"-MaxReq1", MaxReq2:"-MaxReq2",
-    MaxReq3:"-MaxReq3", MaxLoad:"-MaxLoad", MaxReqAll:"-MaxReqAll", MaxLoadAll:"-MaxLoadAll", MaxReqErr:"-MaxReqErr", WantHeader:"-WantHeader",
-    UploadHeader:"-UploadHeader", MaxIteration:"-MaxIteration", DeltaTime:"-DeltaTime", ErrProcessBlock:"-ErrProcessBlock", };
+var StatKeys = {BlockTx:"BlockTx", TxSend:"TxSend", TTSend:"TtSend", HeaderLoad:"HeaderLoad", BodyLoad:"BodyLoad", BodyTxSend:"BodyTx",
+    DBDelta:"-DB-Delta", MaxSumPow:"-SumPow", ReadRowsDB:"Reads", WriteRowsDB:"Writes", TeraReadRowsDB:"-TReads", TeraWriteRowsDB:"-TWrites",
+    ReadBlock:"ReadBlock", WriteBlock:"WriteBlock", ReadBody:"ReadBody", WriteBody:"WriteBody", MAXChainHeight:"Chains", MAXCacheBodyLength:"-CacheB",
+    MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty",
+    MAXFindEmptyCount:"MFEmpty", HotCount:"Hots", MINHots:"-MinHots", ActiveCount:"-Connects", AddrCount:"Addrs", NoValidateTx:0,
+    AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", MaxReqAll:"-MaxReqAll", MaxLoadAll:"-MaxLoadAll",
+    MaxReqErr:"-MaxReqErr", MaxIteration:"-MaxIteration", MaxLoad:"-MaxLoad", WantHeader:"-WantHeader", UploadHeader:"-UploadHeader",
+    WantBody:"-WantBody", UploadBody:"-UploadBody", DeltaTime:"-DeltaTime", ErrProcessBlock:"-ErrProcessBlock", SkipMethod:"-SkipMethod",
+    TtReceive:"-TtReceive", TxReceive:"-TxReceive", TxReceiveErr:"TxReceiveErr", BanCount:"-BanCount", };
 if(typeof process === "object")
 {
 }
@@ -28,8 +29,10 @@ global.JINN_STAT = {};
 JINN_STAT.Methods = {};
 JINN_STAT.Keys = StatKeys;
 
+global.JINN_STATCopy = {};
 JINN_STAT.Clear = function ()
 {
+    CopyObjKeys(global.JINN_STATCopy, global.JINN_STAT);
     for(var key in StatKeys)
     {
         JINN_STAT[key] = 0;
@@ -119,8 +122,12 @@ function InitClass(Engine)
             deltaTime = Time[0] * 1000 + Time[1] / 1e6;
         }
         
+        if(!JINN_STAT.Methods["TIME:" + Method])
+            JINN_STAT.Methods["TIME:" + Method] = 0;
+        JINN_STAT.Methods["TIME:" + Method] += deltaTime;
+        
         if(!JINN_STAT.Methods[Method])
             JINN_STAT.Methods[Method] = 0;
-        JINN_STAT.Methods[Method] += deltaTime;
+        JINN_STAT.Methods[Method]++;
     };
 }

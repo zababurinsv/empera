@@ -199,11 +199,8 @@ function InitClass(Engine)
         Engine.Block1 = 0;
         Engine.Block2 = 0;
         
-        Engine.ListTreeTx = {};
-        
-        Engine.ListTreeTicket = {};
-        Engine.ListTreeTicketAll = {};
         Engine.BAN_IP = {};
+        Engine.TestLoadMap = {};
         
         if(Engine.DB)
             Engine.DB.Clear();
@@ -219,9 +216,6 @@ function InitClass(Engine)
             var Child = Engine.LevelArr[i];
             if(Child)
             {
-                Child.CahcheVersion++;
-                Child.CacheAll = {};
-                Child.CacheBlockNumAll = {};
                 
                 Child.LastTransferTime = Date.now();
                 Child.FirstTransferTime = Date.now();

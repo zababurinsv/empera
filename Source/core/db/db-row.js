@@ -169,6 +169,7 @@ module.exports = class CDBRow extends require("./db")
             this.WasUpdate = 1
             if(LastNum < 0)
                 ToLog("Truncate " + this.FileName + " from 0", 2)
+            
             FI.size = Position
             fs.ftruncateSync(FI.fd, FI.size)
             

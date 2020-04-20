@@ -37,7 +37,8 @@ JINN_CONST.START_CHECK_BLOCKNUM = 50;
 
 JINN_CONST.SHARD_NAME = "TERA";
 
-
+JINN_CONST.MAX_LEVEL_CONNECTION = 6;
+JINN_CONST.EXTRA_SLOTS_COUNT = 2;
 
 JINN_CONST.MAX_PACKET_SIZE = global.MAX_PACKET_LENGTH;
 JINN_CONST.MAX_PACKET_SIZE_RET_DATA = Math.floor(JINN_CONST.MAX_PACKET_SIZE / 2);
@@ -90,17 +91,26 @@ module.exports.Create = function (Node,MapName)
     
     require("./tera-tests").Init(Engine);
     
+    require("./tera-net-info.js").Init(Engine);
+    
+    require("./tera-addr").Init(Engine);
+    
     if(Engine.AddNodeAddr)
     {
         if(global.LOCAL_RUN)
         {
-            Engine.AddNodeAddr({ip:"127.0.0.1", port:50001});
+            Engine.AddNodeAddr({ip:"127.0.0.1", port:50001, Score:1000000000});
         }
         else
         {
-            Engine.AddNodeAddr({ip:"dappsgate.com", port:33000});
-            Engine.AddNodeAddr({ip:"212.80.217.95", port:33006});
+            Engine.AddNodeAddr({ip:"dappsgate.com", port:33000, Score:1000000000});
+            Engine.AddNodeAddr({ip:"212.80.217.95", port:33006, Score:1000000000});
+            Engine.AddNodeAddr({ip:"212.80.217.187", port:33007, Score:1000000000});
+            
+            Engine.AddNodeAddr({ip:"109.251.8.131", port:33000});
         }
+        
+        Engine.LoadAddrOnStart();
     }
     
     global.Engine = Engine;
@@ -115,6 +125,8 @@ function StartRun()
 {
     SERVER.NodeSyncStatus = {Header1:Engine.Header1, Header2:Engine.Header2, Block1:Engine.Block1, Block2:Engine.Block2, };
     NextRunEngine(global.JINN);
+    
+    Engine.DoNodeAddr();
     
     var CurTimeNum =  + GetCurrentTime();
     var StartTimeNum = Math.floor((CurTimeNum + PERIOD_FOR_RUN) / PERIOD_FOR_RUN) * PERIOD_FOR_RUN;

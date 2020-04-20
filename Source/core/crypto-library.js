@@ -353,7 +353,7 @@ function IsZeroArr(arr)
     return true;
 }
 
-function CalcMerkl3FromArray(Arr,Tree0)
+function CalcMerkl3FromArray(Arr,BlockNum,Tree0)
 {
     var Tree, bSort;
     if(Tree0)
@@ -383,7 +383,7 @@ function CalcMerkl3FromArray(Arr,Tree0)
         return Tree;
     }
     
-    if(bSort)
+    if(bSort && BlockNum < global.UPDATE_CODE_4)
     {
         Arr.sort(CompareArr);
     }
@@ -400,7 +400,7 @@ function CalcMerkl3FromArray(Arr,Tree0)
         Arr2.push(Arr[Arr.length - 1]);
     }
     
-    return CalcMerkl3FromArray(Arr2, Tree);
+    return CalcMerkl3FromArray(Arr2, BlockNum, Tree);
 }
 
 function CalcMerkl0FromArray(Arr,Tree0)
@@ -457,7 +457,7 @@ function CalcMerklFromArray(BlockNum,Arr)
 {
     if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
     {
-        return CalcMerkl3FromArray(Arr);
+        return CalcMerkl3FromArray(Arr, BlockNum);
     }
     else
     {

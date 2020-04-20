@@ -7,7 +7,7 @@
 */
 
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, DoNode:DoNode, Name:"NetCache"});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"NetCache"});
 
 
 //Engine context
@@ -19,194 +19,157 @@ global.glUsePackMaxHash = 1;
 
 function DoNode(Engine)
 {
-    var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_CLEAR_MEM;
+    var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+    var BlockNum = LastBlockNum - JINN_CONST.STEP_CLEAR_MEM;
     if(Engine.CacheLastCurBlockNum === BlockNum)
         return;
     Engine.CacheLastCurBlockNum = BlockNum;
     
-    Engine.NetCacheClear();
+    Engine.NetCacheClear(BlockNum);
 }
 
 function InitClass(Engine)
 {
-    Engine.ProcessBlockOnSend = function (Child,Block)
+    Engine.ProcessBlockOnSend = function (Child,Block,TxData)
     {
         var BlockNum = Block.BlockNum;
         var DeltaBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - BlockNum;
         
-        if(!global.glUseBlockCache || DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM - JINN_CONST.MAX_DELTA_PROCESSING)
-            return Block.TxData.length;
-        Block.TxTransfer = [];
-        Block.TTTransfer = [];
-        var TxReceive = [];
-        var TxSend = [];
-        
-        var TreeTX = Engine.ListTreeTx[BlockNum];
-        var ChildMap = Child.GetCacheByBlockNum(BlockNum);
-        var DeltaTime = Date.now() - Child.CreateCacheTime;
-        
-        for(var i = 0; i < Block.TxData.length; i++)
+        var bFullData = 0;
+        if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM - JINN_CONST.MAX_DELTA_PROCESSING)
+            bFullData = 1;
+        else
         {
-            var Tx = Block.TxData[i];
-            Engine.CheckHashExist(Tx);
-            CheckTx("ProcessBlockOnSend", Tx, BlockNum);
-            
-            var TxIndexSend = Child.SendTxMap[Tx.KEY];
-            if(TxIndexSend !== undefined)
-                TxSend.push(TxIndexSend);
-            else
+            for(var i = 0; i < TxData.length; i++)
             {
-                var TxIndexReceive = Child.ReceiveTxMap[Tx.KEY];
-                if(TxIndexReceive !== undefined)
-                    TxReceive.push(TxIndexReceive);
-                else
+                var Tx = TxData[i];
+                if(!Tx || !Tx.TTReceiveIndex || !Tx.TTReceiveIndex[Child.Level] || !GetBit(Tx.TXSend, Child.Level))
                 {
-                    if(global.glUseTicket && DeltaTime >= 5 * 1000 && DeltaBlockNum <= JINN_CONST.STEP_LAST && TreeTX && TreeTX.find(Tx) && (ChildMap.ReceiveTicketMap[Tx.KEY] || ChildMap.SendTicketMap[Tx.KEY]))
-                    {
-                        Block.TTTransfer.push(Tx.HashTicket);
-                    }
-                    else
-                    {
-                        Engine.AddTxToSendCache(Child, BlockNum, Tx);
-                        Block.TxTransfer.push({Index:Tx.Index, body:Tx.body});
-                    }
+                    bFullData = 1;
+                    break;
                 }
             }
         }
-        Block.TxReceive = Engine.GetPackedArray(TxReceive);
-        Block.TxSend = Engine.GetPackedArray(TxSend);
         
-        if(global.JINN_WARNING >= 4)
+        var Size = 0;
+        var TxArr = [];
+        var TxRaw = [];
+        
+        if(bFullData)
         {
-            var Arr2 = Engine.GetUnpackedArray(Block.TxReceive);
-            if(!IsEqArr(Arr2, TxReceive))
-                ToLogTrace("Error PackedArray TxReceive");
-            var Arr3 = Engine.GetUnpackedArray(Block.TxSend);
-            if(!IsEqArr(Arr3, TxSend))
-                ToLogTrace("Error PackedArray TxSend");
+            for(var i = 0; i < TxData.length; i++)
+            {
+                var Tx = TxData[i];
+                TxRaw.push(Tx);
+                Size += Tx.body.length;
+            }
         }
+        else
+        {
+            for(var i = 0; i < TxData.length; i++)
+            {
+                var Tx = TxData[i];
+                var TTIndex = Tx.TTReceiveIndex[Child.Level];
+                if(!TTIndex)
+                {
+                    ToLogOne("Not found TTIndex on Block=" + Block.BlockNum, " KEY: " + Tx.KEY);
+                }
+                
+                TxArr.push(TTIndex - 1);
+            }
+            Size = TxArr.length * 2;
+        }
+        Block.TxArr = TxArr;
+        Block.TxRaw = TxRaw;
         
-        delete Block.TxData;
-        
-        return Block.TxTransfer.length;
+        return Size;
     };
     
-    Engine.ProcessBlockOnReceive = function (Child,Block)
+    Engine.ProcessBlockOnReceive = function (Child,Block,bTest)
     {
         var BlockNum = Block.BlockNum;
-        if(!global.glUseBlockCache || Block.TxData.length)
+        Block.TxData = [];
+        if(Block.TxRaw.length)
         {
-            for(var i = 0; i < Block.TxData.length; i++)
+            for(var i = 0; i < Block.TxRaw.length; i++)
             {
-                var Value = Block.TxData[i];
+                var Value = Block.TxRaw[i];
                 var Tx = Engine.GetTx(Value.body);
-                Block.TxData[i] = Tx;
+                Block.TxData.push(Tx);
                 
                 CheckTx("" + Engine.ID + ". #1 ProcessBlockOnReceive", Tx, BlockNum);
             }
-            
-            return 1;
         }
-        
-        Block.TxData = [];
-        for(var i = 0; i < Block.TxTransfer.length; i++)
-        {
-            var Value = Block.TxTransfer[i];
-            var Tx = Engine.GetTx(Value.body);
-            Tx.Index = Value.Index;
-            
-            CheckTx("" + Engine.ID + ". #1 ProcessBlockOnReceive", Tx, BlockNum);
-            
-            Block.TxData.push(Tx);
-            Engine.AddTxToReceiveCache(Child, BlockNum, Tx, 1);
-        }
-        if(Block.TTTransfer.length)
-        {
-            var ChildMap = Child.GetCacheByBlockNum(BlockNum);
-            var TreeTX = Engine.GetTreeTx(BlockNum);
-            var TreeAll = Engine.GetTreeTicketAll(BlockNum);
-            
-            var Tx;
-            for(var i = 0; i < Block.TTTransfer.length; i++)
+        else
+            if(Block.TxArr.length)
             {
-                var HashTicket = Block.TTTransfer[i];
-                var KeyTicket = GetHexFromArr(HashTicket);
+                var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
                 
-                var TItem = TreeAll.find({Hash:HashTicket});
-                if(TItem)
-                    Tx = TItem.Tx;
-                
-                if(!Tx || !CheckTx("" + Engine.ID + ". #2 ProcessBlockOnReceive", Tx, BlockNum, 1))
+                var TxArr = Block.TxArr;
+                for(var i = 0; i < TxArr.length; i++)
                 {
-                    if(global.JINN_WARNING >= 4)
-                        Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Key=" + KeyTicket, 1);
-                    return 0;
+                    var TTIndex = TxArr[i];
+                    
+                    var Tx = ArrTTAll[TTIndex];
+                    if(!Tx || !Tx.IsTx)
+                    {
+                        Child.ToError("Error tx index = " + TTIndex);
+                        return 0;
+                    }
+                    
+                    Block.TxData.push(Tx);
                 }
-                Block.TxData.push(Tx);
             }
-        }
         
-        var TxReceive = Engine.GetUnpackedArray(Block.TxReceive);
-        var TxSend = Engine.GetUnpackedArray(Block.TxSend);
-        for(var i = 0; i < TxReceive.length; i++)
-        {
-            var Index = TxReceive[i];
-            var Tx = Child.SendTxArr[Index];
-            if(!Tx || !CheckTx("" + Engine.ID + ". #3 ProcessBlockOnReceive", Tx, BlockNum, 1))
-            {
-                if(global.JINN_WARNING >= 4)
-                    Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT", 3);
-                Child.CahcheVersion++;
-                return 0;
-            }
-            Block.TxData.push(Tx);
-        }
-        
-        for(var i = 0; i < TxSend.length; i++)
-        {
-            var Index = TxSend[i];
-            var Tx = Child.ReceiveTxArr[Index];
-            if(!Tx || !CheckTx("" + Engine.ID + ". #4 ProcessBlockOnReceive", Tx, BlockNum, 1))
-            {
-                if(global.JINN_WARNING >= 4)
-                    Engine.ToWarning("<-" + Child.ID + " Bad cache version: " + Child.CahcheVersion + " Index=" + Index + " . DO INCREMENT", 3);
-                Child.CahcheVersion++;
-                
-                return 0;
-            }
-            Block.TxData.push(Tx);
-        }
-        
-        delete Block.TTTransfer;
-        delete Block.TxTransfer;
-        delete Block.TxReceive;
-        delete Block.TxSend;
+        delete Block.TxArr;
+        delete Block.TxRaw;
         
         return 1;
     };
-    
+    Engine.GetPackedArray = function (Arr)
+    {
+        var Arr2 = [];
+        
+        var Counter = 0;
+        for(var i = 0; i < Arr.length; i++)
+        {
+            var Value = Arr[i];
+            var Value2 = Arr[i + 1];
+            
+            Counter++;
+            if(Counter < 60 && Value === Value2)
+            {
+            }
+            else
+            {
+                Counter--;
+                Arr2.push(Value * 60 + Counter);
+                Counter = 0;
+            }
+        }
+        return Arr2;
+    };
     Engine.GetUnpackedArray = function (Arr)
     {
         var Arr2 = [];
-        if(Arr.length / 2 === (Arr.length >> 1))
-            for(var i = 0; i < Arr.length; i += 2)
-            {
-                var Value = Arr[i];
-                var Count = Arr[i + 1];
-                for(var n = 0; n < Count; n++)
-                    Arr2.push(Value + n);
-            }
-        
+        for(var i = 0; i < Arr.length; i++)
+        {
+            var Value = (Arr[i] / 60) >>> 0;
+            var Count = 1 + (Arr[i] % 60);
+            
+            for(var n = 0; n < Count; n++)
+                Arr2.push(Value);
+        }
         return Arr2;
     };
-    
-    Engine.GetPackedArray = function (Arr)
+    Engine.GetPackedSeqArray = function (Arr)
     {
         Arr.sort(function (a,b)
         {
             return a - b;
         });
         var Arr2 = [];
+        
         var Counter = 0;
         for(var i = 0; i < Arr.length; i++)
         {
@@ -227,15 +190,69 @@ function InitClass(Engine)
         }
         return Arr2;
     };
+    Engine.GetUnpackedSeqArray = function (Arr)
+    {
+        
+        var Arr2 = [];
+        if(Arr.length / 2 === (Arr.length >> 1))
+        {
+            for(var i = 0; i < Arr.length; i += 2)
+            {
+                var Value = Arr[i];
+                var Count = Arr[i + 1];
+                for(var n = 0; n < Count; n++)
+                    Arr2.push(Value + n);
+            }
+        }
+        
+        return Arr2;
+    };
     
-    Engine.ProcessMaxHashOnSend = function (Child,BlockNum,Arr)
+    Engine.FindMaxArrItem = function (Arr,Find)
+    {
+        for(var n = 0; n < Arr.length; n++)
+        {
+            var Item = Arr[n];
+            if(Item && FMaxTreeCompare(Item, Find, 1) === 0)
+                return n;
+        }
+        return  - 1;
+    };
+    
+    Engine.AddItemToRepeatArr = function (Arr,Index,Item)
+    {
+    };
+    
+    Engine.ProcessMaxHashOnSend = function (Child,BlockNum,Arr,ArrRepeat)
     {
         if(!glUsePackMaxHash)
             return;
         
+        if(!Child.LastSendArrMax)
+        {
+            Child.LastSendArrIndex = 0;
+            Child.LastSendArrMax = [];
+        }
+        
         for(var a = 0; a < Arr.length; a++)
         {
             var Status = Arr[a];
+            
+            var FindNum = Engine.FindMaxArrItem(Child.LastSendArrMax, Status);
+            if(FindNum !==  - 1)
+            {
+                ArrRepeat.push(FindNum);
+                Arr.splice(a, 1);
+                a--;
+            }
+        }
+        
+        for(var a = 0; a < Arr.length; a++)
+        {
+            var Status = Arr[a];
+            
+            Child.LastSendArrIndex++;
+            Engine.AddItemToRepeatArr(Child.LastSendArrMax, Child.LastSendArrIndex, Status);
             if(Status.LoadH && IsEqArr(Status.LoadH, Status.Hash))
             {
                 Status.Mode |= 128;
@@ -244,14 +261,36 @@ function InitClass(Engine)
         }
     };
     
-    Engine.ProcessMaxHashOnReceive = function (Child,BlockNum,Arr)
+    Engine.ProcessMaxHashOnReceive = function (Child,BlockNum,Arr,ArrRepeat)
     {
         if(!glUsePackMaxHash)
             return 1;
+        if(!Child.LastReceiveArrMax)
+        {
+            Child.LastReceiveArrIndex = 0;
+            Child.LastReceiveArrMax = [];
+        }
+        
+        for(var n = 0; n < ArrRepeat.length; n++)
+        {
+            var Index = ArrRepeat[n];
+            var Item = Child.LastReceiveArrMax[Index];
+            if(!Item)
+            {
+                continue;
+            }
+            Item.Repeat = 1;
+            Arr.push(Item);
+        }
         
         for(var a = 0; a < Arr.length; a++)
         {
             var Status = Arr[a];
+            if(!Status.Repeat)
+            {
+                Child.LastReceiveArrIndex++;
+                Engine.AddItemToRepeatArr(Child.LastReceiveArrMax, Child.LastReceiveArrIndex, Status);
+            }
             if(Status.Mode & 128)
             {
                 Status.Mode ^= 128;
@@ -264,225 +303,139 @@ function InitClass(Engine)
     
     Engine.InitChildNext = function (Child)
     {
-        
-        Child.CacheAll = {};
-        
-        Child.CahcheVersion = 0;
-        Child.GetCache = function (Name,BlockNum,FTreeSort)
+        Child.SendBodyTimeCache = new CTimeCache(function (a,b)
         {
-            
-            var ChildCache = Child.GetCacheByBlockNum(BlockNum);
-            var Map = ChildCache[Name];
-            if(!Map)
-            {
-                if(FTreeSort)
-                    Map = new RBTree(FTreeSort);
-                else
-                    Map = {};
-                
-                ChildCache[Name] = Map;
-            }
-            
-            return Map;
-        };
-        
-        Child.GetCacheByBlockNum = function (BlockNum)
+            return CompareArr(a.Hash, b.Hash);
+        });
+        Child.InvalidateOldBlockNumCache = function (LastBlockNum)
         {
-            var Map = Child.CurrentCacheMapNum[BlockNum];
-            if(!Map)
-            {
-                Child.SetCacheNum(Child.CurrentCacheVersion, BlockNum);
-                Map = Child.CurrentCacheMapNum[BlockNum];
-            }
-            return Map;
-        };
-        
-        Child.SetCacheNum = function (Version,BlockNum)
-        {
-            if(typeof Version !== "number")
-                throw "SetCacheNum:Error type Version";
-            if(typeof BlockNum !== "number")
-                throw "SetCacheNum:Error type BlockNum";
-            
-            Child.CurrentCacheVersion = Version;
-            
-            var Map = Child.CacheAll[Version];
-            if(!Map)
-            {
-                Map = {};
-                Map.CacheVersion = Version;
-                Map.ByBlockNum = {};
-                Map.Cache = {};
-                Map.CreateCacheTime = Date.now();
-                Child.CacheAll[Version] = Map;
-            }
-            Map.CacheTime = Date.now();
-            
-            var Map2 = Map.ByBlockNum[BlockNum];
-            if(!Map2)
-            {
-                Map2 = {};
-                Map2.ReceiveTxMap = {};
-                Map2.SendTxMap = {};
-                Map2.ReceiveTxArr = [];
-                Map2.SendTxArr = [];
-                
-                Map2.ReceiveTicketMap = {};
-                Map2.SendTicketMap = {};
-                Map2.SendHashMap = {};
-                Map2.ReceiveHashArr = [];
-                Map2.SendHashIndex = 0;
-                
-                Map.ByBlockNum[BlockNum] = Map2;
-            }
-            
-            Child.CurrentCacheMap = Map.Cache;
-            Child.CurrentCacheMapNum = Map.ByBlockNum;
-            
-            Child.CreateCacheTime = Map.CreateCacheTime;
-            Child.ReceiveTxMap = Map2.ReceiveTxMap;
-            Child.SendTxMap = Map2.SendTxMap;
-            Child.ReceiveTxArr = Map2.ReceiveTxArr;
-            Child.SendTxArr = Map2.SendTxArr;
-        };
-        
-        Child.CheckCache = function (Version,BlockNum)
-        {
-            Child.SetCacheNum(Version, BlockNum);
-            if(Version > Child.CahcheVersion)
-                Child.CahcheVersion = Version;
-        };
-        Child.SetLastCache = function (BlockNum)
-        {
-            Child.SetCacheNum(Child.CahcheVersion, BlockNum);
-        };
-        Child.InvalidateOldBlockNumCache = function ()
-        {
-            var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
-            if(Child.CacheBlockNumAll)
-            {
-                for(var key in Child.CacheBlockNumAll)
-                {
-                    var BlockNum =  + key;
-                    if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
-                        continue;
-                    delete Child.CacheBlockNumAll[key];
-                }
-            }
-            if(Child.CurrentCacheMapNum)
-            {
-                for(var key in Child.CurrentCacheMapNum)
-                {
-                    var BlockNum =  + key;
-                    if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
-                        continue;
-                    delete Child.CurrentCacheMapNum[key];
-                }
-            }
-        };
-        Child.InvalidateOldChildCache = function ()
-        {
-            
-            var CurDate = Date.now();
-            for(var key in Child.CacheAll)
-            {
-                var Map = Child.CacheAll[key];
-                if(!Map)
-                    continue;
-                
-                if(!Map.CacheTime)
-                {
-                    ToLogTrace("Error Map.CacheTime");
-                    continue;
-                }
-                
-                var Delta = CurDate - Map.CacheTime;
-                
-                if(Map.CacheVersion === Child.CahcheVersion)
-                    continue;
-                
-                if(Delta > JINN_CONST.CACHE_PERIOD_FOR_INVALIDATE * 1000)
-                {
-                    delete Child.CacheAll[key];
-                }
-            }
+            var StartClearBlockNum = LastBlockNum - JINN_CONST.STEP_CLEAR_MEM;
+            Child.SendBodyTimeCache.RemoveTo(StartClearBlockNum, "SendBodyTimeCache");
+            if(Child.SendMaxTimeCache)
+                Child.SendMaxTimeCache.RemoveTo(StartClearBlockNum, "SendMaxTimeCache");
         };
     };
-    Engine.NetCacheClear = function ()
+    
+    Engine.ClearChild = function (Child)
     {
-        var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        Child.InvalidateOldBlockNumCache(1e12);
+    };
+    Engine.NetCacheClear = function (LastBlockNum)
+    {
+        
+        if(Engine.MaxLiderTimeCache)
+            Engine.MaxLiderTimeCache.RemoveTo(LastBlockNum, "MaxLiderTimeCache");
         ClearListTree(Engine.ListTreeTx, LastBlockNum);
         ClearListTree(Engine.ListTreeTicket, LastBlockNum);
         ClearListTree(Engine.ListTreeTicketAll, LastBlockNum);
-        for(var key in Engine.MaxLiderList)
+        ClearListMap(Engine.ListArrTicketAll, LastBlockNum, function (Arr)
         {
-            var Store = Engine.MaxLiderList[key];
-            if(LastBlockNum - Store.BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
-                continue;
-            delete Engine.MaxLiderList[key];
-        }
+            for(var i = 0; i < Arr.length; i++)
+            {
+                var Tx = Arr[i];
+                if(Tx.TTReceiveIndex)
+                {
+                    delete Tx.TTReceiveIndex;
+                    delete Tx.TXSend;
+                }
+            }
+        });
+        
+        ClearListMap(Engine.MaxLiderList, LastBlockNum);
         
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
             if(Child)
             {
-                Child.InvalidateOldChildCache();
-                Child.InvalidateOldBlockNumCache();
+                Child.InvalidateOldBlockNumCache(LastBlockNum);
             }
         }
     };
-    function ClearListTree(Tree,LastBlockNum)
+    function ClearListMap(Map,LastBlockNum,FClear)
     {
-        if(!Tree)
+        if(!Map)
             return;
-        for(var key in Tree)
+        for(var key in Map)
         {
             var BlockNum =  + key;
-            if(LastBlockNum - BlockNum <= JINN_CONST.STEP_CLEAR_MEM)
+            if(BlockNum > LastBlockNum)
                 continue;
-            
-            var Value = Tree[key];
-            Value.clear();
-            delete Tree[key];
+            if(FClear)
+            {
+                FClear(Map[key]);
+            }
+            delete Map[key];
         }
+    };
+    function ClearListTree(TreeMap,LastBlockNum)
+    {
+        ClearListMap(TreeMap, LastBlockNum, function (Tree)
+        {
+            Tree.clear();
+        });
     };
 }
 
-function InitAfter(Engine)
+class CTimeCache
 {
-    Engine.FindInCache = function (Child,BlockNum,Tx)
-    {
-        if(Child.ReceiveTxMap[Tx.KEY] === undefined && Child.SendTxMap[Tx.KEY] === undefined)
-            return 0;
-        else
-            return 1;
-    };
     
-    Engine.AddTxToSendCache = function (Child,BlockNum,Tx)
+    constructor(FCompare)
     {
-        var Index = Child.SendTxMap[Tx.KEY];
-        if(Index === undefined)
+        this.DataTree = new RBTree(FCompare)
+        this.TimeTree = new RBTree(function (a,b)
         {
-            Index = Child.SendTxArr.length;
-            Child.SendTxArr.push(Tx);
-            Child.SendTxMap[Tx.KEY] = Index;
-        }
-        Tx.Index = Index;
-        return Index;
-    };
-    Engine.AddTxToReceiveCache = function (Child,BlockNum,Tx,bCheck)
+            if(a.TimeNum !== b.TimeNum)
+                return a.TimeNum - b.TimeNum;
+            return FCompare(a, b);
+        })
+    }
+    
+    Clear()
     {
-        if(Child.ReceiveTxMap[Tx.KEY] !== undefined)
-            return;
+        this.DataTree.clear()
+        this.TimeTree.clear()
+    }
+    
+    RemoveTo(ToNum, Name)
+    {
+        while(1)
+        {
+            var Item = this.TimeTree.min();
+            if(!Item || Item.TimeNum > ToNum)
+                break;
+            
+            this.DataTree.remove(Item)
+            this.TimeTree.remove(Item)
+            
+            if(this.DataTree.size !== this.TimeTree.size)
+                ToLogTrace("#1 Error trees size")
+        }
+    }
+    
+    AddItemToCache(Item)
+    {
+        if(typeof Item.TimeNum !== "number")
+            ToLogTrace("Error type Item.TimeNum=" + Item.TimeNum)
+        var Find = this.DataTree.find(Item);
+        if(Find)
+        {
+            this.DataTree.remove(Find)
+            this.TimeTree.remove(Find)
+            if(this.DataTree.size !== this.TimeTree.size)
+                ToLogTrace("#2 Error trees size")
+        }
+        this.DataTree.insert(Item)
+        this.TimeTree.insert(Item)
         
-        if(Tx.Index === undefined)
-            throw "Error Tx.Index";
-        
-        var Index = Tx.Index;
-        Child.ReceiveTxMap[Tx.KEY] = Index;
-        Child.ReceiveTxArr[Index] = Tx;
-        
-        return Index;
-    };
-}
+        if(this.DataTree.size !== this.TimeTree.size)
+            ToLogTrace("#3 Error trees size")
+    }
+    
+    FindItemInCache(Item)
+    {
+        return this.DataTree.find(Item);
+    }
+};
+
+global.CTimeCache = CTimeCache;

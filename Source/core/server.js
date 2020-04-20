@@ -1480,4 +1480,3 @@ function CalcStatArr(arr,arrAvg,arrNext,Period)
     
     return arrNext[arrNext.length - 1];
 }
-

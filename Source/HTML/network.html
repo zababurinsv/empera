@@ -23,6 +23,8 @@
 <script type="text/javascript" src="../HTML/JS/client.js"></script>
 
 <script>
+    var JINNMODE=0;
+    var glCurNodeStr;
     var MaxChildCount=7;//MAX_CONNECT_CHILD
     var SaveIdArr=["idMaxNodesCount"];
     var NodesArr=[];
@@ -37,7 +39,7 @@
     var WasSetName;
     var WasSetProperty;
     var WasSetInfo;
-    function SetInfo(Name,StrProperty,StrInfo)
+    function SetInfo(Name,StrProperty,StrLogInfo)
     {
         var id;
         if(WasSetName!==Name)
@@ -51,14 +53,16 @@
         {
             WasSetProperty=StrProperty;
             id = $("idNodeProperty");
-            id.value=StrProperty;
+            if(document.activeElement!==id)
+                id.value=StrProperty;
         }
 
-        if(WasSetInfo!==StrProperty)
+        if(WasSetInfo!==StrLogInfo)
         {
-            WasSetInfo=StrProperty;
+            WasSetInfo=StrLogInfo;
             id = $("idNodeLog");
-            id.value=StrInfo;
+            if(document.activeElement!==id)
+                id.value=StrLogInfo;
         }
 
     }
@@ -68,10 +72,15 @@
     {
         var CountBlock=ParseNum($("idCountBlock").value);
 
-        GetData("/GetHotArray",{CountBlock:CountBlock}, function (Data)
+        GetData("/GetHotArray",{CountBlock:CountBlock,CurNodeStr:glCurNodeStr}, function (Data)
         {
             if(Data && Data.result)
             {
+                JINNMODE=Data.JINNMODE;
+                if(JINNMODE)
+                {
+                    MaxChildCount = 1;
+                }
                 SetHotTable(Data.ArrTree);
             }
         });
@@ -80,6 +89,14 @@
     function SetHotTable(ArrTree)
     {
         var htmlTable=$("grid_hot");
+
+        for(var col=1;col<=7;col++)
+            if(col<=MaxChildCount)
+                SetVisibleBlock("idCol"+col,"inline-column");
+            else
+                SetVisibleBlock("idCol"+col,"none");
+
+
         if(!htmlTable.ItemsMap)
         {
             htmlTable.RowCounts=0;
@@ -110,7 +127,7 @@
                 }
                 row.MaxRows=2;
             }
-            row.cells[0].innerText=1+Level;
+            row.cells[0].innerText=Level;//1+
             var StrConnect="";
             var StrActive="";
 
@@ -133,17 +150,24 @@
                     if(Node.Name)
                         Name=Node.Name;
                     else
-                        Name=Node.addrStr.substr(0,6);
+                        Name=Node.ip;//Node.addrStr.substr(0,6);
                     Str+=Name;
 
+                    Str+="   ";
                     if(Node.BlockProcessCount)
-                        Str+="="+Node.BlockProcessCount;
+                    {
+                        Node.BlockProcessCount=Math.floor(10*Node.BlockProcessCount)/10;
+                        Str += Node.BlockProcessCount;
+                        Str += " - "
+                    }
                     if(Node.DeltaTime)
-                        Str+=" ping:"+Node.DeltaTime+" ";
+                        Str+=Node.DeltaTime+"ms";
                     if(Node.Name)
                         strClass="mnode";
                     else
                         strClass="node";
+
+
 
                     Str='<INPUT type="button" id="N'+Node.id+'" class="'+strClass+'" onclick="ViewInfo('+Node.id+',1)" value="'+Str+'">';
 
@@ -174,7 +198,7 @@
                     if(Node && Node.Hot)
                     {
                         var id=$("S"+Node.id);
-                        if(!id || cell.NodeID!==Node.id)
+                        //if(!id || cell.NodeID!==Node.id)
                         {
                             var Stat="<DIV id='S"+Node.id+"'></DIV>";
                             cell.innerHTML=Stat+Str;
@@ -278,18 +302,23 @@
                 if(Node.Name)
                     Name=Node.Name;
                 else
-                    Name=Node.addrStr.substr(0,6);
+                    Name=Node.ip+":"+Node.port;//addrStr.substr(0,6);
 
-                var Info=Node.Info;
-                Node.Info=undefined;
+                glCurNodeStr=Node.addrStr;
+
+                var LogInfo=Node.LogInfo;
+                Node.LogInfo=undefined;
                 var Str=JSON.stringify(Node,"",2);
-                Node.Info=Info;
+                Node.LogInfo=LogInfo;
 
-                SetInfo(Name,Str,Info);
+                SetInfo(Name,Str,LogInfo);
                 //SetInfo(escapeHtml(Name+"\n"+Str+"\n"+Node.Info));
             }
             else
-                SetInfo("Not found","","");
+            {
+                glCurNodeStr=undefined;
+                SetInfo("Not found", "", "");
+            }
         }
     }
 
@@ -298,8 +327,7 @@
         var Node=NodesArr[Index];
         if(Node)
         {
-            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; Node.NextConnectDelta=1000; Node.CreateConnect();"OK"';
-            RunCode(Code);
+            RunCode('SERVER.NetAddConnect("'+Node.addrStr+'")');
         }
     }
 
@@ -308,8 +336,7 @@
         var Node=NodesArr[Index];
         if(Node)
         {
-            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; SERVER.AddToBan(Node,"=BAN=");"OK"';
-            RunCode(Code);
+            RunCode('SERVER.NetAddBan("'+Node.addrStr+'")');
         }
     }
     function AddHot(Index)
@@ -317,8 +344,7 @@
         var Node=NodesArr[Index];
         if(Node)
         {
-            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; SERVER.StartAddLevelConnect(Node);"OK"';
-            RunCode(Code);
+            RunCode('SERVER.NetAddHot("'+Node.addrStr+'")');
         }
     }
     function DeleteNode(Index)
@@ -326,8 +352,7 @@
         var Node=NodesArr[Index];
         if(Node)
         {
-            var Code='var Node=SERVER.NodesMap["'+Node.addrStr+'"]; SERVER.StartDisconnectHot(Node,"=DEL=",1);"OK"';
-            RunCode(Code);
+            RunCode('SERVER.NetDeleteNode("'+Node.addrStr+'")');
         }
     }
     function RunCode(Code)
@@ -343,38 +368,16 @@
 
     function CheckCtrlEnter(e,F)
     {
-//        SaveValues();
-//
-//        if(e.ctrlKey && e.keyCode===13)
-//        {
-//            SendToServer();
-//        }
-//
-//        if(e.keyCode===27)
-//        {
-//            window.close();
-//        }
+
     }
 
 
-    function CheckDevelop()
-    {
-        GetData("GetWalletInfo",{},function (Data)
-        {
-            if(Data && Data.result)
-            {
-                if(!Data.IsDevelopAccount)
-                {
-                }
-            }
-        });
-    }
 
     window.onload=function()
     {
         UpdateData();
         setInterval(UpdateData,1000);
-        //setTimeout(CheckDevelop,500);
+
 
         window.onkeydown = CheckCtrlEnter;
 
@@ -480,15 +483,19 @@
     }
     #idNodeProperty
     {
-        height: 280px;
+        height: 600px;
         width: 100%;
     }
     #idNodeLog
     {
-        height: 600px;
+        height: 280px;
         width: 100%;
     }
 
+    .focusnoedit:focus
+    {
+        color: #1a2ec1;
+    }
 </style>
 
 
@@ -506,13 +513,13 @@
         <table id="grid_hot" class="hot_nodes">
             <tr>
                 <th>L</th>
-                <th class="mnode">Node1</th>
-                <th class="mnode">Node2</th>
-                <th class="mnode">Node3</th>
-                <th class="mnode">Node4</th>
-                <th class="mnode">Node5</th>
-                <th class="mnode">Node6</th>
-                <th class="mnode">Node7</th>
+                <th class="mnode" id="idCol1">Node1</th>
+                <th class="mnode" id="idCol2">Node2</th>
+                <th class="mnode" id="idCol3">Node3</th>
+                <th class="mnode" id="idCol4">Node4</th>
+                <th class="mnode" id="idCol5">Node5</th>
+                <th class="mnode" id="idCol6">Node6</th>
+                <th class="mnode" id="idCol7">Node7</th>
                 <th>Connected</th>
                 <th>Not connected</th>
             </tr>
@@ -522,9 +529,9 @@
     </DIV>
     <DIV id="idNodeBlock" style="float: left; border: 0px solid #bfc1c0; text-align: left">
             <DIV id="idNodeName"></DIV>
-            <textarea rows="5" cols="250"  id="idNodeProperty" style="width: 99%;">
+            <textarea rows="25" cols="250"  id="idNodeProperty" class="focusnoedit" style="width: 99%;">
             </textarea>
-            <textarea rows="5" cols="250"  id="idNodeLog" style="width: 99%;">
+            <textarea rows="5" cols="250"  id="idNodeLog" class="focusnoedit" style="width: 99%;">
             </textarea>
     </DIV>
 </DIV>

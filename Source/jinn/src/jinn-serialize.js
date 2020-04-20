@@ -43,8 +43,8 @@ function InitClass(Engine)
         }
         catch(e)
         {
-            ToLog(e);
-            return {};
+            ToLogOne(e);
+            return undefined;
         }
     };
     
@@ -69,7 +69,7 @@ function InitClass(Engine)
             }
             else
             {
-                ToLog("NOT FOUND FORMAT FOR METHOD: " + name);
+                ToLogOne("NOT FOUND FORMAT FOR METHOD: " + name);
                 return {struct:""};
             }
             Engine.SendFormatMap[name] = format;

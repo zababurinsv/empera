@@ -85,7 +85,7 @@ class CDBChain
             }
         }
         
-        JINN_STAT.SaveBlock++
+        JINN_STAT.WriteBlock++
         
         Block.VersionDB = JINN_VERSION_DB
         
@@ -102,7 +102,7 @@ class CDBChain
     
     ReadBlock(Position, bRaw)
     {
-        JINN_STAT.LoadHeader++
+        JINN_STAT.ReadBlock++
         
         var Block = this.DBBlockHeader.Read(Position);
         if(!Block)
@@ -264,7 +264,7 @@ class CDBChain
             return 1;
         }
         
-        JINN_STAT.LoadBody++
+        JINN_STAT.ReadBody++
         var Data = this.DBBlockBody.Read(Block.TxPosition);
         if(!Data)
             return 0;
@@ -297,7 +297,7 @@ class CDBChain
         if(!TxData)
             return 0;
         
-        JINN_STAT.SaveBody++
+        JINN_STAT.WriteBody++
         var Data = {TxArr:TxData};
         this.DBBlockBody.Write(Data)
         return Data.Position;
@@ -325,12 +325,16 @@ class CDBChain
                 break;
             }
             
-            if(!Block.TxPosition && IsEqArr(TreeHash, Block.TreeHash))
+            if(IsEqArr(TreeHash, Block.TreeHash))
             {
-                Block.TxPosition = TxPosition
-                Block.TxCount = TxData.length
-                this.WriteBlock(Block)
                 Count++
+                
+                if(!Block.TxPosition)
+                {
+                    Block.TxPosition = TxPosition
+                    Block.TxCount = TxData.length
+                    this.WriteBlock(Block)
+                }
             }
             
             Position = Block.PrevPosition

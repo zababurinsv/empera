@@ -43,8 +43,8 @@ global.ToLog = function (Str,Level)
     Level =  + Level;
     if(Level > global.MaxLogLevel)
         global.MaxLogLevel = Level;
-    if(global.MaxLogLevel > 50)
-        ToLogTrace("global.MaxLogLevel=" + global.MaxLogLevel);
+    if(Level > 50)
+        ToLogTrace("Err Log Level=" + Level);
     
     if(Level && Level > global.LOG_LEVEL)
         return;

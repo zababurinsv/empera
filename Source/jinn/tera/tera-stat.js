@@ -11,8 +11,8 @@ module.exports.Init = Init;
 
 const os = require('os');
 
-global.MAX_BUSY_VALUE = 120;
-global.MAX_SHA3_VALUE = 1000;
+global.MAX_BUSY_VALUE = 200;
+global.MAX_SHA3_VALUE = 500;
 
 var GlSumUser;
 var GlSumSys;
@@ -51,8 +51,9 @@ function Init(Engine)
     
     var GlobalNodeID = 0;
     var GlobalNodeMap = {};
-    function GetLocalNodeID(IDStr)
+    function GetLocalNodeID(Node)
     {
+        var IDStr = Node.IDStr;
         var id = GlobalNodeMap[IDStr];
         if(!id)
         {
@@ -74,10 +75,14 @@ function Init(Engine)
         if(IsEqArr(Engine.IDArr, Node.IDArr))
             return;
         
-        var id = GetLocalNodeID(Node.IDStr);
+        var AddrItem = Node.AddrItem;
+        if(!AddrItem)
+            AddrItem = {Score:Node.Score};
+        var id = GetLocalNodeID(Node);
         var Item = {id:id, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port, Hot:IsHot, Level:Node.Level,
-            addrStr:Node.IDStr, BlockProcessCount:Node.BlockProcessCount, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
-            DeltaTime:Node.DeltaTransfer, TransferCount:Node.TransferCount, Info:Node.Info ? Node.Info : "", Active:IsOpen, };
+            addrStr:Node.IDStr, BlockProcessCount:AddrItem.Score, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
+            DeltaTime:Node.DeltaTransfer, TransferCount:Node.TransferCount, LogInfo:Engine.GetLogNetInfo(Node), Active:IsOpen, ErrCountAll:Node.ErrCount,
+            WasBan:Node.WasBan, INFO:Node.INFO_DATA, STATS:Node.STAT_DATA, };
         
         var ArrLevel = Arr[Item.Level];
         if(!ArrLevel)
@@ -88,7 +93,6 @@ function Init(Engine)
         
         ArrLevel.push(Item);
     };
-    
     SERVER.GetTransferTree = function ()
     {
         var Arr = SERVER.GetActualNodes();
@@ -112,6 +116,49 @@ function Init(Engine)
         }
         
         return ArrRes;
+    };
+    
+    SERVER.NetAddConnect = function (IDStr)
+    {
+        var Child = Engine.FindAddrItemByArr(GetArrFromHex(IDStr));
+        if(!Child)
+            return "CHILD NOT FOUND";
+        
+        var Child2 = Engine.RetNewConnectByAddr(Child);
+        if(Child2 && Engine.SendConnectReq(Child2))
+            return "OK AddConnect";
+        else
+            return "NO AddConnect";
+    };
+    
+    SERVER.NetAddBan = function (IDStr)
+    {
+        var Child = Engine.FindConnectedChildByArr(GetArrFromHex(IDStr));
+        if(!Child)
+            return "CHILD NOT FOUND";
+        
+        Engine.AddToBan(Child, "=BAN=");
+        return "OK AddBan";
+    };
+    
+    SERVER.NetAddHot = function (IDStr)
+    {
+        var Child = Engine.FindConnectedChildByArr(GetArrFromHex(IDStr));
+        if(!Child)
+            return "CHILD NOT FOUND";
+        
+        Engine.TryHotConnection(Child, 1);
+        return "OK AddHot";
+    };
+    
+    SERVER.NetDeleteNode = function (IDStr)
+    {
+        var Child = Engine.FindConnectedChildByArr(GetArrFromHex(IDStr));
+        if(!Child)
+            return "CHILD NOT FOUND";
+        
+        Engine.DenyHotConnection(Child, 1);
+        return "OK DeleteNode";
     };
     
     SERVER.OnStartSecond = function ()
@@ -142,8 +189,10 @@ function Init(Engine)
         Engine.NetConfiguration = 0;
         
         ADD_TO_STAT("ERRORS", JINN_STAT.ErrorCount);
-        ADD_TO_STAT("MAX:MEMORY_USAGE", process.memoryUsage().heapTotal / 1024 / 1024);
-        ADD_TO_STAT("MAX:MEMORY_FREE", os.freemem() / 1024 / 1024);
+        global.glMemoryUsage = (process.memoryUsage().heapTotal / 1024 / 1024) >>> 0;
+        global.glFreeMem = os.freemem() / 1024 / 1024;
+        ADD_TO_STAT("MAX:MEMORY_USAGE", glMemoryUsage);
+        ADD_TO_STAT("MAX:MEMORY_FREE", glFreeMem);
         
         var SumUser = 0;
         var SumSys = 0;
@@ -176,6 +225,7 @@ function Init(Engine)
                 ADD_TO_STAT("MAX:BLOCK_SUMPOW", MaxBlock.SumPow - PrevSumPow);
             PrevSumPow = MaxBlock.SumPow;
         }
+        global.glMaxNumDB = MaxNumDB;
         
         JINN_STAT.TeraReadRowsDB += global.TeraReadRowsDB;
         JINN_STAT.TeraWriteRowsDB += global.TeraWriteRowsDB;
@@ -230,18 +280,36 @@ function Init(Engine)
     };
 }
 
+
+global.GetBusyTime = GetBusyTime;
+global.glBusySha3 = 0;
+global.glBusyTime = 0;
+
 var LastTimeIdle = 0;
 function OnTimeIdleBusy()
 {
+    global.glBusyTime = (Date.now() - LastTimeIdle) * (100 / 50);
+    
     LastTimeIdle = Date.now();
-    ADD_TO_STAT("SHA3", global.glKeccakCount);
+    global.glBusySha3 = global.glKeccakCount;
     global.glKeccakCount = 0;
     
-    setTimeout(OnTimeIdleBusy, global.MAXHASH_TIMING);
+    if(global.glStartStat)
+    {
+        if(global.glStartStat === 2)
+        {
+            ADD_TO_STAT("MAX:Busy", global.glBusyTime);
+            ADD_TO_STAT("SHA3", global.glBusySha3);
+        }
+        global.glStartStat = 2;
+    }
+    
+    setTimeout(OnTimeIdleBusy, 50);
 }
 OnTimeIdleBusy();
 
 function GetBusyTime()
 {
-    return (Date.now() - LastTimeIdle) * (100 / global.MAXHASH_TIMING);
+    var LocalBusyTime = (Date.now() - LastTimeIdle) * (100 / 50);
+    return Math.max(LocalBusyTime, glBusyTime);
 }

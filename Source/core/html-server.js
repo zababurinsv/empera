@@ -1239,6 +1239,8 @@ HTTPCaller.GetAccountKey = function (Num)
 
 HTTPCaller.GetHotArray = function (Param)
 {
+    if(Param)
+        global.glCurNetNodeStr = Param.CurNodeStr;
     var ArrTree = SERVER.GetTransferTree();
     if(!ArrTree)
         return {result:0};
@@ -1300,7 +1302,10 @@ HTTPCaller.GetHotArray = function (Param)
         return a.id - b.id;
     };
     
-    return {result:1, ArrTree:ArrTree};
+    var Ret = {result:1, ArrTree:ArrTree};
+    if(global.JINN)
+        Ret.JINNMODE = 1;
+    return Ret;
 }
 function GetCopyNode(Node,BlockCounts)
 {
@@ -1322,12 +1327,13 @@ function GetCopyNode(Node,BlockCounts)
     var Item = {VersionNum:Node.VersionNum, NetConstVer:Node.NetConstVer, VERSION:Node.VERSIONMAX, LoadHistoryMode:Node.LoadHistoryMode,
         BlockNumDBMin:Node.BlockNumDBMin, BlockNumDB:Node.BlockNumDB, LevelsBit:Node.LevelsBit, NoSendTx:Node.NoSendTx, GetNoSendTx:Node.GetNoSendTx,
         DirectMAccount:Node.DirectMAccount, id:Node.id, ip:Node.ip, portweb:Node.portweb, port:Node.port, TransferCount:Node.TransferCount,
-        GetTiming:GetTiming, ErrCountAll:Node.ErrCountAll, LevelCount:Node.LevelCount, LevelEnum:Node.LevelEnum, TimeTransfer:GetStrOnlyTimeUTC(new Date(Node.LastTimeTransfer)),
+        GetTiming:GetTiming, LevelCount:Node.LevelCount, LevelEnum:Node.LevelEnum, TimeTransfer:GetStrOnlyTimeUTC(new Date(Node.LastTimeTransfer)),
         BlockProcessCount:Node.BlockProcessCount, DeltaTime:Node.DeltaTime, DeltaTimeM:Node.DeltaTimeM, DeltaGlobTime:Node.DeltaGlobTime,
         PingNumber:Node.PingNumber, NextConnectDelta:Node.NextConnectDelta, NextGetNodesDelta:Node.NextGetNodesDelta, NextHotDelta:Node.NextHotDelta,
-        Name:Node.Name, addrStr:Node.addrStr, CanHot:Node.CanHot, Active:Node.Active, Hot:Node.Hot, Info:Node.PrevInfo + Node.Info,
+        Name:Node.Name, addrStr:Node.addrStr, CanHot:Node.CanHot, Active:Node.Active, Hot:Node.Hot, LogInfo:Node.PrevInfo + Node.LogInfo,
         InConnectArr:Node.WasAddToConnect, Level:Node.Level, TransferBlockNum:Node.TransferBlockNum, TransferSize:Node.TransferSize,
-        TransferBlockNumFix:Node.TransferBlockNumFix, CurBlockNum:Node.CurBlockNum, };
+        TransferBlockNumFix:Node.TransferBlockNumFix, CurBlockNum:Node.CurBlockNum, WasBan:Node.WasBan, ErrCountAll:Node.ErrCountAll,
+        ADDRITEM:Node.ADDRITEM, INFO:Node.INFO, STATS:Node.STATS, };
     
     return Item;
 }
@@ -2521,6 +2527,8 @@ HTTPCaller.GetHashRate = function (ArrParams)
     var ResArr = [];
     for(var i = 0; i < ArrParams.length; i++)
     {
+        var bMinutes = (i === ArrParams.length - 1);
+        
         var Item = ArrParams[i];
         if(!Item)
         {
@@ -2534,7 +2542,7 @@ HTTPCaller.GetHashRate = function (ArrParams)
             Item.BlockNum2 = CurBlockNum;
         var Delta = Item.BlockNum2 - Item.BlockNum1;
         var Count = Delta;
-        if(Count > 20)
+        if(Count > 20 && !bMinutes)
             Count = 20;
         else
             if(Count <= 0)
@@ -2554,7 +2562,7 @@ HTTPCaller.GetHashRate = function (ArrParams)
         {
             var Power;
             var Item2 = BlockTree.LoadValue(Num, 1);
-            if(Item2 && i !== ArrParams.length - 1)
+            if(Item2 && !bMinutes)
             {
                 Power = Item2.Power;
             }
@@ -2573,19 +2581,31 @@ HTTPCaller.GetHashRate = function (ArrParams)
                         CountSum++;
                         Sum += GetPowPower(Block.PowHash);
                     }
+                    if(StepDelta / CountAvg <= 1)
+                        break;
                 }
-                if(!CountSum)
-                    CountSum = 1;
-                Power = Math.floor(Sum / CountSum);
-                
-                if(Power)
-                    BlockTree.SaveValue(Num, {BlockNum:Num, Power:Power});
+                if(CountSum)
+                {
+                    Power = Math.floor(Sum / CountSum);
+                    if(Power && !bMinutes)
+                        BlockTree.SaveValue(Num, {BlockNum:Num, Power:Power});
+                }
+                else
+                {
+                    Power = 0;
+                }
             }
             ItervalArr.push(Power);
         }
         ResArr[i] = ItervalArr;
     }
-    return {result:1, ItervalArr:ResArr};
+    
+    var Ret = {result:1, ItervalArr:ResArr};
+    if(global.JINN)
+    {
+        Ret.MaxHashStatArr = JINN.GetTimeStatArr(GetCurrentBlockNumByTime() - 60);
+    }
+    return Ret;
 }
 
 function DoGetTransactionByID(response,Params)

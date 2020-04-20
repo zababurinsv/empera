@@ -395,6 +395,13 @@ var glMapRest = {};
 function GetRestMerkleTree(BlockNumRest,RestIndexArr)
 {
     var MerkleTree = glMapRest[BlockNumRest];
+    if(MerkleTree)
+    {
+        var Delta = Date.now() - MerkleTree.StratTime;
+        if(Delta > 3600 * 1000)
+            MerkleTree = undefined;
+    }
+    
     if(!MerkleTree)
     {
         ToLog("Create new glMapRest key: " + BlockNumRest, 2);
@@ -407,7 +414,7 @@ function GetRestMerkleTree(BlockNumRest,RestIndexArr)
         var Time1 = process.hrtime(startTime);
         
         var MerkleCalc = {};
-        MerkleTree = {LevelsHash:[ArrHash], RecalcCount:0};
+        MerkleTree = {LevelsHash:[ArrHash], RecalcCount:0, StratTime:Date.now()};
         
         for(var Num = 0; Num < ArrHash.length; Num++)
         {

@@ -87,14 +87,14 @@ process.on('uncaughtException', function (err)
         process.send({cmd:"log", message:err});
     }
     
-    ToError(err.stack);
-    ToLog(err.stack);
-    
-    if(err.code === "ENOTFOUND" || err.code === "ECONNRESET" || err.code === "EPIPE")
+    if(err.code === "ENOTFOUND" || err.code === "ECONNRESET" || err.code === "EPIPE" || err.code === "ETIMEDOUT")
     {
     }
     else
     {
+        ToError(err.stack);
+        ToLog(err.stack);
+        
         TO_ERROR_LOG("APP", 666, err);
         ToLog("-----------------EXIT------------------");
         process.exit();

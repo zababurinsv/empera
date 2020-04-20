@@ -38,7 +38,8 @@ function InitClass(Engine)
             return;
         
         var Tree = Engine.GetTreeTx(BlockNum);
-        var TreeAll = Engine.GetTreeTicketAll(BlockNum);
+        var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
+        var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
         
         for(var t = 0; t < TxArr.length; t++)
         {
@@ -46,18 +47,13 @@ function InitClass(Engine)
             if(!Engine.IsValidateTx(Tx, "AddCurrentProcessingTx", BlockNum))
                 continue;
             
-            Engine.AddTxToTree(Tree, Tx);
-            
-            TreeAll.remove({Hash:Tx.HashTicket});
-            TreeAll.insert({Hash:Tx.HashTicket, Tx:Tx});
+            Engine.AddToTreeWithAll(TreeTTAll, ArrTTAll, Tree, Tx);
         }
     };
     
     Engine.SendTx = function (BlockNum)
     {
-        
-        var ArrAll = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
-        var TreeTT = Engine.GetTreeTicket(BlockNum);
+        var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
         
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
@@ -65,44 +61,46 @@ function InitClass(Engine)
             if(!Child || !Child.IsHot() || !Child.IsOpen() || Child.HotStart)
                 continue;
             
-            Child.SetLastCache(BlockNum);
-            var ChildMap = Child.GetCacheByBlockNum(BlockNum);
-            
             var Arr = [];
-            for(var t = 0; t < ArrAll.length; t++)
+            for(var t = 0; t < ArrTop.length; t++)
             {
-                var Tx = ArrAll[t];
+                var Tx = ArrTop[t];
                 
                 if(!Engine.IsValidateTx(Tx, "SendTx", BlockNum))
                     continue;
-                if(global.glUseTicket)
+                
+                if(!GetBit(Tx.TXWait, Child.Level))
                 {
-                    var TT = MapTT[Tx.KEY];
-                    if(!TreeTT.find(Tx))
-                    {
-                        continue;
-                    }
-                    var TicketValue = ChildMap.ReceiveTicketMap[Tx.KEY];
-                    if(TicketValue === global.OLD_TICKET)
-                        continue;
+                    continue;
                 }
                 
-                if(!Engine.FindInCache(Child, BlockNum, Tx))
+                if(GetBit(Tx.TXSend, Child.Level))
+                    continue;
+                Tx.TXSend = SetBit(Tx.TXSend, Child.Level);
+                if(!GetBit(Tx.TXSend, Child.Level))
+                    ToLog("**********Error set TXSend on " + Child.Level);
+                
+                global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Send TX=" + Tx.KEY);
+                var TTIndex = Tx.TTReceiveIndex[Child.Level];
+                if(!TTIndex)
                 {
-                    Engine.AddTxToSendCache(Child, BlockNum, Tx);
-                    Arr.push({Index:Tx.Index, body:Tx.body});
-                    JINN_STAT.TxSend++;
+                    continue;
                 }
+                
+                Arr.push({TTIndex:TTIndex - 1, body:Tx.body});
+                JINN_STAT.TxSend++;
             }
             if(!Arr.length)
                 continue;
             
-            Engine.Send("TRANSFERTX", Child, {Cache:Child.CahcheVersion, BlockNum:BlockNum, TxArr:Arr});
+            Engine.Send("TRANSFERTX", Child, {BlockNum:BlockNum, TxArr:Arr});
         }
     };
-    Engine.TRANSFERTX_SEND = {Cache:"uint", BlockNum:"uint32", TxArr:[{Index:"uint16", body:"tr"}]};
+    Engine.TRANSFERTX_SEND = {Reserve:"uint", BlockNum:"uint32", TxArr:[{TTIndex:"uint16", body:"tr"}]};
     Engine.TRANSFERTX = function (Child,Data)
     {
+        if(!Data)
+            return;
         
         var TxArr = Data.TxArr;
         var BlockNum = Data.BlockNum;
@@ -117,71 +115,80 @@ function InitClass(Engine)
         if(!Child || !Child.IsHot() || Child.HotStart)
             return;
         
-        Child.CheckCache(Data.Cache, BlockNum);
-        
         Engine.CheckSizeTXArray(Child, TxArr);
+        
+        var Tree = Engine.GetTreeTx(BlockNum);
+        var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
+        
         var TxArr2 = [];
+        var ErrCount = 0;
+        var CountNew = 0;
         for(var t = 0; t < TxArr.length; t++)
         {
-            var Value = TxArr[t];
-            var Tx = Engine.GetTx(Value.body);
-            Tx.Index = Value.Index;
-            if(!Engine.IsValidateTx(Tx, "TRANSFERTX", BlockNum))
-                continue;
-            if(global.JINN_WARNING >= 5 && global.glUseTicket && BlockNum > JINN_CONST.START_CHECK_BLOCKNUM)
+            JINN_STAT.TxReceive++;
+            
+            var ItemReceive = TxArr[t];
+            
+            var Find = ArrTTAll[ItemReceive.TTIndex];
+            if(!Find)
             {
-                var Tree = Engine.ListTreeTx[BlockNum];
-                if(Tree && Tree.find(Tx))
+                Child.ToError("Error tx index = " + ItemReceive.TTIndex);
+                continue;
+            }
+            
+            var TxRaw = Engine.GetTx(ItemReceive.body, undefined, MAX_ARR_32);
+            if(!Engine.IsValidateTx(TxRaw, "TRANSFERTX", BlockNum))
+                continue;
+            if(!IsEqArr(Find.HashTicket, TxRaw.HashTicket))
+            {
+                Engine.ToLog("<-" + Child.ID + " B=" + BlockNum + " **************** Error ticket/tx KEY:" + Find.KEY + "/" + TxRaw.KEY);
+                continue;
+            }
+            Engine.DoTicketFromTx(Find, TxRaw);
+            
+            var Tx = Find;
+            
+            global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got TX=" + Tx.KEY);
+            if(global.glUseTicket)
+            {
+                var Find = Tree.find(Tx);
+                if(Find)
                 {
-                    Engine.ToLog("<-" + Child.ID + ". B=" + BlockNum + " Bad TICKET CHACHE - WAS Tx=" + Tx.KEY.substr(0, 6));
+                    ErrCount++;
+                    global.JINN_WARNING >= 4 && Engine.ToLog("<-" + Child.ID + ". B=" + BlockNum + " WAS TX IN CACHE : Tx=" + Tx.KEY + " TTSend=[" + Tx.TTSend + "]  TTReceive=[" + Tx.TTReceive + "]");
+                    continue;
                 }
             }
             
-            Engine.AddTxToReceiveCache(Child, BlockNum, Tx, 1);
+            CountNew++;
             TxArr2.push(Tx);
         }
         
-        Engine.AddCurrentProcessingTx(BlockNum, TxArr2);
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_TX;
-        if(BlockNum !== CurBlockNum)
+        if(ErrCount)
         {
-            Engine.SendTx(BlockNum);
+            if(!Child.INFO_DATA)
+                Child.INFO_DATA = {};
+            if(!Child.INFO_DATA.TxReceiveErr)
+                Child.INFO_DATA.TxReceiveErr = 0;
+            
+            JINN_STAT.TxReceiveErr += ErrCount;
+            Child.INFO_DATA.TxReceiveErr += ErrCount;
         }
-    };
-    Engine.FindInCache = function (Child,BlockNum,Tx)
-    {
-        if(!Child.TxMap)
-            Child.TxMap = {};
-        if(Child.TxMap[Tx.KEY] === undefined)
-            return 0;
-        else
-            return 1;
-    };
-    
-    Engine.AddTxToSendCache = function (Child,BlockNum,Tx)
-    {
-        if(!Child.TxMap)
-            Child.TxMap = {};
-        Child.TxMap[Tx.KEY] = 1;
         
-        return 0;
-    };
-    Engine.AddTxToReceiveCache = function (Child,BlockNum,Tx,bCheck)
-    {
-        if(!Child.TxMap)
-            Child.TxMap = {};
-        Child.TxMap[Tx.KEY] = 1;
-        return 0;
+        Engine.AddCurrentProcessingTx(BlockNum, TxArr2);
+        
+        if(CountNew)
+            Engine.StepTaskTx[BlockNum] = 1;
     };
     
     Engine.CreateTx = function (Params)
     {
         glTxNum++;
-        var rnd = glTxNum;
         
         var body = [0];
         WriteUintToArr(body, Engine.ID);
-        WriteUintToArr(body, rnd);
+        WriteUintToArr(body, glTxNum);
+        WriteUintToArr(body, Engine.TickNum);
         for(var i = 0; i < 100; i++)
             body[body.length] = random(255);
         
