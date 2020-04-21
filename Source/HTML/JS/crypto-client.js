@@ -186,7 +186,8 @@ function GetBlockNumTr(arr)
 var LastCreatePOWTrType = 0;
 var LastCreatePOWBlockNum = 0;
 var LastCreatePOWHash = [255, 255, 255, 255];
-function CreateHashBodyPOWInnerMinPower(arr,MinPow,startnonce)
+var glNonce = 0;
+function CreateHashBodyPOWInnerMinPower(arr,MinPow)
 {
     SetMinPow();
     
@@ -196,13 +197,9 @@ function CreateHashBodyPOWInnerMinPower(arr,MinPow,startnonce)
     {
         MinPow = MIN_POWER_POW_TR + Math.log2(arr.length / 128);
     }
-    
-    var nonce = 0;
-    if(startnonce)
-        nonce = startnonce;
     while(1)
     {
-        var arrhash = CreateHashBody(arr, BlockNum, nonce);
+        var arrhash = CreateHashBody(arr, BlockNum, glNonce);
         var power = GetPowPower(arrhash);
         if(power >= MinPow)
         {
@@ -214,11 +211,11 @@ function CreateHashBodyPOWInnerMinPower(arr,MinPow,startnonce)
                 LastCreatePOWBlockNum = BlockNum;
                 LastCreatePOWTrType = TrType;
                 LastCreatePOWHash = arrhash;
-                return nonce;
+                return glNonce;
             }
         }
-        nonce++;
-        if(nonce % 2000 === 0)
+        glNonce++;
+        if(glNonce % 2000 === 0)
         {
             BlockNum = GetBlockNumTr(arr);
         }

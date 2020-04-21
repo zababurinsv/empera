@@ -223,16 +223,6 @@ module.exports = class CSmartContract extends require("./block-exchange")
             DApps[key].OnDeleteBlock(Block)
         }
     }
-    IsValidTicket(Tr, BlockNum)
-    {
-        this.CheckCreateTicketObject(Tr, BlockNum)
-        if(Tr.power < MIN_POWER_POW_TR)
-            return  - 2;
-        if(Tr.num !== BlockNum)
-            return  - 3;
-        
-        return 1;
-    }
     
     IsValidTransaction(Tr, BlockNum)
     {

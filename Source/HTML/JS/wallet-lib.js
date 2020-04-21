@@ -253,12 +253,8 @@ function CreateTransaction(F,CheckErr,Run)
     StrCENT = StrCENT + "000000000";
     var Coin = {SumCOIN:ParseNum(StrTER), SumCENT:ParseNum(StrCENT.substr(0, 9))};
     
-    var OperationID = 0;
     var Item = MapAccounts[FromID];
-    if(Item)
-    {
-        OperationID = Item.Value.OperationID;
-    }
+    var OperationID = GetOperationIDFromItem(Item);
     
     var AttachBody = [];
     if(AttachItem)
@@ -320,20 +316,6 @@ function CheckSending(bToStatus)
     {
         StrButton = " ";
         StrButtonSign = " ";
-    }
-    
-    if(CanSend)
-    {
-        var FromID = ParseNum($("idAccount").value);
-        var Item = MapAccounts[FromID];
-        if(Item && Item.NextSendTime && Item.NextSendTime > MaxBlockNum)
-        {
-            if(bToStatus)
-                SetStatus("Transaction was sending. Wait... (" + Item.LastTransactionText + ")");
-            
-            CanSend = false;
-            StrButton = "Wait...";
-        }
     }
     
     $("idSendButton").disabled = (!CanSend);
@@ -532,16 +514,6 @@ function SendMoneyTR(TR)
     {
         if(Err)
             return;
-        var Item = MapAccounts[TR.FromID];
-        if(Item)
-        {
-            var key = GetHexFromArr(sha3(Body));
-            var BlockNum = GetCurrentBlockNumByTime();
-            Item.LastTransactionText = GetTransactionText(TR);
-            Item.NextSendTime = BlockNum + 10;
-            MapCheckTransaction[key] = Item;
-            CheckSending();
-        }
     });
 }
 

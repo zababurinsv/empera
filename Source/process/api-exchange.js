@@ -120,6 +120,7 @@ WebApi2.Send = function (Params,response,A,request,nJsonRet)
         {
             OperationID += 20;
         }
+        OperationID = Math.max(DataFrom.Value.OperationID, OperationID);
     }
     OperationID++;
     MapSendID[FromNum].OperationID = OperationID;
@@ -374,27 +375,27 @@ function GetBlockNumTr(arr)
     return BlockNum;
 }
 
-function CreateHashBodyPOWInnerMinPower(TR,arr,MinPow,startnonce)
+var glNonce = 0;
+function CreateHashBodyPOWInnerMinPower(TR,arr,MinPow)
 {
     var BlockNum = GetBlockNumTr(arr);
     if(MinPow === undefined)
     {
         MinPow = MIN_POWER_POW_TR + Math.log2(arr.length / 128);
     }
-    
-    var nonce = startnonce;
+    glNonce++;
     while(1)
     {
-        var TxID = CreateTxID(arr, BlockNum, nonce);
+        var TxID = CreateTxID(arr, BlockNum, glNonce);
         var power = GetPowPower(sha3(TxID));
         if(power >= MinPow)
         {
             TR._TxID = TxID;
             TR._BlockNum = BlockNum;
-            return nonce;
+            return glNonce;
         }
-        nonce++;
-        if(nonce % 2000 === 0)
+        glNonce++;
+        if(glNonce % 2000 === 0)
         {
             BlockNum = GetBlockNumTr(arr);
         }

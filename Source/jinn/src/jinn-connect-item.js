@@ -42,8 +42,8 @@ function InitClass(Engine)
         var Item = Engine.NewConnect(AddrItem.IDArr, AddrItem.ip, AddrItem.port);
         if(Item)
         {
-            Item.AddrItem = AddrItem;
-            Engine.LinkHotItem(Item);
+            
+            Engine.SetAddrItemForChild(AddrItem, Item);
         }
         return Item;
     };
@@ -66,10 +66,13 @@ function InitClass(Engine)
         
         var IDStr = GetHexFromArr(IDArr);
         var Child = {IDStr:IDStr, IDArr:IDArr};
-        Engine.ConnectArray.push(Child);
         
+        Engine.SetChildID(Child, ip, port);
         Engine.SetIPPort(Child, ip, port);
         Engine.InitChild(Child);
+        
+        Engine.ConnectArray.push(Child);
+        
         return Child;
     };
     
@@ -84,7 +87,6 @@ function InitClass(Engine)
         
         Child.ip = ip;
         Child.port = port;
-        Engine.SetChildID(Child, ip, port);
         Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
         
         if(JINN_EXTERN.NodeRoot && ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)

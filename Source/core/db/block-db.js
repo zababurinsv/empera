@@ -1113,6 +1113,7 @@ module.exports = class CDB extends require("../code")
             var Body = Tr.body;
             Tr.IsTx = 1
             Tr.num = ReadUintFromArr(Body, Body.length - 12)
+            Tr.nonce = ReadUintFromArr(Body, Body.length - 6)
             
             if(Tr.num >= global.BLOCKNUM_TICKET_ALGO)
                 Tr.HASH = sha3(Body, 33)

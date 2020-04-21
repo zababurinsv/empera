@@ -32,6 +32,9 @@ const POW_SHIFT_MASKA = 32 - POW_MEMORY_BIT_SIZE;
 var COUNT_LIST_LOOP = 3;
 
 
+
+global.GETNODES_VERSION = 1;
+
 function InitClass(Engine)
 {
     Engine.NodesArrByLevel = [];
@@ -45,9 +48,9 @@ function InitClass(Engine)
         if(!Child.Iterator)
             Child.Iterator = {Level:0, Arr:[]};
         
-        Engine.Send("GETNODES", Child, {Iterator:Child.Iterator}, function (Child,Data)
+        Engine.Send("GETNODES", Child, {Iterator:Child.Iterator, Version:GETNODES_VERSION}, function (Child,Data)
         {
-            if(!Data)
+            if(!Data || Data.Version !== GETNODES_VERSION)
                 return;
             
             var Count = 0;
@@ -75,11 +78,12 @@ function InitClass(Engine)
             }
         });
     };
-    Engine.GETNODES_SEND = {Iterator:{Level:"byte", Arr:["uint16"]}};
-    Engine.GETNODES_RET = {Iterator:{Level:"byte", Arr:["uint16"]}, Arr:[{ip:"str30", port:"uint16", BlockNum:"uint32", Nonce:"uint"}]};
+    Engine.GETNODES_SEND = {Version:"byte", Iterator:{Level:"byte", Arr:["uint16"]}};
+    Engine.GETNODES_RET = {Version:"byte", Iterator:{Level:"byte", Arr:["uint16"]}, Arr:[{ip:"str30", port:"uint16", BlockNum:"uint32",
+            Nonce:"uint"}]};
     Engine.GETNODES = function (Child,Data)
     {
-        if(!Data)
+        if(!Data || Data.Version !== GETNODES_VERSION)
             return;
         
         var Arr = [];
@@ -101,17 +105,20 @@ function InitClass(Engine)
             }
         }
         
-        return {Arr:Arr, Iterator:Data.Iterator};
+        return {Version:GETNODES_VERSION, Arr:Arr, Iterator:Data.Iterator};
     };
     Engine.GetCountAddr = function ()
     {
         return Engine.NodesTree.size;
     };
-    Engine.AddNodeAddr = function (AddrItem,Child)
+    Engine.AddNodeAddr = function (AddrItem,FromChild)
     {
+        if(global.LOCAL_RUN && AddrItem.ip !== "127.0.0.1")
+            return 0;
+        
         if(AddrItem.ip === "0.0.0.0")
         {
-            ToLogOne("AddNodeAddr:Error ip from " + ChildName(Child));
+            ToLogOne("AddNodeAddr:Error ip from " + ChildName(FromChild));
             return 0;
         }
         
@@ -149,6 +156,7 @@ function InitClass(Engine)
         else
         {
             Tree.insert(AddrItem);
+            AddrItem.ID = Tree.size;
         }
         
         if(Arr.length >= JINN_CONST.MAX_LEVEL_NODES)
@@ -245,6 +253,13 @@ function InitClass(Engine)
         Engine.ip = ip;
         if(Engine.ip === "0.0.0.0")
             return;
+        
+        if(!IsLocalIP(ip))
+            Engine.DirectIP = 1;
+        
+        Engine.IDArr = CalcIDArr(Engine.ip, Engine.port);
+        Engine.IDStr = GetHexFromArr(Engine.IDArr);
+        
         Engine.AddrItem = {IDArr:Engine.IDArr, ip:Engine.ip, port:Engine.port, Nonce:0, NonceTest:0, BlockNum:0, AddrHashPOW:[255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255]};
@@ -337,6 +352,28 @@ function InitClass(Engine)
                 return Item;
         }
         return undefined;
+    };
+    
+    Engine.SetAddrItemForChild = function (AddrChild,Child,AddNode)
+    {
+        if(!Child.AddrItem)
+        {
+            var FindItem = Engine.NodesTree.find(AddrChild);
+            if(!FindItem)
+            {
+                FindItem = AddrChild;
+                if(AddNode)
+                {
+                    Engine.AddNodeAddr(AddrChild, Child);
+                }
+            }
+            Child.AddrItem = FindItem;
+        }
+        if(!Child.AddrItem.Score || Child.AddrItem.Score <= 0)
+            Child.AddrItem.Score = 0;
+        
+        Child.ID = Child.AddrItem.ID;
+        Engine.LinkHotItem(Child);
     };
 }
 

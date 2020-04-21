@@ -27,22 +27,29 @@ function InitClass(Engine)
     Engine.StartHandShake = function (Child)
     {
         
+        Child.ToLogNet("StartHandShake");
+        
         var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
-            RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum};
+            RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum, RemoteIP:Child.ip,
+            FindSelfIP:Child.FindSelfIP, };
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
     };
     
-    Engine.HANDSHAKE_SEND = {Protocol:"str20", Shard:"str5", ServerIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash",
-        RunVersionNum:"uint", CodeVersionNum:"uint"};
-    Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", ClientIP:"str30", RunVersionNum:"uint", CodeVersionNum:"uint"};
+    Engine.HANDSHAKE_SEND = {Protocol:"str20", Shard:"str5", RemoteIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash",
+        RunVersionNum:"uint", CodeVersionNum:"uint", FindSelfIP:"byte"};
+    Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", RemoteIP:"str30", RunVersionNum:"uint", CodeVersionNum:"uint"};
     Engine.HANDSHAKE = function (Child,Data)
     {
-        Child.ToLogNet("HANDSHAKE: " + JSON.stringify(Data));
+        var WasLevel = Child.Level;
+        Child.ToLogNet("HANDSHAKE Level=" + WasLevel);
         
         if(!Data)
+        {
+            Child.ToLog("Error HANDSHAKE data", 2);
             return;
+        }
         
-        var Ret = {result:0, RndHash:Engine.RndHash, ClientIP:Child.ip, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum};
+        var Ret = {result:0, RndHash:Engine.RndHash, RemoteIP:Child.ip, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum};
         var AddrChild = {ip:Child.ip, port:Data.port, BlockNum:0, Nonce:0, RndHash:Data.RndHash};
         
         var StrError;
@@ -54,8 +61,11 @@ function InitClass(Engine)
         else
             if(IsEqArr(Engine.RndHash, Data.RndHash))
             {
-                if(Engine.ip === "0.0.0.0")
-                    Engine.SetIP(AddrChild.ip);
+                if(Engine.ip === "0.0.0.0" && !IsLocalIP(Data.RemoteIP))
+                {
+                    Child.ToLogNet("Set self IP: " + Data.RemoteIP, 4);
+                    Engine.SetIP(Data.RemoteIP);
+                }
                 
                 Engine.SetItemSelf(AddrChild);
                 StrError = "ERROR: SELF ADDRESS";
@@ -81,33 +91,17 @@ function InitClass(Engine)
             return Ret;
         }
         
-        if(Data.DirectIP)
-        {
-            var FindItem = Engine.NodesTree.find(AddrChild);
-            if(!FindItem)
-            {
-                FindItem = AddrChild;
-                var Res = Engine.AddNodeAddr(AddrChild, Child);
-                if(Res === 0)
-                {
-                    Engine.ToLog("Error HANDSHAKE #1");
-                    return Ret;
-                }
-            }
-            Child.AddrItem = FindItem;
-        }
-        else
-        {
-            Child.AddrItem = AddrChild;
-        }
-        if(!Child.AddrItem.Score || Child.AddrItem.Score <= 0)
-            Child.AddrItem.Score = 0;
+        Engine.SetAddrItemForChild(AddrChild, Child, Data.DirectIP);
         
         Child.RndHash = Data.RndHash;
-        Child.myip = Data.ServerIP;
+        
+        Engine.DoMyAddres(Child, Data.RemoteIP);
+        
         Engine.SetItemRndHash(Child.AddrItem, Data.RndHash);
         Engine.SetIPPort(Child, AddrChild.ip, AddrChild.port);
-        Engine.LinkHotItem(Child);
+        
+        if(WasLevel !== Child.Level)
+            Child.ToLogNet("New Level=" + Child.Level);
         
         Engine.OnAddConnect(Child);
         
@@ -115,19 +109,38 @@ function InitClass(Engine)
         return Ret;
     };
     
+    Engine.DoMyAddres = function (Child,myip)
+    {
+        if(myip && Engine.ip === "0.0.0.0" && !IsLocalIP(myip))
+        {
+            Child.myip = myip;
+            var Child2 = Engine.NewConnect(Engine.IDArr, myip, Engine.port);
+            if(Child2)
+            {
+                Child2.FindSelfIP = 1;
+                var Str = "Start set  my ip = " + myip + ":" + Engine.port;
+                Child.ToLog(Str, 4);
+                Child2.ToLogNet(Str);
+                Engine.SendConnectReq(Child2);
+            }
+        }
+    };
+    
     Engine.OnHandShakeReturn = function (Child,Data)
     {
         Child.RndHash = Data.RndHash;
-        Child.myip = Data.ClientIP;
+        Engine.DoMyAddres(Child, Data.RemoteIP);
         Engine.SetItemRndHash(Child, Data.RndHash);
         
         if(!Data.result || !Engine.CanConnect(Child))
         {
-            Child.ToLog("OnHandShakeReturn : Not can connect to " + Child.Name() + " result=" + Data.result, 4);
+            Child.ToLogNet("OnHandShakeReturn : Not can connect to " + Child.Name() + " result=" + Data.result, 4);
             
             Engine.OnDeleteConnect(Child, "OnHandShakeReturn");
             return;
         }
+        
+        Child.ToLogNet("Result HandShake OK");
         
         Engine.OnAddConnect(Child);
         

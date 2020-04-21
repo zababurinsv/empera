@@ -978,12 +978,6 @@ function OKSend()
     SetDataUpdateTime(20);
     
     CancelSend();
-    
-    openModal('idSending');
-    setTimeout(function ()
-    {
-        closeModal();
-    }, 8 * 1000);
 }
 
 function CancelSend()

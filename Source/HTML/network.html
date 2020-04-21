@@ -28,7 +28,7 @@
     var MaxChildCount=7;//MAX_CONNECT_CHILD
     var SaveIdArr=["idMaxNodesCount"];
     var NodesArr=[];
-    var CurNode;
+    var CurNodeID;
 
     function SetStatus(Str)
     {
@@ -168,6 +168,8 @@
                         strClass="node";
 
 
+                    // if(CurNodeID===Node.id)
+                    //     strClass=strClass+" current";
 
                     Str='<INPUT type="button" id="N'+Node.id+'" class="'+strClass+'" onclick="ViewInfo('+Node.id+',1)" value="'+Str+'">';
 
@@ -175,21 +177,25 @@
                         Str+="<BR>";
 
 
-                    if(!Node.Active)
-                        Str+='<INPUT type="button" class="connect" onclick="AddConnect('+Node.id+')" value="Con...">';
-                    else
+
                     if(Node.Active)
                     {
-                        Str+="<DIV style='float: right'>"
+                        Str+="<DIV style='float: left'>"
                         if(!Node.Hot)
                             Str+='<INPUT type="button" class="edit" onclick="AddHot('+Node.id+')" value="Add"><BR>';
                         if(!Node.Name)
                             Str+='<INPUT type="button" class="edit" onclick="AddBan('+Node.id+')" value="Ban">';
                         Str+="</DIV>"
                     }
+                    else
+                    {
+                        Str+='<INPUT type="button" class="connect" onclick="AddConnect('+Node.id+')" value="Con...">';
+                    }
+
                     if(Node.Hot)
                         Str+='<INPUT type="button" class="edit" onclick="DeleteNode('+Node.id+')" value="Del">';
                     Str+="<BR>";
+
                 }
 
                 if(n<MaxChildCount)
@@ -283,7 +289,7 @@
 
         }
 
-        ViewInfo(CurNode);
+        ViewInfo(CurNodeID);
       }
 
 
@@ -292,8 +298,18 @@
     {
         if(Index!==undefined)
         {
+            var element;
             if(bSet)
-                CurNode=Index;
+            {
+                element=$("N"+CurNodeID);
+                if(element)
+                    element.className=element.className.replace(" current","");
+                CurNodeID = Index;
+            }
+            element=$("N"+CurNodeID);
+            if(element && element.className.indexOf("current")===-1)
+                element.className=element.className+" current";
+
 
             var Node=NodesArr[Index];
             if(Node)
@@ -458,6 +474,7 @@
     }
     .edit
     {
+        float: left;
         width: 35px;
         font-size: 9pt;
     }
@@ -483,12 +500,12 @@
     }
     #idNodeProperty
     {
-        height: 600px;
+        height: 500px;
         width: 100%;
     }
     #idNodeLog
     {
-        height: 280px;
+        height: 380px;
         width: 100%;
     }
 
@@ -496,6 +513,12 @@
     {
         color: #1a2ec1;
     }
+
+    .current
+    {
+        border-color: #1a2ec1;
+    }
+
 </style>
 
 

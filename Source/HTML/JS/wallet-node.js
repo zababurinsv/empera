@@ -318,6 +318,15 @@ function SetArrLog(arr)
                         TR.Run(TR);
                         TR.Run = undefined;
                     }
+                    
+                    if(window.MapAccounts && TR.To)
+                    {
+                        for(var n = 0; n < TR.To.length; n++)
+                        {
+                            var ToID = TR.To[n].ID;
+                            delete MapAccounts[ToID];
+                        }
+                    }
                 }
             }
             

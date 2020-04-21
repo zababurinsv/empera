@@ -180,10 +180,10 @@ function InitClass(Engine)
     
     Engine.InHotStart = function (Item)
     {
-        if(!Item.HotItem)
+        var HotItem = Item.HotItem;
+        if(!HotItem)
             return 0;
         
-        var HotItem = Item.HotItem;
         if(HotItem.HotStart && Date.now() - HotItem.HotStart <= MAX_HOT_CONNECTION_DELAY)
             return 1;
         else
@@ -289,7 +289,7 @@ function InitClass(Engine)
             Child.AddrItem.SendHotConnectPeriod = 1000;
         
         Engine.LevelArr[Child.Level] = Child;
-        Child.ToLogNet("SetLevel: " + Child.Level);
+        Child.ToLogNet("SetLevel: " + Child.Level + (Child.Level >= JINN_CONST.MAX_LEVEL_CONNECTION ? " (Extra slot)" : ""));
         
         Engine.NetConfiguration++;
         

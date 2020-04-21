@@ -26,14 +26,13 @@ function InitClass(Engine)
             return Engine.ToWarning(Str, StartLevel);
         
         var Time;
-        Time = "";
         var ID = "" + Engine.ID;
         
         var Type = Str.substr(0, 2);
         if(Type === "<-" || Type === "->")
-            ToLog("" + Time + ID + Str);
+            ToLog("" + ID + Str);
         else
-            ToLog("" + Time + ID + "." + Str);
+            ToLog("" + ID + "." + Str);
     };
     
     Engine.ToLog1 = function (Str)
@@ -85,67 +84,37 @@ function InitClass(Engine)
                 Engine.ToWarning("<-->" + ID + " ********ERROR: " + Str, WarningLevel);
             }
     };
+    Engine.GetStrOnlyTime = function (now)
+    {
+        if(!now)
+            now = Date.now();
+        
+        var Str = "" + now.getHours().toStringZ(2);
+        Str = Str + ":" + now.getMinutes().toStringZ(2);
+        Str = Str + ":" + now.getSeconds().toStringZ(2);
+        Str = Str + "." + now.getMilliseconds().toStringZ(3);
+        return Str;
+    };
     const LOGNET_WIDTH = 200;
     const LOGNET_MAXSIZE = 80;
     
-    Engine.GetLogNetBuf = function (Child)
+    function WriteLogToBuf(Buf,Time,Str)
     {
-        if(!global.Buffer)
-            return undefined;
-        
-        var Item;
-        if(Child.AddrItem)
-        {
-            if(Child.LogNetBuf)
-            {
-                Child.AddrItem.LogNetBuf = Child.LogNetBuf;
-                delete Child.LogNetBuf;
-                return Child.AddrItem.LogNetBuf;
-            }
-            Item = Child.AddrItem;
-        }
-        else
-        {
-            Item = Child;
-        }
-        
-        if(!Item.LogNetBuf)
-        {
-            Item.LogNetBuf = Buffer.alloc(LOGNET_MAXSIZE * LOGNET_WIDTH);
-            Item.LogNetBuf.PosNum = 0;
-        }
-        
-        return Item.LogNetBuf;
-    };
-    
-    Engine.ToLogNet = function (Child,Str,nLogLevel)
-    {
-        var Buf = Engine.GetLogNetBuf(Child);
-        if(!Buf)
-            return;
-        
-        var length = Math.min(LOGNET_WIDTH, Str.length);
-        
         var Num = (Buf.PosNum) % LOGNET_MAXSIZE;
         var Pos = Num * LOGNET_WIDTH;
         
-        for(var i = Pos; i < Pos + length; i++)
+        for(var i = Pos; i < Pos + LOGNET_WIDTH; i++)
             Buf[i] = 0;
-        Buf.write(Str, Pos, length);
+        
+        var length = Math.min(LOGNET_WIDTH - 6, Str.length);
+        Buf.writeUIntLE(Time, Pos, 6);
+        Buf.write(Str, Pos + 6, length);
         
         Buf.PosNum++;
-        
-        if(nLogLevel)
-            Engine.ToLog(Str, nLogLevel);
     };
-    
-    Engine.GetLogNetInfo = function (Child)
+    function GetArrLogFromBuf(Buf)
     {
-        var Buf = Engine.GetLogNetBuf(Child);
-        var Str = "";
-        if(!Buf)
-            return Str;
-        
+        var Arr = [];
         for(var n = 0; n < LOGNET_MAXSIZE; n++)
         {
             if(n >= Buf.PosNum)
@@ -158,16 +127,89 @@ function InitClass(Engine)
             
             var Pos = Num * LOGNET_WIDTH;
             
-            var CurStr = Buf.toString('utf8', Pos, Pos + LOGNET_WIDTH);
+            var Time = Buf.readUIntLE(Pos, 6);
+            
+            var CurStr = Buf.toString('utf8', Pos + 6, Pos + LOGNET_WIDTH);
             
             for(var i = CurStr.length - 1; i >= 0; i--)
             {
                 if(CurStr.charCodeAt(i) !== 0)
                 {
-                    Str += CurStr.substr(0, i + 1) + "\n";
+                    CurStr = CurStr.substr(0, i + 1);
                     break;
                 }
             }
+            
+            Arr.push({Time:Time, Log:CurStr});
+        }
+        return Arr;
+    };
+    
+    Engine.GetLogNetBuf = function (Child)
+    {
+        if(!global.Buffer)
+            return undefined;
+        
+        var Item;
+        if(Child.AddrItem)
+        {
+            Item = Child.AddrItem;
+            if(!Item.LogNetBuf)
+            {
+                Item.LogNetBuf = Buffer.alloc(LOGNET_MAXSIZE * LOGNET_WIDTH);
+                Item.LogNetBuf.PosNum = 0;
+            }
+            
+            if(Child.LogNetBuf)
+            {
+                var Arr = GetArrLogFromBuf(Child.LogNetBuf);
+                for(var n = 0; n < Arr.length; n++)
+                {
+                    var CurItemLog = Arr[n];
+                    WriteLogToBuf(Item.LogNetBuf, CurItemLog.Time, CurItemLog.Log);
+                }
+                delete Child.LogNetBuf;
+            }
+            
+            return Item.LogNetBuf;
+        }
+        else
+        {
+            if(!Child.LogNetBuf)
+            {
+                Child.LogNetBuf = Buffer.alloc(LOGNET_MAXSIZE * LOGNET_WIDTH);
+                Child.LogNetBuf.PosNum = 0;
+            }
+            return Child.LogNetBuf;
+        }
+    };
+    
+    Engine.ToLogNet = function (Child,Str,nLogLevel)
+    {
+        var Buf = Engine.GetLogNetBuf(Child);
+        if(!Buf)
+            return;
+        
+        WriteLogToBuf(Buf, Date.now(), Str);
+        
+        if(nLogLevel)
+            Engine.ToLog(Str, nLogLevel);
+    };
+    
+    Engine.GetLogNetInfo = function (Child)
+    {
+        var Buf = Engine.GetLogNetBuf(Child);
+        var Str = "";
+        if(!Buf)
+            return Str;
+        
+        var Arr = GetArrLogFromBuf(Buf);
+        
+        for(var n = 0; n < Arr.length; n++)
+        {
+            var Item = Arr[n];
+            var StrTime = Engine.GetStrOnlyTime(new Date(Item.Time));
+            Str += StrTime + " " + Item.Log + "\n";
         }
         return Str;
     };

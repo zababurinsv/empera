@@ -893,7 +893,7 @@ HostingCaller.SendTransactionHex = function (Params,response,ArrPath,request)
     Item.Count++;
     if(Item.Count > global.MAX_TX_FROM_WEB_IP)
     {
-        var Str = "Too many requests from the user";
+        var Str = "Too many requests from the user. Count=" + Item.Count;
         ToLogOne("AddTransactionFromWeb: " + Str + " from ip: " + ip);
         
         var Result = {result:0, text:Str};

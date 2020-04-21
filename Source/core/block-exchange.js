@@ -1015,6 +1015,10 @@ module.exports = class CConsensus extends require("./block-exchange2")
         
         var arrTr = this.GetArrayFromTxTree(Block);
         this.AddDAppTransactions(Block.BlockNum, arrTr)
+        arrTr.sort(function (a,b)
+        {
+            return a.nonce - b.nonce;
+        })
         
         for(var i = 0; i < arrTr.length; i++)
         {

@@ -49,21 +49,6 @@ function Init(Engine)
         return Arr;
     };
     
-    var GlobalNodeID = 0;
-    var GlobalNodeMap = {};
-    function GetLocalNodeID(Node)
-    {
-        var IDStr = Node.IDStr;
-        var id = GlobalNodeMap[IDStr];
-        if(!id)
-        {
-            GlobalNodeID++;
-            GlobalNodeMap[IDStr] = GlobalNodeID;
-            id = GlobalNodeID;
-        }
-        return id;
-    };
-    
     function AddNodeToArr(Arr,Node,IsOpen,IsHot)
     {
         if(!Node.IDStr)
@@ -78,9 +63,8 @@ function Init(Engine)
         var AddrItem = Node.AddrItem;
         if(!AddrItem)
             AddrItem = {Score:Node.Score};
-        var id = GetLocalNodeID(Node);
-        var Item = {id:id, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port, Hot:IsHot, Level:Node.Level,
-            addrStr:Node.IDStr, BlockProcessCount:AddrItem.Score, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
+        var Item = {id:Node.ID, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port, Hot:IsHot,
+            Level:Node.Level, addrStr:Node.IDStr, BlockProcessCount:AddrItem.Score, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
             DeltaTime:Node.DeltaTransfer, TransferCount:Node.TransferCount, LogInfo:Engine.GetLogNetInfo(Node), Active:IsOpen, ErrCountAll:Node.ErrCount,
             WasBan:Node.WasBan, INFO:Node.INFO_DATA, STATS:Node.STAT_DATA, };
         
@@ -101,18 +85,23 @@ function Init(Engine)
         for(var i = 0; i < Arr.length; i++)
         {
             var Node = Arr[i];
-            Map[Node.ip + ":" + Node.port] = 1;
+            var Key = Node.ID;
+            if(Map[Key])
+                continue;
             AddNodeToArr(ArrRes, Node, Node.IsOpen(), Node.IsHot());
+            Map[Key] = 1;
         }
         
         Arr = Engine.GetNodesArr();
         for(var i = 0; i < Arr.length; i++)
         {
-            var Node = Arr[i];
-            if(Map[Node.ip + ":" + Node.port])
+            var AddrItem = Arr[i];
+            var Key = AddrItem.ID;
+            if(Map[Key])
                 continue;
             
-            AddNodeToArr(ArrRes, Node, 0, 0);
+            AddNodeToArr(ArrRes, AddrItem, 0, 0);
+            Map[Key] = 1;
         }
         
         return ArrRes;
@@ -125,6 +114,10 @@ function Init(Engine)
             return "CHILD NOT FOUND";
         
         var Child2 = Engine.RetNewConnectByAddr(Child);
+        
+        if(Child2)
+            Child2.ToLogNet("=MANUAL CONNECT=");
+        
         if(Child2 && Engine.SendConnectReq(Child2))
             return "OK AddConnect";
         else
@@ -137,6 +130,8 @@ function Init(Engine)
         if(!Child)
             return "CHILD NOT FOUND";
         
+        Child.ToLogNet("=MANUAL BAN=");
+        
         Engine.AddToBan(Child, "=BAN=");
         return "OK AddBan";
     };
@@ -147,6 +142,8 @@ function Init(Engine)
         if(!Child)
             return "CHILD NOT FOUND";
         
+        Child.ToLogNet("=MANUAL ADD HOT=");
+        
         Engine.TryHotConnection(Child, 1);
         return "OK AddHot";
     };
@@ -156,6 +153,8 @@ function Init(Engine)
         var Child = Engine.FindConnectedChildByArr(GetArrFromHex(IDStr));
         if(!Child)
             return "CHILD NOT FOUND";
+        
+        Child.ToLogNet("=MANUAL DELETE=");
         
         Engine.DenyHotConnection(Child, 1);
         return "OK DeleteNode";

@@ -66,7 +66,7 @@ function InitClass(Engine)
         var ArrTime = Child.TimeMap[Method];
         if(!ArrTime)
         {
-            ArrTime = [0, 0, 0, 0, 0];
+            ArrTime = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
             Child.TimeMap[Method] = ArrTime;
         }
         
@@ -124,7 +124,7 @@ function InitClass(Engine)
         
         JINN_STAT.BanCount++;
         
-        Engine.StartDisconnect(Child, 0);
+        Engine.StartDisconnect(Child, 1);
     };
     
     Engine.WasBanIP = function (rinfo)

@@ -40,6 +40,9 @@ JINN_CONST.SHARD_NAME = "TERA";
 JINN_CONST.MAX_LEVEL_CONNECTION = 6;
 JINN_CONST.EXTRA_SLOTS_COUNT = 2;
 
+if(global.LOCAL_RUN)
+    JINN_CONST.EXTRA_SLOTS_START_TIME = 20;
+
 JINN_CONST.MAX_PACKET_SIZE = global.MAX_PACKET_LENGTH;
 JINN_CONST.MAX_PACKET_SIZE_RET_DATA = Math.floor(JINN_CONST.MAX_PACKET_SIZE / 2);
 
@@ -67,18 +70,23 @@ module.exports.Create = function (Node,MapName)
     }
     
     var Engine = {};
-    Engine.DirectIP = 1;
+    Engine.UseExtraSlot = 0;
     Engine.ID = Node.port % 1000;
     if(!Engine.ID)
         Engine.ID = 1;
     Engine.port = Node.port;
+    
+    Engine.ip = Node.ip;
+    Engine.DirectIP = 0;
     Engine.IDArr = CalcIDArr(Engine.ip, Engine.port);
     Engine.IDStr = GetHexFromArr(Engine.IDArr);
     
     Engine.Header1 = 0;
     global.CreateNodeEngine(Engine, MapName);
     if(Engine.SetIP)
+    {
         Engine.SetIP(Node.ip);
+    }
     
     require("./tera-hash").Init(Engine);
     require("./tera-link").Init(Engine);

@@ -14,7 +14,7 @@ function Init(Engine)
 {
     Engine.DoNodeAddr = function ()
     {
-        if(!Engine.NodesTree || Engine.TickNum < 1200 || Engine.TickNum % 1200 === 0)
+        if(!Engine.NodesTree || Engine.TickNum < 1200 || Engine.TickNum % 1200 !== 0)
             return;
         
         var Arr = [];
@@ -30,12 +30,12 @@ function Init(Engine)
         }
         
         Engine.SortAddrArrByScore(Arr);
-        SaveParams(GetDataPath("jinn-nodes.lst"), Arr);
+        SaveParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), Arr);
     };
     
     Engine.LoadAddrOnStart = function ()
     {
-        var Arr = LoadParams(GetDataPath("jinn-nodes.lst"), []);
+        var Arr = LoadParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), []);
         for(var i = 0; i < Arr.length; i++)
         {
             Engine.AddNodeAddr(Arr[i]);

@@ -472,7 +472,7 @@ function TestCreateTr()
     var Body = BufLib.GetBufferFromObject(TR, FORMAT_CREATE, 1000, {});
     var startTime = process.hrtime();
     var StartData = Date.now();
-    var nonce = CreateHashBodyPOWInnerMinPower(Body, 1000, 17);
+    var nonce = CreateHashBodyPOWInnerMinPowerTest(Body, 1000, 17);
     var Time = process.hrtime(startTime);
     
     var power = GetPowPower(shaarr(Body));
@@ -490,7 +490,7 @@ function CreateHashBody(body,Num,Nonce)
     return shaarr(body);
 }
 
-function CreateHashBodyPOWInnerMinPower(arr,BlockNum,MinPow)
+function CreateHashBodyPOWInnerMinPowerTest(arr,BlockNum,MinPow)
 {
     var nonce = 0;
     while(1)

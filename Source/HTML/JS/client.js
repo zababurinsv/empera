@@ -1832,11 +1832,45 @@ function SendTransaction(Body,TR,SumPow,F)
 }
 
 var MapSendID = {};
+function GetOperationIDFromItem(Item)
+{
+    if(!Item || !Item.Num)
+    {
+        if(window.SetError)
+            SetError("Error read account From");
+        return 0;
+    }
+    
+    var FromNum = Item.Num;
+    var OperationID = 0;
+    if(!MapSendID[FromNum])
+    {
+        OperationID = Item.Value.OperationID + 10;
+        MapSendID[FromNum] = {};
+    }
+    else
+    {
+        OperationID = MapSendID[FromNum].OperationID;
+        if((new Date() - MapSendID[FromNum].Date) > 8 * 1000)
+        {
+            OperationID += 20;
+        }
+        OperationID = Math.max(Item.Value.OperationID, OperationID);
+    }
+    OperationID++;
+    OperationID++;
+    MapSendID[FromNum].OperationID = OperationID;
+    MapSendID[FromNum].Date = Date.now();
+    
+    return OperationID;
+}
+
 function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
 {
     
     var TR = {Type:135};
     var Body = [TR.Type];
+    
     WriteUint(Body, Account);
     WriteStr(Body, MethodName);
     WriteStr(Body, JSON.stringify(Params));
@@ -1873,24 +1907,7 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
                     return;
                 }
                 
-                var OperationID;
-                if(!MapSendID[FromNum])
-                {
-                    OperationID = Data.Item.Value.OperationID + 10;
-                    MapSendID[FromNum] = {};
-                }
-                else
-                {
-                    OperationID = MapSendID[FromNum].OperationID;
-                    if((new Date() - MapSendID[FromNum].Date) > 8 * 1000)
-                    {
-                        OperationID += 20;
-                    }
-                }
-                OperationID++;
-                OperationID++;
-                MapSendID[FromNum].OperationID = OperationID;
-                MapSendID[FromNum].Date = Date.now();
+                var OperationID = GetOperationIDFromItem(Data.Item);
                 
                 WriteUint(Body, OperationID);
                 Body.length += 10;

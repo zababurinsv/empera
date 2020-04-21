@@ -36,9 +36,6 @@ function Init(Engine)
             return  - 3;
         if(Tx.num > CurBlockNum + 20)
             return  - 5;
-        
-        if(ToAll)
-            var Stop = 1;
         Engine.AddCurrentProcessingTx(Tx.num, [Tx]);
         
         return 1;
@@ -162,7 +159,7 @@ function Init(Engine)
         global.JINN_WARNING = global.LOG_LEVEL;
     };
     
-    Engine.ChildIDCounter = 0;
+    Engine.ChildIDCounter = 10000;
     Engine.SetChildID = function (Child)
     {
         Engine.ChildIDCounter++;
