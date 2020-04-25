@@ -189,7 +189,6 @@ function InitClass(Engine)
             Engine.DoMaxStatus(Store);
             if(LID)
             {
-                Engine.AddChildScore(Child, 1);
                 
                 for(var n = 0; n < Store.LiderArr.length; n++)
                 {
@@ -242,8 +241,6 @@ function InitClass(Engine)
         var bSaveChain = Engine.DB.SetTxData(Block.BlockNum, Block.TreeHash, Block.TxData);
         if(bSaveChain)
         {
-            if(LID)
-                Engine.AddChildScore(Child, 1);
             
             Engine.DoMaxStatus(Store);
         }

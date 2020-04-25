@@ -23,7 +23,7 @@ MapM["GETNODES"] = {Period:1000};
 MapM["HANDSHAKE"] = {Period:1000};
 MapM["CONNECTLEVEL"] = {Period:1000};
 MapM["DISCONNECTLEVEL"] = {Period:1000};
-MapM["MAXHASH"] = {Period:MAXHASH_TIMING};
+MapM["MAXHASH"] = {Period:0};
 MapM["TRANSFERTT"] = {Period:50};
 MapM["TRANSFERTX"] = {Period:100};
 
@@ -32,6 +32,8 @@ MapM["VERSION"] = {Period:10 * 1000};
 MapM["CODE"] = {Period:30 * 1000};
 
 MapM["INFO"] = {Period:0.5 * 1000};
+
+MapM["SPEED"] = {Period:100 * 1000};
 
 function InitClass(Engine)
 {
@@ -60,13 +62,15 @@ function InitClass(Engine)
     
     Engine.StopDoSendPacket = function (Child,Item,Method)
     {
+        if(!Item.Period)
+            return 0;
         
         var CurTime = Date.now();
         
         var ArrTime = Child.TimeMap[Method];
         if(!ArrTime)
         {
-            ArrTime = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            ArrTime = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
             Child.TimeMap[Method] = ArrTime;
         }
         
@@ -76,14 +80,13 @@ function InitClass(Engine)
         });
         
         var Delta = CurTime - ArrTime[0];
+        ArrTime[0] = CurTime;
         if(Delta < Item.Period * JINN_CONST.MULT_TIME_PERIOD)
         {
             JINN_STAT.SkipMethod++;
             Engine.AddCheckErrCount(Child, 1, "Skip method: " + Method + " Delta=" + Delta + " ms");
             return 1;
         }
-        
-        ArrTime[0] = CurTime;
         return 0;
     };
     
@@ -101,7 +104,7 @@ function InitClass(Engine)
         if(!bSilent)
             Child.ToLog(StrErr, 4);
         
-        if(Child.BlockProcessCount() <  - JINN_CONST.MAX_ERR_PROCESS_COUNT)
+        if(Child.Score <  - JINN_CONST.MAX_ERR_PROCESS_COUNT)
         {
             Engine.AddToBan(Child, "Last err:" + StrErr);
         }

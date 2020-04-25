@@ -87,7 +87,7 @@ function InitClass(Engine)
         
         Child.ip = ip;
         Child.port = port;
-        Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
+        Engine.RecalcChildLevel(Child);
         
         if(JINN_EXTERN.NodeRoot && ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)
             Child.ROOT_NODE = 1;
@@ -96,9 +96,13 @@ function InitClass(Engine)
             Child.Self = 1;
     };
     
+    Engine.ChildCounterID = 10000;
     Engine.InitChild = function (Child)
     {
         glChildWorkNum++;
+        Engine.ChildCounterID++;
+        
+        Child.ID = Engine.ChildCounterID;
         Child.WorkNum = glChildWorkNum;
         
         Child.UseZip = global.glUseZip;
@@ -113,13 +117,21 @@ function InitClass(Engine)
         Child.IDContextNum = 0;
         Child.ContextCallMap = {};
         Child.SendAddrMap = {};
-        Child.BlockProcessCount = function ()
-        {
-            if(Child.AddrItem)
-                return Child.AddrItem.Score;
-            else
-                return 0;
-        };
+        
+        Object.defineProperty(Child, "Score", {get:function ()
+            {
+                if(this.AddrItem)
+                    return this.AddrItem.Score;
+                else
+                    return 0;
+            }});
+        Object.defineProperty(Child, "TestExchangeTime", {get:function ()
+            {
+                if(this.AddrItem)
+                    return this.AddrItem.TestExchangeTime;
+                else
+                    return 0;
+            }});
         
         Child.SendPacketCount = 0;
         Child.ReceivePacketCount = 0;

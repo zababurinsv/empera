@@ -87,8 +87,8 @@ function DrawBlockInfo()
             
             var AvgTotal = InitBlockInfo();
             var ArrMax = NormalizeMaxArr(Data.MaxHashStatArr, TimeBlockNum);
-            DrawBlockInfoByArr(ArrMax, AvgTotal, TimeBlockNum);
-            DrawBlockMaxArr(ArrMax, AvgTotal, TimeBlockNum);
+            var CountErrMax = DrawBlockMaxArr(ArrMax, AvgTotal, TimeBlockNum);
+            DrawBlockInfoByArr(ArrMax, AvgTotal, TimeBlockNum, CountErrMax);
         }
     });
 }
@@ -170,7 +170,7 @@ function NormalizeMaxArr(Arr,CurBlockNum)
 function DrawBlockMaxArr(ArrMax,AvgTotal,CurBlockNum)
 {
     if(!ArrMax)
-        return;
+        return 0;
     
     var obj = document.getElementById("idBlockInfo");
     var ctx = obj.getContext('2d');
@@ -178,36 +178,52 @@ function DrawBlockMaxArr(ArrMax,AvgTotal,CurBlockNum)
     
     var Minute = MapInfo["minute"];
     if(!Minute)
-        return;
+        return 0;
     
-    ctx.fillStyle = "#4036ff";
-    ctx.strokeStyle = ctx.fillStyle;
+    var Arr = Minute.PowerArr;
+    
+    var CountErrMax = 0;
     for(var i = 0; i < ArrMax.length; i++)
     {
         if(!ArrMax[i])
             continue;
         
-        var Power = ArrMax[i];
+        var PowerMax = ArrMax[i];
         var Delta = i;
         
-        var CurPower = Minute.PowerArr[i];
-        if(CurPower && Power <= CurPower)
-            continue;
-        
         var x = obj.width - Delta;
-        var y = ValueToY(obj, AvgTotal, Power);
+        var y = ValueToY(obj, AvgTotal, PowerMax);
         
-        ctx.beginPath();
-        ctx.arc(x, y, 1, 0, 2 * Math.PI);
-        
-        ctx.fill();
-        ctx.stroke();
+        var PowerBlock = Arr[i];
+        if(!PowerBlock)
+            PowerBlock = 0;
+        var DeltaPow = PowerMax - PowerBlock;
+        if(DeltaPow > 0)
+        {
+            CountErrMax++;
+            ctx.beginPath();
+            if(DeltaPow >= 8)
+                ctx.fillStyle = "#ff0f00";
+            else
+                if(DeltaPow >= 6)
+                    ctx.fillStyle = "#ff9f44";
+                else
+                    if(DeltaPow >= 2)
+                        ctx.fillStyle = "#ffe843";
+                    else
+                        ctx.fillStyle = "#d5ff50";
+            
+            ctx.strokeStyle = ctx.fillStyle;
+            ctx.arc(x, y, 1, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+        }
     }
     
-    ctx.stroke();
+    return CountErrMax;
 }
 
-function DrawBlockInfoByArr(ArrMax,AvgTotal,TimeBlockNum)
+function DrawBlockInfoByArr(ArrMax,AvgTotal,TimeBlockNum,CountErrMax)
 {
     var obj = document.getElementById("idBlockInfo");
     var ctx = obj.getContext('2d');
@@ -245,7 +261,8 @@ function DrawBlockInfoByArr(ArrMax,AvgTotal,TimeBlockNum)
         for(var n = 0; n < Arr.length; n++)
         {
             CurX += DeltaX;
-            path.lineTo(CurX, ValueToY(obj, AvgTotal, Arr[n]));
+            var Y = Arr[n];
+            path.lineTo(CurX, ValueToY(obj, AvgTotal, Y));
         }
         x += Item.DX;
         
@@ -254,6 +271,7 @@ function DrawBlockInfoByArr(ArrMax,AvgTotal,TimeBlockNum)
         ctx.stroke(path);
         
         var Delta = Month.AvgPow - Item.AvgPow;
+        
         if(i > 1 && Delta >= 1)
         {
             WasRed = 1;
@@ -269,6 +287,19 @@ function DrawBlockInfoByArr(ArrMax,AvgTotal,TimeBlockNum)
             {
                 ctx.fillStyle = "#080";
             }
+        
+        if(bMinutes)
+        {
+            if(CountErrMax >= 40)
+                ctx.fillStyle = "#e22317";
+            else
+                if(CountErrMax >= 30)
+                    ctx.fillStyle = "#ff9b35";
+                else
+                    if(CountErrMax >= 20)
+                        ctx.fillStyle = "#76911b";
+        }
+        
         ctx.fill(path);
     }
     

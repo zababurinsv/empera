@@ -1845,7 +1845,8 @@ function GetOperationIDFromItem(Item)
     var OperationID = 0;
     if(!MapSendID[FromNum])
     {
-        OperationID = Item.Value.OperationID + 10;
+        var BlockNum = GetCurrentBlockNumByTime();
+        OperationID = Item.Value.OperationID + BlockNum % 100;
         MapSendID[FromNum] = {};
     }
     else
@@ -1853,7 +1854,7 @@ function GetOperationIDFromItem(Item)
         OperationID = MapSendID[FromNum].OperationID;
         if((new Date() - MapSendID[FromNum].Date) > 8 * 1000)
         {
-            OperationID += 20;
+            OperationID += 10;
         }
         OperationID = Math.max(Item.Value.OperationID, OperationID);
     }
@@ -2462,4 +2463,55 @@ function SetTempDisabled(Id,TimeSec)
         $(Id).disabled = 0;
         delete TEMP_DISABLED_MAP[Id];
     }, TimeSec * 1000);
+}
+
+var LastLogID = 0;
+var glSessionID = "";
+function CheckSessionID(session)
+{
+    if(session !== glSessionID)
+    {
+        glSessionID = session;
+        LastLogID = 0;
+    }
+}
+function CanAdItemToLog(Item)
+{
+    if(Item.id <= LastLogID)
+        return 0;
+    LastLogID = Item.id;
+    return 1;
+}
+
+var PrevServerStr = "";
+function SetStatusFromServer(Str)
+{
+    if(!Str)
+        return;
+    
+    var id = $("idServerLog");
+    if(document.activeElement === id)
+        return;
+    if(PrevServerStr.length > 16000)
+    {
+        var Index = PrevServerStr.indexOf("\n", 15000);
+        if(Index > 0)
+            PrevServerStr = PrevServerStr.substr(Index);
+    }
+    PrevServerStr = PrevServerStr + Str;
+    
+    id.scrollTop = id.scrollHeight;
+    
+    id.value = PrevServerStr;
+}
+
+function RunServerCode(Code)
+{
+    GetData("SendDirectCode", {Code:Code}, function (Data)
+    {
+        if(Data)
+        {
+            SetStatus(Data.text);
+        }
+    });
 }

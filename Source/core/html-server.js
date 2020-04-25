@@ -584,11 +584,6 @@ HTTPCaller.RestartNode = function (Params)
     return {result:1};
 }
 
-HTTPCaller.ToLogServer = function (Str)
-{
-    ToLogClient(Str);
-    return {result:1};
-}
 
 HTTPCaller.FindMyAccounts = function (Params)
 {
@@ -772,7 +767,7 @@ HTTPCaller.GetWalletInfo = function (Params)
         CountRunCPU:global.ArrMiningWrk.length, MiningPaused:global.MiningPaused, HashRate:HashRateOneSec, MIN_POWER_POW_TR:MIN_POWER_POW_TR,
         PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NWMODE:global.NWMODE, PERIOD_ACCOUNT_HASH:PERIOD_ACCOUNT_HASH, MAX_ACCOUNT_HASH:DApps.Accounts.DBAccountsHash.GetMaxNum(),
         TXBlockNum:TXBlockNum, SpeedSignLib:global.SpeedSignLib, NETWORK:global.NETWORK, RestContext:RestContext, MaxLogLevel:global.MaxLogLevel,
-        JINN_NET_CONSTANT:global.JINN_NET_CONSTANT, };
+        JINN_NET_CONSTANT:global.JINN_NET_CONSTANT, sessionid:sessionid, };
     
     if(Params.Account)
         Ret.PrivateKey = GetHexFromArr(WALLET.GetPrivateKey(WALLET.AccountMap[Params.Account]));
@@ -1200,18 +1195,25 @@ HTTPCaller.SetHTTPParams = function (SetObj)
 
 HTTPCaller.SetNetMode = function (SetObj)
 {
-    
-    if(!global.NET_WORK_MODE)
-        global.NET_WORK_MODE = {};
-    
-    for(var key in SetObj)
+    if(global.JINN)
     {
-        global.NET_WORK_MODE[key] = SetObj[key];
+        global.JINN_IP = SetObj.ip;
+        global.JINN_PORT = SetObj.port;
     }
-    if(NET_WORK_MODE)
+    else
     {
-        global.START_IP = NET_WORK_MODE.ip;
-        global.START_PORT_NUMBER = NET_WORK_MODE.port;
+        if(!global.NET_WORK_MODE)
+            global.NET_WORK_MODE = {};
+        
+        for(var key in SetObj)
+        {
+            global.NET_WORK_MODE[key] = SetObj[key];
+        }
+        if(NET_WORK_MODE)
+        {
+            global.START_IP = NET_WORK_MODE.ip;
+            global.START_PORT_NUMBER = NET_WORK_MODE.port;
+        }
     }
     
     SAVE_CONST(true);
@@ -1237,10 +1239,24 @@ HTTPCaller.GetAccountKey = function (Num)
     return Result;
 }
 
+HTTPCaller.GetNodeData = function (Param)
+{
+    var Item = SERVER.FindNodeByID(Param.ID);
+    if(!Item)
+        return {};
+    
+    if(global.JINN)
+    {
+        if(Item.IsOpen)
+            Engine.SendGetInfo(Item);
+        return global.GetJinnNode(Item);
+    }
+    
+    return GetCopyNode(Item, 0);
+}
+
 HTTPCaller.GetHotArray = function (Param)
 {
-    if(Param)
-        global.glCurNetNodeStr = Param.CurNodeStr;
     var ArrTree = SERVER.GetTransferTree();
     if(!ArrTree)
         return {result:0};
@@ -1248,69 +1264,55 @@ HTTPCaller.GetHotArray = function (Param)
     for(var Level = 0; Level < ArrTree.length; Level++)
     {
         var arr = ArrTree[Level];
-        if(arr)
-            for(var n = 0; n < arr.length; n++)
-            {
-                arr[n].GetTiming = 0;
-            }
-    }
-    
-    var BlockCounts = 0;
-    if(Param && Param.CountBlock)
-        for(var i = SERVER.CurrentBlockNum - Param.CountBlock; i <= SERVER.CurrentBlockNum - Param.CountBlock; i++)
-        {
-            var Block = SERVER.GetBlock(i);
-            if(!Block || !Block.Active || !Block.LevelsTransfer)
-            {
-                continue;
-            }
-            BlockCounts++;
-            for(var n = 0; n < Block.LevelsTransfer.length; n++)
-            {
-                var Transfer = Block.LevelsTransfer[n];
-                for(var Addr in Transfer.TransferNodes)
-                {
-                    var Item = Transfer.TransferNodes[Addr];
-                    Item.Node.GetTiming += Item.GetTiming;
-                }
-            }
-        }
-    
-    for(var Level = 0; Level < ArrTree.length; Level++)
-    {
-        var arr = ArrTree[Level];
         if(!arr)
             continue;
         
-        arr.sort(SortNodeHot);
+        if(!global.JINN)
+            arr.sort(SortNodeHot);
         for(var n = 0; n < arr.length; n++)
         {
-            arr[n] = GetCopyNode(arr[n], BlockCounts);
+            arr[n] = GetCopyNode(arr[n], 1);
         }
     }
-    
-    function SortNodeHot(a,b)
-    {
-        if(b.Hot !== a.Hot)
-            return b.Hot - a.Hot;
-        if(b.BlockProcessCount !== a.BlockProcessCount)
-            return b.BlockProcessCount - a.BlockProcessCount;
-        
-        if(a.DeltaTime !== b.DeltaTime)
-            return a.DeltaTime - b.DeltaTime;
-        
-        return a.id - b.id;
-    };
     
     var Ret = {result:1, ArrTree:ArrTree};
     if(global.JINN)
         Ret.JINNMODE = 1;
     return Ret;
 }
-function GetCopyNode(Node,BlockCounts)
+
+function SortNodeHot(a,b)
+{
+    var HotA = 0;
+    var HotB = 0;
+    if(a.Hot)
+        HotA = 1;
+    if(b.Hot)
+        HotB = 1;
+    
+    if(HotB !== HotA)
+        return HotB - HotA;
+    
+    if(b.BlockProcessCount !== a.BlockProcessCount)
+        return b.BlockProcessCount - a.BlockProcessCount;
+    
+    if(a.DeltaTime !== b.DeltaTime)
+        return a.DeltaTime - b.DeltaTime;
+    
+    return a.id - b.id;
+}
+
+function GetCopyNode(Node,bSimple)
 {
     if(!Node)
         return;
+    
+    if(bSimple)
+    {
+        var Item = {ID:Node.id, ip:Node.ip, Active:Node.Active, Hot:Node.Hot, Level:Node.Level, BlockProcessCount:Node.BlockProcessCount,
+            TransferCount:Node.TransferCount, DeltaTime:Node.DeltaTime, Name:Node.Name, };
+        return Item;
+    }
     
     if(Node.Socket && Node.Socket.Info)
     {
@@ -1320,20 +1322,15 @@ function GetCopyNode(Node,BlockCounts)
     if(!Node.PrevInfo)
         Node.PrevInfo = "";
     
-    var GetTiming = 0;
-    if(BlockCounts !== 0)
-        GetTiming = Math.trunc(Node.GetTiming / BlockCounts) / 1000;
-    
-    var Item = {VersionNum:Node.VersionNum, NetConstVer:Node.NetConstVer, VERSION:Node.VERSIONMAX, LoadHistoryMode:Node.LoadHistoryMode,
+    var Item = {ID:Node.id, ip:Node.ip, VersionNum:Node.VersionNum, NetConstVer:Node.NetConstVer, VERSION:Node.VERSIONMAX, LoadHistoryMode:Node.LoadHistoryMode,
         BlockNumDBMin:Node.BlockNumDBMin, BlockNumDB:Node.BlockNumDB, LevelsBit:Node.LevelsBit, NoSendTx:Node.NoSendTx, GetNoSendTx:Node.GetNoSendTx,
-        DirectMAccount:Node.DirectMAccount, id:Node.id, ip:Node.ip, portweb:Node.portweb, port:Node.port, TransferCount:Node.TransferCount,
-        GetTiming:GetTiming, LevelCount:Node.LevelCount, LevelEnum:Node.LevelEnum, TimeTransfer:GetStrOnlyTimeUTC(new Date(Node.LastTimeTransfer)),
-        BlockProcessCount:Node.BlockProcessCount, DeltaTime:Node.DeltaTime, DeltaTimeM:Node.DeltaTimeM, DeltaGlobTime:Node.DeltaGlobTime,
-        PingNumber:Node.PingNumber, NextConnectDelta:Node.NextConnectDelta, NextGetNodesDelta:Node.NextGetNodesDelta, NextHotDelta:Node.NextHotDelta,
-        Name:Node.Name, addrStr:Node.addrStr, CanHot:Node.CanHot, Active:Node.Active, Hot:Node.Hot, LogInfo:Node.PrevInfo + Node.LogInfo,
-        InConnectArr:Node.WasAddToConnect, Level:Node.Level, TransferBlockNum:Node.TransferBlockNum, TransferSize:Node.TransferSize,
-        TransferBlockNumFix:Node.TransferBlockNumFix, CurBlockNum:Node.CurBlockNum, WasBan:Node.WasBan, ErrCountAll:Node.ErrCountAll,
-        ADDRITEM:Node.ADDRITEM, INFO:Node.INFO, STATS:Node.STATS, };
+        DirectMAccount:Node.DirectMAccount, portweb:Node.portweb, port:Node.port, TransferCount:Node.TransferCount, LevelCount:Node.LevelCount,
+        LevelEnum:Node.LevelEnum, TimeTransfer:GetStrOnlyTimeUTC(new Date(Node.LastTimeTransfer)), BlockProcessCount:Node.BlockProcessCount,
+        DeltaTime:Node.DeltaTime, DeltaTimeM:Node.DeltaTimeM, DeltaGlobTime:Node.DeltaGlobTime, PingNumber:Node.PingNumber, NextConnectDelta:Node.NextConnectDelta,
+        NextGetNodesDelta:Node.NextGetNodesDelta, NextHotDelta:Node.NextHotDelta, Name:Node.Name, addrStr:Node.addrStr, CanHot:Node.CanHot,
+        Active:Node.Active, Hot:Node.Hot, LogInfo:Node.PrevInfo + Node.LogInfo, InConnectArr:Node.WasAddToConnect, Level:Node.Level,
+        TransferBlockNum:Node.TransferBlockNum, TransferSize:Node.TransferSize, TransferBlockNumFix:Node.TransferBlockNumFix, CurBlockNum:Node.CurBlockNum,
+        WasBan:Node.WasBan, ErrCountAll:Node.ErrCountAll, ADDRITEM:Node.ADDRITEM, INFO:Node.INFO, STATS:Node.STATS, };
     
     return Item;
 }
@@ -1561,9 +1558,6 @@ HTTPCaller.GetBlockChain = function (type)
         LoadedBlocks:arrLoadedBlocks, BlockChain:arrBlocks, port:SERVER.port, DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, memoryUsage:process.memoryUsage(),
         IsDevelopAccount:IsDeveloperAccount(WALLET.PubKeyArr), LoadedChainCount:SERVER.LoadedChainList.length, StartLoadBlockTime:SERVER.StartLoadBlockTime,
         sessionid:sessionid, result:1};
-    
-    var obj2 = HTTPCaller.GetHotArray();
-    obj.ArrTree = obj2.ArrTree;
     
     arrBlocks = [];
     arrLoadedChainList = [];

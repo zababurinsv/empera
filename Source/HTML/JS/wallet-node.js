@@ -10,14 +10,14 @@
 
 function SavePrivateKey()
 {
-    var Select = document.getElementById("idTypeKey");
+    var Select = $("idTypeKey");
     if(Select.value === "brain")
     {
         ConvertToPrivateKey();
         return;
     }
     
-    var Str = document.getElementById("idKeyNew").value;
+    var Str = $("idKeyNew").value;
     Str = Str.trim();
     if(Select.value === "private" && (Str.length !== 64 || !IsHexStr(Str)))
     {
@@ -83,12 +83,12 @@ function SetCodeVersionJSON()
     
     var Data2 = CopyObjKeys({Service:"SetNewCodeVersion"}, Data);
     var Str = JSON.stringify(Data2, "", 2);
-    document.getElementById("idDevService").value = Str;
+    $("idDevService").value = Str;
 }
 
 function SetCorrTimeJSON()
 {
-    var AutoDelta = parseInt(document.getElementById("idDevValue").value);
+    var AutoDelta = parseInt($("idDevValue").value);
     var Data = {Num:CONFIG_DATA.CurBlockNum, bUse:1, bAddTime:1};
     if(AutoDelta < 0)
     {
@@ -103,12 +103,12 @@ function SetCorrTimeJSON()
     
     var Data2 = CopyObjKeys({Service:"SetCheckDeltaTime"}, Data);
     var Str = JSON.stringify(Data2, "", 2);
-    document.getElementById("idDevService").value = Str;
+    $("idDevService").value = Str;
 }
 function SetNetConstJSON()
 {
     var Str = JSON.stringify(Data, "", 2);
-    document.getElementById("idDevService").value = Str;
+    $("idDevService").value = Str;
     var Data = {TERA:{MaxTrasactionLimit:CONFIG_DATA.MAX_TRANSACTION_LIMIT, ProtocolVer:CONFIG_DATA.PROTOCOL_VER, ProtocolMode:CONFIG_DATA.PROTOCOL_MODE,
             MaxLevel:CONFIG_DATA.MAX_LEVEL, }, JINN:CONFIG_DATA.JINN_NET_CONSTANT};
     
@@ -123,14 +123,19 @@ function SetNetConstJSON()
     
     var Data2 = CopyObjKeys({Service:"SetCheckNetConstant"}, Data);
     var Str = JSON.stringify(Data2, "", 2);
-    document.getElementById("idDevService").value = Str;
+    $("idDevService").value = Str;
+}
+
+function ConnectToAll()
+{
+    RunServerCode('SERVER.ConnectToAll()');
 }
 
 function RunDevelopService()
 {
     try
     {
-        var Data = JSON.parse(document.getElementById("idDevService").value);
+        var Data = JSON.parse($("idDevService").value);
     }
     catch(e)
     {
@@ -167,13 +172,13 @@ function RestartNode()
 
 function UseAutoUpdate()
 {
-    var Data = {USE_AUTO_UPDATE:document.getElementById("idAutoUpdate").checked, DoMining:1};
+    var Data = {USE_AUTO_UPDATE:$("idAutoUpdate").checked, DoMining:1};
     
     GetData("SaveConstant", Data, function (Data)
     {
         if(Data && Data.result)
         {
-            SetStatus("Save AutoUpdate: " + document.getElementById("idAutoUpdate").checked);
+            SetStatus("Save AutoUpdate: " + $("idAutoUpdate").checked);
         }
     });
 }
@@ -184,25 +189,25 @@ function UseMining()
         SetError("Not set mining account");
         return;
     }
-    var Data = {USE_MINING:document.getElementById("idUseMining").checked, DoMining:1};
+    var Data = {USE_MINING:$("idUseMining").checked, DoMining:1};
     
     GetData("SaveConstant", Data, function (Data)
     {
         if(Data && Data.result)
         {
-            SetStatus("Save Mining: " + document.getElementById("idUseMining").checked);
+            SetStatus("Save Mining: " + $("idUseMining").checked);
         }
     });
 }
 function SetPercentMining()
 {
-    var Data = {POW_MAX_PERCENT:document.getElementById("idPercentMining").value};
+    var Data = {POW_MAX_PERCENT:$("idPercentMining").value};
     
     GetData("SaveConstant", Data, function (Data)
     {
         if(Data && Data.result)
         {
-            SetStatus("Save Mining percent: " + document.getElementById("idPercentMining").value + " %");
+            SetStatus("Save Mining percent: " + $("idPercentMining").value + " %");
         }
     });
 }
@@ -217,8 +222,8 @@ function MiningSets()
     else
     {
         SetVisibleBlock(name, true);
-        document.getElementById("idMiningAccount").value = MiningAccount;
-        document.getElementById("idMiningAccount").focus();
+        $("idMiningAccount").value = MiningAccount;
+        $("idMiningAccount").focus();
     }
 }
 function SaveMiningSet(Value)
@@ -231,7 +236,7 @@ function SaveMiningSet(Value)
     }
     else
     {
-        MiningAccount = ParseNum(document.getElementById("idMiningAccount").value);
+        MiningAccount = ParseNum($("idMiningAccount").value);
     }
     GetData("SetMining", MiningAccount, function (Data)
     {
@@ -295,6 +300,8 @@ function SetArrLog(arr)
     for(var i = 0; i < arr.length; i++)
     {
         var Item = arr[i];
+        if(!CanAdItemToLog(Item))
+            continue;
         
         var tr_text = GetTransactionText(MapSendTransaction[Item.key], Item.key.substr(0, 16));
         var info = Item.time + " " + Item.text;
@@ -383,9 +390,9 @@ function ViewNetworkMode()
             Mode.port = SERVER_PORT;
         }
         
-        document.getElementById("idUseDirectIP").checked = Mode.UseDirectIP;
-        document.getElementById("idIP").value = Mode.ip;
-        document.getElementById("idPort").value = Mode.port;
+        $("idUseDirectIP").checked = Mode.UseDirectIP;
+        $("idIP").value = Mode.ip;
+        $("idPort").value = Mode.port;
     }
 }
 
@@ -393,9 +400,9 @@ function SetNetworkParams(bRestart)
 {
     
     var Mode = {};
-    Mode.UseDirectIP = document.getElementById("idUseDirectIP").checked;
-    Mode.ip = document.getElementById("idIP").value;
-    Mode.port = ParseNum(document.getElementById("idPort").value);
+    Mode.UseDirectIP = $("idUseDirectIP").checked;
+    Mode.ip = $("idIP").value;
+    Mode.port = ParseNum($("idPort").value);
     
     Mode.DoRestartNode = bRestart;
     
@@ -420,7 +427,7 @@ function ViewConstant()
     else
     {
         SetVisibleBlock('idConstantView', true);
-        document.getElementById("idConstant").value = JSON.stringify(CONFIG_DATA.CONSTANTS, "", 2);
+        $("idConstant").value = JSON.stringify(CONFIG_DATA.CONSTANTS, "", 2);
     }
 }
 function SaveConstant(bRestart,Data)
@@ -429,7 +436,7 @@ function SaveConstant(bRestart,Data)
     {
         try
         {
-            Data = JSON.parse(document.getElementById("idConstant").value);
+            Data = JSON.parse($("idConstant").value);
         }
         catch(e)
         {
@@ -462,15 +469,15 @@ function ViewRemoteParams()
     {
         SetVisibleBlock('idRemoteView', true);
         if(CONFIG_DATA.HTTPPort)
-            document.getElementById("idHTTPPort").value = CONFIG_DATA.HTTPPort;
-        document.getElementById("idHTTPPassword").value = CONFIG_DATA.HTTPPassword;
+            $("idHTTPPort").value = CONFIG_DATA.HTTPPort;
+        $("idHTTPPassword").value = CONFIG_DATA.HTTPPassword;
     }
 }
 function SetRemoteParams(bRestart)
 {
     var PrevHTTPPassword = HTTPPassword;
-    var HTTPPort = ParseNum(document.getElementById("idHTTPPort").value);
-    var HTTPPassword = document.getElementById("idHTTPPassword").value;
+    var HTTPPort = ParseNum($("idHTTPPort").value);
+    var HTTPPassword = $("idHTTPPassword").value;
     
     GetData("SetHTTPParams", {HTTPPort:HTTPPort, HTTPPassword:HTTPPassword, DoRestartNode:bRestart}, function (Data)
     {
@@ -517,7 +524,7 @@ function DoBlockChainProcess(FuncName,Text,LastBlock)
     var Params = {};
     if(LastBlock)
     {
-        Params.BlockCount = ParseNum(document.getElementById("idBlockCount").value);
+        Params.BlockCount = ParseNum($("idBlockCount").value);
         Text = Text.replace("%1", Params.BlockCount);
     }
     var result = confirm(Text + "?");

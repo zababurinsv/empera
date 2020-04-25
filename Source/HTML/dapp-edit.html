@@ -168,16 +168,6 @@
     {
         SetStatus("<DIV  align='left' style='color:red'><B>"+Str+"</B></DIV>");
     }
-    var PrevServerStr;
-    function SetStatusFromServer(Str)
-    {
-        var id = $("idServerLog");
-        if(PrevServerStr!==Str)
-        {
-            PrevServerStr=Str;
-            id.innerText=Str;
-        }
-    }
 
     var WasFirstUpdate=0;
     function UpdateData()
@@ -195,6 +185,8 @@
             {
                 if(Data && Data.result)
                 {
+                    CheckSessionID(Data.sessionid);
+
                     WasFirstUpdate=1;
                     CONFIG_DATA=Data;
                     SetBlockChainConstant(Data);
@@ -688,13 +680,15 @@
         for(var i=0;i<arr.length;i++)
         {
             var Item=arr[i];
+            if(!CanAdItemToLog(Item))
+                continue;
+
             var info=Item.text;
             var index=info.indexOf("Add to blockchain: file");
             if(index>=0)
             {
                 var StrRef0=info.substr(index+19);
                 var StrRef="/"+StrRef0;
-                //Str=Str+info.substr(0,index+19)+"<A target='_blank' href='"+StrRef+"'>"+StrRef+"</A>\n";
                 Str=Str+info.substr(0,index+19)+" "+StrRef+"\n";
 
 
@@ -874,6 +868,8 @@
 
 
 
+        if(!Smart.StartValue)
+            Smart.StartValue=0;
         $("idStartValue").value=Smart.StartValue;
         $("idOwnerPubKey").checked=Smart.OwnerPubKey;
 
@@ -2409,7 +2405,9 @@ function HTMLTemplate(){
         <DIV id="idServerBlock" style="width2: 50%;max-height: 300px;">
             <HR>
             Log from node:
-            <DIV id="idServerLog"></DIV><BR>
+            <textarea rows="15" cols="200"  id="idServerLog" class="focusnowrite" readonly>
+            </textarea>
+<!--            <DIV id="idServerLog"></DIV><BR>-->
         </DIV>
     </DIV>
 
@@ -2467,6 +2465,17 @@ function HTMLTemplate(){
         color: #cb763a;
         cursor: pointer;
     }
+
+    #idServerLog
+    {
+        width: 99%;
+        background-color: var(--color2);
+    }
+    .focusnowrite:focus
+    {
+        font-style: italic;
+    }
+
 
     ::-webkit-scrollbar
     {

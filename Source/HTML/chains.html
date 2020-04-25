@@ -271,73 +271,9 @@
 
 
 
-        SetNodesResult(Data.ArrTree);
+
 
         DrawChannels(NodeParam,NodeNum,CurBlockNum,MinBlockNum,MaxBlockNum,Data.BlockChain,Data.LoadedChainList);
-    }
-
-    var ArrHotNodes=[];
-    function SetNodesResult(SetArr)
-    {
-        ArrHotNodes=[];
-
-        if(!SetArr)
-            return;
-        for(var Level=0;Level<SetArr.length;Level++)
-        {
-            var Arr=SetArr[Level];
-            if(Arr)
-            for(var i=0;i<Arr.length;i++)
-            {
-                var Node=Arr[i];
-                if(!Node || !Node.Hot)
-                    continue;
-
-                Node.guid=Node.id;
-                Node.Prepared=1;
-                var NodeOld=MapHotNodes[Node.guid];
-                CopyNodeParam(Node,NodeOld);
-                MapHotNodes[Node.guid]=Node;
-
-                if(!Node.Color)
-                    Node.Color=getRandomColor();
-
-                ArrHotNodes.push(Node);
-            }
-        }
-    }
-
-    function CopyNodeParam(NodeNew,NodeOld)
-    {
-        if(NodeNew && NodeOld)
-        {
-            NodeNew.z=NodeOld.z;
-            //NodeNew.guid=NodeOld.guid;
-            NodeNew.View=NodeOld.View;
-            NodeNew.Color=NodeOld.Color;
-
-            if(!NodeOld.TransferBlockNumFixPrev)
-                NodeOld.TransferBlockNumFixPrev=0;
-            if(!NodeOld.TransferSizePrev)
-                NodeOld.TransferSizePrev=0;
-
-
-            NodeNew.TransferBlockNumFixPrev=NodeOld.TransferBlockNumFixPrev;
-            NodeNew.TransferSizePrev=NodeOld.TransferSizePrev;
-            NodeNew.SizeView=NodeOld.SizeView;
-
-
-            if(NodeNew.TransferBlockNumFixPrev!==NodeNew.TransferBlockNumFix)
-            {
-                NodeNew.SizeView=NodeNew.TransferSize-NodeNew.TransferSizePrev;
-                if(!NodeNew.TransferBlockNumFixPrev)
-                    NodeNew.SizeView=0;
-                NodeNew.TransferBlockNumFixPrev=NodeNew.TransferBlockNumFix;
-                NodeNew.TransferSizePrev=NodeNew.TransferSize;
-            }
-
-
-        }
     }
 
 
@@ -374,67 +310,6 @@
             }
         }
 
-
-        //ноды
-        if(ArrHotNodes.length)
-        {
-            var SumSizeView=0;
-            for(var i=0;i<ArrHotNodes.length;i++)
-            {
-                var Node=ArrHotNodes[i];
-                if(!Node.SizeView)
-                    Node.SizeView=0;
-                SumSizeView+=Node.SizeView;
-            }
-            var AvgSizeView=SumSizeView/ArrHotNodes.length;
-            if(!AvgSizeView)
-                AvgSizeView=1;
-
-            for(var i=0;i<ArrHotNodes.length;i++)
-            {
-                var Node=ArrHotNodes[i];
-                //Node.BlockNum=ArrHotNodes.length-i;
-                Node.BlockNum=i;
-
-                if(CalcDrawBlock(obj,ctx,ArrHotNodes.length-1,"N",0,0,Node,50,Node.Color.color2))
-                {
-                    arrBlocks.push(Node);
-
-                    var x1,x2,y1,y2;
-
-                    var TransferBlockNum=Node.TransferBlockNum;
-                    if(Node.TransferBlockNumFix!==CurBlockNum)
-                    {
-                        Node.SizeView=0;
-                        continue;
-                    }
-
-
-                    var Block=NodeParam.MapBlockChain[Node.TransferBlockNum];
-                    if(!Block)
-                        continue;
-
-                    x1=Node.x+Node.width/2;
-                    y1=Node.y+Node.height;
-                    x2=Block.x+Block.width/2;
-                    y2=Block.y;
-
-                    //линии
-                    ctx.strokeStyle = Node.Color.color1;//color;
-                    ctx.lineWidth=Math.log2(1+Node.SizeView/AvgSizeView/2);
-                    if(ctx.lineWidth<0.2)
-                        ctx.lineWidth=0.2;
-                    if(ctx.lineWidth>6)
-                        ctx.lineWidth=6;
-
-                    ctx.beginPath();
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2,y2);
-                    ctx.stroke();
-
-                }
-            }
-        }
 
 
         if(LastBlock)

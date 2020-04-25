@@ -77,7 +77,8 @@
         }
         arr.unshift(Data1);
 
-        var StrFilter = document.getElementById("idFilter").value;
+        var StrFilter = document.getElementById("idFilter").value.toUpperCase();
+
 
         var rows=htmlTable.rows;
         if(!htmlTable.StatItem)
@@ -113,7 +114,7 @@
                 var item=htmlTable.StatItem[name];
                 if(!item)
                 {
-                    //index=htmlTable.rows.length;
+
 
                     var item=htmlTable.insertRow(1);
                     htmlTable.StatItem[name]=item;
@@ -133,7 +134,7 @@
                 item.cells[m+1].innerText=Count;
                 //item.visibility="visible";
 
-                if(StrFilter.length>0 && name.indexOf(StrFilter)==-1)
+                if(StrFilter.length>0 && name.toUpperCase().indexOf(StrFilter)==-1)
                    item.style="display:none";
                 else
                     item.style="";

@@ -49,7 +49,7 @@ function Init(Engine)
         return Arr;
     };
     
-    function AddNodeToArr(Arr,Node,IsOpen,IsHot)
+    function AddNodeToArr(Arr,Node)
     {
         if(!Node.IDStr)
         {
@@ -60,13 +60,7 @@ function Init(Engine)
         if(IsEqArr(Engine.IDArr, Node.IDArr))
             return;
         
-        var AddrItem = Node.AddrItem;
-        if(!AddrItem)
-            AddrItem = {Score:Node.Score};
-        var Item = {id:Node.ID, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port, Hot:IsHot,
-            Level:Node.Level, addrStr:Node.IDStr, BlockProcessCount:AddrItem.Score, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
-            DeltaTime:Node.DeltaTransfer, TransferCount:Node.TransferCount, LogInfo:Engine.GetLogNetInfo(Node), Active:IsOpen, ErrCountAll:Node.ErrCount,
-            WasBan:Node.WasBan, INFO:Node.INFO_DATA, STATS:Node.STAT_DATA, };
+        var Item = GetJinnNode(Node);
         
         var ArrLevel = Arr[Item.Level];
         if(!ArrLevel)
@@ -77,87 +71,152 @@ function Init(Engine)
         
         ArrLevel.push(Item);
     };
-    SERVER.GetTransferTree = function ()
+    
+    function GetJinnNode(Node)
     {
-        var Arr = SERVER.GetActualNodes();
-        var ArrRes = [];
-        var Map = {};
-        for(var i = 0; i < Arr.length; i++)
+        var IsOpen, IsHot;
+        if(Node.IsOpen)
+            IsOpen = Node.IsOpen();
+        if(Node.IsHot)
+            IsHot = Node.IsHot();
+        
+        var AddrItem = Node.AddrItem;
+        if(!AddrItem)
+            AddrItem = {Score:Node.Score};
+        var Item = {ID:Node.ID, id:Node.ID, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port,
+            Hot:IsHot, Level:Node.Level, addrStr:Node.IDStr, BlockProcessCount:AddrItem.Score, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
+            DeltaTime:Node.RetDeltaTime, TransferCount:Node.TransferCount, LogInfo:Engine.GetLogNetInfo(Node), Active:IsOpen, ErrCountAll:Node.ErrCount,
+            WasBan:Node.WasBan, };
+        
+        CopyPrimitiveValues(Item, Node);
+        if(Node.AddrItem)
         {
-            var Node = Arr[i];
-            var Key = Node.ID;
-            if(Map[Key])
-                continue;
-            AddNodeToArr(ArrRes, Node, Node.IsOpen(), Node.IsHot());
-            Map[Key] = 1;
+            Item.ADDRITEM = {};
+            CopyPrimitiveValues(Item.ADDRITEM, Node.AddrItem);
         }
         
-        Arr = Engine.GetNodesArr();
-        for(var i = 0; i < Arr.length; i++)
+        Item.INFO = Node.INFO_DATA;
+        Item.STATS = Node.STAT_DATA;
+        
+        return Item;
+    };
+    
+    global.GetJinnNode = GetJinnNode;
+    
+    function CopyPrimitiveValues(Dst,Src)
+    {
+        for(var Key in Src)
         {
-            var AddrItem = Arr[i];
-            var Key = AddrItem.ID;
-            if(Map[Key])
-                continue;
+            var Value = Src[Key];
+            var Type = typeof Value;
+            if(Type === "string" || Type === "number" || Type === "boolean")
+                Dst[Key] = Value;
+        }
+    };
+    SERVER.GetTransferTree = function ()
+    {
+        var ArrRes = [];
+        var ArrLevels = Engine.GetTransferArrByLevel(1, 1);
+        for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION; L++)
+        {
+            var LevelData = ArrLevels[L];
+            if(LevelData.HotChild)
+                AddNodeToArr(ArrRes, LevelData.HotChild);
             
-            AddNodeToArr(ArrRes, AddrItem, 0, 0);
-            Map[Key] = 1;
+            for(var i = 0; i < LevelData.Connect.length; i++)
+            {
+                AddNodeToArr(ArrRes, LevelData.Connect[i]);
+            }
+            
+            for(var i = 0; i < LevelData.NotConnect.length; i++)
+            {
+                AddNodeToArr(ArrRes, LevelData.NotConnect[i]);
+            }
         }
         
         return ArrRes;
     };
-    
-    SERVER.NetAddConnect = function (IDStr)
+    SERVER.NetAddConnect = function (ID)
     {
-        var Child = Engine.FindAddrItemByArr(GetArrFromHex(IDStr));
+        var Child = SERVER.FindNodeByID(ID);
         if(!Child)
             return "CHILD NOT FOUND";
         
+        Child.SendHotConnectPeriod = 1000;
+        
         var Child2 = Engine.RetNewConnectByAddr(Child);
+        if(!Child2)
+            return "#1 NO AddConnect";
         
-        if(Child2)
-            Child2.ToLogNet("=MANUAL CONNECT=");
+        Child2.ToLogNet("=MANUAL CONNECT=");
         
-        if(Child2 && Engine.SendConnectReq(Child2))
-            return "OK AddConnect";
+        if(Engine.SendConnectReq(Child2))
+            return "OK AddConnect: " + ID;
         else
-            return "NO AddConnect";
+            return "#2 NO AddConnect";
     };
     
-    SERVER.NetAddBan = function (IDStr)
+    SERVER.NetAddBan = function (ID)
     {
-        var Child = Engine.FindConnectedChildByArr(GetArrFromHex(IDStr));
+        var Child = SERVER.FindNodeByID(ID);
         if(!Child)
             return "CHILD NOT FOUND";
         
         Child.ToLogNet("=MANUAL BAN=");
         
         Engine.AddToBan(Child, "=BAN=");
-        return "OK AddBan";
+        return "OK AddBan: " + ID;
     };
     
-    SERVER.NetAddHot = function (IDStr)
+    SERVER.NetAddHot = function (ID)
     {
-        var Child = Engine.FindConnectedChildByArr(GetArrFromHex(IDStr));
+        var Child = SERVER.FindNodeByID(ID);
         if(!Child)
             return "CHILD NOT FOUND";
         
         Child.ToLogNet("=MANUAL ADD HOT=");
         
-        Engine.TryHotConnection(Child, 1);
-        return "OK AddHot";
+        var WasChild = Engine.LevelArr[Child.Level];
+        if(WasChild)
+        {
+            Engine.DenyHotConnection(WasChild, 1);
+        }
+        
+        if(Engine.TryHotConnection(Child, 1))
+            return "OK AddHot: " + ID;
+        else
+            return "NOT AddHot";
     };
     
-    SERVER.NetDeleteNode = function (IDStr)
+    SERVER.NetDeleteNode = function (ID)
     {
-        var Child = Engine.FindConnectedChildByArr(GetArrFromHex(IDStr));
+        var Child = SERVER.FindNodeByID(ID);
         if(!Child)
             return "CHILD NOT FOUND";
         
         Child.ToLogNet("=MANUAL DELETE=");
         
         Engine.DenyHotConnection(Child, 1);
-        return "OK DeleteNode";
+        return "OK DeleteNode: " + ID;
+    };
+    
+    SERVER.FindNodeByID = function (ID)
+    {
+        for(var i = 0; i < Engine.ConnectArray.length; i++)
+        {
+            var Child = Engine.ConnectArray[i];
+            if(Child && Child.ID === ID)
+                return Child;
+        }
+        
+        var it = Engine.NodesTree.iterator(), Item;
+        while((Item = it.next()) !== null)
+        {
+            if(Item.ID === ID)
+                return Item;
+        }
+        
+        return undefined;
     };
     
     SERVER.OnStartSecond = function ()

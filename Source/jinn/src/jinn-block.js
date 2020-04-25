@@ -280,12 +280,16 @@ function InitClass(Engine)
     
     Engine.SortBlock = function (Block)
     {
-        if(!Block || !Block.TxData)
+        if(!Block || !Block.TxData || Block.TxData.length <= 1)
             return;
         for(var i = 0; i < Block.TxData.length; i++)
             Engine.CheckHashExist(Block.TxData[i]);
         Block.TxData.sort(function (a,b)
         {
+            
+            if(a.nonce !== b.nonce)
+                return a.nonce - b.nonce;
+            
             if(b.TimePow !== a.TimePow)
                 return b.TimePow - a.TimePow;
             return CompareArr(a.HashPow, b.HashPow);
@@ -432,6 +436,7 @@ function InitClass(Engine)
         Tt.IsTx = Tx.IsTx;
         Tt.HASH = Tx.HASH;
         Tt.body = Tx.body;
+        Tt.nonce = Tx.nonce;
     };
     
     Engine.GetTicket = function (HashTicket,Key,Num)
@@ -448,6 +453,7 @@ function InitClass(Engine)
         
         var Tx = {};
         Tx.IsTx = 1;
+        Tx.nonce = ReadUintFromArr(body, body.length - 6);
         Tx.num = ReadUintFromArr(body, body.length - 12);
         if(HASH)
             Tx.HASH = HASH;

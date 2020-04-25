@@ -1017,7 +1017,12 @@ module.exports = class CConsensus extends require("./block-exchange2")
         this.AddDAppTransactions(Block.BlockNum, arrTr)
         arrTr.sort(function (a,b)
         {
-            return a.nonce - b.nonce;
+            if(a.nonce !== b.nonce)
+                return a.nonce - b.nonce;
+            
+            if(b.TimePow !== a.TimePow)
+                return b.TimePow - a.TimePow;
+            return CompareArr(a.HashPow, b.HashPow);
         })
         
         for(var i = 0; i < arrTr.length; i++)

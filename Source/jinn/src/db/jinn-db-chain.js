@@ -582,7 +582,6 @@ class CDBChain
             var PrevBlockSeed = this.GetPrevBlockDB(BlockSeed);
             if(!PrevBlockSeed)
             {
-                ToLog("#2 SaveChainToDB: Error PrevBlock on Block=" + BlockSeed.BlockNum)
                 return  - 1;
             }
             BlockSeed = PrevBlockSeed

@@ -14,7 +14,6 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Connect"});
 
-var MAX_CONNECT_TIMEOUT = 20 * 1000;
 
 var glWorkConnect = 0;
 
@@ -22,26 +21,35 @@ var glWorkConnect = 0;
 
 function DoNode(Engine)
 {
-    if(Engine.TickNum % 10 !== 0)
+    if(Engine.TickNum % 5 !== 0)
         return;
     
     if(Engine.ROOT_NODE)
         return 0;
     
+    var Delta = Date.now() - Engine.StartTime;
+    if(Delta < 2000 * JINN_CONST.MAX_CONNECT_TIMEOUT / 3)
+        Engine.IsStartingTime = 1;
+    else
+        Engine.IsStartingTime = 0;
+    
+    if(global.MODELING)
+        Engine.IsStartingTime = 0;
+    
     glWorkConnect++;
-    if(!Engine.WasSendToGenesis && JINN_EXTERN.NodeRoot)
+    if(!Engine.WasSendToRoot && JINN_EXTERN.NodeRoot)
     {
-        Engine.WasSendToGenesis = 1;
         var Child = Engine.NewConnect(JINN_EXTERN.NodeRoot.IDArr, JINN_EXTERN.NodeRoot.ip, JINN_EXTERN.NodeRoot.port);
         if(Child)
         {
+            Engine.WasSendToRoot = 1;
             Child.ROOT_NODE = 1;
             Engine.SendConnectReq(Child);
         }
     }
     else
         if(Engine.NodesTree.size === 0 && Engine.TickNum > 10)
-            Engine.WasSendToGenesis = 0;
+            Engine.WasSendToRoot = 0;
     for(var i = 0; i < Engine.ConnectArray.length; i++)
     {
         var Child = Engine.ConnectArray[i];
@@ -50,19 +58,22 @@ function DoNode(Engine)
             continue;
         }
         
-        var AddrItem = Child.AddrItem;
-        if(!AddrItem || !Child.IsHot())
+        if(!Child.IsHot())
         {
             var DeltaTime = Date.now() - Child.ConnectStart;
-            if(DeltaTime > MAX_CONNECT_TIMEOUT)
+            if(DeltaTime > JINN_CONST.MAX_CONNECT_TIMEOUT * 1000)
             {
                 
-                var StrError = "MAX_CONNECT_TIMEOUT StartDisconnect #" + i;
+                var StrError = "MAX_CONNECT_TIMEOUT StartDisconnect";
                 Child.ToLogNet(StrError);
                 Engine.StartDisconnect(Child, 1, StrError);
+                continue;
             }
-            continue;
         }
+        
+        var AddrItem = Child.AddrItem;
+        if(!AddrItem)
+            continue;
         
         if(AddrItem.WorkConnect !== glWorkConnect)
         {
@@ -76,7 +87,7 @@ function DoNode(Engine)
     for(var i = 0; i < Engine.ConnectArray.length; i++)
     {
         var Child = Engine.ConnectArray[i];
-        if(!Child || Child.ROOT_NODE || Child.Del || !Child.AddrItem || !Child.IsOpen() || Child.Self || !Child.IsHot())
+        if(!Child || Child.ROOT_NODE || Child.Del || !Child.AddrItem || !Child.IsOpen() || Child.Self || Child.IsHot())
         {
             continue;
         }
@@ -88,7 +99,7 @@ function DoNode(Engine)
         {
             if(Child.InComeConnect)
             {
-                var StrError = "StartDisconnect 1 Num:" + Child.ConnectNum + " port:" + Child._port;
+                var StrError = "---DOUBLE StartDisconnect 1 Num:" + Child.ConnectNum;
                 Child.ToLogNet(StrError);
                 Engine.StartDisconnect(Child, 1, StrError);
                 Engine.DenyHotConnection(Child);
@@ -98,13 +109,14 @@ function DoNode(Engine)
         {
             if(!Child.InComeConnect)
             {
-                var StrError = "StartDisconnect 2 Num: " + Child.ConnectNum;
+                var StrError = "---DOUBLE StartDisconnect 2 Num: " + Child.ConnectNum;
                 Child.ToLogNet(StrError);
                 Engine.StartDisconnect(Child, 1, StrError);
                 Engine.DenyHotConnection(Child);
             }
         }
     }
+    Engine.DoConnectLevels();
     
     Engine.DoStatConnect();
 }
@@ -112,7 +124,9 @@ function DoNode(Engine)
 
 function InitClass(Engine)
 {
-    Engine.WasSendToGenesis = 0;
+    Engine.StartTime = Date.now();
+    
+    Engine.WasSendToRoot = 0;
     Engine.IndexChildLoop = 0;
     
     Engine.ConnectArray = [];
@@ -221,9 +235,140 @@ function InitClass(Engine)
         
         Engine.RemoveConnect(Child);
     };
+    
+    Engine.GetTransferArrByLevel = function (bConnect,bNotConnect)
+    {
+        var LevelData;
+        var ArrLevels = [];
+        
+        glWorkConnect++;
+        for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION; L++)
+        {
+            LevelData = {HotChild:Engine.LevelArr[L], Connect:[], NotConnect:[]};
+            ArrLevels.push(LevelData);
+        }
+        if(bConnect)
+        {
+            for(var i = 0; i < Engine.ConnectArray.length; i++)
+            {
+                var Child = Engine.ConnectArray[i];
+                if(!Child)
+                    continue;
+                
+                if(Child.Level === undefined)
+                    ToLogTrace("Error Child.Level===undefined");
+                
+                if(Child.AddrItem)
+                    Child.AddrItem.WorkConnect = glWorkConnect;
+                
+                if(Child.Level < JINN_CONST.MAX_LEVEL_CONNECTION)
+                {
+                    LevelData = ArrLevels[Child.Level];
+                    if(LevelData.HotChild !== Child)
+                        LevelData.Connect.push(Child);
+                }
+            }
+        }
+        if(bNotConnect)
+        {
+            var it = Engine.NodesTree.iterator(), Item;
+            while((Item = it.next()) !== null)
+            {
+                if(Item.SendConnectPeriod === undefined)
+                    ToLogTrace("Error Item.SendConnectPeriod===undefined");
+                
+                if(Item.WorkConnect === glWorkConnect)
+                    continue;
+                
+                if(Item.Level === undefined)
+                    ToLogTrace("Error Item.Level===undefined");
+                
+                if(Item.Level < JINN_CONST.MAX_LEVEL_CONNECTION)
+                {
+                    LevelData = ArrLevels[Item.Level];
+                    LevelData.NotConnect.push(Item);
+                }
+            }
+        }
+        for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION; L++)
+        {
+            var LevelData = ArrLevels[L];
+            
+            LevelData.Connect.sort(function (a,b)
+            {
+                if(a.SendHotConnectLastTime !== b.SendHotConnectLastTime)
+                    return a.SendHotConnectLastTime - b.SendHotConnectLastTime;
+                
+                if(a.TestExchangeTime !== b.TestExchangeTime)
+                    return b.TestExchangeTime - a.TestExchangeTime;
+                
+                if(a.Score !== b.Score)
+                    return b.Score - a.Score;
+                
+                return a.ID - b.ID;
+            });
+            
+            LevelData.NotConnect.sort(function (a,b)
+            {
+                if(a.SendConnectLastTime !== b.SendConnectLastTime)
+                    return a.SendConnectLastTime - b.SendConnectLastTime;
+                
+                if(a.Score !== b.Score)
+                    return b.Score - a.Score;
+                
+                return a.ID - b.ID;
+            });
+        }
+        
+        return ArrLevels;
+    };
+    Engine.DoConnectLevels = function ()
+    {
+        var ArrLevels = Engine.GetTransferArrByLevel(1, 1);
+        
+        var MinNodeCounts = 1;
+        if(Engine.IsStartingTime)
+            MinNodeCounts = 10;
+        
+        for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION; L++)
+        {
+            var LevelData = ArrLevels[L];
+            if(LevelData.Connect.length < MinNodeCounts)
+            {
+                for(var i = 0; i < LevelData.NotConnect.length; i++)
+                {
+                    var Item = LevelData.NotConnect[i];
+                    
+                    if(!CanTime(Item, "SendConnect", 1000, 1.5))
+                        continue;
+                    
+                    if(!Item.CheckStartConnect && CompareArr(Engine.IDArr, Item.IDArr) > 0)
+                    {
+                        Item.CheckStartConnect = 1;
+                        continue;
+                    }
+                    
+                    var Child = Engine.RetNewConnectByAddr(Item);
+                    if(Child && Engine.SendConnectReq(Child))
+                    {
+                        break;
+                    }
+                }
+            }
+            for(var i = 0; i < LevelData.Connect.length; i++)
+            {
+                var Child = LevelData.Connect[i];
+                var Item = Child.AddrItem;
+                if(Item && Item.SendConnectPeriod !== 1000)
+                {
+                    ResetTimePeriod(Item, "SendConnect", 1000, 10000);
+                }
+            }
+        }
+    };
 }
 
-function CanTime(Obj,Name,Period)
+function CanTime(Obj,Name,Period,kMult,TimeReset)
 {
     var NameLastTime = Name + "LastTime";
     var NamePeriod = Name + "Period";
@@ -234,11 +379,32 @@ function CanTime(Obj,Name,Period)
         Obj[NameLastTime] = 0;
         Obj[NamePeriod] = Period;
     }
+    
+    if(TimeReset)
+        Obj[NamePeriod] = TimeReset;
+    
     var Delta = CurTume - Obj[NameLastTime];
     if(Delta < Obj[NamePeriod])
         return 0;
     Obj[NameLastTime] = CurTume;
+    
+    if(kMult)
+    {
+        Obj[NamePeriod] = Obj[NamePeriod] * kMult;
+    }
+    
+    if(TimeReset)
+    {
+        Obj[NamePeriod] = Period;
+    }
+    
     return 1;
 }
 
+function ResetTimePeriod(Obj,Name,Period,TimeReset)
+{
+    CanTime(Obj, Name, Period, 0, TimeReset);
+}
+
 global.CanTime = CanTime;
+global.ResetTimePeriod = ResetTimePeriod;

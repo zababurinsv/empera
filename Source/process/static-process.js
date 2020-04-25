@@ -230,8 +230,11 @@ function GETREST(msg)
     var BlockDB = SERVER.ReadBlockHeaderDB(BlockNumRest);
     if(!BlockDB)
     {
+        ToLog("NOT find block: " + BlockNumRest + " from node: " + msg.NodeName, 4);
         return;
     }
+    
+    ToLog("Got GETREST block: " + BlockNumRest + " from node: " + msg.NodeName, 4);
     
     var RestIndexArr = GetCurrentRestArr();
     var nResult = 0;

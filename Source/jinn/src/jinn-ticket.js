@@ -113,7 +113,7 @@ function InitClass(Engine)
         Item.TTIndex = ArrTTAll.length;
         ArrTTAll.push(Item);
         
-        var ArrLength = JINN_CONST.MAX_LEVEL_CONNECTION + JINN_CONST.EXTRA_SLOTS_COUNT;
+        var ArrLength = 1 + Math.max(JINN_CONST.MAX_LEVEL_ALL, Engine.LevelArr.length);
         
         if(Item.TTReceiveIndex)
             ToLog("WAS Item.TTReceiveIndex=" + Item.TTReceiveIndex);

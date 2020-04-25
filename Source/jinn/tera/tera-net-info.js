@@ -33,13 +33,9 @@ function Init(Engine)
         return Ret;
     };
     
-    Engine.SendGetInfo = function ()
+    Engine.SendGetInfo = function (Child)
     {
-        if(!global.glCurNetNodeStr)
-            return;
-        
-        var Child = Engine.FindConnectedChildByArr(GetArrFromHex(global.glCurNetNodeStr));
-        if(!Child)
+        if(!Child || !Child.IsOpen())
             return;
         
         Engine.Send("INFO", Child, {}, function (Child,Data)
@@ -56,8 +52,6 @@ function Init(Engine)
             Child.INFO_DATA.DeltaMaxSumPow = JINN_STATCopy.MaxSumPow - Data.MaxSumPow;
         });
     };
-    
-    setInterval(Engine.SendGetInfo, 500);
     Engine.INFO_RET = {};
     
     var Test = Engine.INFO(undefined, undefined, 1);

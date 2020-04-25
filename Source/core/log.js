@@ -79,6 +79,7 @@ global.ToLogTrace = function (Str)
     ToError("" + Str + ":" + Data);
 }
 var MapLogOne = {};
+var StartLogOne = Date.now();
 global.ToLogOne = function (Str,Str2)
 {
     if(!MapLogOne[Str])
@@ -88,6 +89,12 @@ global.ToLogOne = function (Str,Str2)
             ToLog(Str + Str2);
         else
             ToLog(Str);
+        
+        if(Date.now() - StartLogOne > 3600 * 1000)
+        {
+            MapLogOne = {};
+            StartLogOne = Date.now();
+        }
     }
 }
 
@@ -137,6 +144,7 @@ function ToLogFile(file_name,Str,bNoFile)
 }
 
 global.ArrLogClient = [];
+global.ArrLogCounter = 0;
 function ToLogClient(Str,StrKey,bFinal)
 {
     if(!Str)
@@ -146,7 +154,8 @@ function ToLogClient(Str,StrKey,bFinal)
     
     if(!StrKey)
         StrKey = "";
-    ArrLogClient.push({time:GetStrOnlyTime(), text:Str, key:StrKey, final:bFinal, });
+    global.ArrLogCounter++;
+    ArrLogClient.push({id:global.ArrLogCounter, time:GetStrOnlyTime(), text:Str, key:StrKey, final:bFinal, });
     
     if(ArrLogClient.length > 13)
         ArrLogClient.shift();

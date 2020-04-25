@@ -42,7 +42,7 @@ var CServer = require("../core/server");
 require("../core/tests");
 
 
-global.DEF_PERIOD_SIGN_LIB = 500;
+global.DEF_PERIOD_SIGN_LIB = 100;
 setTimeout(function ()
 {
     TestSignLib(DEF_PERIOD_SIGN_LIB);
@@ -261,6 +261,13 @@ function RunServer()
     }
     
     KeyPair.setPrivateKey(Buffer.from(ServerPrivKey));
+    
+    if(global.TEST_JINN)
+    {
+        START_IP = global.JINN_IP;
+        START_PORT_NUMBER = global.JINN_PORT;
+    }
+    
     var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, global.TEST_JINN);
     
     if(global.TEST_JINN)
@@ -275,15 +282,12 @@ function RunServer()
 function StartJinn()
 {
     var JinnLib = require("../jinn/tera");
-    if(!SERVER.ip)
-        SERVER.ip = "0.0.0.0";
-    StartPortMapping(SERVER.ip, SERVER.port, function (ip)
+    if(!global.JINN_IP)
+        global.JINN_IP = "0.0.0.0";
+    
+    global.NET_WORK_MODE = undefined;
+    StartPortMapping(global.JINN_IP, global.JINN_PORT, function (ip)
     {
-        if(!SERVER.ip && ip)
-        {
-            SERVER.ip = ip;
-            global.INTERNET_IP_FROM_STUN = ip;
-        }
         
         JinnLib.Create(SERVER);
         SERVER.CanSend = 2;

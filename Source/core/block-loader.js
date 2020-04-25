@@ -332,6 +332,9 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 3)
             }
         }
+        else
+        {
+        }
     }
     StartLoadBlockHeader(LoadHash, Num, StrInfo, bIsSum)
     {
@@ -495,7 +498,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         {
             var Delta = CurTime - task.time;
             if(Delta < PACKET_ALIVE_PERIOD_NEXT_NODE)
-                return {Result:false, timewait:true};
+                return {Result:false, timewait:true, RowNum:1};
         }
         var StartI = 0;
         if(task.Node)
@@ -575,7 +578,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 task.time = CurTime
                 
                 return {Result:true, Node:Node, timewait:timewait, ArrStat:[NodeCount1, NodeCount2, NodeCount3, NodeCount4, NodeCount5, NodeCount6,
-                    NodeCount7]};
+                    NodeCount7], RowNum:2};
             }
         }
         if(!task.RestartGetNextNode)
@@ -590,11 +593,11 @@ module.exports = class CBlock extends require("./rest-loader.js")
                 task.RestartGetNextNode++
                 task.LastTimeRestartGetNextNode = Date.now()
                 task.MapSend = {}
-                return {Result:false, timewait:true};
+                return {Result:false, timewait:true, RowNum:3};
             }
         }
         
-        return {Result:false, timewait:timewait};
+        return {Result:false, timewait:timewait, RowNum:4};
     }
     
     SendChainNext(chain, checktime)

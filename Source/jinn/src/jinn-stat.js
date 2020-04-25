@@ -104,12 +104,7 @@ function DoNode(Engine)
     if(JINN_STAT.MINHots ===  - 1 || JINN_STAT.MINHots > CurHotCounts)
         JINN_STAT.MINHots = CurHotCounts;
     
-    for(var l = 0; l < Engine.NodesArrByLevel.length; l++)
-    {
-        var LArr = Engine.NodesArrByLevel[l];
-        if(LArr)
-            JINN_STAT.AddrCount += LArr.length;
-    }
+    JINN_STAT.AddrCount = Engine.NodesTree.size;
 }
 
 function InitClass(Engine)

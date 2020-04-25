@@ -27,6 +27,8 @@ require("../core/geo");
 
 require("./child-process");
 
+var sessionid = GetHexFromAddres(crypto.randomBytes(20));
+
 global.READ_ONLY_DB = 1;
 global.MAX_STAT_PERIOD = 600;
 
@@ -76,7 +78,8 @@ process.on('message', function (msg)
                     }
                 }
                 
-                ArrLogClient.push({text:msg.ResultStr, key:msg.TX, final:msg.bFinal, time:Date.now(), });
+                global.ArrLogCounter++;
+                ArrLogClient.push({id:global.ArrLogCounter, text:msg.ResultStr, key:msg.TX, final:msg.bFinal, time:Date.now(), });
                 
                 break;
             }
@@ -107,6 +110,16 @@ var KeyPair = crypto.createECDH('secp256k1');
 KeyPair.setPrivateKey(Buffer.from([77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77,
 77, 77, 77, 77, 77, 77, 77, 77, 77, 77]));
 global.SERVER = new CServerDB(KeyPair, undefined, undefined, false, true);
+
+if(global.JINN_MODE)
+{
+    SERVER.port = 0;
+    SERVER.ip = "0.0.0.0";
+    
+    var JinnLib = require("../jinn/tera");
+    var Map = {"Block":1, "BlockDB":1, "Log":1, };
+    JinnLib.Create(SERVER, Map);
+}
 
 global.HTTP_PORT_NUMBER = 0;
 require("../core/html-server");
@@ -589,7 +602,7 @@ HostingCaller.GetCurrentInfo = function (Params)
         MaxNumBlockDB:MaxNumBlockDB, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:DApps.Accounts.GetMaxAccount(), MaxDappsID:DApps.Smart.GetMaxNum(),
         CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
         CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME, PRICE_DAO:PRICE_DAO(MaxNumBlockDB), GrayConnect:GrayConnect(),
-    };
+        sessionid:sessionid, };
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {

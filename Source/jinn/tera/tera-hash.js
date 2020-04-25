@@ -17,6 +17,7 @@ function Init(Engine)
     {
         var Tx = {};
         Tx.IsTx = 1;
+        Tx.nonce = ReadUintFromArr(body, body.length - 6);
         Tx.num = ReadUintFromArr(body, body.length - 12);
         
         if(HASH)

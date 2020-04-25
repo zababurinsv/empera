@@ -12,33 +12,51 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
+    Engine.LastAddrSaveTime = Date.now();
     Engine.DoNodeAddr = function ()
     {
-        if(!Engine.NodesTree || Engine.TickNum < 1200 || Engine.TickNum % 1200 !== 0)
+        var Period = Math.floor(JINN_CONST.RECONNECT_MIN_TIME / 2);
+        
+        var Delta = Math.floor((Date.now() - Engine.LastAddrSaveTime) / 1000);
+        if(!Engine.NodesTree || Delta < Period)
             return;
         
+        Engine.LastAddrSaveTime = Date.now();
+        Engine.SaveAddrNodes();
+    };
+    
+    const MIN_SCORE = 100;
+    Engine.SaveAddrNodes = function ()
+    {
         var Arr = [];
         var it = Engine.NodesTree.iterator(), Item;
         while((Item = it.next()) !== null)
         {
-            if(!Item.Score || Item.Score <= 0)
+            if(!Item.Score || Item.Score <= MIN_SCORE)
                 continue;
             
             var Item2 = {ip:Item.ip, port:Item.port, Score:Item.Score};
             
             Arr.push(Item2);
+            
+            if(Arr.length >= JINN_CONST.MAX_RET_NODE_LIST)
+                break;
         }
         
         Engine.SortAddrArrByScore(Arr);
         SaveParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), Arr);
+        ToLog("*********** SaveParams jinn-nodes.lst Count=" + Arr.length, 4);
     };
     
     Engine.LoadAddrOnStart = function ()
     {
         var Arr = LoadParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), []);
+        if(Arr.length)
+            ToLog("*********** Load jinn-nodes.lst Count=" + Arr.length, 4);
         for(var i = 0; i < Arr.length; i++)
         {
-            Engine.AddNodeAddr(Arr[i]);
+            var Item = Arr[i];
+            Engine.AddNodeAddr(Item);
         }
     };
 }

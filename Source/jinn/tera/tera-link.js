@@ -108,6 +108,7 @@ function Init(Engine)
         ToLogTrace("Error API call");
         return 0;
     };
+    
     function ErrorTODO()
     {
         ToLogTrace("TODO");
@@ -148,11 +149,6 @@ function Init(Engine)
     {
         return Engine.GetLinkDataFromDB(Block);
     };
-    Engine.SetTimeDelta = function (DeltaTime)
-    {
-        global.DELTA_CURRENT_TIME = DeltaTime;
-        SAVE_CONST(0);
-    };
     
     global.ON_USE_CONST = function ()
     {
@@ -165,6 +161,55 @@ function Init(Engine)
         Engine.ChildIDCounter++;
         Child.ID = Engine.ChildIDCounter;
     };
+    SERVER.ConnectToAll = function ()
+    {
+        var Count = 0;
+        
+        var Map = {};
+        for(var i = 0; i < Engine.ConnectArray.length; i++)
+        {
+            var Child = Engine.ConnectArray[i];
+            if(Child)
+            {
+                Map[Child.ID] = 1;
+            }
+        }
+        
+        var it = Engine.NodesTree.iterator(), AddrItem;
+        while((AddrItem = it.next()) !== null)
+        {
+            if(Map[AddrItem.ID])
+                continue;
+            
+            Engine.InitAddrItem(AddrItem);
+            
+            var Child = Engine.RetNewConnectByAddr(AddrItem);
+            
+            if(Engine.SendConnectReq(Child))
+                Count++;
+        }
+        
+        ToLog("Connect to " + Count + " nodes");
+    };
+    
+    Object.defineProperty(SERVER, "ip", {get:function ()
+        {
+            return Engine.ip;
+        }});
+    Object.defineProperty(SERVER, "port", {get:function ()
+        {
+            return Engine.port;
+        }});
+    Engine.OnSetTimeDelta = function (DeltaTime)
+    {
+        SAVE_CONST(0);
+    };
+    Engine.OnSetOwnIP = function (ip)
+    {
+        global.JINN_IP = ip;
+        SAVE_CONST(1);
+    };
+    
     ON_USE_CONST();
     
     if(global.LOCAL_RUN)

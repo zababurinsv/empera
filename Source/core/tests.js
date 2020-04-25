@@ -63,16 +63,25 @@ function TestSignLib(MaxTime)
         deltaTime = Time[0] * 1000 + Time[1] / 1e6;
         if(deltaTime > MaxTime)
         {
-            ToLog("*************** WARNING: VERY SLOW LIBRARY: secp256k1 ***************");
-            ToLog("You can only process: " + Num + " transactions");
-            ToLog("Install all dependent packages, see detail: https://www.npmjs.com/package/secp256k1");
             global.SpeedSignLib = Num;
-            return 0;
+            break;
         }
     }
+    if(!deltaTime)
+        deltaTime = 1;
     
-    global.SpeedSignLib = Math.floor(Num * MaxTime / deltaTime);
+    global.SpeedSignLib = Math.floor(Num * 500 / deltaTime);
+    
     ToLog("TestSignLib: " + global.SpeedSignLib + " per sec");
+    
+    if(global.SpeedSignLib < 800)
+    {
+        ToLog("*************** WARNING: VERY SLOW LIBRARY: secp256k1 ***************");
+        ToLog("You can only process: " + global.SpeedSignLib + " transactions");
+        ToLog("Install all dependent packages, see detail: https://www.npmjs.com/package/secp256k1");
+        return 0;
+    }
+    
     return 1;
 }
 

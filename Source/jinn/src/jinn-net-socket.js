@@ -40,6 +40,7 @@ function InitClass(Engine)
             var Child = Engine.RetNewConnectByIPPort(Socket.remoteAddress, Socket.remotePort, 1);
             if(Child)
             {
+                Child.InComeConnect = 1;
                 Child.ToLogNet("Connect from " + Socket.remoteAddress + ":" + Socket.remotePort);
                 Engine.SetEventsProcessing(Socket, Child, "Client", 1);
             }
@@ -96,6 +97,8 @@ function InitClass(Engine)
         });
         SOCKET.on('end', function ()
         {
+            if(Child.LogNetBuf && Child.AddrItem)
+                Engine.GetLogNetBuf(Child);
         });
         
         if(!bAll)
@@ -136,7 +139,10 @@ function InitClass(Engine)
                 Name = ChildName(Child);
             else
                 Name = Socket.remoteAddress + ":" + Socket.remotePort;
-            Engine.ToLog("CloseSocket: " + Name + " " + StrError, 4);
+            var Str = "CloseSocket: " + Name + " " + StrError;
+            Engine.ToLog(Str, 4);
+            if(Child)
+                Engine.ToLogNet(Child, Str);
         }
         Engine.ClearSocket(Socket, Child);
         Socket.end();
@@ -164,7 +170,8 @@ function InitClass(Engine)
         Child.ConnectType = ConnectType;
         Socket.WasChild = 1;
         Child.Socket = Socket;
-        Child.DirectIP = (ConnectType === "Server");
+        if(ConnectType === "Server")
+            Child.DirectIP = 1;
         SetSocketStatus(Socket, 100);
     };
     

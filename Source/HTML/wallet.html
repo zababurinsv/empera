@@ -102,10 +102,10 @@
         window.crypto.getRandomValues(arr);
         var Str=GetHexFromArr(sha3(arr));
 
-        document.getElementById("idKeyNew").value=Str;
+        $("idKeyNew").value=Str;
         SetVisibleEditKeys(1);
 
-        var Select=document.getElementById("idTypeKey");
+        var Select=$("idTypeKey");
         Select.value="private";
 
         SetVisibleItemByTypeKey();
@@ -114,15 +114,15 @@
     {
         if(!IsVisibleBlock("edit_keys"))
         {
-            var Select=document.getElementById("idTypeKey");
+            var Select=$("idTypeKey");
             if(IsPrivateMode())
             {
-                document.getElementById("idKeyNew").value=PrivKeyStr;
+                $("idKeyNew").value=PrivKeyStr;
                 Select.value="private";
             }
             else
             {
-                document.getElementById("idKeyNew").value=PubKeyStr;
+                $("idKeyNew").value=PubKeyStr;
                 Select.value="public";
             }
 
@@ -138,24 +138,24 @@
 
     function ConvertToPrivateKey()
     {
-        var Str=document.getElementById("idKeyNew").value;
+        var Str=$("idKeyNew").value;
         if(!Str || Str.length<20)
         {
             SetError("Enter secret words that are at least 20 characters long");
             return;
         }
 
-        var Str2=document.getElementById("idKeyNew2").value;
+        var Str2=$("idKeyNew2").value;
         if(Str2 && Str!==Str2)
         {
             SetError("Re-entered secret does not match");
             return;
         }
 
-        document.getElementById("idTypeKey").value="private";
+        $("idTypeKey").value="private";
         SetVisibleItemByTypeKey();
-        document.getElementById("idKeyNew").value=GetPrivateKeyFromStr(Str);
-        document.getElementById("idKeyNew2").value="";
+        $("idKeyNew").value=GetPrivateKeyFromStr(Str);
+        $("idKeyNew2").value="";
     }
 
     function GetPrivateKeyFromStr(Str)
@@ -201,13 +201,13 @@
             SetVisibleBlock(name,true);
             $("idAccountName").focus();
 
-            var Select=document.getElementById("idAccount");
+            var Select=$("idAccount");
             SetViewWN();
         }
     }
     function SetViewWN()
     {
-            document.getElementById("Item.WN").innerText="";
+            $("Item.WN").innerText="";
             SetVisibleBlock("Item.WN","none");
     }
     function CancelCreateAccount()
@@ -227,12 +227,12 @@
 
         WasCreateAccountInfo=PubKeyStr;
 
-        var Description=document.getElementById("idAccountName").value;
-        var Adviser=0;//ParseNum(document.getElementById("idAdviser").value);
-        var Smart=ParseNum(document.getElementById("idSmart").value);
-        var Currency=GetCurrencyByName(document.getElementById("idCurrency").value);
+        var Description=$("idAccountName").value;
+        var Adviser=0;//ParseNum($("idAdviser").value);
+        var Smart=ParseNum($("idSmart").value);
+        var Currency=GetCurrencyByName($("idCurrency").value);
 
-        var WN=ParseNum(document.getElementById("idWN").value);
+        var WN=ParseNum($("idWN").value);
 
         if(!Description)
         {
@@ -264,15 +264,15 @@
         if(bSet)
         {
             SetVisibleItemByTypeKey();
-            document.getElementById("idKeyNew").focus();
+            $("idKeyNew").focus();
         }
     }
 
     function SelectTypeKey()
     {
-        var Select=document.getElementById("idTypeKey");
-        var Item=document.getElementById("idKeyNew");
-        var Item2=document.getElementById("idKeyNew2");
+        var Select=$("idTypeKey");
+        var Item=$("idKeyNew");
+        var Item2=$("idKeyNew2");
 
         if(Select.value==="public" && (Item.value.length!==66 || Item.value.substr(0,1)!=="0"))
         {
@@ -297,7 +297,7 @@
     }
     function SetVisibleItemByTypeKey()
     {
-        var Select=document.getElementById("idTypeKey");
+        var Select=$("idTypeKey");
         if(Select.value==="brain")
         {
             SetVisibleBlock("idViewKeyNew2","table-row");
@@ -441,6 +441,7 @@
         if(!Data || !Data.result)
             return;
 
+        CheckSessionID(Data.sessionid);
 
         CONFIG_DATA=Data;
         ServerBlockNumDB=Data.BlockNumDB;
@@ -613,24 +614,24 @@
             SetVisibleBlock("idSignLibError",(CONFIG_DATA.SpeedSignLib<MIN_SPEED));
 
 
-        $("idChains").disabled=!!JinnStat;
+
 
 
 
 
         SetArrLog(Data.ArrLog);
 
-        // if(document.getElementById("idPubKey").innerText!==PubKeyStr)
-        //     document.getElementById("idPubKey").innerText=PubKeyStr;
-        if(document.getElementById("idDataPath").innerText!==Data.DATA_PATH)
-            document.getElementById("idDataPath").innerText=Data.DATA_PATH;
-//        if(document.getElementById("idNodeAddr").innerText!==Data.NodeAddrStr)
-//            document.getElementById("idNodeAddr").innerText=Data.NodeAddrStr;
+        // if($("idPubKey").innerText!==PubKeyStr)
+        //     $("idPubKey").innerText=PubKeyStr;
+        if($("idDataPath").innerText!==Data.DATA_PATH)
+            $("idDataPath").innerText=Data.DATA_PATH;
+//        if($("idNodeAddr").innerText!==Data.NodeAddrStr)
+//            $("idNodeAddr").innerText=Data.NodeAddrStr;
 
 
 
-        //document.getElementById("idTo").max=MaxAccID;
-        //document.getElementById("idAdviser").max=MaxAccID;
+        //$("idTo").max=MaxAccID;
+        //$("idAdviser").max=MaxAccID;
 
         SetVisibleBlock("idDevelopService",Data.IsDevelopAccount);
         SetVisibleBlock("idDevelopService2",CONFIG_DATA.CONSTANTS.WALLET_DESCRIPTION);
@@ -652,12 +653,14 @@
         SERVER_IP=Data.ip;
         SERVER_PORT=Data.port;
 
+
+
         //Mining
         MiningAccount=Data.MiningAccount;
-        document.getElementById("idUseMining").checked=CONFIG_DATA.CONSTANTS.USE_MINING;
+        $("idUseMining").checked=CONFIG_DATA.CONSTANTS.USE_MINING;
         if(!idPercentItem || document.activeElement!==idPercentItem)
         {
-            idPercentItem=document.getElementById("idPercentMining");
+            idPercentItem=$("idPercentMining");
             idPercentItem.value=CONFIG_DATA.CONSTANTS.POW_MAX_PERCENT;
         }
         if(Data.CountMiningCPU>0 && CONFIG_DATA.CONSTANTS.USE_MINING)
@@ -684,7 +687,7 @@
             $("idAutoUpdate").className="checkbox";
         }
 
-        document.getElementById("idAutoUpdate").checked=CONFIG_DATA.CONSTANTS.USE_AUTO_UPDATE;
+        $("idAutoUpdate").checked=CONFIG_DATA.CONSTANTS.USE_AUTO_UPDATE;
 
 
 
@@ -703,6 +706,10 @@
         $("idLogLevelText").innerText=CONFIG_DATA.CONSTANTS.LOG_LEVEL;
         $("idLogLevel").max=CONFIG_DATA.MaxLogLevel;
 
+        //JINN
+        $("idChains").disabled=!!JinnStat;
+        SetVisibleBlock("idUseDirectIPView",!JinnStat)
+
     }
     
     function ChangeLog()
@@ -715,7 +722,7 @@
     function SetVisibleBtOpenWallet()
     {
         SetVisibleBlock("idOpenWallet",WalletOpen!==undefined);
-        var item=document.getElementById("idOpenWallet");
+        var item=$("idOpenWallet");
         if(WalletOpen==true)
         {
             item.value="Wallet opened";
@@ -763,24 +770,7 @@
 
 
 
-    function ToLogServer(Str)
-    {
-        GetData("ToLogServer",Str, function (Data)
-        {
-            UpdatesData();
-        });
-    }
 
-    var PrevServerStr;
-    function SetStatusFromServer(Str)
-    {
-        var id = document.getElementById("idServerLog");
-        if(PrevServerStr!==Str)
-        {
-            PrevServerStr=Str;
-            id.innerText=Str;
-        }
-    }
 
     var bMainCanClear=true;
     var StrMainStatus="";
@@ -836,7 +826,7 @@
         for (var i=0;i<TabArr.length;i++)
         {
             var name=TabArr[i].name;
-            var Item=document.getElementById(name);
+            var Item=$(name);
             if(!Item)
                 continue;
             if(CurTabName===name)
@@ -851,7 +841,7 @@
                 str="bttab bt"
             }
 
-            var ItemM=document.getElementById("M"+name);
+            var ItemM=$("M"+name);
             if(ItemM)
                 ItemM.className=str;
         }
@@ -969,7 +959,7 @@
     function SelectStyle(value)
     {
 
-        var Select=document.getElementById("idSelStyle");
+        var Select=$("idSelStyle");
         if(value)
             Select.value=value;
 
@@ -1036,7 +1026,7 @@
     {
         if(localStorage["WasStart"]!=="1")
         {
-            var ValText=document.getElementById("idRunText").value;
+            var ValText=$("idRunText").value;
             if(ValText && ValText!=="undefined" && ValText.trim())
             {
                 localStorage["WasStart"]="1";
@@ -1293,6 +1283,17 @@
         min-width: 30px;
         font-weight: bold;
     }
+
+
+    #idServerLog
+    {
+        background-color: var(--color2);
+    }
+    .focusnowrite:focus
+    {
+        font-style: italic;
+    }
+
 </style>
 
 
@@ -1351,6 +1352,7 @@
                             </td>
                             <td style="width: 200px">
                                 <INPUT type="button" class="bt btdoit" style="background-color: #f4f542;color:black;font-weight: bold;height: 50px;width: 100px;" onclick="RunDevelopService()" value="SEND">
+                                <INPUT type="button" class="bt btdoit" style="background-color: #58aff5;color:black;height: 24px;width: 100px;" onclick="ConnectToAll()" value="ConnectToAll">
                             </td>
                         </tr>
                     </table>
@@ -1494,14 +1496,10 @@
             <DIV>
                 <DIV id="idNetworkView" style="display: none">
                     <H3>Network connections:</H3>
-                    <INPUT type="checkbox" id="idUseDirectIP">Run server and use direct IP:<BR>
-                    IP:<INPUT  maxlength="20" id="idIP"> Port:<INPUT maxlength="9" id="idPort"><BR>
-                    <!--<INPUT type="checkbox" id="idUseIncomeGrayIP">Allow connection users without a direct ip:<BR>-->
-                    <!--White list nodes (HEX-format):<BR>-->
-                    <!--<TEXTAREA id="idNodeWhiteList" rows="4" cols="100" style="display: none"> </TEXTAREA>-->
-                    <BR>
-
-                    <!--<INPUT type="button" onclick="SetNetworkParams(0)" class="btdoit bt" value="Save">-->
+                        <div id="idUseDirectIPView">
+                        <INPUT type="checkbox" id="idUseDirectIP">Run server and use direct IP:
+                        </div>
+                    Own IP: <INPUT  maxlength="20" id="idIP"> Port: <INPUT maxlength="9" id="idPort">
                     <INPUT type="button" onclick="SetNetworkParams(1)" class="btdoit bt" value="Save and Restart">
                     <HR>
                 </DIV>
@@ -1876,7 +1874,10 @@
         <DIV id="idServerBlock" style="width: 99.5%">
             <HR>
             <div id="idServerLogHeader"> Log from node. Detail level: <b id="idLogLevelText">-</b> <input type="range" min="0" max="3" id="idLogLevel" oninput="ChangeLog()" value="0"></div>
-            <DIV id="idServerLog"></DIV><BR>
+
+            <textarea rows="15" cols="250"  id="idServerLog" class="focusnowrite" readonly>
+            </textarea>
+
         </DIV>
 
 

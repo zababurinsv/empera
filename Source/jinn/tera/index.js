@@ -37,11 +37,7 @@ JINN_CONST.START_CHECK_BLOCKNUM = 50;
 
 JINN_CONST.SHARD_NAME = "TERA";
 
-JINN_CONST.MAX_LEVEL_CONNECTION = 6;
-JINN_CONST.EXTRA_SLOTS_COUNT = 2;
 
-if(global.LOCAL_RUN)
-    JINN_CONST.EXTRA_SLOTS_START_TIME = 20;
 
 JINN_CONST.MAX_PACKET_SIZE = global.MAX_PACKET_LENGTH;
 JINN_CONST.MAX_PACKET_SIZE_RET_DATA = Math.floor(JINN_CONST.MAX_PACKET_SIZE / 2);
@@ -71,21 +67,27 @@ module.exports.Create = function (Node,MapName)
     
     var Engine = {};
     Engine.UseExtraSlot = 0;
-    Engine.ID = Node.port % 1000;
+    
+    Engine.ip = global.JINN_IP;
+    Engine.port = global.JINN_PORT;
+    Engine.ID = Engine.port % 1000;
     if(!Engine.ID)
         Engine.ID = 1;
-    Engine.port = Node.port;
     
-    Engine.ip = Node.ip;
     Engine.DirectIP = 0;
-    Engine.IDArr = CalcIDArr(Engine.ip, Engine.port);
+    
+    if(Engine.ip === "0.0.0.0")
+        Engine.IDArr = GetRandomBytes(32);
+    else
+        Engine.IDArr = CalcIDArr(Engine.ip, Engine.port);
+    
     Engine.IDStr = GetHexFromArr(Engine.IDArr);
     
     Engine.Header1 = 0;
     global.CreateNodeEngine(Engine, MapName);
-    if(Engine.SetIP)
+    if(Engine.SetOwnIP)
     {
-        Engine.SetIP(Node.ip);
+        Engine.SetOwnIP(Engine.ip);
     }
     
     require("./tera-hash").Init(Engine);
@@ -111,11 +113,12 @@ module.exports.Create = function (Node,MapName)
         }
         else
         {
-            Engine.AddNodeAddr({ip:"dappsgate.com", port:33000, Score:1000000000});
+            Engine.AddNodeAddr({ip:"149.154.70.158", port:33000, Score:1000000000});
             Engine.AddNodeAddr({ip:"212.80.217.95", port:33006, Score:1000000000});
             Engine.AddNodeAddr({ip:"212.80.217.187", port:33007, Score:1000000000});
             
             Engine.AddNodeAddr({ip:"109.251.8.131", port:33000});
+            Engine.AddNodeAddr({ip:"139.9.250.2", port:33000});
         }
         
         Engine.LoadAddrOnStart();

@@ -33,7 +33,7 @@ var COUNT_LIST_LOOP = 3;
 
 
 
-global.GETNODES_VERSION = 1;
+global.GETNODES_VERSION = 3;
 
 function InitClass(Engine)
 {
@@ -130,8 +130,8 @@ function InitClass(Engine)
         
         AddrItem.IDArr = CalcIDArr(AddrItem.ip, AddrItem.port);
         
-        var Level = Engine.AddrLevelArr(Engine.IDArr, AddrItem.IDArr, 1);
-        var Arr = GetArrByLevel(Level);
+        AddrItem.Level = Engine.AddrLevelArr(Engine.IDArr, AddrItem.IDArr, 1);
+        var Arr = Engine.GetArrByLevel(AddrItem.Level);
         
         var Tree = Engine.NodesTree;
         var Find = Tree.find(AddrItem);
@@ -148,7 +148,7 @@ function InitClass(Engine)
                     Arr.splice(i, 1);
                     Arr.push(ArrItem);
                     
-                    Arr.DeltaPos++;
+                    Arr.DeltaPosLoop++;
                     return 3;
                 }
             }
@@ -157,12 +157,13 @@ function InitClass(Engine)
         {
             Tree.insert(AddrItem);
             AddrItem.ID = Tree.size;
+            Engine.InitAddrItem(AddrItem);
         }
         
         if(Arr.length >= JINN_CONST.MAX_LEVEL_NODES)
         {
             Arr.splice(0, 1);
-            Arr.DeltaPos++;
+            Arr.DeltaPosLoop++;
         }
         
         AddrItem.IsLocal = IsLocalIP(AddrItem.ip);
@@ -175,6 +176,20 @@ function InitClass(Engine)
         if(JINN_EXTERN.NodeRoot && AddrItem.ip === JINN_EXTERN.NodeRoot.ip && AddrItem.port === JINN_EXTERN.NodeRoot.port)
             AddrItem.ROOT_NODE = 1;
         return 1;
+    };
+    
+    Engine.InitAddrItem = function (AddrItem,bStart)
+    {
+        if(!AddrItem.Score)
+            AddrItem.Score = 0;
+        
+        AddrItem.TestExchangeTime = 0;
+        
+        AddrItem.SendConnectPeriod = 1000;
+        AddrItem.SendConnectLastTime = 0;
+        
+        AddrItem.SendHotConnectPeriod = 1000;
+        AddrItem.SendHotConnectLastTime = 0;
     };
     
     Engine.SetItemSelf = function (AddrItem)
@@ -203,15 +218,15 @@ function InitClass(Engine)
         if(!Pos)
             Pos = 0;
         
-        var Arr = GetArrByLevel(Level);
+        var Arr = Engine.GetArrByLevel(Level);
         
-        var Index = Pos - Arr.DeltaPos;
+        var Index = Pos - Arr.DeltaPosLoop;
         if(Index < 0)
             Index = 0;
         
         if(Index < Arr.length)
         {
-            Iterator.Arr[Level] = Index + Arr.DeltaPos + 1;
+            Iterator.Arr[Level] = Index + Arr.DeltaPosLoop + 1;
             return Arr[Index];
         }
         else
@@ -248,7 +263,7 @@ function InitClass(Engine)
         return Hash;
     };
     
-    Engine.SetIP = function (ip)
+    Engine.SetOwnIP = function (ip)
     {
         Engine.ip = ip;
         if(Engine.ip === "0.0.0.0")
@@ -257,12 +272,89 @@ function InitClass(Engine)
         if(!IsLocalIP(ip))
             Engine.DirectIP = 1;
         
-        Engine.IDArr = CalcIDArr(Engine.ip, Engine.port);
-        Engine.IDStr = GetHexFromArr(Engine.IDArr);
+        var NewIDArr = CalcIDArr(Engine.ip, Engine.port);
+        if(!IsEqArr(Engine.IDArr, NewIDArr))
+        {
+            Engine.IDArr = NewIDArr;
+            Engine.IDStr = GetHexFromArr(Engine.IDArr);
+            
+            Engine.RecreateLevelsArray();
+        }
         
         Engine.AddrItem = {IDArr:Engine.IDArr, ip:Engine.ip, port:Engine.port, Nonce:0, NonceTest:0, BlockNum:0, AddrHashPOW:[255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255]};
+        
+        Engine.OnSetOwnIP(ip);
+    };
+    
+    Engine.OnSetOwnIP = function (ip)
+    {
+    };
+    
+    Engine.RecreateLevelsArray = function ()
+    {
+        if(Engine.NodesTree.size)
+        {
+            Engine.NodesArrByLevel = [];
+            var Count = 0;
+            var it = Engine.NodesTree.iterator(), Item;
+            while((Item = it.next()) !== null)
+            {
+                
+                var NewLevel = Engine.AddrLevelArr(Engine.IDArr, Item.IDArr, 1);
+                var Arr = Engine.GetArrByLevel(NewLevel);
+                Arr.push(Item);
+                
+                if(Item.Level < JINN_CONST.MAX_LEVEL_CONNECTION)
+                {
+                    if(Item.Level !== NewLevel)
+                    {
+                        Engine.ToLogNet(Item, "---Recalc node level from: " + Item.Level + " to: " + NewLevel);
+                        Item.Level = NewLevel;
+                        Count++;
+                    }
+                }
+            }
+            
+            if(Count)
+                Engine.ToLog("Recalc nodes levels: Count=" + Count);
+            for(var i = 0; i < Engine.ConnectArray.length; i++)
+            {
+                var Child = Engine.ConnectArray[i];
+                if(!Child)
+                    continue;
+                if(Child.AddrItem && Child.AddrItem.Level !== undefined)
+                    Child.Level = Child.AddrItem.Level;
+                else
+                    Child.Level = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
+            }
+            for(var n = 0; n < JINN_CONST.MAX_LEVEL_CONNECTION; n++)
+            {
+                var Child = Engine.LevelArr[n];
+                if(Child && Child.Level !== n)
+                {
+                    Engine.ToLogNet(Child, "---Delete from hot level: " + n);
+                    var CurLevel = Child.Level;
+                    Child.Level = n;
+                    Engine.DenyHotConnection(Child, 1);
+                    Child.Level = CurLevel;
+                }
+            }
+        }
+    };
+    
+    Engine.RecalcChildLevel = function (Child)
+    {
+        var NewLevel = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
+        if(NewLevel !== Child.Level)
+        {
+            if(Child.Level !== undefined)
+            {
+                Engine.ToLogNet(Child, "===Recalc node level from: " + Child.Level + " to: " + NewLevel);
+            }
+            Child.Level = NewLevel;
+        }
     };
     Engine.CaclNextAddrHashPOW = function (Count)
     {
@@ -287,13 +379,14 @@ function InitClass(Engine)
             }
         }
     };
-    function GetArrByLevel(Level)
+    Engine.GetArrByLevel = function (Level)
     {
         var Arr = Engine.NodesArrByLevel[Level];
         if(!Arr)
         {
             Arr = [];
-            Arr.DeltaPos = 0;
+            Arr.DeltaPosLoop = 0;
+            Arr.IndexHotLoop =  - 1;
             Engine.NodesArrByLevel[Level] = Arr;
         }
         return Arr;
@@ -354,7 +447,7 @@ function InitClass(Engine)
         return undefined;
     };
     
-    Engine.SetAddrItemForChild = function (AddrChild,Child,AddNode)
+    Engine.SetAddrItemForChild = function (AddrChild,Child,bAddNode)
     {
         if(!Child.AddrItem)
         {
@@ -362,17 +455,26 @@ function InitClass(Engine)
             if(!FindItem)
             {
                 FindItem = AddrChild;
-                if(AddNode)
+                if(bAddNode)
                 {
+                    Child.DirectIP = 1;
                     Engine.AddNodeAddr(AddrChild, Child);
                 }
+            }
+            else
+            {
+                Child.DirectIP = 1;
             }
             Child.AddrItem = FindItem;
         }
         if(!Child.AddrItem.Score || Child.AddrItem.Score <= 0)
             Child.AddrItem.Score = 0;
         
-        Child.ID = Child.AddrItem.ID;
+        if(Child.AddrItem.ID)
+            Child.ID = Child.AddrItem.ID;
+        else
+            Child.AddrItem.ID = Child.ID;
+        
         Engine.LinkHotItem(Child);
     };
 }

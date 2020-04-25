@@ -37,7 +37,12 @@ function InitClass(Engine)
     Engine.SetTimeDelta = function (DeltaTime)
     {
         global.DELTA_CURRENT_TIME = DeltaTime;
+        Engine.OnSetTimeDelta(DeltaTime);
     };
+    Engine.OnSetTimeDelta = function (DeltaTime)
+    {
+    };
+    
     Engine.CorrectTimeByDelta = function (NewDelta)
     {
         

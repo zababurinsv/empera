@@ -193,7 +193,10 @@ function InitClass(Engine)
         WriteLogToBuf(Buf, Date.now(), Str);
         
         if(nLogLevel)
-            Engine.ToLog(Str, nLogLevel);
+        {
+            var ID = GetNodeWarningID(Child);
+            Engine.ToLog("<-->" + ID + " " + Str, nLogLevel);
+        }
     };
     
     Engine.GetLogNetInfo = function (Child)

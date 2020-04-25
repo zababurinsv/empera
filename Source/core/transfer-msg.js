@@ -235,7 +235,7 @@ module.exports = class CMessages extends require("./transaction-validator")
         var CurTime = GetCurrentTime(0) - 0;
         var Count;
         if(GrayConnect())
-            Count = Math.trunc(MAX_GRAY_CONNECTIONS_TO_SERVER / 2)
+            Count = Math.trunc(MAX_GRAY_CONNECTIONS_TO_SERVER)
         else
             Count = Math.min(this.ActualNodes.size, 16)
         if(Count < 2)
@@ -248,16 +248,16 @@ module.exports = class CMessages extends require("./transaction-validator")
             if(!Node)
                 continue;
             
-            if(Node.TaskLastSend)
+            if(Node.TaskLastSendTx)
             {
-                var Delta = CurTime - Node.TaskLastSend;
-                if(Delta < global.PERIOD_GET_BLOCK || Node.StopGetBlock)
+                var Delta = CurTime - Node.TaskLastSendTx;
+                if(Delta < global.PERIOD_GET_BLOCK)
                 {
                     continue;
                 }
             }
             
-            Node.TaskLastSend = CurTime
+            Node.TaskLastSendTx = CurTime
             this.SendF(Node, {"Method":"TRANSACTION", "Data":Tr}, Tr.body.length + 1000)
             
             ToLogContext("Send " + TrName(Tr) + " to " + NodeName(Node))
@@ -283,6 +283,7 @@ module.exports = class CMessages extends require("./transaction-validator")
 };
 function ToLogContext(Str)
 {
+    ToLog(Str, 3);
 }
 function TrName(Tr)
 {

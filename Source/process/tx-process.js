@@ -59,6 +59,7 @@ var KeyPair = crypto.createECDH('secp256k1');
 KeyPair.setPrivateKey(Buffer.from([77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77,
 77, 77, 77, 77, 77, 77, 77, 77, 77, 77]));
 global.SERVER = new CServerDB(KeyPair, undefined, undefined, false, true);
+
 if(global.JINN_MODE)
 {
     SERVER.port = 0;

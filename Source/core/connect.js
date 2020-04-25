@@ -177,6 +177,11 @@ module.exports = class CConnect extends require("./connect2")
                 if(Node.NextPing < MIN_PERIOD_PING)
                     Node.NextPing = MIN_PERIOD_PING
                 
+                if(GrayConnect())
+                {
+                    Node.NextPing = random(MIN_PERIOD_PING)
+                }
+                
                 var Delta = Date.now() - Node.PingStart;
                 if(Delta >= Node.NextPing)
                 {
@@ -903,7 +908,7 @@ module.exports = class CConnect extends require("./connect2")
                 Node = Item
             else
                 Node = new CNode(Item.addrStr, Item.ip, Item.port)
-            Node.id = this.NodesArr.length
+            Node.id = 1 + this.NodesArr.length
             Node.addrArr = GetAddresFromHex(Node.addrStr)
             
             this.NodesMap[Node.addrStr] = Node
@@ -1820,9 +1825,9 @@ module.exports = class CConnect extends require("./connect2")
         var Str = Utf8ArrayToStr(Arr);
         return Str;
     }
-    NetAddConnect(addrStr)
+    NetAddConnect(ID)
     {
-        var Node = this.NodesMap[addrStr];
+        var Node = this.FindNodeByID(ID);
         if(!Node)
             return "NODE NOT FOUND";
         
@@ -1830,9 +1835,9 @@ module.exports = class CConnect extends require("./connect2")
         Node.CreateConnect()
         return "OK";
     }
-    NetAddBan(addrStr)
+    NetAddBan(ID)
     {
-        var Node = this.NodesMap[addrStr];
+        var Node = this.FindNodeByID(ID);
         if(!Node)
             return "NODE NOT FOUND";
         
@@ -1840,9 +1845,9 @@ module.exports = class CConnect extends require("./connect2")
         return "OK";
     }
     
-    NetAddHot(addrStr)
+    NetAddHot(ID)
     {
-        var Node = this.NodesMap[addrStr];
+        var Node = this.FindNodeByID(ID);
         if(!Node)
             return "NODE NOT FOUND";
         
@@ -1850,14 +1855,25 @@ module.exports = class CConnect extends require("./connect2")
         return "OK";
     }
     
-    NetDeleteNode(addrStr)
+    NetDeleteNode(ID)
     {
-        var Node = this.NodesMap[addrStr];
+        var Node = this.FindNodeByID(ID);
         if(!Node)
             return "NODE NOT FOUND";
         
         this.StartDisconnectHot(Node, "=DEL=", 1)
         return "OK";
+    }
+    
+    FindNodeByID(ID)
+    {
+        for(var i = 0; i < this.NodesArr.length; i++)
+        {
+            var Node = this.NodesArr[i];
+            if(Node.id === ID)
+                return Node;
+        }
+        return undefined;
     }
 };
 

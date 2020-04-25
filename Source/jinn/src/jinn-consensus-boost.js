@@ -152,7 +152,8 @@ function InitClass(Engine)
         
         if(!Child.FirstTransferTime)
             Child.FirstTransferTime = Date.now();
-        Child.SendTransferTime = Date.now();
+        
+        let ArrNeedHash = [];
         
         var MaxReqAll = 0;
         for(var i = 0; i < Arr.length; i++)
@@ -160,6 +161,8 @@ function InitClass(Engine)
             var Item = Arr[i];
             if(Item.CountItem && Item.CountItem > MaxReqAll)
                 MaxReqAll = Item.CountItem;
+            if(Item.LoadH && !IsZeroArr(Item.LoadH))
+                ArrNeedHash.push(Item.LoadH);
         }
         JINN_STAT.MaxReqAll += MaxReqAll;
         
@@ -170,6 +173,7 @@ function InitClass(Engine)
         var ArrRepeat = [];
         Engine.ProcessMaxHashOnSend(Child, BlockNum, Arr, ArrRepeat);
         
+        let SendTransferTime = Date.now();
         Engine.Send("MAXHASH", Child, {BlockNum:BlockNum, CodeVersionNum:CODE_VERSION.VersionNum, NetConstVer:JINN_NET_CONSTANT.NetConstVer,
             Arr:Arr, ArrRepeat:ArrRepeat, Debug:global.TEST_CONNECTOR}, function (Child,Data)
         {
@@ -181,7 +185,7 @@ function InitClass(Engine)
             
             Child.LastTransferTime = Date.now();
             Child.TransferCount++;
-            Child.DeltaTransfer = Date.now() - Child.SendTransferTime;
+            Child.DeltaTransfer = Child.LastTransferTime - SendTransferTime;
             var Store = Engine.GetLiderArrAtNum(BlockNum);
             if(!Store)
                 return;
@@ -201,7 +205,9 @@ function InitClass(Engine)
                     Store.HeaderLoad++;
                     JINN_STAT.HeaderLoad++;
                     JINN_STAT.MaxLoad++;
+                    
                     var LID = Engine.AddBlockHeader(Context, Child, Value, Store);
+                    Engine.AddChildScoreByHash(Child, ArrNeedHash, Value.Hash, Value.SumHash);
                     if(!LID)
                     {
                         continue;
@@ -255,6 +261,7 @@ function InitClass(Engine)
                         JINN_STAT.MaxLoad++;
                         
                         var LID = Engine.AddBlockBody(Context, Child, Value, Store);
+                        Engine.AddChildScoreByHash(Child, ArrNeedHash, Value.TreeHash);
                         if(!LID)
                         {
                             continue;
@@ -332,10 +339,7 @@ function InitClass(Engine)
             Engine.StartGetNetConstant(Child, Data.NetConstVer);
         }
         
-        if(Engine.StartGetNewVersion && (Data.CodeVersionNum > CODE_VERSION.VersionNum || Data.CodeVersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash)))
-        {
-            Engine.StartGetNewVersion(Child, Data.CodeVersionNum);
-        }
+        Engine.CheckNewVersionNum(Child, Data.CodeVersionNum);
         
         if(Data.CodeVersionNum < global.MIN_JINN_VERSION_NUM)
             return {result:0};
@@ -345,6 +349,7 @@ function InitClass(Engine)
         
         if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
             return {result:0};
+        
         Engine.CheckHotConnection(Child);
         if(!Child || !Child.IsHot() || Child.HotStart)
         {
@@ -450,6 +455,9 @@ function InitClass(Engine)
     Engine.CanUploadData = function (CurBlockNum,LoadBlockNum)
     {
         return 1;
+    };
+    Engine.CheckNewVersionNum = function (Child,CodeVersionNum)
+    {
     };
     
     Engine.CheckPacketSize = function (BlockNum,BlockNumLoad,Size)
