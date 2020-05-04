@@ -195,8 +195,21 @@ function SetCalcPOW(Block,cmd)
     if(!global.USE_MINING)
         return;
     
+    if(!Block.Hash)
+        ToLogTrace("!Block.Hash on Block=" + Block.BlockNum);
+    if(!Block.PrevHash)
+        ToLogTrace("!Block.PrevHash on Block=" + Block.BlockNum);
+    if(!Block.SeqHash)
+        ToLogTrace("!Block.SeqHash on Block=" + Block.BlockNum);
+    
     if(ArrMiningWrk.length !== GetCountMiningCPU())
         return;
+    if(global.POW_MAX_PERCENT > 100)
+        global.POW_MAX_PERCENT = 100;
+    if(global.POW_MAX_PERCENT < 0)
+        global.POW_MAX_PERCENT = 0;
+    
+    var BlockTimeCreate = CONSENSUS_PERIOD_TIME + Date.now() - Block.BlockNum * CONSENSUS_PERIOD_TIME - global.FIRST_TIME_BLOCK + global.DELTA_CURRENT_TIME;
     
     BlockMining = Block;
     for(var i = 0; i < ArrMiningWrk.length; i++)
@@ -204,10 +217,10 @@ function SetCalcPOW(Block,cmd)
         var CurWorker = ArrMiningWrk[i];
         if(!CurWorker.bOnline)
             continue;
-        
         CurWorker.send({cmd:cmd, BlockNum:Block.BlockNum, Account:GENERATE_BLOCK_ACCOUNT, MinerID:GENERATE_BLOCK_ACCOUNT, SeqHash:Block.SeqHash,
             Hash:Block.Hash, PrevHash:Block.PrevHash, Time:Date.now(), Num:CurWorker.Num, RunPeriod:global.POWRunPeriod, RunCount:global.POW_RUN_COUNT,
-            Percent:global.POW_MAX_PERCENT, CountMiningCPU:GetCountMiningCPU(), ProcessMemorySize:ProcessMemorySize, });
+            Percent:global.POW_MAX_PERCENT, CountMiningCPU:GetCountMiningCPU(), ProcessMemorySize:ProcessMemorySize, LastNonce0:BlockTimeCreate * 0x10000,
+        });
     }
 }
 

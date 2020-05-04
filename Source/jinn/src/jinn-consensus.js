@@ -114,7 +114,12 @@ function InitClass(Engine)
     Engine.PrepareBlockOnReceive = function (Block)
     {
         if(Block.BlockNum >= JINN_CONST.LINK_HASH_PREV_HASHSUM)
+        {
+            if(Block.PrevSumHash)
+                ToLo("Was Block.PrevSumHash=" + GetHexFromArr(Block.PrevSumHash));
+            
             Block.PrevSumHash = Block.LinkSumHash;
+        }
         
         Engine.CalcBlockData(Block);
     };
@@ -256,7 +261,7 @@ function InitClass(Engine)
     Engine.CanDoNextBodyLoad = function (NodeStatus,BlockHead,BlockSeed,Num)
     {
         var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead.BlockNum, BlockSeed);
-        while(BodyForLoad)
+        while(BodyForLoad && Engine.DB.GetTxDataCache)
         {
             var TxData = Engine.DB.GetTxDataCache(BodyForLoad.TreeHash);
             if(TxData)
@@ -385,8 +390,7 @@ function InitClass(Engine)
     
     Engine.CompareMaxLider = function (Data1,Data2)
     {
-        
-        if(Data1.Power < Data2.Power || (Data1.Power === Data2.Power && CompareArr(Data2.PowHash, Data1.PowHash) <= 0))
+        if(Data1.Power < Data2.Power || (Data1.Power === Data2.Power && CompareArr(Data2.Hash, Data1.Hash) <= 0))
         {
             return  - 1;
         }
@@ -412,7 +416,7 @@ function InitClass(Engine)
     
     Engine.AddHashToMaxLider = function (Data,BlockNum,bFromCreateNew)
     {
-        if(!bFromCreateNew && !CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
+        if(!bFromCreateNew && !Engine.CanProcessMaxHash(BlockNum))
             return  - 1;
         
         Engine.AddMaxHashToTimeStat(Data, BlockNum);
@@ -607,19 +611,28 @@ function InitClass(Engine)
         
         return Res;
     };
+    
+    Engine.CanProcessBlock = function (BlockNum,Step)
+    {
+        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - Step;
+        var Delta = CurBlockNum - BlockNum;
+        if(Math.abs(Delta) <= JINN_CONST.MAX_DELTA_PROCESSING)
+            return 1;
+        
+        JINN_STAT.ErrProcessBlock++;
+        return 0;
+    };
+    
+    Engine.CanProcessMaxHash = function (BlockNum)
+    {
+        var CurBlockNumTime = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var BlockNum1 = CurBlockNumTime - JINN_CONST.STEP_CALC_POW_FIRST - JINN_CONST.MAX_DELTA_PROCESSING;
+        var BlockNum2 = CurBlockNumTime - JINN_CONST.STEP_CALC_POW_LAST + JINN_CONST.MAX_DELTA_PROCESSING;
+        if(BlockNum1 <= BlockNum && BlockNum <= BlockNum2)
+            return 1;
+        
+        JINN_STAT.ErrProcessBlock++;
+        return 0;
+    };
 }
 
-
-function CanProcessBlock(Engine,BlockNum,Step)
-{
-    
-    var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - Step;
-    var Delta = CurBlockNum - BlockNum;
-    if(Math.abs(Delta) <= JINN_CONST.MAX_DELTA_PROCESSING)
-        return 1;
-    
-    JINN_STAT.ErrProcessBlock++;
-    return 0;
-}
-
-global.CanProcessBlock = CanProcessBlock;

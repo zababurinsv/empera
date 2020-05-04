@@ -8,7 +8,9 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 window.CLIENT_VERSION = 17;
+var MAX_CLIENT_LOG_SIZE = 32000;
 
 function $(id)
 {
@@ -2492,9 +2494,9 @@ function SetStatusFromServer(Str)
     var id = $("idServerLog");
     if(document.activeElement === id)
         return;
-    if(PrevServerStr.length > 16000)
+    if(PrevServerStr.length > MAX_CLIENT_LOG_SIZE)
     {
-        var Index = PrevServerStr.indexOf("\n", 15000);
+        var Index = PrevServerStr.indexOf("\n", MAX_CLIENT_LOG_SIZE - 1000);
         if(Index > 0)
             PrevServerStr = PrevServerStr.substr(Index);
     }

@@ -99,14 +99,6 @@ function InitClass(Engine)
                 return 0;
             }
             
-            var LinkSumHash = Engine.GetLinkDataFromDB(Block);
-            if(!IsEqArr(LinkSumHash, Block.LinkSumHash))
-            {
-                var Str = "SaveToDB: Error LinkSumHash: " + Block.LinkSumHash + " / " + LinkSumHash + " on block=" + BlockNum;
-                ToLogTrace(Str);
-                return 0;
-            }
-            
             if(BlockNum > 0)
             {
                 var PrevBlock = Engine.GetBlockHeaderDB(BlockNum - 1, 1);
@@ -114,12 +106,6 @@ function InitClass(Engine)
                 {
                     ToLogTrace("SaveToDB: Error PrevBlock on Block=" + BlockNum);
                     var PrevBlock2 = Engine.GetBlockHeaderDB(BlockNum - 1, 1);
-                    return 0;
-                }
-                
-                if(!Block.LinkSumHash)
-                {
-                    ToLogTrace("SaveToDB: Error LinkSumHash on Block=" + BlockNum);
                     return 0;
                 }
                 if(PrevBlock.BlockNum !== BlockNum - 1)
@@ -165,6 +151,11 @@ function InitClass(Engine)
     Engine.GetMaxNumBlockDB = function ()
     {
         return Engine.DB.GetMaxNumBlockDB();
+    };
+    
+    Engine.GetMaxNumChain = function ()
+    {
+        return Engine.DB.GetMaxIndex();
     };
     
     Engine.CheckLoadBody = function (Block)

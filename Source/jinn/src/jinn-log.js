@@ -231,6 +231,8 @@ if(!global.ToLogTrace)
 
 global.GetNodeWarningID = function (Child)
 {
-    var ID = "" + Child.Level + ":" + Child.ID;
-    return ID;
+    if(global.MODELING)
+        return "" + Child.ID;
+    else
+        return "" + Child.Level + ":" + Child.ID;
 }

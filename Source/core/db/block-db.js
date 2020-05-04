@@ -781,11 +781,19 @@ module.exports = class CDB extends require("../code")
             if(Block.AddrHash)
             {
                 Block.Miner = ReadUintFromArr(Block.AddrHash, 0)
-                if(Block.BlockNum < 16 || Block.Miner > MaxAccount)
+                if(Block.BlockNum < 16 || (Block.Miner > MaxAccount && Block.BlockNum < global.UPDATE_CODE_5))
                     Block.Miner = 0
                 if(bMinerName)
                 {
                     Block.MinerName = ""
+                    
+                    if(Block.BlockNum >= global.UPDATE_CODE_5 && Block.Miner >= 1e9)
+                    {
+                        var CurMiner = DApps.Accounts.GetIDByAMID(Block.Miner);
+                        if(CurMiner)
+                            Block.Miner = CurMiner
+                    }
+                    
                     if(Block.Miner)
                     {
                         var Item = DApps.Accounts.ReadState(Block.Miner);

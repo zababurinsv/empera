@@ -144,15 +144,14 @@ function Init(Engine)
     };
     
     SERVER.GetLinkHash = ErrorAPICall;
-    
-    SERVER.GetLinkHashDB = function (Block)
-    {
-        return Engine.GetLinkDataFromDB(Block);
-    };
+    SERVER.GetLinkHashDB = ErrorAPICall;
     
     global.ON_USE_CONST = function ()
     {
         global.JINN_WARNING = global.LOG_LEVEL;
+        
+        if(global.WEB_PROCESS)
+            global.WEB_PROCESS.UpdateConst = 1;
     };
     
     Engine.ChildIDCounter = 10000;

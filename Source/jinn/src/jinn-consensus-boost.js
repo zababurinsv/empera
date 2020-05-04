@@ -33,7 +33,7 @@ function InitClass(Engine)
     
     Engine.StartSendMaxHash = function (BlockNum)
     {
-        if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
+        if(!Engine.CanProcessMaxHash(BlockNum))
             return;
         
         var Context = Engine.SendMaxContext[BlockNum];
@@ -133,7 +133,7 @@ function InitClass(Engine)
     
     Engine.SendMaxHashToOneNode = function (Context,BlockNum,Child,IterationNum,bNext)
     {
-        if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
+        if(!Engine.CanProcessMaxHash(BlockNum))
             return;
         
         if(BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT - 1)
@@ -321,7 +321,7 @@ function InitClass(Engine)
             DataHashNum:"byte", DataHash:"zhash", MinerHash:"hash", CountItem:"uint16", LoadN:"uint", LoadH:"zhash"}], Debug:"byte", ArrRepeat:["byte"],
     };
     Engine.MAXHASH_RET = {result:"byte", Reserve:"uint", Mode:"byte", HeaderArr:[{BlockNum:"uint32", PrevSumPow:"uint", LinkSumHash:"hash",
-            TreeHash:"zhash", MinerHash:"hash"}], OldBodyArr:"uint32", BodyArr:[{BlockNum:"uint32", TxArr:["uint16"], TxRaw:[{body:"tr"}],
+            TreeHash:"zhash", MinerHash:"hash"}], Reserv01:"uint32", BodyArr:[{BlockNum:"uint32", TxArr:["uint16"], TxRaw:[{body:"tr"}],
         }], BodyTreeNum:"uint32", BodyTreeHash:"zhash", };
     Engine.MAXHASH = function (Child,Data)
     {
@@ -347,7 +347,7 @@ function InitClass(Engine)
         if(Data.Arr.length)
             Engine.AddMaxHashToTimeStat(Data.Arr[0], BlockNum);
         
-        if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_MAXHASH))
+        if(!Engine.CanProcessMaxHash(BlockNum))
             return {result:0};
         
         Engine.CheckHotConnection(Child);
@@ -640,7 +640,7 @@ function InitClass(Engine)
         
         JINN_STAT.BodyTxSend += BlockBody.TxData.length;
         
-        if(BlockBody.TxData.length)
+        if(BlockBody.TxData.length && Engine.DB.SetTxDataCache)
         {
             Engine.DB.SetTxDataCache(BlockBody.TreeHash, BlockBody.TxData);
         }

@@ -152,7 +152,8 @@ function InitClass(Engine)
             if(PacketNum !== Child.ReceivePacketCount)
             {
                 Engine.ToError(Child, "Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, 4);
-                Child.ReceivePacketCount = PacketNum;
+                if(PacketNum > Child.ReceivePacketCount)
+                    Child.ReceivePacketCount = PacketNum;
             }
             
             Pos = 8;

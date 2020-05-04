@@ -15,6 +15,8 @@ const DBRow = require("../core/db/db-row");
 
 require('../core/rest_tables.js');
 
+const CAdvMining = require('./adv-mining.js');
+
 const MAX_SUM_TER = 1e9;
 const MAX_SUM_CENT = 1e9;
 
@@ -226,6 +228,8 @@ class AccountApp extends require("./dapp")
     Start(bClean)
     {
         
+        this.InitAMIDTab()
+        
         if(!bClean && this.DBState.GetMaxNum() + 1 >= BLOCK_PROCESSING_LENGTH2)
             return;
         
@@ -312,7 +316,7 @@ class AccountApp extends require("./dapp")
         ToLog("******************************FINISH FillRestDB")
     }
     
-    DBStateWriteInner(Data, BlockNum)
+    DBStateWriteInner(Data, BlockNum, bDeleteAct)
     {
         this.CheckRestDB()
         
@@ -326,6 +330,8 @@ class AccountApp extends require("./dapp")
         DoRest(RestData, Data, BlockNum)
         
         this.DBRest.Write(RestData)
+        
+        this.SetAMIDTab(Data, BlockNum)
     }
     
     DBStateTruncateInner(Num)
@@ -333,6 +339,7 @@ class AccountApp extends require("./dapp")
         this.DBState.Truncate(Num)
         
         this.DBRest.Truncate(Num)
+        this.TruncateAMIDTab(Num)
     }
     
     ReadRest(Num)
@@ -539,7 +546,17 @@ class AccountApp extends require("./dapp")
         var SysData = this.ReadStateTR(0);
         var SysBalance = SysData.Value.SumCOIN;
         const REF_PERIOD_START = global.START_MINING;
+        
         var AccountID = ReadUintFromArr(Block.AddrHash, 0);
+        
+        if(Block.BlockNum >= global.UPDATE_CODE_5 && AccountID >= 1e9)
+        {
+            var FindAMID = AccountID;
+            AccountID = this.GetIDByAMID(FindAMID)
+            if(!AccountID)
+                ToErrorTx("DoCoinBaseTR: Error find AMID:" + FindAMID + " on BlockNum:" + Block.BlockNum)
+        }
+        
         if(AccountID < 8)
             return;
         
@@ -1097,7 +1114,7 @@ class AccountApp extends require("./dapp")
     {
         var Map = {};
         var bWas = 0;
-        var NumTruncateState;
+        var NumTruncateState = 0;
         for(var num = StartNum; true; num++)
         {
             var Item = DBAct.Read(num);
@@ -1519,7 +1536,7 @@ class AccountApp extends require("./dapp")
         var SumHash = CalcSumHash(PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
         if(!Block.NoChechkSumHash && !IsEqArr(Block.SumHash, SumHash))
         {
-            ToLogOne("#SUMHASH: Error sum hash on Block=" + Block.BlockNum)
+            ToLog("#SUMHASH: Error sum hash on Block=" + Block.BlockNum, 4)
             this.ErrSumHashCount++
         }
         else
@@ -1645,8 +1662,28 @@ class AccountApp extends require("./dapp")
         if(BlockNum < SMART_BLOCKNUM_START)
             Data.Value.Smart = 0
         Data.BlockNumCreate = BlockNum
-        if(Data.Adviser > this.GetMaxAccount())
-            Data.Adviser = 0
+        
+        if(BlockNum >= global.UPDATE_CODE_5)
+        {
+            var AMID = Data.Adviser;
+            if(AMID < 1e9 || AMID >= 1e10)
+                Data.Adviser = 0
+            else
+            {
+                var CurNum = this.GetIDByAMID(AMID);
+                if(CurNum && CurNum < Data.Num)
+                {
+                    ToLog("Account:" + Data.Num + " - was find AMID: " + AMID + " in Account: " + CurNum + ", AMID set to 0", 2)
+                    Data.Adviser = 0
+                }
+            }
+        }
+        else
+            if(Data.Adviser > this.GetMaxAccount())
+            {
+                Data.Adviser = 0
+            }
+        
         if(Data.Value.Smart > DApps.Smart.GetMaxNum())
             Data.Value.Smart = 0
         if(Data.Currency > DApps.Smart.GetMaxNum())
@@ -1928,6 +1965,41 @@ class AccountApp extends require("./dapp")
         }
         
         return FLOAT_FROM_COIN(SumCoin);
+    }
+    InitAMIDTab()
+    {
+        this.AdvMining = new CAdvMining()
+        var GetMaxNum = this.GetMaxAccount();
+        for(var num = 0; num <= GetMaxNum; num++)
+        {
+            var Account = this.ReadState(num);
+            if(Account && Account.BlockNumCreate >= global.UPDATE_CODE_5 && Account.Adviser >= 1e9)
+                this.AdvMining.SetRow(Account.Num, Account.Adviser)
+        }
+    }
+    
+    SetAMIDTab(Account, BlockNum)
+    {
+        if(BlockNum < global.UPDATE_CODE_5)
+            return;
+        
+        if(Account.New && Account.Num && Account.Adviser >= 1e9)
+        {
+            this.AdvMining.SetRow(Account.Num, Account.Adviser)
+        }
+    }
+    
+    TruncateAMIDTab(ToID)
+    {
+        this.AdvMining.Truncate(ToID)
+    }
+    
+    GetIDByAMID(AMID)
+    {
+        if(!this.AdvMining)
+            this.InitAMIDTab()
+        
+        return this.AdvMining.GetID(AMID);
     }
 };
 

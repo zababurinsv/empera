@@ -12,7 +12,6 @@
 var DELTA_LONG_MINING = 5000;
 var BLOCKNUM_ALGO2 = 6560000;
 var BLOCKNUM_HASH_NEW = 10195000;
-var BLOCKNUM_HASH_FIX = 70000000;
 var BLOCKNUM_TICKET_ALGO = 16070000;
 
 if(typeof global === "object")
@@ -72,9 +71,6 @@ function GetHashFromSeqAddr(SeqHash,AddrHash,BlockNum,PrevHash,MiningVer)
     {
         PrevHashNum = ReadUint32FromArr(AddrHash, 28);
     }
-    
-    if(BlockNum >= BLOCKNUM_HASH_FIX)
-        PrevHashNum = BlockNum;
     
     var Data = GetHash(SeqHash, PrevHashNum, BlockNum, MinerID, Nonce0, Nonce1, Nonce2, DeltaNum1, DeltaNum2);
     return Data;
@@ -442,11 +438,6 @@ function GetBlockArrFromBuffer(BufRead,Info)
             Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash);
             var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
             var PrevAddrNum = ReadUint32FromArr(Block.AddrHash, 28);
-            if(Block.BlockNum >= BLOCKNUM_HASH_FIX)
-            {
-                PrevHashNum = Block.BlockNum;
-                PrevAddrNum = Block.BlockNum;
-            }
             if(PrevHashNum !== PrevAddrNum && Block.BlockNum > 20000000)
             {
                 if(global.WATCHDOG_DEV)
@@ -512,9 +503,9 @@ function CalcDataHash(PrevHash,TreeHash,BlockNum)
     }
 }
 
-function CalcBlockHash(Block,SeqHash,AddrHash,BlockNum)
+function CalcBlockHash(Block,SeqHash,AddrHash,BlockNum,PrevHash)
 {
-    var Value = GetHashFromSeqAddr(SeqHash, AddrHash, BlockNum);
+    var Value = GetHashFromSeqAddr(SeqHash, AddrHash, BlockNum, PrevHash);
     Block.Hash = Value.Hash;
     Block.PowHash = Value.PowHash;
     Block.Power = GetPowPower(Value.PowHash);

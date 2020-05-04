@@ -45,14 +45,14 @@ function Init(Engine)
         
         Engine.SortAddrArrByScore(Arr);
         SaveParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), Arr);
-        ToLog("*********** SaveParams jinn-nodes.lst Count=" + Arr.length, 4);
+        ToLog("--- SaveParams jinn-nodes.lst Count=" + Arr.length, 4);
     };
     
     Engine.LoadAddrOnStart = function ()
     {
         var Arr = LoadParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), []);
         if(Arr.length)
-            ToLog("*********** Load jinn-nodes.lst Count=" + Arr.length, 4);
+            ToLog("--- Load jinn-nodes.lst Count=" + Arr.length, 4);
         for(var i = 0; i < Arr.length; i++)
         {
             var Item = Arr[i];

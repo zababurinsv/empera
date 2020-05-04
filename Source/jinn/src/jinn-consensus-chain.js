@@ -269,37 +269,49 @@ function InitClass(Engine)
         
         return 1;
     };
-    
-    Engine.GetMaxPowerBlockFromChain = function (BlockNum)
+    Engine.GetMaxPowerBlockWithConinues = function (BlockNum,BlockNumDB,bAddCurrentTx)
     {
         
-        var ArrBlock = Engine.DB.GetChainArrByNum(BlockNum);
-        if(ArrBlock.length === 0)
-            ToLogTrace("Error ArrBlock.length===0 on Block=" + BlockNum);
-        
-        var LinkSumHash = Engine.GetLinkDataFromDBNum(BlockNum);
-        var PrevSumHash = Engine.GetPrevSumHashFromDBNum(BlockNum);
-        
-        var MaxBlock = undefined;
-        for(var mode = 1; mode <= 2; mode++)
-            for(var n = 0; n < ArrBlock.length; n++)
+        var Block = undefined;
+        if(BlockNum <= BlockNumDB)
+        {
+            Block = Engine.GetBlockHeaderDB(BlockNum, 1);
+        }
+        else
+        {
+            var PrevBlock = Engine.GetMaxPowerBlockWithConinues(BlockNum - 1, BlockNumDB);
+            if(PrevBlock)
             {
-                var CurBlock = ArrBlock[n];
-                if(IsEqArr(LinkSumHash, CurBlock.LinkSumHash) && !NeedLoadBodyFromNet(CurBlock))
+                var ArrBlock = Engine.DB.GetChainArrByNum(BlockNum);
+                Block = Engine.GetMaxPowerBlockFromArr(ArrBlock, PrevBlock.SumHash);
+                if(!Block)
                 {
-                    if(mode === 1 && IsEqArr(CurBlock.PrevSumHash, PrevSumHash))
+                    Block = Engine.GetNewBlock(PrevBlock, bAddCurrentTx);
+                    if(Block)
                     {
-                        if(!MaxBlock || (MaxBlock.Power < CurBlock.Power || (MaxBlock.Power === CurBlock.Power && CompareArr(CurBlock.Hash, MaxBlock.Hash) < 0)))
-                            MaxBlock = CurBlock;
+                        if(bAddCurrentTx)
+                            Engine.SetBodyCurrentTx(Block);
+                        
+                        Block = Engine.AddBlockToChain(Block);
                     }
-                    else
-                        if(mode === 2)
-                        {
-                            if(!MaxBlock || (MaxBlock.Power < CurBlock.Power || (MaxBlock.Power === CurBlock.Power && CompareArr(CurBlock.Hash, MaxBlock.Hash) < 0)))
-                                MaxBlock = CurBlock;
-                        }
                 }
             }
+        }
+        return Block;
+    };
+    
+    Engine.GetMaxPowerBlockFromArr = function (ArrBlock,PrevBlockSumHash)
+    {
+        var MaxBlock = undefined;
+        for(var n = 0; n < ArrBlock.length; n++)
+        {
+            var CurBlock = ArrBlock[n];
+            if(IsEqArr(CurBlock.PrevSumHash, PrevBlockSumHash) && !NeedLoadBodyFromNet(CurBlock))
+            {
+                if(!MaxBlock || (MaxBlock.SumPow < CurBlock.SumPow || (MaxBlock.SumPow === CurBlock.SumPow && CompareArr(CurBlock.Hash, MaxBlock.Hash) < 0)))
+                    MaxBlock = CurBlock;
+            }
+        }
         return MaxBlock;
     };
     Engine.InitBlockList();

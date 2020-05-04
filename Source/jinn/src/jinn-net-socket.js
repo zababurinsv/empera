@@ -115,13 +115,14 @@ function InitClass(Engine)
             else
                 if(SOCKET.WasChild)
                 {
-                    if(Engine.GetSocketStatus(Child) === 100)
+                    var StatusNum = Engine.GetSocketStatus(Child);
+                    if(StatusNum === 100)
                     {
                         Engine.ReceiveFromNetwork(Child, data);
                     }
                     else
                     {
-                        Child.ToLog("CONNECT : Error GetSocketStatus");
+                        Child.ToLog("SOCKET on data: Error GetSocketStatus=" + StatusNum, 4);
                     }
                 }
         });

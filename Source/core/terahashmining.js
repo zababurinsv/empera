@@ -9,11 +9,9 @@
 */
 
 
-var START_NONCE = 0;
 
 const DELTA_LONG_MINING = 5000;
 var BLOCKNUM_ALGO2 = 6560000;
-var BLOCKNUM_HASH_FIX = 70000000;
 if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE || global.JINN_MODE)
 {
     BLOCKNUM_ALGO2 = 0;
@@ -25,9 +23,6 @@ require('../HTML/JS/terahashlib.js');
 
 var DELTA_NONCE = Math.pow(2, 40) * global.MINING_VERSION_NUM;
 
-global.CreateHashMinimal = CreateHashMinimal;
-global.CreatePOWVersionX = CreatePOWVersion3;
-
 function CreateHashMinimal(Block,MinerID)
 {
     if(Block.BlockNum < BLOCKNUM_ALGO2)
@@ -37,8 +32,6 @@ function CreateHashMinimal(Block,MinerID)
     }
     
     var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
-    if(Block.BlockNum >= BLOCKNUM_HASH_FIX)
-        PrevHashNum = Block.BlockNum;
     
     var Ret = GetHash(Block.SeqHash, PrevHashNum, Block.BlockNum, MinerID, 0, 0, 0, 0, 0);
     Block.Hash = Ret.Hash;
@@ -54,7 +47,7 @@ function CreateHashMinimal(Block,MinerID)
 var MAX_MEMORY3 = 0, SHIFT_MASKA3;
 var BufferNonce3, BufferBlockNum3;
 var bWasInitVer3, bWasInitVerOK3;
-function InitVer3(Block)
+function InitMiningMemory(Block)
 {
     
     bWasInitVer3 = 1;
@@ -97,12 +90,10 @@ function InitVer3(Block)
         ToLog("MAX HASH ITEMS=" + Math.trunc(MAX_MEMORY3 / 1024 / 1024) + " M");
     }
 }
-
-function CreatePOWVersion3(Block,bHashPump)
+function CheckMiningBlock(Block)
 {
-    
     if(!bWasInitVer3)
-        InitVer3(Block);
+        InitMiningMemory(Block);
     if(!bWasInitVerOK3)
         return 0;
     
@@ -123,7 +114,14 @@ function CreatePOWVersion3(Block,bHashPump)
             255, 255, 255, 255, 255, 255], };
     }
     
-    var MaxLider = Block.MaxLider;
+    return 1;
+}
+
+function DoPumpMemoryHash(Block)
+{
+    if(!CheckMiningBlock(Block))
+        return  - 1;
+    
     var RunCount = Block.RunCount;
     var BlockNum = Block.BlockNum;
     var Miner = Block.MinerID;
@@ -141,15 +139,29 @@ function CreatePOWVersion3(Block,bHashPump)
     }
     Block.LastNonce += RunCount;
     
+    if(BlockPump.TotalCount !== undefined)
+        BlockPump.TotalCount += RunCount;
+}
+
+function FindMiningPOW(Block,bHashPump)
+{
+    if(!CheckMiningBlock(Block))
+        return  - 1;
+    
     if(bHashPump)
-        return;
+    {
+        DoPumpMemoryHash(Block);
+        return  - 2;
+    }
+    
+    var MaxLider = Block.MaxLider;
+    var BlockNum = Block.BlockNum;
+    var Miner = Block.MinerID;
     var Ret = 0;
     var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
-    if(Block.BlockNum >= BLOCKNUM_HASH_FIX)
-        PrevHashNum = Block.BlockNum;
     
     var HashBase = GetHashFromNum2(BlockNum, PrevHashNum);
-    var Value1 = FindHashBuffer3(HashBase, BlockNum, Miner, 1);
+    var Value1 = FindHashBuffer3(HashBase, BlockNum, Miner, 4);
     if(Value1)
     {
         var Hash1 = XORArr(HashBase, Value1.Hash);
@@ -162,11 +174,11 @@ function CreatePOWVersion3(Block,bHashPump)
         }
     }
     
-    START_NONCE = Block.LastNonce0;
-    var CountEnd = START_NONCE + 50000;
+    var StartNonce = Block.LastNonce0;
+    var CountEnd = StartNonce + 50000;
     
     var Nonce0;
-    for(Nonce0 = START_NONCE; Nonce0 < CountEnd; Nonce0++)
+    for(Nonce0 = StartNonce; Nonce0 < CountEnd; Nonce0++)
     {
         var HashCurrent = GetHashFromArrNum2(Block.SeqHash, Miner, Nonce0);
         var Value2 = FindHashBuffer3(HashCurrent, BlockNum, Miner, 1);
@@ -221,6 +233,7 @@ function CreatePOWVersion3(Block,bHashPump)
     
     return Ret;
 }
+
 function FindHashBuffer3(HashFind,BlockNum,Miner,CountFind)
 {
     var HashNum = ReadIndexFromArr(HashFind);
@@ -262,6 +275,14 @@ global.GetNonceHashArr = function (BlockNum,Miner,StartNonceRnd,CountNonce)
     }
     return {ArrNonce:ArrNonce, ArrHash:ArrHash};
 }
+
+
+global.CreateHashMinimal = CreateHashMinimal;
+global.DoPumpMemoryHash = DoPumpMemoryHash;
+global.FindMiningPOW = FindMiningPOW;
+global.CreatePOWVersionX = FindMiningPOW;
+
+
 
 
 global.GetTxID = GetTxID;

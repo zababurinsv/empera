@@ -39,7 +39,7 @@ class CDBItem extends global.CDBFile
         if(Data.Position)
         {
             DataSize = this.ReadUint32(Data.Position)
-            if(DataSize !== BufWrite.length)
+            if(DataSize < BufWrite.length)
             {
                 ToLogTrace("Error Read DataSize: " + DataSize + "/" + BufWrite.length)
                 return 0;
@@ -66,7 +66,7 @@ class CDBItem extends global.CDBFile
         if(!DataSize)
             return undefined;
         
-        if(this.DataSize && this.DataSize !== DataSize)
+        if(this.DataSize && this.DataSize > DataSize)
         {
             ToLogTrace("Error Read DataSize: " + DataSize + "/" + this.DataSize)
             return 0;

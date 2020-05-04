@@ -103,6 +103,12 @@ process.on('message', function (msg)
         case "Eval":
             EvalCode(msg.Code);
             break;
+            
+        case "UpdateConst":
+            {
+                LOAD_CONST();
+                break;
+            }
     }
 }
 );

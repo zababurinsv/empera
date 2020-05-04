@@ -288,7 +288,7 @@ function DrawBlockInfoByArr(ArrMax,AvgTotal,TimeBlockNum,CountErrMax)
                 ctx.fillStyle = "#080";
             }
         
-        if(bMinutes)
+        if(0 && bMinutes)
         {
             if(CountErrMax >= 40)
                 ctx.fillStyle = "#e22317";

@@ -181,7 +181,7 @@ function InitClass(Engine)
                 if(!Data || !Data.result)
                     return;
                 
-                if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TICKET))
+                if(!Engine.CanProcessBlock(BlockNum, JINN_CONST.STEP_TICKET))
                 {
                     Engine.ToError(Child, "RET TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum, 4);
                     return;
@@ -233,7 +233,7 @@ function InitClass(Engine)
         
         var BlockNum = Data.BlockNum;
         
-        if(!CanProcessBlock(Engine, BlockNum, JINN_CONST.STEP_TICKET))
+        if(!Engine.CanProcessBlock(BlockNum, JINN_CONST.STEP_TICKET))
         {
             Engine.ToError(Child, "TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum, 4);
             return {result:0};

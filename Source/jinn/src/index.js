@@ -58,6 +58,8 @@ if(typeof window !== "object")
     require("./jinn-tx-control.js");
     
     require("./jinn-block.js");
+    require("./jinn-block-mining.js");
+    
     require("./jinn-consensus-chain.js");
     require("./jinn-consensus.js");
     require("./jinn-consensus-boost.js");
@@ -100,8 +102,8 @@ JINN_CONST.UNIQUE_IP_MODE = 0;
 
 JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME = 30;
 JINN_CONST.CORRECT_TIME_TRIGGER = 1200;
-JINN_CONST.CORRECT_TIME_VALUE = 60;
-JINN_CONST.INFLATION_TIME_VALUE = 30;
+JINN_CONST.CORRECT_TIME_VALUE = 50;
+JINN_CONST.INFLATION_TIME_VALUE = 20;
 
 JINN_CONST.START_CHECK_BLOCKNUM = 20;
 JINN_CONST.START_ADD_TX = 20;
@@ -165,12 +167,17 @@ JINN_CONST.MAX_DELTA_PROCESSING = 2;
 
 JINN_CONST.STEP_ADDTX = 0;
 JINN_CONST.STEP_TICKET = 1;
-JINN_CONST.STEP_TX = 3;
-JINN_CONST.STEP_MINING = 4;
-JINN_CONST.STEP_MAXHASH = 5;
+JINN_CONST.STEP_TX = 2;
 
-JINN_CONST.STEP_LAST = 7;
-JINN_CONST.STEP_CLEAR_MEM = 30;
+
+JINN_CONST.STEP_NEW_BLOCK = 4;
+JINN_CONST.STEP_CALC_POW_LAST = 4;
+JINN_CONST.STEP_CALC_POW_FIRST = 7;
+JINN_CONST.STEP_SAVE = 5;
+
+JINN_CONST.STEP_LAST = 8;
+JINN_CONST.STEP_CLEAR_MEM = 20;
+
 
 function CreateNodeEngine(Engine,MapName)
 {

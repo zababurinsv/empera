@@ -228,7 +228,15 @@
         WasCreateAccountInfo=PubKeyStr;
 
         var Description=$("idAccountName").value;
-        var Adviser=0;//ParseNum($("idAdviser").value);
+        var AMinerID=ParseNum($("idAMinerID").value);
+        if(AMinerID)
+        {
+            if(AMinerID<1e9 || AMinerID>1e10)
+            {
+                SetError("Error Advanced miner ID. Must be 10 digital.")
+                return;
+            }
+        }
         var Smart=ParseNum($("idSmart").value);
         var Currency=GetCurrencyByName($("idCurrency").value);
 
@@ -246,13 +254,13 @@
             {
                 if(Data && Data.result===1)
                 {
-                    SendTrCreateAcc(Currency,Data.PubKeyStr,Description,Adviser,Smart,1,bAddToPay);
+                    SendTrCreateAcc(Currency,Data.PubKeyStr,Description,AMinerID,Smart,1,bAddToPay);
                 }
             });
         }
         else
         {
-            SendTrCreateAcc(Currency,PubKeyStr,Description,Adviser,Smart,0,bAddToPay);
+            SendTrCreateAcc(Currency,PubKeyStr,Description,AMinerID,Smart,0,bAddToPay);
         }
     }
 
@@ -630,8 +638,8 @@
 
 
 
-        //$("idTo").max=MaxAccID;
-        //$("idAdviser").max=MaxAccID;
+
+
 
         SetVisibleBlock("idDevelopService",Data.IsDevelopAccount);
         SetVisibleBlock("idDevelopService2",CONFIG_DATA.CONSTANTS.WALLET_DESCRIPTION);
@@ -708,7 +716,9 @@
 
         //JINN
         $("idChains").disabled=!!JinnStat;
-        SetVisibleBlock("idUseDirectIPView",!JinnStat)
+        SetVisibleBlock("idUseDirectIPView",!JinnStat);
+        SetVisibleBlock("idAMIDRow",!!JinnStat?"table-row":"none");
+
 
     }
     
@@ -1435,19 +1445,28 @@
 
                 <DIV id="idAccountEdit" class="" style="display: none">
                     <table class="form_input keys" id="grid_edit_newacc">
-                        <tr><td>Public name:</td>
+                        <tr>
+                            <td>Public name:</td>
                             <td>
                                 <INPUT type="string" maxlength="40" style="width: 260px;text-align: left" autocomplete="off" id="idAccountName" onkeyup="CheckLengthAccDesription('idAccountName',40)">
                                 Currency:
-                                <input list="idCurrencyList" id="idCurrency" style="width: 120px;" onchange="ValidateCurrency(this)"/>
+                                <input list="idCurrencyList" id="idCurrency" style="width: 110px;" onchange="ValidateCurrency(this)"/>
                                 <datalist id="idCurrencyList" style="width: 80px;">
                                     <option value="Loading"></option>
                                 </datalist>
 
                                 Smart:
-                                <INPUT type="number" id="idSmart" min=0 max=100000000 value="0" style="width: 80px;">
+                                <INPUT type="number" id="idSmart" min=0 max=100000000 value="0" style="width: 100px;">
                             </td>
                         </tr>
+
+                        <tr id="idAMIDRow">
+                            <td>Advanced miner ID:</td>
+                            <td>
+                                <INPUT type="number" id="idAMinerID" min=1000000000 max=9999999999 value="0" style="width: 260px;">
+                            </td>
+                        </tr>
+
 
                         <tr>
                             <td>
@@ -1475,7 +1494,7 @@
                     <!--<th id="CurrencyNameItemHTML(Item)" data-name="Currency" class="cur hint">Cur</th>-->
                     <th id="Item.Name" data-name="Account name" class="accname hint">Name</th>
                     <th id="Item.Value.OperationID" data-name="Operation ID" class="snum hint">OP</th>
-                    <th id="(RetHistoryAccount(Item,'Adviser'))" data-name="Adviser" class="snum hint">Adv</th>
+                    <th id="Item.Adviser" data-name="Adviser" class="snum hint">Adv</th>
 
                     <th id="(RetChangeSmart(Item))" data-name="Smart contract (DApp)" class="smart hint">Smart</th>
                     <th id="Item.WN" class="num" style="width: 30px;"></th>
@@ -1715,7 +1734,7 @@
                             <th id="Item.Name" class="accname">Name</th>
                             <th id="Item.PubKeyStr" class="pubkey">PubKey</th>
                             <th id="Item.Value.OperationID" class="num">Operation</th>
-                            <th id="(RetHistoryAccount(Item,'Adviser'))" class="num">Adviser</th>
+                            <th id="(RetHistoryAccount(Item,'Adviser'))" class="num">Adv</th>
                             <th id="Item.Value.Smart" class="num">Smart</th>
                             <th id="(RetOpenBlock(Item.BlockNumCreate,1))" class="num">Block Num</th>
                             <!--<th id="Item.Arr[0].BlockNum" class="num">0</th>-->
@@ -1767,7 +1786,7 @@
                             <!--<th id="GetHexFromArr(Item.Hash1)" class="hash">Hash1</th>-->
                             <!--<th id="GetHexFromArr(Item.Hash2)" class="hash">Hash2</th>-->
 
-<!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->
+<!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">MinerHash</th>-->
 
                             <!--<th id="ReadUintFromArr(Item.AddrHash,6)" class="hash">Nonce0</th>-->
                             <!--<th id="ReadUintFromArr(Item.AddrHash,12)" class="hash">Nonce1</th>-->

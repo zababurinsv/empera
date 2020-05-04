@@ -495,7 +495,8 @@ function InitDiagramByArr(Arr,width,Param)
     {
         var Item = Arr[i];
         Item.num = i + 1;
-        Item.id = "DgrmId" + Item.num;
+        if(!Item.id || !Item.Extern)
+            Item.id = "DgrmId" + Item.num;
     }
     
     for(var i = 0; i < Arr.length; i++)

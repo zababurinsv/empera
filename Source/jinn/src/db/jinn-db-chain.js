@@ -17,8 +17,8 @@ const NUM_FOR_MAX_BLOCK =  - 1;
 
 
 global.DB_HEADER_FORMAT = {VersionDB:"byte", BlockNum:"uint", PrevPosition:"uint", TreeHash:"hash", MinerHash:"hash", PrevSumPow:"uint",
-    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", PrevBlockPosition:"uint", Reserv:"arr9",
-};
+    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", PrevBlockPosition:"uint", TestSumHash:"byte",
+    TestHash:"byte", TestDataHash:"byte", TestZero:"arr6", };
 
 const BODY_FORMAT = {PrevPosition:"uint", PrevCountTx:"uint16", TxArr:[{body:"tr"}], TxIndex:["uint16"]};
 
@@ -110,6 +110,11 @@ class CDBChain
         if(Block.VersionDB !== JINN_VERSION_DB)
         {
             ToLogTrace("Error version DB: " + Block.VersionDB + "/" + JINN_VERSION_DB)
+            return undefined;
+        }
+        if(!IsZeroArr(Block.TestZero))
+        {
+            ToLogTrace("Error TestZero = " + GetHexFromArr(Block.TestZero))
             return undefined;
         }
         
@@ -420,16 +425,28 @@ class CDBChain
         return undefined;
     }
     
-    GetPrevBlockDB(Block, bRaw)
+    GetPrevBlockDB(Block, bRaw, bMustHave)
     {
         if(Block.PrevBlockPosition)
         {
+            if(global.TEST_DB_BLOCK)
+                bRaw = 0
+            
             var PrevBlock = this.ReadBlock(Block.PrevBlockPosition, bRaw);
-            if(IsEqArr(Block.PrevSumHash, PrevBlock.SumHash))
+            
+            if(global.TEST_DB_BLOCK && !IsEqArr(Block.PrevSumHash, PrevBlock.SumHash))
+                PrevBlock = undefined
+            
+            if(PrevBlock)
                 return PrevBlock;
+            
+            if(bMustHave)
+            {
+                ToLog("********* Must have GetPrevBlockDB on block = " + Block.BlockNum)
+            }
         }
         
-        var PrevBlock = this.GetPrevBlockDBInner(Block);
+        var PrevBlock = this.GetPrevBlockDBInner(Block, bMustHave);
         if(PrevBlock)
         {
             Block.PrevBlockPosition = PrevBlock.Position
@@ -579,9 +596,10 @@ class CDBChain
         while(BlockSeed.BlockNum >= StartHotBlockNum)
         {
             Arr.push(BlockSeed)
-            var PrevBlockSeed = this.GetPrevBlockDB(BlockSeed);
+            var PrevBlockSeed = this.GetPrevBlockDB(BlockSeed, 0, 1);
             if(!PrevBlockSeed)
             {
+                ToLog("#2 SaveChainToDB: Error PrevBlock on Block=" + BlockSeed.BlockNum)
                 return  - 1;
             }
             BlockSeed = PrevBlockSeed

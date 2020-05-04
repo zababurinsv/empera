@@ -648,7 +648,7 @@
         document.getElementById("idBlockNum").value=localStorage["MonitoridBlockNum"];
         document.getElementById("idBlockCount").value=localStorage["MonitoridBlockCount"];
         document.getElementById("idMiner").value=localStorage["MonitoridMiner"];
-        document.getElementById("idAdviser").value=localStorage["MonitoridAdviser"];
+        //document.getElementById("idAdviser").value=localStorage["MonitoridAdviser"];
 
     }
     function SaveValues()
@@ -657,7 +657,7 @@
         localStorage["MonitoridBlockNum"]=document.getElementById("idBlockNum").value;
         localStorage["MonitoridBlockCount"]=document.getElementById("idBlockCount").value;
         localStorage["MonitoridMiner"]=document.getElementById("idMiner").value;
-        localStorage["MonitoridAdviser"]=document.getElementById("idAdviser").value;
+        //localStorage["MonitoridAdviser"]=document.getElementById("idAdviser").value;
 
     }
 
@@ -769,7 +769,7 @@
         var BlockNum=ParseNum(document.getElementById("idBlockNum").value);
         var Count=ParseNum(document.getElementById("idBlockCount").value);
         var Miner=ParseNum(document.getElementById("idMiner").value);
-        var Adviser=ParseNum(document.getElementById("idAdviser").value);
+        //var Adviser=ParseNum(document.getElementById("idAdviser").value);
         var bNonce=document.getElementById("idNonce").checked;
         var bMinerLess=document.getElementById("idMinerLess").checked;
 
@@ -777,7 +777,7 @@
             Miner=-1;
 
 
-        GetData("GetBlockchainStat",{BlockNum:BlockNum,Count:Count,Miner:Miner,bMinerLess:bMinerLess,Adviser:Adviser,bNonce:bNonce}, function (Data)
+        GetData("GetBlockchainStat",{BlockNum:BlockNum,Count:Count,Miner:Miner,bMinerLess:bMinerLess,Adviser:0,bNonce:bNonce}, function (Data)
         {
             if(Data && Data.result)
             {
@@ -865,7 +865,7 @@
     <BR>
     <BR>
     <DIV style="text-align: center;">Blockchain Power</DIV>
-    Adviser:<INPUT type="search" id="idAdviser" style="width:50px" >
+<!--    Adviser:<INPUT type="search" id="idAdviser" style="width:50px" >-->
     Miner:
     &lt;=<INPUT type="checkbox" id="idMinerLess" style="margin:1px" >
     <INPUT type="search" id="idMiner" style="width:50px" value="">

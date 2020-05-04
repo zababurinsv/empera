@@ -29,9 +29,6 @@ else
 var LastAlive = Date.now();
 setInterval(CheckAlive, 1000);
 
-var idInterval = undefined;
-var Block = {};
-
 PROCESS.on('message', function (msg)
 {
     LastAlive = Date.now();
@@ -44,9 +41,10 @@ PROCESS.on('message', function (msg)
         FastBlock.RunCount = 0;
         try
         {
-            if(CreatePOWVersionX(FastBlock))
+            var Result = FindMiningPOW(FastBlock);
+            if(Result === 1)
                 process.send({cmd:"POW", BlockNum:FastBlock.BlockNum, SeqHash:FastBlock.SeqHash, Hash:FastBlock.Hash, PowHash:FastBlock.PowHash,
-                    AddrHash:FastBlock.AddrHash, Num:FastBlock.Num});
+                    AddrHash:FastBlock.AddrHash, Num:FastBlock.Num, TotalCount:BlockPump.TotalCount, PrevHash:FastBlock.PrevHash, });
         }
         catch(e)
         {
@@ -78,38 +76,20 @@ function CheckAlive()
     }
 }
 
-function CalcPOWHash()
-{
-    if(!Block.SeqHash)
-        return;
-    
-    if(new Date() - Block.Time > Block.Period)
-    {
-        clearInterval(idInterval);
-        idInterval = undefined;
-        return;
-    }
-    
-    try
-    {
-        if(CreatePOWVersionX(Block))
-            process.send({cmd:"POW", BlockNum:Block.BlockNum, SeqHash:Block.SeqHash, Hash:Block.Hash, PowHash:Block.PowHash, AddrHash:Block.AddrHash,
-                Num:Block.Num});
-    }
-    catch(e)
-    {
-        ToError(e);
-    }
-}
+global.BlockPump = {BlockNum:0, RunCount:0, MinerID:0, Percent:0, LastNonce:0, TotalCount:0, };
 
-global.BlockPump = undefined;
 var idIntervalPump = undefined;
 function StartHashPump(SetBlock)
 {
-    if(!BlockPump || BlockPump.BlockNum < SetBlock.BlockNum || BlockPump.MinerID !== SetBlock.MinerID || BlockPump.Percent !== SetBlock.Percent)
+    if(BlockPump.BlockNum < SetBlock.BlockNum || BlockPump.MinerID !== SetBlock.MinerID || BlockPump.Percent !== SetBlock.Percent || BlockPump.RunCount !== SetBlock.RunCount)
     {
-        global.BlockPump = {BlockNum:SetBlock.BlockNum, RunCount:SetBlock.RunCount, MinerID:SetBlock.MinerID, Percent:SetBlock.Percent,
-            LastNonce:0, };
+        if(BlockPump.BlockNum !== SetBlock.BlockNum)
+            BlockPump.LastNonce = 0;
+        
+        BlockPump.BlockNum = SetBlock.BlockNum;
+        BlockPump.RunCount = SetBlock.RunCount;
+        BlockPump.MinerID = SetBlock.MinerID;
+        BlockPump.Percent = SetBlock.Percent;
     }
     
     if(!idIntervalPump)
@@ -118,32 +98,29 @@ function StartHashPump(SetBlock)
     }
 }
 
-var StartTime = 1;
-var EndTime = 0;
+var StateWork = 0;
+var StartTime = 0;
+
 function PumpHash()
 {
-    if(!BlockPump)
-        return;
-    
     var CurTime = Date.now();
-    if(StartTime > EndTime)
-    {
-        var Delta = CurTime - StartTime;
-        var PeriodPercent = 100 * Delta / CONSENSUS_PERIOD_TIME;
-        if(PeriodPercent >= BlockPump.Percent)
-        {
-            EndTime = CurTime;
-            return;
-        }
-        CreatePOWVersionX(BlockPump, 1);
-    }
+    var DeltaMustWork = BlockPump.Percent / 100;
+    var DeltaMust = 0;
+    if(StateWork)
+        DeltaMust = DeltaMustWork;
     else
+        DeltaMust = 1 - DeltaMustWork;
+    
+    var Delta = CurTime - StartTime;
+    
+    if(Delta >= DeltaMust * CONSENSUS_PERIOD_TIME)
     {
-        var Delta = CurTime - EndTime;
-        var PeriodPercent = 100 * Delta / CONSENSUS_PERIOD_TIME;
-        if(PeriodPercent > 100 - BlockPump.Percent)
-        {
-            StartTime = CurTime;
-        }
+        StateWork = 1 - StateWork;
+        StartTime = CurTime;
+    }
+    
+    if(StateWork)
+    {
+        DoPumpMemoryHash(BlockPump);
     }
 }

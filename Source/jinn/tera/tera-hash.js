@@ -83,14 +83,18 @@ function Init(Engine)
             ToLogTrace("No TreeHash on block " + Block.BlockNum);
         
         Block.DataHash = CalcDataHash(Block.LinkSumHash, Block.TreeHash, Block.BlockNum);
-        CalcBlockHash(Block, Block.DataHash, Block.MinerHash, Block.BlockNum);
         
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
             Block.Hash = ZERO_ARR_32.slice();
             Block.Hash[0] = 1 + Block.BlockNum;
             Block.Hash[31] = Block.Hash[0];
+            Block.PowHash = Block.Hash;
             Block.Power = GetPowPower(Block.Hash);
+        }
+        else
+        {
+            CalcBlockHash(Block, Block.DataHash, Block.MinerHash, Block.BlockNum, Block.LinkSumHash);
         }
         
         Block.SumPow = Block.PrevSumPow + Block.Power;
@@ -113,6 +117,42 @@ function Init(Engine)
         if(!Data.DataHash || IsZeroArr(Data.DataHash))
             ToLogTrace("ZERO DataHash on block:" + BlockNum);
         CalcBlockHash(Data, Data.DataHash, Data.MinerHash, BlockNum);
+    };
+    Engine.SetBlockDataFromDB = function (Block)
+    {
+        Block.PrevSumPow = Engine.GetPrevSumPowFromDBNum(Block.BlockNum);
+        Block.PrevSumHash = Engine.GetPrevSumHashFromDBNum(Block.BlockNum);
+        Block.LinkSumHash = Block.PrevSumHash;
+    };
+    
+    Engine.GetPrevSumPowFromDBNum = function (BlockNum)
+    {
+        var PrevNum = BlockNum - 1;
+        if(PrevNum < 0)
+            return 0;
+        else
+        {
+            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
+            if(PrevBlock)
+                return PrevBlock.SumPow;
+            else
+                return 0;
+        }
+    };
+    
+    Engine.GetPrevSumHashFromDBNum = function (BlockNum)
+    {
+        var PrevNum = BlockNum - 1;
+        if(PrevNum <= 0)
+            return ZERO_ARR_32;
+        else
+        {
+            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
+            if(PrevBlock)
+                return PrevBlock.SumHash;
+            else
+                return ZERO_ARR_32;
+        }
     };
     
     Engine.ConvertToTera = function (Block,bBody)

@@ -27,7 +27,7 @@ require("../core/geo");
 
 require("./child-process");
 
-var sessionid = GetHexFromAddres(crypto.randomBytes(20));
+var sessionid = GetHexFromArr(crypto.randomBytes(20));
 
 global.READ_ONLY_DB = 1;
 global.MAX_STAT_PERIOD = 600;
@@ -598,11 +598,14 @@ HostingCaller.GetCurrentInfo = function (Params)
             return {result:0};
     }
     var MaxNumBlockDB = SERVER.GetMaxNumBlockDB();
+    if(SERVER.BlockNumDBMin === undefined)
+        SERVER.ReadStateTX();
+    
     var Ret = {result:1, VersionNum:global.START_CODE_VERSION_NUM, VersionUpd:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK,
-        MaxNumBlockDB:MaxNumBlockDB, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:DApps.Accounts.GetMaxAccount(), MaxDappsID:DApps.Smart.GetMaxNum(),
-        CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
-        CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME, PRICE_DAO:PRICE_DAO(MaxNumBlockDB), GrayConnect:GrayConnect(),
-        sessionid:sessionid, };
+        MaxNumBlockDB:MaxNumBlockDB, BlockNumDBMin:SERVER.BlockNumDBMin, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:DApps.Accounts.GetMaxAccount(),
+        MaxDappsID:DApps.Smart.GetMaxNum(), CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR,
+        FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME, PRICE_DAO:PRICE_DAO(MaxNumBlockDB),
+        GrayConnect:GrayConnect(), sessionid:sessionid, };
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {

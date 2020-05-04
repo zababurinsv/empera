@@ -11,7 +11,7 @@
 var ArrChildProcess = [];
 
 var WebProcess = {Name:"WEB PROCESS", idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(), Worker:undefined, Path:"./process/web-process.js",
-    OnMessage:OnMessageWeb, PeriodAlive:10 * 1000};
+    OnMessage:OnMessageWeb, PeriodAlive:10 * 1000, UpdateConst:0};
 global.WEB_PROCESS = WebProcess;
 
 if(global.HTTP_HOSTING_PORT && !global.NWMODE)
@@ -25,6 +25,11 @@ if(global.HTTP_HOSTING_PORT && !global.NWMODE)
             try
             {
                 WebProcess.Worker.send({cmd:"Stat", Name:"MAX:ALL_NODES", Value:global.CountAllNode});
+                if(global.WEB_PROCESS.UpdateConst)
+                {
+                    global.WEB_PROCESS.UpdateConst = 0;
+                    global.WEB_PROCESS.Worker.send({cmd:"UpdateConst"});
+                }
             }
             catch(e)
             {
@@ -182,7 +187,7 @@ function StartChildProcess(Item)
             {
                 if(ITEM.Worker)
                 {
-                    ToLog("KILL PROCESS " + ITEM.Name + ": " + ITEM.Worker.pid);
+                    ToLog("KILL with alive=" + (Delta / 1000) + " " + ITEM.Name + ": " + ITEM.Worker.pid);
                     try
                     {
                         process.kill(ITEM.Worker.pid, 'SIGKILL');

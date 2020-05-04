@@ -35,128 +35,6 @@ function DoNode(Engine)
 function InitClass(Engine)
 {
     Engine.TickNum = 0;
-    Engine.MaxLiderTaskArr = [];
-    
-    Engine.DoBlockMining = function (CurBlockNum)
-    {
-        
-        var Count = 0;
-        while(1)
-        {
-            var Block;
-            Count++;
-            var LastBlockNum = Engine.GetMaxNumBlockDB();
-            if(LastBlockNum >= 0)
-            {
-                if(!Engine.GetBlockHeaderDB(LastBlockNum))
-                {
-                    ToLog("--------------1 Error DB in Block=" + LastBlockNum);
-                    return 0;
-                }
-                if(!Engine.GetBlockHeaderDB(LastBlockNum - 1))
-                {
-                    ToLog("--------------2 Error DB in Block=" + (LastBlockNum - 1));
-                    return 0;
-                }
-            }
-            
-            if(LastBlockNum >= CurBlockNum)
-            {
-                return LastBlockNum;
-            }
-            
-            var BlockNum = LastBlockNum + 1;
-            
-            if(BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
-            {
-                Engine.WriteGenesisDB();
-                return;
-            }
-            var TxArr = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
-            Block = Engine.GetNewBlock(BlockNum, TxArr);
-            if(!Block)
-            {
-                Engine.ToLog("Cannt create block=" + BlockNum);
-                return 0;
-            }
-            
-            Engine.AddBlockToChain(Block);
-            if(Count >= JINN_CONST.DELTA_BLOCKS_FOR_CREATE)
-            {
-                if(JINN_CONST.LINK_HASH_DELTA === 1)
-                    return 0;
-                
-                var DeltaNum = CurBlockNum - Block.BlockNum;
-                if(DeltaNum > JINN_CONST.DELTA_BLOCKS_FOR_LOAD_ONLY)
-                {
-                    Engine.ToLog5("Old block  BlockNum=" + BlockNum);
-                    Engine.CreateBlockInMemory(CurBlockNum);
-                }
-                return 0;
-            }
-        }
-    };
-    
-    Engine.AddBlockToChain = function (Block)
-    {
-        var Find = Engine.DB.FindBlockByHash(Block.BlockNum, Block.SumHash);
-        if(!Find)
-        {
-            Engine.DB.WriteBlock(Block);
-        }
-        Engine.FindSaveMaxBlock(Block.BlockNum);
-        
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
-        if(Block.BlockNum < CurBlockNum - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING)
-            return;
-        if(Block.BlockNum >= CurBlockNum - JINN_CONST.STEP_MINING)
-            Engine.MaxLiderTaskArr.push(Block);
-        else
-            Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
-    };
-    Engine.DoMaxLiderTaskArr = function (BlockNum)
-    {
-        for(var i = 0; i < Engine.MaxLiderTaskArr.length; i++)
-        {
-            var Block = Engine.MaxLiderTaskArr[i];
-            if(Block.BlockNum <= BlockNum)
-            {
-                Engine.AddHashToMaxLider(Block, Block.BlockNum, 1);
-                Engine.MaxLiderTaskArr.splice(i, 1);
-                i--;
-            }
-        }
-    };
-    
-    Engine.FindSaveMaxBlock = function (BlockNum)
-    {
-        var Block = Engine.GetMaxPowerBlockFromChain(BlockNum);
-        if(!Block)
-        {
-            return 0;
-        }
-        
-        if(!Engine.SaveToDB(Block, 0, 1))
-        {
-            return 0;
-        }
-    };
-    
-    Engine.CreateBlockInMemory = function (BlockNum)
-    {
-        
-        if(Engine.GetBlockHeaderDB(BlockNum))
-            return;
-        
-        var TxArr = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
-        var Block = Engine.GetNewBlock(BlockNum, TxArr, 1);
-        if(!Block)
-        {
-            return;
-        }
-        
-        Engine.DB.WriteBlock(Block);
-    };
     
     // Modeling...
     
@@ -193,27 +71,52 @@ function InitClass(Engine)
         return Block;
     };
     
-    Engine.GetNewBlock = function (BlockNum,TxArr,bInMemory)
+    Engine.GetCopyBlock = function (Block)
     {
-        if(BlockNum - JINN_CONST.LINK_HASH_DELTA > Engine.GetMaxNumBlockDB())
+        var BlockNew = {};
+        BlockNew.BlockNum = Block.BlockNum;
+        BlockNew.TreeHash = Block.TreeHash;
+        BlockNew.MinerHash = Block.MinerHash;
+        BlockNew.TxCount = Block.TxCount;
+        
+        BlockNew.PrevSumPow = Block.PrevSumPow;
+        BlockNew.PrevSumHash = Block.PrevSumHash;
+        BlockNew.PrevBlockPosition = Block.PrevBlockPosition;
+        
+        return BlockNew;
+    };
+    
+    Engine.GetNewBlock = function (PrevBlock,bAddCurrentTx)
+    {
+        if(!PrevBlock)
             return undefined;
         
         var Block = {};
-        Block.BlockNum = BlockNum;
+        Block.BlockNum = PrevBlock.BlockNum + 1;
         
-        Engine.SortBlock({TxData:TxArr});
-        Block.TxData = TxArr;
-        Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
-        
-        Block.MinerHash = [Engine.ID % 256, Engine.ID >>> 8];
-        for(var i = 2; i < 32; i++)
-            Block.MinerHash[i] = i;
-        
-        if(random(100) < 50)
+        if(bAddCurrentTx)
+        {
+            Block.TxData = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
+            Engine.SortBlock(Block);
+            
+            Block.MinerHash = [Engine.ID % 256, Engine.ID >>> 8];
+            for(var i = 2; i < 32; i++)
+                Block.MinerHash[i] = i;
+            if(random(100) < 50)
+                Block.MinerHash = ZERO_ARR_32;
+            
+            Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+        }
+        else
+        {
             Block.MinerHash = ZERO_ARR_32;
-        Engine.SetBlockDataFromDB(Block);
-        Engine.CalcBlockData(Block);
+            Engine.FillBodyCurrentTx(Block);
+        }
         
+        Block.PrevSumHash = PrevBlock.SumHash;
+        Block.PrevSumPow = PrevBlock.SumPow;
+        
+        Engine.CalcBlockData(Block);
         return Block;
     };
     
@@ -296,65 +199,9 @@ function InitClass(Engine)
         });
     };
     
-    Engine.SetBlockDataFromDB = function (Block)
-    {
-        Block.PrevSumPow = Engine.GetPrevSumPowFromDBNum(Block.BlockNum);
-        Block.PrevSumHash = Engine.GetPrevSumHashFromDBNum(Block.BlockNum);
-        Block.LinkSumHash = Engine.GetLinkDataFromDBNum(Block.BlockNum);
-    };
-    Engine.GetPrevSumPowFromDBNum = function (BlockNum)
-    {
-        var PrevNum = BlockNum - 1;
-        if(PrevNum < 0)
-            return 0;
-        else
-        {
-            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
-            if(PrevBlock)
-                return PrevBlock.SumPow;
-            else
-                return 0;
-        }
-    };
-    
-    Engine.GetPrevSumHashFromDBNum = function (BlockNum)
-    {
-        var PrevNum = BlockNum - 1;
-        if(PrevNum <= 0)
-            return ZERO_ARR_32;
-        else
-        {
-            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
-            if(PrevBlock)
-                return PrevBlock.SumHash;
-            else
-                return ZERO_ARR_32;
-        }
-    };
-    Engine.GetLinkDataFromDBNum = function (BlockNum)
-    {
-        if(BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
-        {
-            return ZERO_ARR_32;
-        }
-        else
-        {
-            var PrevNum = BlockNum - JINN_CONST.LINK_HASH_DELTA;
-            var PrevBlock = Engine.GetBlockHeaderDB(PrevNum, 1);
-            if(PrevBlock)
-                return PrevBlock.SumHash;
-            else
-                return ZERO_ARR_32;
-        }
-    };
-    
-    Engine.GetLinkDataFromDB = function (Block)
-    {
-        return Engine.GetLinkDataFromDBNum(Block.BlockNum);
-    };
-    
     Engine.CalcBlockData = function (Block)
     {
+        
         Engine.CalcBlockHash(Block);
         Engine.CalcSumHash(Block);
     };

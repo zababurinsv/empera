@@ -13,7 +13,7 @@
 **/
 'use strict';
 
-var HEADER_FORMAT_CACHE = CopyObjKeys(global.DB_HEADER_FORMAT);
+var HEADER_FORMAT_CACHE = CopyObjKeys({}, global.DB_HEADER_FORMAT);
 
 
 HEADER_FORMAT_CACHE.Hash = "hash";
