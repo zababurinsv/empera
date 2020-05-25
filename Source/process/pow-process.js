@@ -44,7 +44,8 @@ PROCESS.on('message', function (msg)
             var Result = FindMiningPOW(FastBlock);
             if(Result === 1)
                 process.send({cmd:"POW", BlockNum:FastBlock.BlockNum, SeqHash:FastBlock.SeqHash, Hash:FastBlock.Hash, PowHash:FastBlock.PowHash,
-                    AddrHash:FastBlock.AddrHash, Num:FastBlock.Num, TotalCount:BlockPump.TotalCount, PrevHash:FastBlock.PrevHash, });
+                    AddrHash:FastBlock.AddrHash, Num:FastBlock.Num, TotalCount:BlockPump.TotalCount, PrevHash:FastBlock.PrevHash, Meta:FastBlock.Meta,
+                });
         }
         catch(e)
         {

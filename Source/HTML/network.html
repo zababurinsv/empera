@@ -25,8 +25,8 @@
 <script>
     var JINNMODE=0;
     var MaxChildCount=1;
-    var SaveIdArr=["idMaxNodesCount"];
-    var NodesArr=[];
+    var SaveIdArr=[];
+    //var NodesArr=[];
     var CurNodeID;
 
     function SetStatus(Str)
@@ -38,6 +38,7 @@
     var WasSetName;
     var WasSetProperty;
     var WasSetInfo;
+
     function SetInfo(Name,StrProperty,StrLogInfo)
     {
         var id;
@@ -69,7 +70,7 @@
 
     function UpdateData()
     {
-        var CountBlock=ParseNum($("idCountBlock").value);
+        var CountBlock=4;//ParseNum($("idCountBlock").value);
 
         GetData("/GetHotArray",{CountBlock:CountBlock}, function (Data)
         {
@@ -103,7 +104,6 @@
         }
         var map=htmlTable.ItemsMap;
 
-        var MaxNode=ParseNum($("idMaxNodesCount").value);
 
         //Hot
         htmlTable.RowCounts=Math.max(htmlTable.RowCounts,ArrTree.length);
@@ -134,7 +134,6 @@
             var CountNodesA=0;
             var CountNodesC=0;
             var length=Math.max(MaxChildCount,arr.length)
-            length=Math.min(length,MaxNode);
             for(var n=0;n<length;n++)
             {
                 var Node=undefined;
@@ -145,7 +144,7 @@
                     Node=arr[n];
 
 
-                    NodesArr[Node.ID]=Node;
+                    //NodesArr[Node.ID]=Node;
                     if(Node.Name)
                         Name=Node.Name;
                     else
@@ -153,11 +152,11 @@
                     Str+=Name;
 
                     Str+="   ";
-                    if(Node.BlockProcessCount || Node.Hot)
+                    if(Node.Active && (Node.BlockProcessCount || Node.Hot))
                     {
                         Node.BlockProcessCount=Math.floor(10*Node.BlockProcessCount)/10;
                         Str += "<BR>"+Node.BlockProcessCount;
-                        Str += ":"
+                        Str += ":";
                     }
 
                     if(Node.DeltaTime)
@@ -167,13 +166,18 @@
                     else
                         strClass="node";
 
+                    if(Node.Active)
+                        strClass+=" open";
+                    else
+                        strClass+=" close";
+
                     if(JINNMODE)
                         strClass+=" jinnnode";
 
                     // if(CurNodeID===Node.ID)
                     //     strClass=strClass+" current";
 
-                    Str='<BUTTON id="N'+Node.ID+'" class="'+strClass+'" onclick="ViewInfo('+Node.ID+',1)">'+Str+'</BUTTON>';
+                    Str='<BUTTON id="N'+Node.ID+'" class="'+strClass+'" onmousedown="ViewInfo('+Node.ID+',1)">'+Str+'</BUTTON>';
 
                     if(Node.Hot)
                         Str+="<BR>";
@@ -192,6 +196,11 @@
                     else
                     {
                         Str+='<INPUT type="button" class="connect" onclick="AddConnect('+Node.ID+')" value="Con...">';
+                    }
+
+                    if(JINNMODE)
+                    {
+                        Str += '<input type="checkbox" class="checkbox" id="D' + Node.ID + '" '+(Node.Debug?' checked':'')+' onchange = "SetDebug(' + Node.ID + ')"/>';
                     }
 
                     if(Node.Hot)
@@ -255,17 +264,17 @@
                 }
             }
 
-            row.MaxRows=Math.max(row.MaxRows,CountNodesA,CountNodesC);
-            for(var i=CountNodesC;i<row.MaxRows;i++)
-            {
-                StrConnect+="<DIV class='node'></DIV>"
-            }
+            // row.MaxRows=Math.max(row.MaxRows,CountNodesA,CountNodesC);
+            // for(var i=CountNodesC;i<row.MaxRows;i++)
+            // {
+            //     StrConnect+="<DIV class='node'></DIV>"
+            // }
 
             if(row.StrActive!==StrActive)
             {
                 var cell=row.cells[MaxChildCount+1];
                 row.StrActive=StrActive;
-                cell.innerHTML=StrActive;
+                cell.innerHTML=GetLayer(StrActive);
             }
 
 
@@ -273,7 +282,7 @@
             {
                 var cell=row.cells[MaxChildCount+2];
                 row.StrConnect=StrConnect;
-                cell.innerHTML=StrConnect;
+                cell.innerHTML=GetLayer(StrConnect);
             }
 
 
@@ -284,6 +293,10 @@
         ViewInfo(CurNodeID);
     }
 
+    function GetLayer(Str)
+    {
+        return '<DIV class="layer">'+Str+'</DIV>'
+    }
 
 
     function ViewInfo(ID,bSet)
@@ -334,6 +347,18 @@
         }
     }
 
+    function ClearChildLog()
+    {
+        RunServerCode('SERVER.NetClearChildLog('+CurNodeID+')');
+        ViewInfo(CurNodeID,1);
+
+    }
+    function SetDebug(ID)
+    {
+        var element=$("D"+ID);
+        RunServerCode('SERVER.NetSetDebug('+ID+','+element.checked+')');
+        ViewInfo(ID,1);
+    }
     function AddConnect(ID)
     {
         RunServerCode('SERVER.NetAddConnect('+ID+')');
@@ -380,8 +405,6 @@
     {
         if(LoadValuesByArr(SaveIdArr))
         {
-            if(!$("idMaxNodesCount").value)
-                $("idMaxNodesCount").value=10;
         }
     }
     function SaveValues()
@@ -413,6 +436,14 @@
         width: 100px;
         text-align: left;
         padding: 1px;
+
+    }
+
+    .layer
+    {
+        height: 200px;
+        overflow:auto;
+
     }
 
     .hot_nodes td:nth-child(1)
@@ -446,9 +477,15 @@
         height: 40px;
         white-space: pre-line;
     }
+    .close
+    {
+        height: 22px;
+        text-align: left;
+    }
+
     .jinnnode
     {
-        width: 150px;
+        width: 200px;
     }
     .edit
     {
@@ -486,10 +523,18 @@
         height: 380px;
         width: 100%;
     }
+    #idLogClear
+    {
+        position: absolute;
+        bottom: 25px;
+        right: 25px;
+        width: 50px;
+        height: 20px;
+    }
 
     .focusnowrite:focus
     {
-        color: #1a2ec1;
+        color2: #1a2ec1;
         font-style: italic;
     }
 
@@ -505,8 +550,7 @@
 
 <DIV align='center'>
     <B>NETWORK</B><BR>
-    Max nodes on level: <INPUT type="number" id="idMaxNodesCount" style="width:80px" value="10" onchange="SaveValues()" onkeyup="SaveValues()">
-    <INPUT type="number" id="idCountBlock" style="width:80px" value="4">
+<!--    <INPUT type="number" id="idCountBlock" style="width:80px" value="4">-->
 
     <DIV id="idStatus" style="height: 20px;"></DIV><BR>
 
@@ -530,11 +574,12 @@
 
     </DIV>
     <DIV id="idNodeBlock" style="float: left; border: 0px solid #bfc1c0; text-align: left">
-            <DIV id="idNodeName"></DIV>
-            <textarea rows="25" cols="250"  id="idNodeProperty" class="focusnowrite" style="width: 99%;">
-            </textarea>
-            <textarea rows="5" cols="250"  id="idNodeLog" class="focusnowrite" style="width: 99%;">
-            </textarea>
+        <DIV id="idNodeName"></DIV>
+        <textarea wrap="off"  rows="25" cols="250"  id="idNodeProperty" class="focusnowrite" style="width: 99%;">
+        </textarea>
+        <textarea wrap="off"  rows="5" cols="1000"  id="idNodeLog" class="focusnowrite" style="width: 99%;">
+        </textarea>
+        <button id="idLogClear" onclick="ClearChildLog()">Clear</button>
     </DIV>
 </DIV>
 

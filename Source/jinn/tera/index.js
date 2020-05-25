@@ -37,8 +37,6 @@ JINN_CONST.START_CHECK_BLOCKNUM = 50;
 
 JINN_CONST.SHARD_NAME = "TERA";
 
-
-
 JINN_CONST.MAX_PACKET_SIZE = global.MAX_PACKET_LENGTH;
 JINN_CONST.MAX_PACKET_SIZE_RET_DATA = Math.floor(JINN_CONST.MAX_PACKET_SIZE / 2);
 
@@ -63,9 +61,23 @@ module.exports.Create = function (Node,MapName)
     {
         JINN_CONST.UNIQUE_IP_MODE = 0;
         global.AUTO_CORRECT_TIME = 0;
+        
+        global.DELTA_CURRENT_TIME = 0;
+        JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME = 10;
+        JINN_CONST.CORRECT_TIME_VALUE = 50;
+        JINN_CONST.CORRECT_TIME_TRIGGER = 5;
+        
+        JINN_CONST.MAX_LEVEL_CONNECTION = 3;
+        JINN_CONST.EXTRA_SLOTS_COUNT = 1;
+        
+        if(global.JINN_PORT === 50001)
+            setTimeout(function ()
+            {
+            }, 100);
     }
     
     var Engine = {};
+    Engine.CanRunStat = !MapName;
     Engine.UseExtraSlot = 0;
     
     Engine.ip = global.JINN_IP;
@@ -109,16 +121,16 @@ module.exports.Create = function (Node,MapName)
     {
         if(global.LOCAL_RUN)
         {
-            Engine.AddNodeAddr({ip:"127.0.0.1", port:50001, Score:1000000000});
+            Engine.AddNodeAddr({ip:"127.0.0.1", port:50001, Score:1000000000, System:1});
         }
         else
         {
-            Engine.AddNodeAddr({ip:"149.154.70.158", port:33000, Score:1000000000});
-            Engine.AddNodeAddr({ip:"212.80.217.95", port:33006, Score:1000000000});
-            Engine.AddNodeAddr({ip:"212.80.217.187", port:33007, Score:1000000000});
+            Engine.AddNodeAddr({ip:"149.154.70.158", port:33000, Score:1000000000, System:1});
+            Engine.AddNodeAddr({ip:"212.80.217.95", port:33006, Score:1000000000, System:1});
+            Engine.AddNodeAddr({ip:"212.80.217.187", port:33007, Score:1000000000, System:1});
             
-            Engine.AddNodeAddr({ip:"109.251.8.131", port:33000});
-            Engine.AddNodeAddr({ip:"139.9.250.2", port:33000});
+            Engine.AddNodeAddr({ip:"109.251.8.131", port:33000, System:1});
+            Engine.AddNodeAddr({ip:"27.155.77.110", port:33000, System:1});
         }
         
         Engine.LoadAddrOnStart();
@@ -135,8 +147,11 @@ const PERIOD_FOR_RUN = 100;
 function StartRun()
 {
     SERVER.NodeSyncStatus = {Header1:Engine.Header1, Header2:Engine.Header2, Block1:Engine.Block1, Block2:Engine.Block2, };
-    NextRunEngine(global.JINN);
     
+    if(Engine.CanRunStat)
+        Engine.OnStatSecond();
+    
+    NextRunEngine(global.JINN);
     Engine.DoNodeAddr();
     
     var CurTimeNum =  + GetCurrentTime();

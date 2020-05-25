@@ -80,15 +80,15 @@ global.ToLogTrace = function (Str)
 }
 var MapLogOne = {};
 var StartLogOne = Date.now();
-global.ToLogOne = function (Str,Str2)
+global.ToLogOne = function (Str,Str2,Level)
 {
     if(!MapLogOne[Str])
     {
         MapLogOne[Str] = 1;
         if(Str2)
-            ToLog(Str + Str2);
+            ToLog(Str + Str2, Level);
         else
-            ToLog(Str);
+            ToLog(Str, Level);
         
         if(Date.now() - StartLogOne > 3600 * 1000)
         {

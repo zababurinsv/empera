@@ -258,9 +258,11 @@ function InitClass(Engine)
         return LID;
     };
     
-    Engine.CanDoNextBodyLoad = function (NodeStatus,BlockHead,BlockSeed,Num)
+    Engine.GetFirstEmptyBodyBlockWithCacheCheck = function (BlockHeadNum,BlockSeed)
     {
-        var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead.BlockNum, BlockSeed);
+        
+        var BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHeadNum, BlockSeed);
+        
         while(BodyForLoad && Engine.DB.GetTxDataCache)
         {
             var TxData = Engine.DB.GetTxDataCache(BodyForLoad.TreeHash);
@@ -269,12 +271,19 @@ function InitClass(Engine)
                 BodyForLoad.TxData = TxData;
                 Engine.DB.WriteBlock(BodyForLoad);
                 
-                BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHead.BlockNum, BlockSeed);
+                BodyForLoad = Engine.GetFirstEmptyBodyBlock(BlockHeadNum, BlockSeed);
                 continue;
             }
             
             break;
         }
+        
+        return BodyForLoad;
+    };
+    
+    Engine.CanDoNextBodyLoad = function (NodeStatus,BlockHead,BlockSeed,Num)
+    {
+        var BodyForLoad = Engine.GetFirstEmptyBodyBlockWithCacheCheck(BlockHead.BlockNum, BlockSeed);
         
         if(BodyForLoad)
         {
@@ -385,7 +394,7 @@ function InitClass(Engine)
         
         Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash).concat(GetArrFromValue(Data.BlockNum)), 10);
         Data.PowHash = Data.Hash;
-        Data.Power = GetPowPower(Data.Hash);
+        Data.Power = GetPowPowerBlock(BlockNum, Data.Hash);
     };
     
     Engine.CompareMaxLider = function (Data1,Data2)
@@ -515,7 +524,7 @@ function InitClass(Engine)
                 continue;
             }
             
-            var BlockHead = Engine.CalcHead(BlockSeed);
+            var BlockHead = Engine.GetFirstHeadBlock(BlockSeed);
             
             //checking for database entries
             if(!Engine.IsExistBlockDB(BlockHead))
@@ -561,73 +570,77 @@ function InitClass(Engine)
         if(!BlockDB)
             return 0;
         
-        var CurBlockSeed = BlockSeed;
-        for(var delta = 0; delta <= JINN_CONST.STEP_LAST; delta++)
+        var CurBlockNumT = Engine.CurrentBlockNum;
+        var BlockNumSave = CurBlockNumT - JINN_CONST.STEP_SAVE;
+        var BlockNumLast = CurBlockNumT - JINN_CONST.STEP_LAST;
+        var BlockNumDB = Engine.GetMaxNumBlockDB();
+        if(BlockNumDB === BlockNumSave - 1)
+            BlockNumSave--;
+        while(BlockSeed.BlockNum > BlockNumSave)
         {
-            if(CurBlockSeed.BlockNum < BlockHead.BlockNum)
-                break;
-            
-            var BlockSeedDB = Engine.GetBlockHeaderDB(CurBlockSeed.BlockNum);
-            if(BlockSeedDB)
+            var PrevBlockSeed = Engine.GetPrevBlock(BlockSeed);
+            if(!PrevBlockSeed)
             {
-                
-                if(delta === 0 && IsEqArr(BlockSeedDB.SumHash, CurBlockSeed.SumHash))
-                {
-                    //so there is a record of this chain in the database and since it is more priority, we stop the cycle
-                    return 0;
-                }
-                
-                //write only if the chain has a large POW amount than the existing one in the database
-                if(CurBlockSeed.SumPow < BlockSeedDB.SumPow || (CurBlockSeed.SumPow === BlockSeedDB.SumPow && CompareArr(BlockSeedDB.Hash,
-                CurBlockSeed.Hash) <= 0))
-                {
-                    return 0;
-                }
-                
-                break;
+                Engine.ToLog("#1 CheckAndSaveChainToDB: Error GetPrevBlock at block=" + BlockSeed.BlockNum, 3);
+                return 0;
             }
-            else
+            BlockSeed = PrevBlockSeed;
+        }
+        
+        if(BlockSeed.BlockNum < BlockNumSave)
+            return 0;
+        if(BlockSeed.Power === 0)
+            return 0;
+        if(BlockHead.BlockNum >= BlockSeed.BlockNum)
+            return 0;
+        if(BlockNumDB === BlockSeed.BlockNum)
+        {
+            var BlockDB = Engine.GetBlockHeaderDB(BlockNumDB);
+            CalcAvgSumPow(BlockDB);
+            CalcAvgSumPow(BlockSeed);
+            if(BlockSeed.SumPow <= BlockDB.SumPow)
             {
-                var PrevBlockSeed = Engine.GetPrevBlock(CurBlockSeed);
-                if(!PrevBlockSeed)
-                {
-                    break;
-                }
-                CurBlockSeed = PrevBlockSeed;
+                return 0;
             }
         }
         
         //writing a chain to the database
         
+        var Count = BlockSeed.BlockNum - BlockHead.BlockNum;
+        var Delta = CurBlockNumT - BlockSeed.BlockNum;
         var Res = Engine.DB.SaveChainToDB(BlockHead, BlockSeed);
+        var Miner = ReadUintFromArr(BlockSeed.MinerHash, 0);
+        if(BlockSeed.BlockNum > 20)
+            Engine.ToLog("SaveChainToDB: " + BlockInfo(BlockHead) + " - " + BlockInfo(BlockSeed) + "  ### SumPow=" + BlockSeed.SumPow + " Miner=" + Miner + " COUNT=" + Count,
+            3);
+        
         if(Res !== 1)
         {
-            Engine.ToLog("Error on SaveChainToDB " + BlockHead.BlockNum + "-" + BlockSeed.BlockNum + " POW:" + BlockSeed.SumPow, 4);
-            {
-                Engine.TruncateChain(BlockHead.BlockNum);
-                return Res;
-            }
+            Engine.ToLog("Error on SaveChainToDB " + BlockHead.BlockNum + "-" + BlockSeed.BlockNum + " POW:" + BlockSeed.SumPow, 2);
+            Engine.TruncateChain(BlockHead.BlockNum);
+            return Res;
         }
+        
+        JINN_STAT.MainDelta = Math.max(JINN_STAT.MainDelta, Engine.CurrentBlockNum - BlockHead.BlockNum);
         
         return Res;
     };
     
     Engine.CanProcessBlock = function (BlockNum,Step)
     {
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - Step;
+        var CurBlockNum = Engine.CurrentBlockNum - Step;
         var Delta = CurBlockNum - BlockNum;
         if(Math.abs(Delta) <= JINN_CONST.MAX_DELTA_PROCESSING)
             return 1;
-        
         JINN_STAT.ErrProcessBlock++;
         return 0;
     };
     
     Engine.CanProcessMaxHash = function (BlockNum)
     {
-        var CurBlockNumTime = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var CurBlockNumTime = Engine.CurrentBlockNum;
         var BlockNum1 = CurBlockNumTime - JINN_CONST.STEP_CALC_POW_FIRST - JINN_CONST.MAX_DELTA_PROCESSING;
-        var BlockNum2 = CurBlockNumTime - JINN_CONST.STEP_CALC_POW_LAST + JINN_CONST.MAX_DELTA_PROCESSING;
+        var BlockNum2 = CurBlockNumTime - JINN_CONST.STEP_CALC_POW_LAST + 1;
         if(BlockNum1 <= BlockNum && BlockNum <= BlockNum2)
             return 1;
         

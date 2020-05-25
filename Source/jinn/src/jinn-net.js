@@ -40,7 +40,7 @@ function InitClass(Engine)
     Engine.SendToNetwork = function (Child,Data)
     {
         Engine.SENDTONETWORK(Child, Data);
-        Engine.AddTrafic(Data.length);
+        Engine.AddTraffic(Data.length);
         Engine.SendTraffic += Data.length;
         Engine.LogBufTransfer(Child, Data, "->");
     };
@@ -195,6 +195,9 @@ function InitClass(Engine)
     
     Engine.CallMethodOnReceive = function (Child,Chunk)
     {
+        if(!Child.IsOpen())
+            return;
+        
         Engine.ReceivePacket++;
         
         Engine.LogTransfer(Child, Chunk, "<-");
@@ -220,7 +223,7 @@ function InitClass(Engine)
             
             Child.RetDeltaTime = Date.now() - Cont.StartTime;
             
-            Engine.RunMethod(Obj.Method + "_RET", Cont.F, Child, Obj.Data, 0);
+            Engine.RunMethod(Obj.Method + "_RET", Cont.F, Child, Obj.Data, 0, Chunk.length);
         }
         else
         {
@@ -234,15 +237,16 @@ function InitClass(Engine)
                 return;
             }
             
-            var RetObj = Engine.RunMethod(Obj.Method, F, Child, Obj.Data, 1);
-            if(RetObj !== undefined && Obj.RetContext)
+            var RetObj = Engine.RunMethod(Obj.Method, F, Child, Obj.Data, 1, Chunk.length);
+            if(RetObj && Obj.RetContext)
             {
+                
                 Engine.PrepareOnSend(Obj.Method, Child, RetObj, 0, undefined, Obj.RetContext);
             }
         }
     };
     
-    Engine.RunMethod = function (Method,F,Child,Data,bCall)
+    Engine.RunMethod = function (Method,F,Child,Data,bCall,DataLength)
     {
         if(typeof process === "object")
         {
@@ -254,6 +258,7 @@ function InitClass(Engine)
             var deltaTime = Time[0] * 1000 + Time[1] / 1e6;
             
             Engine.AddMethodStatTime(Method, deltaTime);
+            Engine.AddMethodTraffic(Child, Method, DataLength);
             
             if(bCall)
                 JINN_STAT.TimeCall += deltaTime;
@@ -323,26 +328,31 @@ function InitClass(Engine)
     
     Engine.LogTransfer = function (Child,Data,StrDirect)
     {
+        if(!Data)
+            return;
         
-        if(global.DEBUG_ID && Data)
+        if(global.DEBUG_ID || Child.Debug)
         {
             
             var Obj = Engine.GetObjectFromRAW(Data);
             var StrData = " DATA:" + JSON.stringify(Obj);
             var ID = GetNodeWarningID(Child);
-            
-            Engine.ToDebug(StrDirect + ID + " " + (Obj.Call ? "" : "RET ") + Obj.Method + StrData);
+            var Str = StrDirect + ID + " " + (Obj.Call ? "" : "RET ") + Obj.Method + StrData;
+            if(Child.Debug)
+                Child.ToLogNet(Str);
+            else
+                Engine.ToDebug(Str);
         }
     };
     
     Engine.PrevTraficBlockNum = 0;
-    Engine.AddTrafic = function (Count)
+    Engine.AddTraffic = function (Count)
     {
         Engine.Traffic += Count;
         
         JINN_STAT.AllTraffic += Count;
         
-        var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var BlockNum = Engine.CurrentBlockNum;
         if(BlockNum !== Engine.PrevTraficBlockNum)
         {
             Engine.PrevTraficBlockNum = BlockNum;
@@ -369,7 +379,7 @@ function DoNode(Engine)
                 if(Delta > JINN_CONST.METHOD_ALIVE_TIME)
                 {
                     delete Child.ContextCallMap[Key];
-                    Child.ToError("Delete old key " + Item.Method + " " + Key);
+                    Child.ToError("Delete old key " + Item.Method + " " + Key, 5);
                 }
             }
         }

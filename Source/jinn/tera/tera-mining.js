@@ -13,50 +13,31 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
-    Engine.GetNewBlock = function (PrevBlock,bAddCurrentTx)
+    Engine.PrepareBodyCurrentTx = function (Block)
     {
-        if(!PrevBlock)
-            return undefined;
-        var Block = {};
-        Block.BlockNum = PrevBlock.BlockNum + 1;
+        Block.TxData = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
+        Engine.SortBlock(Block);
         
-        if(bAddCurrentTx)
+        var Tx = SERVER.GetDAppTransactions(Block.BlockNum);
+        if(Tx)
         {
-            Block.TxData = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
-            Engine.SortBlock(Block);
-            
-            var Tx = SERVER.GetDAppTransactions(Block.BlockNum);
-            if(Tx)
-            {
-                Tx = Engine.GetTx(Tx.body);
-                Block.TxData.unshift(Tx);
-            }
-            Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
-            Block.TxCount = Block.TxData.length;
-            Block.TrCount = Block.TxCount;
+            Tx = Engine.GetTx(Tx.body);
+            Block.TxData.unshift(Tx);
         }
-        else
-        {
-            Engine.FillBodyCurrentTx(Block);
-            Block.TrCount = Block.TxCount;
-        }
-        
-        Block.PrevSumHash = PrevBlock.SumHash;
-        Block.PrevSumPow = PrevBlock.SumPow;
-        var PrevHashNum = ReadUint32FromArr(PrevBlock.SumHash, 28);
-        Block.MinerHash = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        WriteUintToArrOnPos(Block.MinerHash, GENERATE_BLOCK_ACCOUNT, 0);
-        WriteUint32ToArrOnPos(Block.MinerHash, PrevHashNum, 28);
-        
-        Engine.CalcBlockData(Block);
-        
-        return Block;
     };
     
-    Engine.AddToMining = function (Block)
+    Engine.GetNewBlockNext = function (Block,PrevBlock)
+    {
+        var PrevHashNum = ReadUint32FromArr(Block.PrevSumHash, 28);
+        Block.MinerHash = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        WriteUintToArrOnPos(Block.MinerHash, 0, 0);
+        WriteUint32ToArrOnPos(Block.MinerHash, PrevHashNum, 28);
+    };
+    
+    Engine.AddToMiningInner = function (Block)
     {
         
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var CurBlockNum = Engine.CurrentBlockNum;
         if(global.USE_MINING)
         {
             var Delta = CurBlockNum - Block.BlockNum;
@@ -64,6 +45,7 @@ function Init(Engine)
             
             Engine.ConvertToTera(Block);
             
+            Block.Meta = {DB:Block.DB};
             global.SetCalcPOW(Block, "FastCalcBlock");
         }
     };
@@ -94,6 +76,8 @@ function Init(Engine)
                 if(DoBestMiningArr(MiningBlock, MinerHash, MinerHashArr))
                 {
                     MiningBlock.MinerHash = MinerHashArr;
+                    if(msg.Meta)
+                        MiningBlock.DB = msg.Meta.DB;
                     Engine.CalcBlockData(MiningBlock);
                     bWas = 2;
                 }
@@ -109,6 +93,8 @@ function Init(Engine)
                 MiningBlock.PrevHash = PrevHash;
                 MiningBlock.DataHash = DataHash;
                 MiningBlock.MinerHash = MinerHash;
+                if(msg.Meta)
+                    MiningBlock.DB = msg.Meta.DB;
                 Engine.CalcBlockData(MiningBlock);
                 bWas = 1;
                 
@@ -118,7 +104,7 @@ function Init(Engine)
         
         if(bWas)
         {
-            Engine.ToLog("Block = " + MiningBlock.BlockNum + " Total=" + (msg.TotalCount / 1000000) + "M Power=" + MiningBlock.Power + "  Mode=" + bWas + " Arr=" + Arr.length,
+            Engine.ToLog("Mining Block = " + BlockInfo(MiningBlock) + " Total=" + (msg.TotalCount / 1000000) + "M Power=" + MiningBlock.Power + "  Mode=" + bWas + " Arr=" + Arr.length,
             4);
             
             ADD_TO_STAT("MAX:POWER", MiningBlock.Power);
@@ -158,68 +144,5 @@ function Init(Engine)
         }
         
         return bWas;
-    };
-    
-    function AddBestMiningHash_OLD(Block,MinerHashMsg,msg)
-    {
-        
-        var MinerHashArr;
-        
-        var MinerOld = ReadUintFromArr(Block.MinerHash, 0);
-        
-        var ValueOld = GetHashFromSeqAddr(Block.DataHash, Block.MinerHash, Block.BlockNum);
-        var ValueMsg = GetHashFromSeqAddr(Block.DataHash, MinerHashMsg, Block.BlockNum);
-        
-        var bWas = 0;
-        if(MinerOld === GENERATE_BLOCK_ACCOUNT)
-        {
-            MinerHashArr = Block.MinerHash.slice(0);
-            if(CompareArr(ValueOld.Hash1, ValueMsg.Hash1) > 0)
-            {
-                
-                var Nonce1 = ReadUintFromArr(MinerHashMsg, 12);
-                var DeltaNum1 = ReadUint16FromArr(MinerHashMsg, 24);
-                WriteUintToArrOnPos(MinerHashArr, Nonce1, 12);
-                WriteUint16ToArrOnPos(MinerHashArr, DeltaNum1, 24);
-                
-                bWas += 1;
-            }
-            if(CompareArr(ValueOld.Hash2, ValueMsg.Hash2) > 0)
-            {
-                
-                var Nonce0 = ReadUintFromArr(MinerHashMsg, 6);
-                var Nonce2 = ReadUintFromArr(MinerHashMsg, 18);
-                var DeltaNum2 = ReadUint16FromArr(MinerHashMsg, 26);
-                WriteUintToArrOnPos(MinerHashArr, Nonce0, 6);
-                WriteUintToArrOnPos(MinerHashArr, Nonce2, 18);
-                WriteUint16ToArrOnPos(MinerHashArr, DeltaNum2, 26);
-                
-                bWas += 2;
-            }
-        }
-        else
-        {
-            MinerHashArr = MinerHashMsg;
-            bWas = 4;
-        }
-        
-        if(!bWas)
-            return;
-        
-        var BlockNew = Engine.GetCopyBlock(Block);
-        
-        BlockNew.MinerHash = MinerHashArr;
-        Engine.CalcBlockData(BlockNew);
-        
-        if(Engine.AddBlockToChain(BlockNew, 1))
-        {
-            
-            Engine.ToLog("Miner=" + MinerOld + " Block = " + BlockNew.BlockNum + " Total=" + (msg.TotalCount / 1000000) + " M Power=" + BlockNew.Power,
-            4);
-            
-            ADD_TO_STAT("MAX:POWER", BlockNew.Power);
-            var HashCount = Math.pow(2, BlockNew.Power);
-            ADD_HASH_RATE(HashCount);
-        }
     };
 }

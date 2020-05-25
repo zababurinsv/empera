@@ -19,7 +19,7 @@ global.glUsePackMaxHash = 1;
 
 function DoNode(Engine)
 {
-    var LastBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+    var LastBlockNum = Engine.CurrentBlockNum;
     var BlockNum = LastBlockNum - JINN_CONST.STEP_CLEAR_MEM;
     if(Engine.CacheLastCurBlockNum === BlockNum)
         return;
@@ -33,11 +33,13 @@ function InitClass(Engine)
     Engine.ProcessBlockOnSend = function (Child,Block,TxData)
     {
         var BlockNum = Block.BlockNum;
-        var DeltaBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - BlockNum;
+        var DeltaBlockNum = Engine.CurrentBlockNum - BlockNum;
         
         var bFullData = 0;
         if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM - JINN_CONST.MAX_DELTA_PROCESSING)
+        {
             bFullData = 1;
+        }
         else
         {
             for(var i = 0; i < TxData.length; i++)
@@ -307,24 +309,28 @@ function InitClass(Engine)
         {
             return CompareArr(a.Hash, b.Hash);
         });
-        Child.InvalidateOldBlockNumCache = function (LastBlockNum)
-        {
-            var StartClearBlockNum = LastBlockNum - JINN_CONST.STEP_CLEAR_MEM;
-            Child.SendBodyTimeCache.RemoveTo(StartClearBlockNum, "SendBodyTimeCache");
-            if(Child.SendMaxTimeCache)
-                Child.SendMaxTimeCache.RemoveTo(StartClearBlockNum, "SendMaxTimeCache");
-        };
     };
     
     Engine.ClearChild = function (Child)
     {
-        Child.InvalidateOldBlockNumCache(1e12);
+        
+        if(Child.SendBodyTimeCache)
+        {
+            Child.SendBodyTimeCache.Clear();
+            global.AllCacheTreeRemoveItem(Child.SendBodyTimeCache);
+            delete Child.SendBodyTimeCache;
+        }
+        if(Child.SendMaxTimeCache)
+        {
+            Child.SendMaxTimeCache.Clear();
+            global.AllCacheTreeRemoveItem(Child.SendMaxTimeCache);
+            delete Child.SendMaxTimeCache;
+        }
     };
     Engine.NetCacheClear = function (LastBlockNum)
     {
         
-        if(Engine.MaxLiderTimeCache)
-            Engine.MaxLiderTimeCache.RemoveTo(LastBlockNum, "MaxLiderTimeCache");
+        global.AllCacheTreeRemoveTo(LastBlockNum);
         ClearListTree(Engine.ListTreeTx, LastBlockNum);
         ClearListTree(Engine.ListTreeTicket, LastBlockNum);
         ClearListTree(Engine.ListTreeTicketAll, LastBlockNum);
@@ -342,15 +348,6 @@ function InitClass(Engine)
         });
         
         ClearListMap(Engine.MaxLiderList, LastBlockNum);
-        
-        for(var i = 0; i < Engine.LevelArr.length; i++)
-        {
-            var Child = Engine.LevelArr[i];
-            if(Child)
-            {
-                Child.InvalidateOldBlockNumCache(LastBlockNum);
-            }
-        }
     };
     function ClearListMap(Map,LastBlockNum,FClear)
     {
@@ -376,66 +373,3 @@ function InitClass(Engine)
         });
     };
 }
-
-class CTimeCache
-{
-    
-    constructor(FCompare)
-    {
-        this.DataTree = new RBTree(FCompare)
-        this.TimeTree = new RBTree(function (a,b)
-        {
-            if(a.TimeNum !== b.TimeNum)
-                return a.TimeNum - b.TimeNum;
-            return FCompare(a, b);
-        })
-    }
-    
-    Clear()
-    {
-        this.DataTree.clear()
-        this.TimeTree.clear()
-    }
-    
-    RemoveTo(ToNum, Name)
-    {
-        while(1)
-        {
-            var Item = this.TimeTree.min();
-            if(!Item || Item.TimeNum > ToNum)
-                break;
-            
-            this.DataTree.remove(Item)
-            this.TimeTree.remove(Item)
-            
-            if(this.DataTree.size !== this.TimeTree.size)
-                ToLogTrace("#1 Error trees size")
-        }
-    }
-    
-    AddItemToCache(Item)
-    {
-        if(typeof Item.TimeNum !== "number")
-            ToLogTrace("Error type Item.TimeNum=" + Item.TimeNum)
-        var Find = this.DataTree.find(Item);
-        if(Find)
-        {
-            this.DataTree.remove(Find)
-            this.TimeTree.remove(Find)
-            if(this.DataTree.size !== this.TimeTree.size)
-                ToLogTrace("#2 Error trees size")
-        }
-        this.DataTree.insert(Item)
-        this.TimeTree.insert(Item)
-        
-        if(this.DataTree.size !== this.TimeTree.size)
-            ToLogTrace("#3 Error trees size")
-    }
-    
-    FindItemInCache(Item)
-    {
-        return this.DataTree.find(Item);
-    }
-};
-
-global.CTimeCache = CTimeCache;

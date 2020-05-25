@@ -113,7 +113,7 @@ function InitClass(Engine)
         Item.TTIndex = ArrTTAll.length;
         ArrTTAll.push(Item);
         
-        var ArrLength = 1 + Math.max(JINN_CONST.MAX_LEVEL_ALL, Engine.LevelArr.length);
+        var ArrLength = 1 + Math.max(JINN_CONST.MAX_LEVEL_ALL(), Engine.LevelArr.length);
         
         if(Item.TTReceiveIndex)
             ToLog("WAS Item.TTReceiveIndex=" + Item.TTReceiveIndex);
@@ -133,11 +133,15 @@ function InitClass(Engine)
         var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTicket[BlockNum]);
         
         var Count = 0;
-        for(var i = 0; i < Engine.LevelArr.length; i++)
+        var ArrChilds = Engine.GetTransferSession(BlockNum);
+        
+        for(var i = 0; i < ArrChilds.length; i++)
         {
-            var Child = Engine.LevelArr[i];
-            if(!Child || !Child.IsHot() || !Child.IsOpen() || Child.HotStart)
+            var Child = ArrChilds[i];
+            if(!Child)
             {
+                if(Child)
+                    JINN_STAT.ErrTt1++;
                 continue;
             }
             
@@ -240,8 +244,11 @@ function InitClass(Engine)
         }
         
         Engine.CheckHotConnection(Child);
-        if(!Child || !Child.IsHot() || Child.HotStart)
+        if(!Child || !Child.IsHot())
+        {
+            JINN_STAT.ErrTt2++;
             return {result:0};
+        }
         
         var Tree = Engine.GetTreeTicket(BlockNum);
         var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
@@ -264,16 +271,24 @@ function InitClass(Engine)
                 CountNew++;
                 var Key = GetHexFromArr(ItemReceive.HashTicket);
                 Tt = Engine.GetTicket(ItemReceive.HashTicket, Key, BlockNum);
+                Tt.TxCounter = 0;
                 
                 Key === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got NEW TT=" + Key);
                 
                 Engine.AddToTreeWithAll(TreeTTAll, ArrTTAll, Tree, Tt);
                 RetTxArr.push(ItemReceive.TTIndex);
+                Tt.TxCounter++;
             }
             else
             {
                 var Key = GetHexFromArr(ItemReceive.HashTicket);
                 Key === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got OLD TT=" + Key);
+                
+                if(Tt.TxCounter < JINN_CONST.TEST_MODE_DOUBLE_TX)
+                {
+                    RetTxArr.push(ItemReceive.TTIndex);
+                    Tt.TxCounter++;
+                }
             }
             
             RetArrIndex.push(Tt.TTIndex);

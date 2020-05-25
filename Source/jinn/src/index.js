@@ -33,12 +33,14 @@ if(typeof window !== "object")
     require("./terabuf.js");
     require("./jinn-log.js");
     require("./jinn-stat.js");
+    
+    require("./cache-block.js");
     if(global.EMULATE_FILE)
         require("./db/jinn-db-file.js");
     require("./db/jinn-db-row.js");
     require("./db/jinn-db-item.js");
     require("./db/jinn-db-chain.js");
-    require("./db/cache.js");
+    require("./db/cache-db.js");
     require("./db/jinn-db-cache-body.js");
     require("./db/jinn-db-cache-block.js");
     
@@ -53,6 +55,7 @@ if(typeof window !== "object")
     require("./jinn-connect-addr.js");
     require("./jinn-connect-hot.js");
     
+    require("./jinn-session.js");
     require("./jinn-tx.js");
     require("./jinn-ticket.js");
     require("./jinn-tx-control.js");
@@ -74,7 +77,7 @@ if(typeof window !== "object")
     require("./jinn-timing.js");
 }
 
-global.JINN_WARNING = 3;
+global.JINN_WARNING = 0;
 global.DEBUG_ID = 0;
 
 
@@ -125,8 +128,14 @@ JINN_CONST.SHARD_NAME = "TEST";
 JINN_CONST.MAX_RET_NODE_LIST = 100;
 JINN_CONST.MAX_LEVEL_CONNECTION = 8;
 JINN_CONST.MAX_LEVEL_NODES = 30;
+
+
 JINN_CONST.EXTRA_SLOTS_COUNT = 2;
-JINN_CONST.MAX_LEVEL_ALL = JINN_CONST.MAX_LEVEL_CONNECTION + JINN_CONST.EXTRA_SLOTS_COUNT;
+
+JINN_CONST.MAX_LEVEL_ALL = function ()
+{
+    return JINN_CONST.MAX_LEVEL_CONNECTION + JINN_CONST.EXTRA_SLOTS_COUNT;
+}
 
 JINN_CONST.MAX_ERR_PROCESS_COUNT = 30;
 JINN_CONST.RECONNECT_MIN_TIME = 300;
@@ -166,21 +175,29 @@ JINN_CONST.LINK_HASH_DELTA = 1;
 JINN_CONST.MAX_DELTA_PROCESSING = 2;
 
 JINN_CONST.STEP_ADDTX = 0;
-JINN_CONST.STEP_TICKET = 1;
-JINN_CONST.STEP_TX = 2;
+JINN_CONST.STEP_TICKET = 0;
+JINN_CONST.STEP_TX = 1;
 
 
-JINN_CONST.STEP_NEW_BLOCK = 4;
-JINN_CONST.STEP_CALC_POW_LAST = 4;
-JINN_CONST.STEP_CALC_POW_FIRST = 7;
-JINN_CONST.STEP_SAVE = 5;
+JINN_CONST.STEP_NEW_BLOCK = 5;
+JINN_CONST.STEP_CALC_POW_LAST = 5;
+JINN_CONST.STEP_CALC_POW_FIRST = 6;
+JINN_CONST.STEP_SAVE = 6;
 
 JINN_CONST.STEP_LAST = 8;
 JINN_CONST.STEP_CLEAR_MEM = 20;
 
 
+JINN_CONST.TEST_MODE_DOUBLE_TX = 0;
+JINN_CONST.TEST_COUNT_BLOCK = 0;
+JINN_CONST.TEST_COUNT_TX = 0;
+JINN_CONST.TEST_MODE4 = 0;
+JINN_CONST.TEST_MODE5 = 0;
+
+
 function CreateNodeEngine(Engine,MapName)
 {
+    
     for(var i = 0; i < global.JINN_MODULES.length; i++)
     {
         var module = global.JINN_MODULES[i];

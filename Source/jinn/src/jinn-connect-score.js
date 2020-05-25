@@ -82,7 +82,7 @@ function InitClass(Engine)
     {
         var MinScore =  - 1e9;
         var MinChild = undefined;
-        for(var L = 0; L < JINN_CONST.MAX_LEVEL_ALL; L++)
+        for(var L = 0; L < JINN_CONST.MAX_LEVEL_ALL(); L++)
         {
             var CurChild = Engine.LevelArr[L];
             if(CurChild && CurChild.AddrItem && CurChild.AddrItem.Score < MinScore)

@@ -90,7 +90,7 @@ function Init(Engine)
             Block.Hash[0] = 1 + Block.BlockNum;
             Block.Hash[31] = Block.Hash[0];
             Block.PowHash = Block.Hash;
-            Block.Power = GetPowPower(Block.Hash);
+            Block.Power = GetPowPowerBlock(Block.BlockNum, Block.Hash);
         }
         else
         {

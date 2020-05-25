@@ -704,7 +704,7 @@
 
         SetViewWN();
 
-        DrawBlockInfo();
+        StartDrawBlockInfo();
 
 
         //log level
@@ -724,7 +724,7 @@
     
     function ChangeLog()
     {
-        CONFIG_DATA.CONSTANTS.LOG_LEVEL=$("idLogLevel").value;
+        CONFIG_DATA.CONSTANTS.LOG_LEVEL=+$("idLogLevel").value;
         $("idLogLevelText").innerText=CONFIG_DATA.CONSTANTS.LOG_LEVEL;
         SaveConstant(0,CONFIG_DATA.CONSTANTS);
     }
@@ -1894,7 +1894,7 @@
             <HR>
             <div id="idServerLogHeader"> Log from node. Detail level: <b id="idLogLevelText">-</b> <input type="range" min="0" max="3" id="idLogLevel" oninput="ChangeLog()" value="0"></div>
 
-            <textarea rows="15" cols="250"  id="idServerLog" class="focusnowrite" readonly>
+            <textarea wrap="off" rows="15" cols="250"  id="idServerLog" class="focusnowrite" readonly>
             </textarea>
 
         </DIV>

@@ -17,8 +17,8 @@ const NUM_FOR_MAX_BLOCK =  - 1;
 
 
 global.DB_HEADER_FORMAT = {VersionDB:"byte", BlockNum:"uint", PrevPosition:"uint", TreeHash:"hash", MinerHash:"hash", PrevSumPow:"uint",
-    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", PrevBlockPosition:"uint", TestSumHash:"byte",
-    TestHash:"byte", TestDataHash:"byte", TestZero:"arr6", };
+    PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", PrevBlockPosition:"uint", CreateMode:"byte",
+    TestZero:"arr8", };
 
 const BODY_FORMAT = {PrevPosition:"uint", PrevCountTx:"uint16", TxArr:[{body:"tr"}], TxIndex:["uint16"]};
 
@@ -599,7 +599,7 @@ class CDBChain
             var PrevBlockSeed = this.GetPrevBlockDB(BlockSeed, 0, 1);
             if(!PrevBlockSeed)
             {
-                ToLog("#2 SaveChainToDB: Error PrevBlock on Block=" + BlockSeed.BlockNum)
+                ToLog("#2 SaveChainToDB: Error PrevBlock on Block=" + BlockSeed.BlockNum, 2)
                 return  - 1;
             }
             BlockSeed = PrevBlockSeed

@@ -64,7 +64,7 @@ module.exports = class CConsensus extends require("./block-exchange2")
         this.RelayMode = false
         this.TreeSendPacket = new RBTree(CompareItemHash)
         
-        if(!global.ADDRLIST_MODE && (!this.VirtualMode || global.TEST_JINN))
+        if(!global.ADDRLIST_MODE && (!this.VirtualMode) && !global.TEST_JINN)
         {
             
             this.idBlockChainTimer = setInterval(this.StartBlockChain.bind(this), CONSENSUS_PERIOD_TIME - 5)

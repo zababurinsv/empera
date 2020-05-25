@@ -141,8 +141,6 @@ function DrawDiagram(Item)
     if(!CountNameX)
         CountNameX = 10;
     var arrX = Item.arrX;
-    if(arrX && arrX.length)
-        CountNameX = arrX.length;
     
     if(!KPrecision)
         KPrecision = 1;

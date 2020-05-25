@@ -242,7 +242,7 @@ function InitClass(Engine)
         var ArrLevels = [];
         
         glWorkConnect++;
-        for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION; L++)
+        for(var L = 0; L < JINN_CONST.MAX_LEVEL_ALL(); L++)
         {
             LevelData = {HotChild:Engine.LevelArr[L], Connect:[], NotConnect:[]};
             ArrLevels.push(LevelData);
@@ -283,7 +283,11 @@ function InitClass(Engine)
                 if(Item.Level === undefined)
                     ToLogTrace("Error Item.Level===undefined");
                 
-                if(Item.Level < JINN_CONST.MAX_LEVEL_CONNECTION)
+                var Power = Engine.GetAddrPower(Item.AddrHashPOW, Item.BlockNum);
+                if(Item.System || global.MODELING)
+                    Power += MIN_POW_ADDRES;
+                
+                if(Power >= global.MIN_POW_ADDRES && Item.Level < JINN_CONST.MAX_LEVEL_CONNECTION)
                 {
                     LevelData = ArrLevels[Item.Level];
                     LevelData.NotConnect.push(Item);

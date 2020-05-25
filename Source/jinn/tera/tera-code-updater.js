@@ -28,8 +28,10 @@ function Init(Engine)
     Engine.VERSION_RET = {BlockNum:"uint", addrArr:"arr32", LevelUpdate:"byte", BlockPeriod:"uint", VersionNum:"uint", Hash:"hash",
         Sign:"arr64"};
     
-    Engine.CheckNewVersionNum = function (Child,CodeVersionNum)
+    Engine.ProcessNewVersionNum = function (Child,CodeVersionNum)
     {
+        Child.CodeVersionNum = CodeVersionNum;
+        
         if(Engine.StartGetNewVersion && (CodeVersionNum > CODE_VERSION.VersionNum || CodeVersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash)))
         {
             Engine.StartGetNewVersion(Child, CodeVersionNum);

@@ -20,7 +20,8 @@ var StatKeys = {BlockTx:"BlockTx", TxSend:"TxSend", TTSend:"TtSend", HeaderLoad:
     AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", MaxReqAll:"-MaxReqAll", MaxLoadAll:"-MaxLoadAll",
     MaxReqErr:"-MaxReqErr", MaxIteration:"-MaxIteration", MaxLoad:"-MaxLoad", WantHeader:"-WantHeader", UploadHeader:"-UploadHeader",
     WantBody:"-WantBody", UploadBody:"-UploadBody", DeltaTime:"-DeltaTime", ErrProcessBlock:"-ErrProcessBlock", SkipMethod:"-SkipMethod",
-    TtReceive:"-TtReceive", TxReceive:"-TxReceive", TxReceiveErr:"TxReceiveErr", BanCount:"-BanCount", };
+    TtReceive:"-TtReceive", TxReceive:"-TxReceive", TxReceiveErr:"TxReceiveErr", BanCount:"-BanCount", MainDelta:"MainDelta", ErrTt1:"-ErrTt1",
+    ErrTt2:"-ErrTt2", ErrTx1:"-ErrTx1", ErrTx2:"-ErrTx2", };
 if(typeof process === "object")
 {
 }
@@ -75,20 +76,17 @@ function DoNode(Engine)
     if(Engine.ROOT_NODE)
         return;
     
-    var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.STEP_LAST;
+    var BlockNum = Engine.CurrentBlockNum - JINN_CONST.STEP_LAST;
     if(Engine.StatLastCurBlockNum === BlockNum)
         return;
     Engine.StatLastCurBlockNum = BlockNum;
     
     JINN_STAT.ActiveCount += Engine.ConnectArray.length;
-    if(Engine.GetBlockDB)
+    if(Engine.GetBlockHeaderDB)
     {
-        var Block = Engine.GetBlockDB(BlockNum);
-        Engine.CheckLoadBody(Block);
-        if(Block && Block.TxData)
-        {
-            JINN_STAT.BlockTx += Block.TxData.length;
-        }
+        var Block = Engine.GetBlockHeaderDB(BlockNum);
+        if(Block)
+            JINN_STAT.BlockTx = Block.TxCount;
     }
     
     var CurHotCounts = 0;
@@ -117,12 +115,21 @@ function InitClass(Engine)
             deltaTime = Time[0] * 1000 + Time[1] / 1e6;
         }
         
-        if(!JINN_STAT.Methods["TIME:" + Method])
-            JINN_STAT.Methods["TIME:" + Method] = 0;
-        JINN_STAT.Methods["TIME:" + Method] += deltaTime;
+        var Name = "TIME:" + Method;
+        if(!JINN_STAT.Methods[Name])
+            JINN_STAT.Methods[Name] = 0;
+        JINN_STAT.Methods[Name] += deltaTime;
         
         if(!JINN_STAT.Methods[Method])
             JINN_STAT.Methods[Method] = 0;
         JINN_STAT.Methods[Method]++;
+    };
+    
+    Engine.AddMethodTraffic = function (Child,Method,Length)
+    {
+        var Name = "SIZE:" + Method;
+        if(!JINN_STAT.Methods[Name])
+            JINN_STAT.Methods[Name] = 0;
+        JINN_STAT.Methods[Name] += Length;
     };
 }

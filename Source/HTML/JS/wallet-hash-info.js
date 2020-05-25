@@ -24,7 +24,7 @@ function InitArrInfo()
     }
 }
 InitArrInfo();
-function DrawBlockInfo()
+function StartDrawBlockInfo()
 {
     var TimeBlockNum = GetCurrentBlockNumByTime();
     var CurBlockNum = TimeBlockNum;
@@ -41,8 +41,9 @@ function DrawBlockInfo()
         
         CurBlockNum = Math.floor(Item.BlockNum1 / Item.Mult) * Item.Mult;
         
-        var MustUpdate = 0;
-        if(Item.PowerArr)
+        var MustUpdate = (Item.Name === "minute");
+        if(!MustUpdate && Item.PowerArr)
+        {
             for(var n = 0; n < Item.PowerArr.length; n++)
             {
                 if(!Item.PowerArr[n])
@@ -51,6 +52,7 @@ function DrawBlockInfo()
                     break;
                 }
             }
+        }
         if(Item.TimeBlockNum)
         {
             var DeltaTime = Math.abs(Item.TimeBlockNum - TimeBlockNum);
@@ -86,8 +88,9 @@ function DrawBlockInfo()
             }
             
             var AvgTotal = InitBlockInfo();
+            
             var ArrMax = NormalizeMaxArr(Data.MaxHashStatArr, TimeBlockNum);
-            var CountErrMax = DrawBlockMaxArr(ArrMax, AvgTotal, TimeBlockNum);
+            var CountErrMax = DrawBlockMaxArr(ArrMax, AvgTotal);
             DrawBlockInfoByArr(ArrMax, AvgTotal, TimeBlockNum, CountErrMax);
         }
     });
@@ -105,6 +108,7 @@ function ValueToY(obj,AvgTotal,Value)
     }
     
     Y = obj.height - Y * 2;
+    
     if(Y < 0)
         Y = 0;
     return Y;
@@ -146,7 +150,7 @@ function InitBlockInfo()
     return AvgTotal;
 }
 
-function NormalizeMaxArr(Arr,CurBlockNum)
+function NormalizeMaxArr(Arr,TimeBlockNum)
 {
     if(!Arr)
         return;
@@ -158,7 +162,7 @@ function NormalizeMaxArr(Arr,CurBlockNum)
         var Power = Arr[Index];
         
         var BlockNum = Arr[Index + 1];
-        var Delta = CurBlockNum - BlockNum;
+        var Delta = TimeBlockNum - BlockNum - 1;
         if(Delta > 60)
             continue;
         
@@ -167,14 +171,13 @@ function NormalizeMaxArr(Arr,CurBlockNum)
     }
     return Arr2;
 }
-function DrawBlockMaxArr(ArrMax,AvgTotal,CurBlockNum)
+function DrawBlockMaxArr(ArrMax,AvgTotal)
 {
     if(!ArrMax)
         return 0;
     
     var obj = document.getElementById("idBlockInfo");
     var ctx = obj.getContext('2d');
-    var bodystyles = window.getComputedStyle(document.body, null);
     
     var Minute = MapInfo["minute"];
     if(!Minute)
@@ -309,10 +312,11 @@ function DrawBlockInfoByArr(ArrMax,AvgTotal,TimeBlockNum,CountErrMax)
     ctx.beginPath();
     ctx.moveTo(obj.width, 0);
     ctx.lineTo(obj.width, obj.height);
+    var Y = obj.height - 5;
     for(var i = 0; i < ArrInfo.length; i++)
     {
         var Item = ArrInfo[i];
-        ctx.fillText("" + Item.Name + (WasRed ? "-" + Item.AvgPow : ""), Item.x + Item.DX / 2 - 4 * Item.Name.length / 2 - 16, 25);
+        ctx.fillText("" + Item.Name + (WasRed ? "-" + Item.AvgPow : ""), Item.x + Item.DX / 2 - 4 * Item.Name.length / 2 - 16, Y);
     }
     ctx.stroke();
 }

@@ -77,7 +77,7 @@ function InitClass(Engine)
     Engine.SaveToDB = function (Block)
     {
         Block.BlockNum = Math.floor(Block.BlockNum);
-        var MaxCurNumTime = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var MaxCurNumTime = Engine.CurrentBlockNum;
         var MaxNumDB = Engine.GetMaxNumBlockDB();
         var Delta = MaxCurNumTime - MaxNumDB;
         JINN_STAT.DBDelta = Math.max(JINN_STAT.DBDelta, Delta);
@@ -135,6 +135,8 @@ function InitClass(Engine)
     
     Engine.WriteBlockDBInner = function (Block)
     {
+        JINN_STAT.MainDelta = Math.max(JINN_STAT.MainDelta, Engine.CurrentBlockNum - Block.BlockNum);
+        
         return Engine.DB.WriteBlockMain(Block);
     };
     Engine.TruncateChain = function (LastBlockNum)

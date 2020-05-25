@@ -538,8 +538,9 @@ function CreateEval(formula,StrParams)
 global.CreateEval = CreateEval;
 
 var CPU_Count = os.cpus().length;
-function GetCountMiningCPU()
+function GetCountMiningCPU0()
 {
+    
     if(global.COUNT_MINING_CPU)
         return global.COUNT_MINING_CPU;
     else
@@ -547,7 +548,18 @@ function GetCountMiningCPU()
         return CPU_Count - 1;
     }
 }
-global.GetCountMiningCPU = GetCountMiningCPU;
+global.GetCountMiningCPU = GetCountMiningCPU0;
+
+if(global.TEST_JINN)
+{
+    global.GetCountMiningCPU = function ()
+    {
+        var CountCPU = GetCountMiningCPU0();
+        if(CountCPU > 1)
+            CountCPU = 1;
+        return CountCPU;
+    };
+}
 
 function GrayConnect()
 {

@@ -60,7 +60,7 @@ function Init(Engine)
         if(IsEqArr(Engine.IDArr, Node.IDArr))
             return;
         
-        var Item = GetJinnNode(Node);
+        var Item = GetJinnNode(Node, 1);
         
         var ArrLevel = Arr[Item.Level];
         if(!ArrLevel)
@@ -72,7 +72,7 @@ function Init(Engine)
         ArrLevel.push(Item);
     };
     
-    function GetJinnNode(Node)
+    function GetJinnNode(Node,bSimple)
     {
         var IsOpen, IsHot;
         if(Node.IsOpen)
@@ -83,16 +83,39 @@ function Init(Engine)
         var AddrItem = Node.AddrItem;
         if(!AddrItem)
             AddrItem = {Score:Node.Score};
-        var Item = {ID:Node.ID, id:Node.ID, VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, ip:Node.ip, port:Node.port,
-            Hot:IsHot, Level:Node.Level, addrStr:Node.IDStr, BlockProcessCount:AddrItem.Score, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
-            DeltaTime:Node.RetDeltaTime, TransferCount:Node.TransferCount, LogInfo:Engine.GetLogNetInfo(Node), Active:IsOpen, ErrCountAll:Node.ErrCount,
-            WasBan:Node.WasBan, };
         
+        var Item = {ID:Node.ID, id:Node.ID, ip:Node.ip, port:Node.port, Active:IsOpen, Hot:IsHot, Level:Node.Level, BlockProcessCount:AddrItem.Score,
+            TransferCount:Node.TransferCount, DeltaTime:Node.RetDeltaTime, Debug:Node.Debug, };
+        
+        if(bSimple)
+        {
+            return Item;
+        }
+        
+        var Item2 = {VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, addrStr:Node.IDStr, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
+            DeltaTime:Node.RetDeltaTime, LogInfo:Engine.GetLogNetInfo(Node), ErrCountAll:Node.ErrCount, WasBan:Node.WasBan, SocketStatus:Engine.GetSocketStatus(Node),
+        };
+        
+        CopyPrimitiveValues(Item, Item2);
         CopyPrimitiveValues(Item, Node);
+        
         if(Node.AddrItem)
         {
-            Item.ADDRITEM = {};
-            CopyPrimitiveValues(Item.ADDRITEM, Node.AddrItem);
+            Item.ADDR_ITEM = {};
+            CopyPrimitiveValues(Item.ADDR_ITEM, Node.AddrItem);
+            
+            Item.ADDR_ITEM.AddrPower = Engine.GetAddrPower(Node.AddrItem.AddrHashPOW, Node.AddrItem.BlockNum);
+        }
+        else
+            if(Node.AddrHashPOW)
+            {
+                Item.AddrPower = Engine.GetAddrPower(Node.AddrHashPOW, Node.BlockNum);
+            }
+        
+        if(Node.HotItem)
+        {
+            Item.HOT_ITEM = {};
+            CopyPrimitiveValues(Item.HOT_ITEM, Node.HotItem);
         }
         
         Item.INFO = Node.INFO_DATA;
@@ -117,9 +140,10 @@ function Init(Engine)
     {
         var ArrRes = [];
         var ArrLevels = Engine.GetTransferArrByLevel(1, 1);
-        for(var L = 0; L < JINN_CONST.MAX_LEVEL_CONNECTION; L++)
+        for(var L = 0; L < ArrLevels.length; L++)
         {
             var LevelData = ArrLevels[L];
+            
             if(LevelData.HotChild)
                 AddNodeToArr(ArrRes, LevelData.HotChild);
             
@@ -136,6 +160,27 @@ function Init(Engine)
         
         return ArrRes;
     };
+    
+    SERVER.NetClearChildLog = function (ID,bSet)
+    {
+        var Child = SERVER.FindNodeByID(ID);
+        if(!Child)
+            return "CHILD NOT FOUND";
+        Engine.ClearLogNetBuf(Child);
+        
+        return "OK log clear for " + ID;
+    };
+    
+    SERVER.NetSetDebug = function (ID,bSet)
+    {
+        var Child = SERVER.FindNodeByID(ID);
+        if(!Child)
+            return "CHILD NOT FOUND";
+        Child.Debug = bSet;
+        
+        return "SET Debug=" + bSet + " for " + ID;
+    };
+    
     SERVER.NetAddConnect = function (ID)
     {
         var Child = SERVER.FindNodeByID(ID);
@@ -219,10 +264,13 @@ function Init(Engine)
         return undefined;
     };
     
-    SERVER.OnStartSecond = function ()
+    Engine.OnStatSecond = function ()
     {
-        var MaxCurNumTime = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var MaxCurNumTime = Engine.CurrentBlockNum;
+        if(SERVER.CurrentBlockNum === MaxCurNumTime)
+            return;
         SERVER.CurrentBlockNum = MaxCurNumTime;
+        
         PrepareStatEverySecond();
         
         var Arr = SERVER.GetActualNodes();
@@ -247,6 +295,7 @@ function Init(Engine)
         Engine.NetConfiguration = 0;
         
         ADD_TO_STAT("ERRORS", JINN_STAT.ErrorCount);
+        
         global.glMemoryUsage = (process.memoryUsage().heapTotal / 1024 / 1024) >>> 0;
         global.glFreeMem = os.freemem() / 1024 / 1024;
         ADD_TO_STAT("MAX:MEMORY_USAGE", glMemoryUsage);

@@ -28,6 +28,7 @@ global.MAX_ITERATION_MAX_HASH = 20;
 
 function InitClass(Engine)
 {
+    Engine.MaxHashReceiveCount = 0;
     Engine.MaxContextIDCounter = 0;
     Engine.SendMaxContext = {};
     
@@ -52,7 +53,7 @@ function InitClass(Engine)
         for(var i = 0; i < Engine.LevelArr.length; i++)
         {
             var Child = Engine.LevelArr[i];
-            if(Child && Child.IsOpen() && Child.IsHot())
+            if(Child && Child.IsHotReady())
             {
                 Engine.SendMaxHashToOneNode(Context, BlockNum, Child, MAX_ITERATION_MAX_HASH);
             }
@@ -168,14 +169,14 @@ function InitClass(Engine)
         
         JINN_STAT.MaxIteration = Math.max(JINN_STAT.MaxIteration, 1 + MAX_ITERATION_MAX_HASH - IterationNum);
         
-        let DeltaForSend = JINN_EXTERN.GetCurrentBlockNumByTime() - BlockNum;
+        let DeltaForSend = Engine.CurrentBlockNum - BlockNum;
         
         var ArrRepeat = [];
         Engine.ProcessMaxHashOnSend(Child, BlockNum, Arr, ArrRepeat);
         
         let SendTransferTime = Date.now();
-        Engine.Send("MAXHASH", Child, {BlockNum:BlockNum, CodeVersionNum:CODE_VERSION.VersionNum, NetConstVer:JINN_NET_CONSTANT.NetConstVer,
-            Arr:Arr, ArrRepeat:ArrRepeat, Debug:global.TEST_CONNECTOR}, function (Child,Data)
+        Engine.Send("MAXHASH", Child, {BlockNum:BlockNum, Receive:Engine.MaxHashReceiveCount, CodeVersionNum:CODE_VERSION.VersionNum,
+            NetConstVer:JINN_NET_CONSTANT.NetConstVer, Arr:Arr, ArrRepeat:ArrRepeat, Debug:global.TEST_CONNECTOR}, function (Child,Data)
         {
             Context.WaitIteration = 3;
             if(!Data)
@@ -305,7 +306,7 @@ function InitClass(Engine)
                     }
                 
                 Context.WasCountReceive = CountReceive;
-                var BlockNum2 = JINN_EXTERN.GetCurrentBlockNumByTime() - DeltaForSend;
+                var BlockNum2 = Engine.CurrentBlockNum - DeltaForSend;
                 
                 Engine.SendMaxHashNextTime(Context, BlockNum2, Child, IterationNum - 1, 1);
             }
@@ -314,46 +315,46 @@ function InitClass(Engine)
     
     Engine.GetContInfo = function (Context)
     {
-        return "T:" + Engine.TickNum + " ID=" + Context.ID + " LID=" + Context.LiderID + "  TreeNum=" + Context.BodyTreeNum + " Iter:" + Context.IterationNum;
+        return "T:" + Engine.TickNum + " ID=" + Context.ID + " LID=" + Context.LiderID + "  TreeNum=" + Context.BodyTreeNum + " Iter:" + Context.IterationNum + " From:" + Context.BodyFromID;
     };
     
-    Engine.MAXHASH_SEND = {Reserve:"uint", BlockNum:"uint32", NetConstVer:"uint32", CodeVersionNum:"uint32", Arr:[{Mode:"byte",
+    Engine.MAXHASH_SEND = {Receive:"uint", BlockNum:"uint32", NetConstVer:"uint32", CodeVersionNum:"uint32", Arr:[{Mode:"byte",
             DataHashNum:"byte", DataHash:"zhash", MinerHash:"hash", CountItem:"uint16", LoadN:"uint", LoadH:"zhash"}], Debug:"byte", ArrRepeat:["byte"],
     };
-    Engine.MAXHASH_RET = {result:"byte", Reserve:"uint", Mode:"byte", HeaderArr:[{BlockNum:"uint32", PrevSumPow:"uint", LinkSumHash:"hash",
-            TreeHash:"zhash", MinerHash:"hash"}], Reserv01:"uint32", BodyArr:[{BlockNum:"uint32", TxArr:["uint16"], TxRaw:[{body:"tr"}],
-        }], BodyTreeNum:"uint32", BodyTreeHash:"zhash", };
+    Engine.MAXHASH_RET = {result:"byte", errnum:"byte", result2:"byte", Reserve:"uint32", Mode:"byte", HeaderArr:[{BlockNum:"uint32",
+            PrevSumPow:"uint", LinkSumHash:"hash", TreeHash:"zhash", MinerHash:"hash"}], Reserv01:"uint32", BodyArr:[{BlockNum:"uint32",
+            TxArr:["uint16"], TxRaw:[{body:"tr"}], }], BodyTreeNum:"uint32", BodyTreeHash:"zhash", };
     Engine.MAXHASH = function (Child,Data)
     {
+        Engine.MaxHashReceiveCount++;
+        
         if(!Data)
-            return;
+            return {result:0, errnum:1};
         
         var BlockNum = Data.BlockNum;
         if(!Engine.ProcessMaxHashOnReceive(Child, BlockNum, Data.Arr, Data.ArrRepeat))
-            return {result:0};
+            return {result:0, errnum:2};
         
-        Child.NetConstVer = Data.NetConstVer;
-        Child.CodeVersionNum = Data.CodeVersionNum;
-        if(Engine.StartGetNetConstant && Data.NetConstVer > JINN_NET_CONSTANT.NetConstVer)
-        {
-            Engine.StartGetNetConstant(Child, Data.NetConstVer);
-        }
-        
-        Engine.CheckNewVersionNum(Child, Data.CodeVersionNum);
+        Engine.ProcessNetConstant(Child, Data.NetConstVer);
+        Engine.ProcessNewVersionNum(Child, Data.CodeVersionNum);
         
         if(Data.CodeVersionNum < global.MIN_JINN_VERSION_NUM)
-            return {result:0};
+            return {result:0, errnum:3};
         
         if(Data.Arr.length)
             Engine.AddMaxHashToTimeStat(Data.Arr[0], BlockNum);
         
         if(!Engine.CanProcessMaxHash(BlockNum))
-            return {result:0};
+            return {result:0, errnum:4};
         
         Engine.CheckHotConnection(Child);
-        if(!Child || !Child.IsHot() || Child.HotStart)
+        if(!Child || !Child.IsHotReady())
         {
-            return {result:0};
+            if(Child)
+            {
+                Engine.DenyHotConnection(Child, 1);
+            }
+            return {result:0, errnum:5};
         }
         if(Data.Arr.length > JINN_CONST.MAX_LEADER_COUNT)
             Data.Arr.length = JINN_CONST.MAX_LEADER_COUNT;
@@ -437,7 +438,11 @@ function InitClass(Engine)
         }
         
         if(Was)
+        {
             Engine.StepTaskMax[BlockNum] = 1;
+        }
+        
+        Engine.MaxHashReceiveCount++;
         
         return {result:1, Mode:RetMode, HeaderArr:HeaderArr, BodyArr:BodyArr, BodyTreeNum:BodyTreeNum, BodyTreeHash:BodyTreeHash};
     };
@@ -456,7 +461,10 @@ function InitClass(Engine)
     {
         return 1;
     };
-    Engine.CheckNewVersionNum = function (Child,CodeVersionNum)
+    Engine.ProcessNewVersionNum = function (Child,CodeVersionNum)
+    {
+    };
+    Engine.ProcessNetConstant = function (Child,NetConstVer)
     {
     };
     
@@ -614,7 +622,7 @@ function InitClass(Engine)
     };
     Engine.AddBodyBlockToArr = function (Child,Arr,BlockBody,Size,BlockNum)
     {
-        if(glUseBHCache)
+        if(glUseBHCache && Child.SendBodyTimeCache)
         {
             var Find = Child.SendBodyTimeCache.FindItemInCache({Hash:BlockBody.TreeHash});
             if(Find && Find.TimeNum >= BlockNum)

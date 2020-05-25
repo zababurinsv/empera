@@ -86,35 +86,21 @@ function InitClass(Engine)
         return BlockNew;
     };
     
-    Engine.GetNewBlock = function (PrevBlock,bAddCurrentTx)
+    Engine.GetNewBlock = function (PrevBlock)
     {
         if(!PrevBlock)
             return undefined;
         
         var Block = {};
         Block.BlockNum = PrevBlock.BlockNum + 1;
+        Engine.FillBodyTransferTx(Block);
         
-        if(bAddCurrentTx)
-        {
-            Block.TxData = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
-            Engine.SortBlock(Block);
-            
-            Block.MinerHash = [Engine.ID % 256, Engine.ID >>> 8];
-            for(var i = 2; i < 32; i++)
-                Block.MinerHash[i] = i;
-            if(random(100) < 50)
-                Block.MinerHash = ZERO_ARR_32;
-            
-            Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
-        }
-        else
-        {
-            Block.MinerHash = ZERO_ARR_32;
-            Engine.FillBodyCurrentTx(Block);
-        }
-        
+        Block.MinerHash = ZERO_ARR_32;
         Block.PrevSumHash = PrevBlock.SumHash;
         Block.PrevSumPow = PrevBlock.SumPow;
+        
+        if(Engine.GetNewBlockNext)
+            Engine.GetNewBlockNext(Block, PrevBlock);
         
         Engine.CalcBlockData(Block);
         return Block;
@@ -204,6 +190,9 @@ function InitClass(Engine)
         
         Engine.CalcBlockHash(Block);
         Engine.CalcSumHash(Block);
+        
+        if(Engine.CheckMaxHash)
+            Engine.CheckMaxHash(Block);
     };
     
     Engine.CalcBlockHash = function (Block)
@@ -236,7 +225,7 @@ function InitClass(Engine)
             Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash).concat(GetArrFromValue(Block.BlockNum)), 6);
         }
         
-        Block.Power = GetPowPower(Block.Hash);
+        Block.Power = GetPowPowerBlock(Block.BlockNum, Block.Hash);
         Block.SumPow = Block.PrevSumPow + Block.Power;
     };
     
@@ -346,5 +335,24 @@ function NeedLoadBodyFromDB(Block)
         return 0;
 }
 
+function CalcAvgSumPow(Block)
+{
+    Block.AvgSumPow = Block.SumPow / Block.BlockNum;
+}
+function GetPowPowerBlock(BlockNum,arrhash)
+{
+    var Power = GetPowPower(arrhash);
+    return Power;
+}
+
+global.GetPowPowerBlock = GetPowPowerBlock;
+global.CalcAvgSumPow = CalcAvgSumPow;
 global.NeedLoadBodyFromNet = NeedLoadBodyFromNet;
 global.NeedLoadBodyFromDB = NeedLoadBodyFromDB;
+
+global.BlockInfo = function (Block)
+{
+    CalcAvgSumPow(Block);
+    return "" + Block.BlockNum + " (" + GetHexFromArr(Block.SumHash).substr(0, 8) + "<" + GetHexFromArr(Block.PrevSumHash).substr(0,
+    8) + ") Avg=" + Block.AvgSumPow + " Pow=" + Block.Power;
+}

@@ -23,22 +23,27 @@
 
 
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, DoNode:DoNode, Name:"Addr"});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Addr"});
 
 const POW_MEMORY_BIT_SIZE = 18;
 const POW_MAX_ITEM_IN_MEMORRY = 1 << POW_MEMORY_BIT_SIZE;
 const POW_SHIFT_MASKA = 32 - POW_MEMORY_BIT_SIZE;
 
+global.MIN_POW_ADDRES = 10;
+
 var COUNT_LIST_LOOP = 3;
 
 
 
-global.GETNODES_VERSION = 3;
+global.GETNODES_VERSION = 4;
 
 function InitClass(Engine)
 {
     Engine.NodesArrByLevel = [];
     Engine.NodesTree = new RBTree(FNodeAddr);
+    
+    if(global.MODELING)
+        global.MIN_POW_ADDRES = 4;
     
     Engine.SendGetNodesReq = function (Child)
     {
@@ -109,7 +114,21 @@ function InitClass(Engine)
     };
     Engine.GetCountAddr = function ()
     {
-        return Engine.NodesTree.size;
+        var Count = 0;
+        var it = Engine.NodesTree.iterator(), Item;
+        while((Item = it.next()) !== null)
+        {
+            var Power = Engine.GetAddrPower(Item.AddrHashPOW, Item.BlockNum);
+            if(Item.System || global.MODELING)
+                Power += MIN_POW_ADDRES;
+            
+            if(Power > global.MIN_POW_ADDRES)
+            {
+                Count++;
+            }
+        }
+        
+        return Count;
     };
     Engine.AddNodeAddr = function (AddrItem,FromChild)
     {
@@ -237,18 +256,20 @@ function InitClass(Engine)
     };
     Engine.SetParamsNodeAddr = function (WasItem,NewItem)
     {
-        if(WasItem.BlockNum < NewItem.BlockNum)
+        if(!WasItem.BlockNum || WasItem.BlockNum < NewItem.BlockNum)
         {
             
-            var Hash = Engine.GetAddrHashPOW(NewItem, NewItem.BlockNum, NewItem.Nonce);
+            Engine.CalcAddrHash(NewItem);
             
             if(!WasItem.AddrHashPOW)
-                WasItem.AddrHashPOW = Engine.GetAddrHashPOW(WasItem, WasItem.BlockNum, WasItem.Nonce);
+                WasItem.AddrHashPOW = MAX_ARR_32;
+            if(!WasItem.BlockNum)
+                WasItem.BlockNum = 0;
             
-            if(CompareArr(Hash, WasItem.AddrHashPOW) < 0)
+            if(Engine.GetAddrPower(NewItem.AddrHashPOW, NewItem.BlockNum) > Engine.GetAddrPower(WasItem.AddrHashPOW, WasItem.BlockNum))
             {
                 
-                WasItem.AddrHashPOW = Hash;
+                WasItem.AddrHashPOW = NewItem.AddrHashPOW;
                 WasItem.BlockNum = NewItem.BlockNum;
                 WasItem.Nonce = NewItem.Nonce;
                 return 1;
@@ -257,6 +278,27 @@ function InitClass(Engine)
         
         return 0;
     };
+    Engine.GetAddrPower = function (AddrHashPOW,BlockNum)
+    {
+        if(!AddrHashPOW)
+            return 0;
+        
+        if(!BlockNum)
+            BlockNum = 0;
+        
+        var DeltaNum = Engine.CurrentBlockNum - BlockNum;
+        if(DeltaNum < 0)
+            return 0;
+        
+        DeltaNum += 1000;
+        var Power = 1000 * (GetPowPower(AddrHashPOW)) / DeltaNum;
+        return Power;
+    };
+    Engine.CalcAddrHash = function (Item)
+    {
+        Item.AddrHashPOW = GetHashFromArrNum2(Item.IDArr, Item.BlockNum, Item.Nonce);
+    };
+    
     Engine.GetAddrHashPOW = function (AddrItem,BlockNum,Nonce)
     {
         var Hash = GetHashFromArrNum2(AddrItem.IDArr, BlockNum, Nonce);
@@ -281,9 +323,11 @@ function InitClass(Engine)
             Engine.RecreateLevelsArray();
         }
         
-        Engine.AddrItem = {IDArr:Engine.IDArr, ip:Engine.ip, port:Engine.port, Nonce:0, NonceTest:0, BlockNum:0, AddrHashPOW:[255,
-            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-            255, 255, 255, 255, 255, 255]};
+        if(!Engine.AddrItem)
+            Engine.AddrItem = {Nonce:0, BlockNum:0};
+        
+        Engine.AddrItem = {IDArr:Engine.IDArr, ip:Engine.ip, port:Engine.port, Nonce:Engine.AddrItem.Nonce, NonceTest:0, BlockNum:Engine.AddrItem.BlockNum};
+        Engine.CalcAddrHash(Engine.AddrItem);
         
         Engine.OnSetOwnIP(ip);
     };
@@ -344,14 +388,14 @@ function InitClass(Engine)
         }
     };
     
-    Engine.RecalcChildLevel = function (Child)
+    Engine.RecalcChildLevel = function (Child,Mode)
     {
         var NewLevel = Engine.AddrLevelArr(Engine.IDArr, Child.IDArr, 1);
         if(NewLevel !== Child.Level)
         {
             if(Child.Level !== undefined)
             {
-                Engine.ToLogNet(Child, "===Recalc node level from: " + Child.Level + " to: " + NewLevel);
+                Engine.ToLogNet(Child, "===Recalc node level from: " + Child.Level + " to: " + NewLevel + "  Mode=" + Mode);
             }
             Child.Level = NewLevel;
         }
@@ -361,22 +405,31 @@ function InitClass(Engine)
         if(!Engine.AddrItem)
             return;
         
-        var BlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var BlockNum = Engine.CurrentBlockNum;
         var AddrItem = Engine.AddrItem;
         
         if(AddrItem.ip === "0.0.0.0")
             return;
         
+        var MaxAddrHashPOW = MAX_ARR_32;
+        var MaxNonce = 0;
+        
         for(var i = 0; i < Count; i++)
         {
             AddrItem.NonceTest++;
             var Hash = Engine.GetAddrHashPOW(AddrItem, BlockNum, AddrItem.NonceTest);
-            if(CompareArr(Hash, AddrItem.AddrHashPOW) < 0)
+            if(CompareArr(Hash, MaxAddrHashPOW) < 0)
             {
-                AddrItem.AddrHashPOW = Hash;
-                AddrItem.BlockNum = BlockNum;
-                AddrItem.Nonce = AddrItem.NonceTest;
+                MaxAddrHashPOW = Hash;
+                MaxNonce = AddrItem.NonceTest;
             }
+        }
+        
+        if(Engine.GetAddrPower(MaxAddrHashPOW, BlockNum) > Engine.GetAddrPower(AddrItem.AddrHashPOW, AddrItem.BlockNum))
+        {
+            AddrItem.AddrHashPOW = MaxAddrHashPOW;
+            AddrItem.Nonce = MaxNonce;
+            AddrItem.BlockNum = BlockNum;
         }
     };
     Engine.GetArrByLevel = function (Level)
@@ -480,15 +533,15 @@ function InitClass(Engine)
 }
 
 
-function InitAfter(Engine)
-{
-}
-
-
 //Engine context
 
 function DoNode(Engine)
 {
+    if(Engine.TickNum === 1)
+        Engine.CaclNextAddrHashPOW(1 << (global.MIN_POW_ADDRES + 3));
+    
+    Engine.CaclNextAddrHashPOW(10);
+    
     if(Engine.TickNum % 10 !== 0)
         return;
     if(!Engine.ConnectArray.length)

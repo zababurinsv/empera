@@ -30,13 +30,15 @@ function Init(Engine)
         if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", Tx.num))
             return  - 4;
         
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var CurBlockNumT = Engine.CurrentBlockNum;
         
-        if(Tx.num < CurBlockNum)
+        if(Tx.num < CurBlockNumT)
             return  - 3;
-        if(Tx.num > CurBlockNum + 20)
+        if(Tx.num > CurBlockNumT + 20)
             return  - 5;
-        Engine.AddCurrentProcessingTx(Tx.num, [Tx]);
+        
+        var TxArr = [Tx];
+        Engine.AddCurrentProcessingTx(Tx.num, TxArr);
         
         return 1;
     };
@@ -148,7 +150,7 @@ function Init(Engine)
     
     global.ON_USE_CONST = function ()
     {
-        global.JINN_WARNING = global.LOG_LEVEL;
+        global.JINN_WARNING =  + global.LOG_LEVEL;
         
         if(global.WEB_PROCESS)
             global.WEB_PROCESS.UpdateConst = 1;
@@ -182,6 +184,13 @@ function Init(Engine)
             
             Engine.InitAddrItem(AddrItem);
             
+            var Power = Engine.GetAddrPower(AddrItem.AddrHashPOW, AddrItem.BlockNum);
+            if(AddrItem.System || global.MODELING)
+                Power += MIN_POW_ADDRES;
+            
+            if(Power < global.MIN_POW_ADDRES / 2)
+                continue;
+            
             var Child = Engine.RetNewConnectByAddr(AddrItem);
             
             if(Engine.SendConnectReq(Child))
@@ -210,12 +219,4 @@ function Init(Engine)
     };
     
     ON_USE_CONST();
-    
-    if(global.LOCAL_RUN)
-    {
-        global.DELTA_CURRENT_TIME = 0;
-        JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME = 10;
-        JINN_CONST.CORRECT_TIME_VALUE = 50;
-        JINN_CONST.CORRECT_TIME_TRIGGER = 5;
-    }
 }

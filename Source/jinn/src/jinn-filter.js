@@ -41,6 +41,9 @@ function InitClass(Engine)
     
     Engine.CanProcessPacket = function (Child,Data)
     {
+        if(!Child.IsOpen())
+            return 0;
+        
         return 1;
     };
     

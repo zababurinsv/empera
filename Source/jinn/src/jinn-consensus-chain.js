@@ -32,7 +32,7 @@ function InitClass(Engine)
     {
         return Engine.DB.GetPrevBlockDB(Block);
     };
-    Engine.GetFirstBlockHead0 = function (BlockSeed)
+    Engine.GetFirstHeadBlock0 = function (BlockSeed)
     {
         var Block = BlockSeed;
         while(Block)
@@ -104,8 +104,12 @@ function InitClass(Engine)
                 Arr[Level] = Block;
         }
     };
-    Engine.CalcHead = function (BlockSeed,bTest)
+    Engine.GetFirstHeadBlock = function (BlockSeed)
     {
+        
+        var bRaw = 1;
+        if(global.TEST_BLOCK_LIST)
+            bRaw = 0;
         
         var Count = 0;
         var BlockSeed0 = BlockSeed;
@@ -120,18 +124,22 @@ function InitClass(Engine)
             {
                 break;
             }
-            var BlockHead = Engine.DB.GetBlockJump(Block, "H", 1);
-            if(BlockHead)
+            
+            if(Count >= 2)
             {
-                Engine.AddJumpToArr(BlockSeed0, BlockHead, ArrJump);
-                
-                BlockJump = BlockHead;
-                Block = BlockHead;
-                
-                continue;
+                var BlockHead = Engine.DB.GetBlockJump(Block, "H", bRaw);
+                if(BlockHead)
+                {
+                    Engine.AddJumpToArr(BlockSeed0, BlockHead, ArrJump);
+                    
+                    BlockJump = BlockHead;
+                    Block = BlockHead;
+                    
+                    continue;
+                }
             }
             
-            var PrevBlock = Engine.GetPrevBlock(Block, 1);
+            var PrevBlock = Engine.GetPrevBlock(Block, bRaw);
             if(!PrevBlock)
                 break;
             
@@ -141,22 +149,18 @@ function InitClass(Engine)
             Engine.AddJumpToArr(BlockSeed0, Block, ArrJump);
             Block = PrevBlock;
         }
-        
-        if(bTest)
-            return Block;
         if(TEST_BLOCK_LIST)
         {
-            var Block0 = Engine.GetFirstBlockHead0(BlockSeed);
+            var Block0 = Engine.GetFirstHeadBlock0(BlockSeed);
             if(Block && Block0 && Block0 !== Block && !IsEqArr(Block0.SumHash, Block.SumHash) && Block.BlockNum > Block0.BlockNum)
             {
-                
                 var Str = "Err from seed:" + BlockInfo(BlockSeed) + " BlockHead = " + BlockInfo(Block) + "  Need = " + BlockInfo(Block0);
                 Engine.ToLog(Str);
             }
         }
         
         var Delta = BlockSeed0.BlockNum - Block.BlockNum;
-        if(Delta > 0)
+        if(Delta > 0 && Count >= 2)
         {
             if(!ArrJump.length || ArrJump[ArrJump.length - 1] !== Block)
                 ArrJump.push(Block);
@@ -196,6 +200,10 @@ function InitClass(Engine)
         var Count = 0;
         var Block = BlockSeed;
         var BlockSet, JumpBlock, JumpBlockTo;
+        
+        var bRaw = 1;
+        if(global.TEST_BLOCK_LIST)
+            bRaw = 0;
         while(Block)
         {
             BlockSet = Block;
@@ -211,7 +219,7 @@ function InitClass(Engine)
                 break;
             }
             
-            var FirstBlock = Engine.DB.GetBlockJump(Block, "B", 1);
+            var FirstBlock = Engine.DB.GetBlockJump(Block, "B", bRaw);
             if(FirstBlock)
             {
                 JumpBlock = Block;
@@ -222,7 +230,7 @@ function InitClass(Engine)
                 continue;
             }
             
-            Block = Engine.GetPrevBlock(Block, 1);
+            Block = Engine.GetPrevBlock(Block, bRaw);
         }
         JINN_STAT.FindEmptyCount += Count;
         JINN_STAT.MAXFindEmptyCount = Math.max(JINN_STAT.MAXFindEmptyCount, Count);
@@ -269,63 +277,6 @@ function InitClass(Engine)
         
         return 1;
     };
-    Engine.GetMaxPowerBlockWithConinues = function (BlockNum,BlockNumDB,bAddCurrentTx)
-    {
-        
-        var Block = undefined;
-        if(BlockNum <= BlockNumDB)
-        {
-            Block = Engine.GetBlockHeaderDB(BlockNum, 1);
-        }
-        else
-        {
-            var PrevBlock = Engine.GetMaxPowerBlockWithConinues(BlockNum - 1, BlockNumDB);
-            if(PrevBlock)
-            {
-                var ArrBlock = Engine.DB.GetChainArrByNum(BlockNum);
-                Block = Engine.GetMaxPowerBlockFromArr(ArrBlock, PrevBlock.SumHash);
-                if(!Block)
-                {
-                    Block = Engine.GetNewBlock(PrevBlock, bAddCurrentTx);
-                    if(Block)
-                    {
-                        if(bAddCurrentTx)
-                            Engine.SetBodyCurrentTx(Block);
-                        
-                        Block = Engine.AddBlockToChain(Block);
-                    }
-                }
-            }
-        }
-        return Block;
-    };
-    
-    Engine.GetMaxPowerBlockFromArr = function (ArrBlock,PrevBlockSumHash)
-    {
-        var MaxBlock = undefined;
-        for(var n = 0; n < ArrBlock.length; n++)
-        {
-            var CurBlock = ArrBlock[n];
-            if(IsEqArr(CurBlock.PrevSumHash, PrevBlockSumHash) && !NeedLoadBodyFromNet(CurBlock))
-            {
-                if(!MaxBlock || (MaxBlock.SumPow < CurBlock.SumPow || (MaxBlock.SumPow === CurBlock.SumPow && CompareArr(CurBlock.Hash, MaxBlock.Hash) < 0)))
-                    MaxBlock = CurBlock;
-            }
-        }
-        return MaxBlock;
-    };
     Engine.InitBlockList();
 }
 
-function BlockInfo(Block)
-{
-    var Str;
-    if(!Block)
-        Str = "-";
-    else
-    {
-        Str = "" + Block.BlockNum + "(" + GetHexFromArr(Block.Hash).substr(0, 4) + ")";
-    }
-    return Str;
-}
-global.BlockInfo = BlockInfo;

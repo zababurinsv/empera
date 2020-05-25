@@ -9,8 +9,21 @@
 
 'use strict';
 
+var TaskArr = [];
 global.SendTestCoin = SendTestCoin;
-function SendTestCoin(FromID,ToID,Sum,Count,Mode)
+function SendTestCoin(FromID,ToID,Sum,Count,TimeRepeat,bClear)
+{
+    if(bClear)
+        TaskArr.length = 0;
+    
+    if(!TimeRepeat)
+        TimeRepeat = 1;
+    for(var i = 0; i < TimeRepeat; i++)
+        TaskArr.unshift({FromID:FromID, ToID:ToID, Sum:Sum, Count:Count});
+    return TaskArr.length;
+}
+
+function SendTestCoinInner(FromID,ToID,Sum,Count,Mode)
 {
     var PrivHex = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     if(WALLET && WALLET.WalletOpen !== false)
@@ -18,7 +31,7 @@ function SendTestCoin(FromID,ToID,Sum,Count,Mode)
         PrivHex = WALLET.KeyPair.getPrivateKey('hex');
     }
     
-    var Params = {"FromID":FromID, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Тест", "Confirm":0};
+    var Params = {"FromID":FromID, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Test", "Confirm":0};
     
     var WasSend = 0;
     if(!Mode)
@@ -43,8 +56,27 @@ function SendTestCoin(FromID,ToID,Sum,Count,Mode)
 module.exports.Init = Init;
 function Init(Engine)
 {
+    Engine.DoOnStartSecond = function ()
+    {
+        
+        if(!TaskArr.length)
+        {
+            return;
+        }
+        
+        var Item = TaskArr[TaskArr.length - 1];
+        TaskArr.length = TaskArr.length - 1;
+        
+        if(!Item.Count)
+        {
+            return;
+        }
+        SendTestCoinInner(Item.FromID, Item.ToID, Item.Sum, Item.Count, Item.Mode);
+    };
+    
     if(!global.TEST_CONNECTOR)
         return;
+    
     Engine.SendGetNodesReq = function (Child)
     {
     };

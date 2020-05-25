@@ -1310,7 +1310,7 @@ function GetCopyNode(Node,bSimple)
     if(bSimple)
     {
         var Item = {ID:Node.id, ip:Node.ip, Active:Node.Active, Hot:Node.Hot, Level:Node.Level, BlockProcessCount:Node.BlockProcessCount,
-            TransferCount:Node.TransferCount, DeltaTime:Node.DeltaTime, Name:Node.Name, };
+            TransferCount:Node.TransferCount, DeltaTime:Node.DeltaTime, Name:Node.Name, Debug:Node.Debug, };
         return Item;
     }
     

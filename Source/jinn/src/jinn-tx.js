@@ -41,6 +41,8 @@ function InitClass(Engine)
         var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
         var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
         
+        var TreeTT = Engine.GetTreeTicket(BlockNum);
+        
         for(var t = 0; t < TxArr.length; t++)
         {
             var Tx = TxArr[t];
@@ -48,18 +50,25 @@ function InitClass(Engine)
                 continue;
             
             Engine.AddToTreeWithAll(TreeTTAll, ArrTTAll, Tree, Tx);
+            
+            if(TreeTT.WasInit)
+                Engine.AddTxToTree(TreeTT, Tx);
         }
     };
     
     Engine.SendTx = function (BlockNum)
     {
         var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
-        
-        for(var i = 0; i < Engine.LevelArr.length; i++)
+        var ArrChilds = Engine.GetTransferSession(BlockNum);
+        for(var i = 0; i < ArrChilds.length; i++)
         {
-            var Child = Engine.LevelArr[i];
-            if(!Child || !Child.IsHot() || !Child.IsOpen() || Child.HotStart)
+            var Child = ArrChilds[i];
+            if(!Child)
+            {
+                if(Child)
+                    JINN_STAT.ErrTx1++;
                 continue;
+            }
             
             var Arr = [];
             for(var t = 0; t < ArrTop.length; t++)
@@ -112,8 +121,11 @@ function InitClass(Engine)
         }
         
         Engine.CheckHotConnection(Child);
-        if(!Child || !Child.IsHot() || Child.HotStart)
+        if(!Child || !Child.IsHot())
+        {
+            JINN_STAT.ErrTx2++;
             return;
+        }
         
         Engine.CheckSizeTXArray(Child, TxArr);
         
@@ -139,9 +151,10 @@ function InitClass(Engine)
             var TxRaw = Engine.GetTx(ItemReceive.body, undefined, MAX_ARR_32);
             if(!Engine.IsValidateTx(TxRaw, "TRANSFERTX", BlockNum))
                 continue;
-            if(!IsEqArr(Find.HashTicket, TxRaw.HashTicket))
+            if(!IsEqArr(Find.HashTicket, TxRaw.HashTicket) && BlockNum > 23)
             {
-                Engine.ToLog("<-" + Child.ID + " B=" + BlockNum + " **************** Error ticket/tx KEY:" + Find.KEY + "/" + TxRaw.KEY);
+                Child.ToLog("B=" + BlockNum + " **************** Error ticket/tx KEY:" + Find.KEY + "/" + TxRaw.KEY + " index=" + ItemReceive.TTIndex,
+                2);
                 continue;
             }
             Engine.DoTicketFromTx(Find, TxRaw);
@@ -155,7 +168,7 @@ function InitClass(Engine)
                 if(Find)
                 {
                     ErrCount++;
-                    global.JINN_WARNING >= 4 && Engine.ToLog("<-" + Child.ID + ". B=" + BlockNum + " WAS TX IN CACHE : Tx=" + Tx.KEY + " TTSend=[" + Tx.TTSend + "]  TTReceive=[" + Tx.TTReceive + "]");
+                    global.JINN_WARNING >= 4 && Child.ToLog("B=" + BlockNum + " WAS TX IN CACHE : Tx=" + Tx.KEY + " TTSend=[" + Tx.TTSend + "]  TTReceive=[" + Tx.TTReceive + "]");
                     continue;
                 }
             }
@@ -198,29 +211,6 @@ function InitClass(Engine)
         var Tx = Engine.GetTx(body);
         
         return Tx;
-    };
-    Engine.SendTestMap = {};
-    
-    Engine.SendTest = function (Value)
-    {
-        if(Engine.SendTestMap[Value])
-            return;
-        Engine.SendTestMap[Value] = 1;
-        for(var i = 0; i < Engine.LevelArr.length; i++)
-        {
-            var Child = Engine.LevelArr[i];
-            if(!Child)
-                continue;
-            
-            Engine.Send("TESTMESSAGE", Child, {Value:Value});
-        }
-    };
-    Engine.TESTMESSAGE = function (Child,Data)
-    {
-        Engine.TestValue = Data.Value;
-        Engine.SendTest(Data.Value);
-        
-        Engine.CheckHotConnection(Child);
     };
 }
 

@@ -10,7 +10,7 @@
 
 
 window.CLIENT_VERSION = 17;
-var MAX_CLIENT_LOG_SIZE = 32000;
+var MAX_CLIENT_LOG_SIZE = 64000;
 
 function $(id)
 {
@@ -2491,9 +2491,6 @@ function SetStatusFromServer(Str)
     if(!Str)
         return;
     
-    var id = $("idServerLog");
-    if(document.activeElement === id)
-        return;
     if(PrevServerStr.length > MAX_CLIENT_LOG_SIZE)
     {
         var Index = PrevServerStr.indexOf("\n", MAX_CLIENT_LOG_SIZE - 1000);
@@ -2502,8 +2499,24 @@ function SetStatusFromServer(Str)
     }
     PrevServerStr = PrevServerStr + Str;
     
-    id.scrollTop = id.scrollHeight;
+    SetLogToElement();
+}
+var WasSetLogToElement = 0;
+function SetLogToElement()
+{
+    var id = $("idServerLog");
+    if(document.activeElement === id)
+    {
+        if(!WasSetLogToElement)
+        {
+            WasSetLogToElement = 1;
+            setTimeout(SetLogToElement, 500);
+        }
+        return;
+    }
     
+    WasSetLogToElement = 0;
+    id.scrollTop = id.scrollHeight;
     id.value = PrevServerStr;
 }
 

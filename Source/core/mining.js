@@ -123,17 +123,25 @@ function RunStopPOWProcess(Mode)
     }
     
     var Memory;
-    if(global.SIZE_MINING_MEMORY)
-        Memory = global.SIZE_MINING_MEMORY;
+    if(global.TEST_JINN)
+    {
+        Memory = 70 * 1e6;
+    }
     else
     {
-        Memory = os.freemem() - (800 + GetCountMiningCPU() * 80) * 1024 * 1014;
-        if(Memory < 0)
+        if(global.SIZE_MINING_MEMORY)
+            Memory = global.SIZE_MINING_MEMORY;
+        else
         {
-            ToLog("Not enough memory to start processes.");
-            return;
+            Memory = os.freemem() - (800 + GetCountMiningCPU() * 80) * 1024 * 1014;
+            if(Memory < 0)
+            {
+                ToLog("Not enough memory to start processes.");
+                return;
+            }
         }
     }
+    
     ProcessMemorySize = Math.trunc(Memory / GetCountMiningCPU());
     ToLog("START MINER PROCESS COUNT: " + GetCountMiningCPU() + " Memory: " + ProcessMemorySize / 1024 / 1024 + " Mb for each process");
     
@@ -220,7 +228,7 @@ function SetCalcPOW(Block,cmd)
         CurWorker.send({cmd:cmd, BlockNum:Block.BlockNum, Account:GENERATE_BLOCK_ACCOUNT, MinerID:GENERATE_BLOCK_ACCOUNT, SeqHash:Block.SeqHash,
             Hash:Block.Hash, PrevHash:Block.PrevHash, Time:Date.now(), Num:CurWorker.Num, RunPeriod:global.POWRunPeriod, RunCount:global.POW_RUN_COUNT,
             Percent:global.POW_MAX_PERCENT, CountMiningCPU:GetCountMiningCPU(), ProcessMemorySize:ProcessMemorySize, LastNonce0:BlockTimeCreate * 0x10000,
-        });
+            Meta:Block.Meta, });
     }
 }
 

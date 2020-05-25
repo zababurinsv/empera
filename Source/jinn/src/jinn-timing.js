@@ -12,7 +12,7 @@
  *
 **/
 'use strict';
-global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Timing"});
+global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, DoNodeFirst:DoNodeFirst, Name:"Timing"});
 
 const OLD_STAT_BLOCKNUM_PERIOD = 3600;
 
@@ -80,7 +80,7 @@ function InitClass(Engine)
                     NewDelta += JINN_CONST.INFLATION_TIME_VALUE;
         }
         
-        if(NewDelta)
+        if(NewDelta && global.JINN_AUTO_CORRECT_TIME)
         {
             var Value = Math.floor(global.DELTA_CURRENT_TIME + NewDelta);
             ToLog("SET TIME DELTA: " + Value + " ms (" + NewDelta + ")", 4);
@@ -180,7 +180,7 @@ function InitClass(Engine)
         if(!global.FIRST_TIME_BLOCK)
             return;
         
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var CurBlockNum = Engine.CurrentBlockNum;
         var Delta = CurBlockNum - BlockNum;
         if(Engine.WasCorrectTime && Math.abs(Delta) > OLD_STAT_BLOCKNUM_PERIOD)
             return;
@@ -222,7 +222,7 @@ function InitClass(Engine)
         if(!Engine.WasCorrectTime)
             return;
         
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+        var CurBlockNum = Engine.CurrentBlockNum;
         var OldBlockNum = CurBlockNum - OLD_STAT_BLOCKNUM_PERIOD;
         while(1)
         {
@@ -232,10 +232,30 @@ function InitClass(Engine)
             Engine.TreeTimeStat.remove(Item);
         }
     };
+    
+    Engine.GetCurrentBlockNumByTime = function ()
+    {
+        return Engine.CurrentBlockNum;
+    };
 }
 
 global.BlockStatCount = 10;
 global.BlockStatCountTime = 10;
+
+function DoNodeFirst(Engine)
+{
+    if(global.MODELING && global.glTestMode3)
+    {
+        var TickCount = JINN_EXTERN.GetCurrentTickNum();
+        if(Engine.ID % 2 === 0)
+            TickCount -= 5;
+        
+        Engine.CurrentBlockNum = JINN_CONST.START_BLOCK_NUM + Math.floor(TickCount / 10);
+        return;
+    }
+    
+    Engine.CurrentBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+}
 
 function DoNode(Engine)
 {
@@ -244,57 +264,65 @@ function DoNode(Engine)
     if(Engine.ROOT_NODE)
         return;
     
-    var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
+    var CurBlockNumT = Engine.CurrentBlockNum;
     
-    if(Engine.LastCurBlockNum !== CurBlockNum)
+    Engine.DoSaveMainWithContinues();
+    
+    if(Engine.LastCurBlockNum !== CurBlockNumT)
     {
-        Engine.LastCurBlockNum = CurBlockNum;
+        if(Engine.DoOnStartSecond)
+            Engine.DoOnStartSecond();
+        
+        Engine.InitTransferSession(CurBlockNumT);
+        
+        Engine.LastCurBlockNum = CurBlockNumT;
+        
         Engine.DoTimeCorrect(1);
         
-        Engine.DoSaveMain();
         Engine.DoCreateNewBlock();
     }
     
-    Engine.DoRecalcPOW();
+    var StartPeriod = 40 * JINN_CONST.MULT_TIME_PERIOD;
+    
     setTimeout(function ()
     {
-        var CurBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
-        for(var BlockNum = CurBlockNum - JINN_CONST.STEP_CALC_POW_FIRST; BlockNum <= CurBlockNum - JINN_CONST.STEP_CALC_POW_LAST; BlockNum++)
+        var CurBlockNumT = Engine.CurrentBlockNum;
+        for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_CALC_POW_FIRST; BlockNum <= CurBlockNumT - JINN_CONST.STEP_CALC_POW_LAST; BlockNum++)
         {
-            var Arr = Engine.MiningBlockArr[BlockNum];
-            for(var i = 0; Arr && i < Arr.length; i++)
-            {
-                var MiningBlock = Arr[i];
-                if(Engine.AddBlockToChain(MiningBlock, 1))
-                    Engine.ToLog("AddBlockToChain Block = " + MiningBlock.BlockNum + " Power=" + MiningBlock.Power, 4);
-            }
+            Engine.AfterMiningDoBlockArr(BlockNum);
             
             Engine.StartSendMaxHash(BlockNum);
         }
         
-        Engine.MiningBlockArr = {};
-    }, 40);
-    Engine.StepTaskTt[CurBlockNum - JINN_CONST.STEP_TICKET] = 2;
-    Engine.StepTaskTt[CurBlockNum - JINN_CONST.STEP_TICKET - 1] = 2;
+        Engine.InitMiningBlockArr();
+    }, StartPeriod);
     
-    Engine.StepTaskTx[CurBlockNum - JINN_CONST.STEP_TX] = 2;
-    Engine.StepTaskTx[CurBlockNum - JINN_CONST.STEP_TX - 1] = 2;
+    Engine.StepTaskTt[CurBlockNumT - JINN_CONST.STEP_TICKET] = 2;
+    Engine.StepTaskTx[CurBlockNumT - JINN_CONST.STEP_TX] = 2;
     
-    for(var BlockNum = CurBlockNum - JINN_CONST.STEP_CALC_POW_FIRST; BlockNum <= CurBlockNum - JINN_CONST.STEP_CALC_POW_LAST; BlockNum++)
+    Engine.StepTaskTt[CurBlockNumT - JINN_CONST.STEP_TICKET - 1] = 2;
+    Engine.StepTaskTx[CurBlockNumT - JINN_CONST.STEP_TX - 1] = 2;
+    
+    for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_CALC_POW_FIRST; BlockNum <= CurBlockNumT - JINN_CONST.STEP_CALC_POW_LAST; BlockNum++)
     {
         Engine.StepTaskMax[BlockNum] = 0;
     }
     
-    for(var BlockNum = CurBlockNum - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING; BlockNum <= CurBlockNum - JINN_CONST.STEP_TICKET; BlockNum++)
+    for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING; BlockNum <= CurBlockNumT; BlockNum++)
     {
-        if(Engine.StepTaskTt[BlockNum])
-            Engine.SendTicket(BlockNum);
+        var Delta = CurBlockNumT - BlockNum;
         
-        if(Engine.StepTaskTx[BlockNum])
-            Engine.SendTx(BlockNum);
+        if(Delta >= JINN_CONST.STEP_TICKET)
+            if(Engine.StepTaskTt[BlockNum])
+                Engine.SendTicket(BlockNum);
         
-        if(Engine.StepTaskMax[BlockNum])
-            Engine.StartSendMaxHash(BlockNum);
+        if(Delta >= JINN_CONST.STEP_TX)
+            if(Engine.StepTaskTx[BlockNum])
+                Engine.SendTx(BlockNum);
+        
+        if(Delta >= JINN_CONST.STEP_CALC_POW_LAST)
+            if(Engine.StepTaskMax[BlockNum])
+                Engine.StartSendMaxHash(BlockNum);
     }
     Engine.StepTaskTt = {};
     Engine.StepTaskTx = {};

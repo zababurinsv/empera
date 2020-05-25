@@ -688,8 +688,6 @@
     };
     root.SHA3ARR=function (data,num)
     {
-        // if(!num)
-        //     num=GetCurrentBlockNumByTime();
 
         if(!NEW_SIGN_TIME || !num || num>=NEW_SIGN_TIME)
             return sha3(data);

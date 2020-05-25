@@ -87,7 +87,7 @@ function InitClass(Engine)
         
         Child.ip = ip;
         Child.port = port;
-        Engine.RecalcChildLevel(Child);
+        Engine.RecalcChildLevel(Child, 3);
         
         if(JINN_EXTERN.NodeRoot && ip === JINN_EXTERN.NodeRoot.ip && port === JINN_EXTERN.NodeRoot.port)
             Child.ROOT_NODE = 1;
@@ -118,6 +118,19 @@ function InitClass(Engine)
         Child.ContextCallMap = {};
         Child.SendAddrMap = {};
         
+        Child.SendPacketCount = 0;
+        Child.ReceivePacketCount = 0;
+        
+        Child.ReceiveDataArr = [];
+        Child.Node = Engine;
+        
+        Child.ConnectStart = Date.now();
+        
+        Child.TimeMap = {};
+        Child.LastGetNetConstant = 0;
+        Child.LastGetCodeVersion = 0;
+        Child.LastGetCode = 0;
+        
         Object.defineProperty(Child, "Score", {get:function ()
             {
                 if(this.AddrItem)
@@ -132,19 +145,17 @@ function InitClass(Engine)
                 else
                     return 0;
             }});
-        
-        Child.SendPacketCount = 0;
-        Child.ReceivePacketCount = 0;
-        
-        Child.ReceiveDataArr = [];
-        Child.Node = Engine;
-        
-        Child.ConnectStart = Date.now();
-        
-        Child.TimeMap = {};
-        Child.LastGetNetConstant = 0;
-        Child.LastGetCodeVersion = 0;
-        Child.LastGetCode = 0;
+        Object.defineProperty(Child, "Debug", {set:function (value)
+            {
+                if(this.AddrItem)
+                    this.AddrItem.Debug = value;
+            }, get:function ()
+            {
+                if(this.AddrItem && this.AddrItem.Debug)
+                    return 1;
+                else
+                    return 0;
+            }});
         
         Child.IsOpen = function ()
         {
@@ -160,12 +171,29 @@ function InitClass(Engine)
             return 0;
         };
         
+        Child.IsHotReady = function ()
+        {
+            
+            if(!Child.HotReady)
+                return 0;
+            
+            if(!Child.IsOpen())
+                return 0;
+            
+            if(!Child.IsHot())
+                return 0;
+            
+            return 1;
+        };
+        
         if(Engine.InitChildNext)
             Engine.InitChildNext(Child);
         
-        Child.ToError = function (Str)
+        Child.ToError = function (Str,WarningLevel)
         {
-            Engine.ToError(Child, Str, 4);
+            if(WarningLevel === undefined)
+                WarningLevel = 4;
+            Engine.ToError(Child, Str, WarningLevel);
         };
         Child.ToLog = function (Str,StartLevel)
         {

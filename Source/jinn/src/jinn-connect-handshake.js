@@ -30,13 +30,14 @@ function InitClass(Engine)
         Child.ToLogNet("StartHandShake");
         
         var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
-            RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum, RemoteIP:Child.ip,
-            FindSelfIP:Child.FindSelfIP, };
+            RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum, FindSelfIP:Child.FindSelfIP,
+        };
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
     };
     Engine.HANDSHAKE_SEND = {Protocol:"str20", Shard:"str5", RemoteIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash",
         RunVersionNum:"uint", CodeVersionNum:"uint", FindSelfIP:"byte"};
-    Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", RemoteIP:"str30", RunVersionNum:"uint", CodeVersionNum:"uint", text:"str"};
+    Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", RemoteIP:"str30", RunVersionNum:"uint", CodeVersionNum:"uint", text:"str",
+        NetConstVer:"uint"};
     Engine.HANDSHAKE = function (Child,Data)
     {
         if(!Data)
@@ -46,9 +47,10 @@ function InitClass(Engine)
         }
         Child.ToLogNet("HANDSHAKE Level=" + Child.Level + " port:" + Data.port);
         
-        Engine.CheckNewVersionNum(Child, Data.CodeVersionNum);
+        Engine.ProcessNewVersionNum(Child, Data.CodeVersionNum);
         
-        var Ret = {result:0, RndHash:Engine.RndHash, RemoteIP:Child.ip, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum};
+        var Ret = {result:0, RndHash:Engine.RndHash, RemoteIP:Child.ip, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum,
+            NetConstVer:JINN_NET_CONSTANT.NetConstVer};
         var AddrChild = {ip:Child.ip, port:Data.port, BlockNum:0, Nonce:0, RndHash:Data.RndHash};
         
         var StrError;
@@ -111,7 +113,8 @@ function InitClass(Engine)
         Engine.DoMyAddres(Child, Data.RemoteIP);
         Engine.SetItemRndHash(Child, Data.RndHash);
         
-        Engine.CheckNewVersionNum(Child, Data.CodeVersionNum);
+        Engine.ProcessNetConstant(Child, Data.NetConstVer);
+        Engine.ProcessNewVersionNum(Child, Data.CodeVersionNum);
         
         if(!Data.result)
         {
