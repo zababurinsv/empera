@@ -508,7 +508,7 @@ class AccountApp extends require("./dapp")
                 }
             case TYPE_TRANSACTION_ACC_HASH:
                 {
-                    Result = 1
+                    Result = true
                     
                     if(BlockNum < START_BLOCK_ACCOUNT_HASH + START_BAD_ACCOUNT_CONTROL)
                         break;

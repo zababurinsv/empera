@@ -598,6 +598,7 @@ global.GetTxSize = GetTxSize;
 function SetBit(Sum,BitNum)
 {
     Sum = (Sum >>> 0) | (1 << BitNum);
+    
     return Sum;
 }
 

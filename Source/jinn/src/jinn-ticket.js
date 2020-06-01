@@ -102,7 +102,7 @@ function InitClass(Engine)
         {
             if(Item.IsTx)
             {
-                Engine.DoTicketFromTx(Find, Item);
+                Engine.DoTxFromTicket(Find, Item);
             }
             if(!Find.TTReceiveIndex)
                 ToLogTrace("************* Error !Find.TTReceiveIndex");
@@ -114,11 +114,15 @@ function InitClass(Engine)
         ArrTTAll.push(Item);
         
         var ArrLength = 1 + Math.max(JINN_CONST.MAX_LEVEL_ALL(), Engine.LevelArr.length);
-        
         if(Item.TTReceiveIndex)
             ToLog("WAS Item.TTReceiveIndex=" + Item.TTReceiveIndex);
         
         Item.TTReceiveIndex = new Uint16Array(ArrLength);
+        Engine.InitItemTT(Item);
+    };
+    
+    Engine.InitItemTT = function (Item)
+    {
         Item.TTSend = 0;
         Item.TXWait = 0;
         
@@ -171,8 +175,6 @@ function InitClass(Engine)
                 
                 TTArr.push(Tt);
                 Tt.TTSend = SetBit(Tt.TTSend, Child.Level);
-                if(!GetBit(Tt.TTSend, Child.Level))
-                    ToLog("**********Error set TTSend on " + Child.Level);
                 
                 JINN_STAT.TTSend++;
                 Count++;
@@ -219,8 +221,6 @@ function InitClass(Engine)
                         break;
                     }
                     Tt.TXWait = SetBit(Tt.TXWait, Child.Level);
-                    if(!GetBit(Tt.TXWait, Child.Level))
-                        ToLog("**********Error set TXWait on " + Child.Level);
                 }
             });
         }
@@ -292,9 +292,12 @@ function InitClass(Engine)
             }
             
             RetArrIndex.push(Tt.TTIndex);
-            Tt.TTReceiveIndex[Child.Level] = 1 + ItemReceive.TTIndex;
-            if(!Tt.TTReceiveIndex[Child.Level])
-                ToLog("**********Error set TTReceiveIndex on " + Child.Level);
+            if(Tt.TTReceiveIndex)
+            {
+                Tt.TTReceiveIndex[Child.Level] = 1 + ItemReceive.TTIndex;
+                if(!Tt.TTReceiveIndex[Child.Level])
+                    ToLog("**********Error set TTReceiveIndex on " + Child.Level);
+            }
         }
         
         if(CountNew)

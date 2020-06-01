@@ -11,6 +11,7 @@
  * Asynchronous startup of the processing unit according to the timings
  *
 **/
+
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, DoNodeFirst:DoNodeFirst, Name:"Timing"});
 
@@ -46,6 +47,9 @@ function InitClass(Engine)
     Engine.CorrectTimeByDelta = function (NewDelta)
     {
         
+        if(Math.abs(NewDelta) > 1000000000)
+            NewDelta = 0;
+        
         if(Engine.WasCorrectTime > 0)
         {
             var NewDeltaAbs = Math.abs(NewDelta);
@@ -79,6 +83,11 @@ function InitClass(Engine)
                 if(global.DELTA_CURRENT_TIME < 0)
                     NewDelta += JINN_CONST.INFLATION_TIME_VALUE;
         }
+        else
+            if(!NewDelta)
+            {
+                NewDelta =  - global.DELTA_CURRENT_TIME;
+            }
         
         if(NewDelta && global.JINN_AUTO_CORRECT_TIME)
         {
@@ -117,7 +126,7 @@ function InitClass(Engine)
         for(var i = 0; i < Arr.length; i++)
         {
             var Delta = AvgSum1 - Arr[i];
-            if(Delta * Delta < AvgDisp)
+            if(Delta * Delta < 3 * AvgDisp)
             {
                 Sum += Arr[i];
                 Count++;
@@ -125,7 +134,11 @@ function InitClass(Engine)
         }
         
         if(Count < MinCount / 2)
+        {
+            Engine.StatArray = [];
             return;
+        }
+        
         var AvgSum2 = Sum / Count;
         Engine.CorrectTimeByDelta( - Math.floor(1000 * AvgSum2));
     };
@@ -167,8 +180,8 @@ function InitClass(Engine)
         Engine.TreeTimeStat.insert({Hash:MaxItem.Hash, BlockNum:MaxItem.BlockNum, Power:MaxItem.Power});
         
         JINN_STAT.DeltaTime = MaxItem.Delta;
-        var Delta = MaxItem.Delta;
         
+        var Delta = MaxItem.Delta;
         Engine.StatArray.push(Delta);
         Engine.MaxTimeStatus = {Power:0, Hash:MAX_ARR_32, PowHash:MAX_ARR_32};
         
@@ -202,6 +215,7 @@ function InitClass(Engine)
             
             var BlockTimeNow = CONSENSUS_PERIOD_TIME + Date.now() - BlockNum * CONSENSUS_PERIOD_TIME - global.FIRST_TIME_BLOCK + global.DELTA_CURRENT_TIME;
             MaxItem.Delta = (BlockTimeNow - BlockTimeCreate) / 1000;
+            
             ToLog("BlockNum=" + BlockNum + " Power=" + Item.Power + " Time: " + BlockTimeNow + " - " + BlockTimeCreate + " = " + MaxItem.Delta,
             5);
             
@@ -237,6 +251,16 @@ function InitClass(Engine)
     {
         return Engine.CurrentBlockNum;
     };
+    
+    Engine.ClearListToNum = function (Map,ToOldBlockNum)
+    {
+        for(var Key in Map)
+        {
+            var BlockNum =  + Key;
+            if(BlockNum <= ToOldBlockNum)
+                delete Map[Key];
+        }
+    };
 }
 
 global.BlockStatCount = 10;
@@ -244,15 +268,6 @@ global.BlockStatCountTime = 10;
 
 function DoNodeFirst(Engine)
 {
-    if(global.MODELING && global.glTestMode3)
-    {
-        var TickCount = JINN_EXTERN.GetCurrentTickNum();
-        if(Engine.ID % 2 === 0)
-            TickCount -= 5;
-        
-        Engine.CurrentBlockNum = JINN_CONST.START_BLOCK_NUM + Math.floor(TickCount / 10);
-        return;
-    }
     
     Engine.CurrentBlockNum = JINN_EXTERN.GetCurrentBlockNumByTime();
 }
@@ -270,8 +285,8 @@ function DoNode(Engine)
     
     if(Engine.LastCurBlockNum !== CurBlockNumT)
     {
-        if(Engine.DoOnStartSecond)
-            Engine.DoOnStartSecond();
+        if(Engine.DoOnStartBlock)
+            Engine.DoOnStartBlock();
         
         Engine.InitTransferSession(CurBlockNumT);
         
@@ -280,51 +295,51 @@ function DoNode(Engine)
         Engine.DoTimeCorrect(1);
         
         Engine.DoCreateNewBlock();
+        Engine.ClearListToNum(Engine.StepTaskTt, CurBlockNumT - JINN_CONST.STEP_CLEAR_MEM);
+        Engine.ClearListToNum(Engine.StepTaskTx, CurBlockNumT - JINN_CONST.STEP_CLEAR_MEM);
+        Engine.ClearListToNum(Engine.StepTaskMax, CurBlockNumT - JINN_CONST.STEP_CLEAR_MEM);
     }
     
-    var StartPeriod = 40 * JINN_CONST.MULT_TIME_PERIOD;
-    
-    setTimeout(function ()
-    {
-        var CurBlockNumT = Engine.CurrentBlockNum;
-        for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_CALC_POW_FIRST; BlockNum <= CurBlockNumT - JINN_CONST.STEP_CALC_POW_LAST; BlockNum++)
+    if(JINN_CONST.TEST_DELTA_TIMING_HASH)
+        for(var Delta = 0; Delta < JINN_CONST.TEST_DELTA_TIMING_HASH; Delta++)
         {
-            Engine.AfterMiningDoBlockArr(BlockNum);
-            
-            Engine.StartSendMaxHash(BlockNum);
+            if(JINN_CONST.TEST_DIV_TIMING_HASH <= 1 || Engine.TickNum % JINN_CONST.TEST_DIV_TIMING_HASH === 0)
+                Engine.StepTaskMax[CurBlockNumT - JINN_CONST.STEP_NEW_BLOCK - Delta] = 2;
         }
-        
-        Engine.InitMiningBlockArr();
-    }, StartPeriod);
     
-    Engine.StepTaskTt[CurBlockNumT - JINN_CONST.STEP_TICKET] = 2;
-    Engine.StepTaskTx[CurBlockNumT - JINN_CONST.STEP_TX] = 2;
-    
-    Engine.StepTaskTt[CurBlockNumT - JINN_CONST.STEP_TICKET - 1] = 2;
-    Engine.StepTaskTx[CurBlockNumT - JINN_CONST.STEP_TX - 1] = 2;
-    
-    for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_CALC_POW_FIRST; BlockNum <= CurBlockNumT - JINN_CONST.STEP_CALC_POW_LAST; BlockNum++)
-    {
-        Engine.StepTaskMax[BlockNum] = 0;
-    }
+    if(JINN_CONST.TEST_DELTA_TIMING_TX)
+        for(var Delta = 0; Delta < JINN_CONST.TEST_DELTA_TIMING_TX; Delta++)
+        {
+            Engine.StepTaskTt[CurBlockNumT - JINN_CONST.STEP_TICKET - Delta] = 2;
+            Engine.StepTaskTx[CurBlockNumT - JINN_CONST.STEP_TX - Delta] = 2;
+        }
     
     for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING; BlockNum <= CurBlockNumT; BlockNum++)
     {
         var Delta = CurBlockNumT - BlockNum;
         
+        Engine.AfterMiningDoBlockArr(BlockNum);
+        
         if(Delta >= JINN_CONST.STEP_TICKET)
             if(Engine.StepTaskTt[BlockNum])
+            {
                 Engine.SendTicket(BlockNum);
+                Engine.StepTaskTt[BlockNum] = 0;
+            }
         
         if(Delta >= JINN_CONST.STEP_TX)
             if(Engine.StepTaskTx[BlockNum])
+            {
                 Engine.SendTx(BlockNum);
+                Engine.StepTaskTx[BlockNum] = 0;
+            }
         
-        if(Delta >= JINN_CONST.STEP_CALC_POW_LAST)
+        if(Delta >= JINN_CONST.STEP_NEW_BLOCK - JINN_CONST.TEST_NDELTA_TIMING_HASH)
             if(Engine.StepTaskMax[BlockNum])
+            {
                 Engine.StartSendMaxHash(BlockNum);
+                Engine.StepTaskMax[BlockNum] = 0;
+            }
     }
-    Engine.StepTaskTt = {};
-    Engine.StepTaskTx = {};
-    Engine.StepTaskMax = {};
+    Engine.InitMiningBlockArr();
 }

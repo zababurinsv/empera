@@ -56,7 +56,7 @@ function SendTestCoinInner(FromID,ToID,Sum,Count,Mode)
 module.exports.Init = Init;
 function Init(Engine)
 {
-    Engine.DoOnStartSecond = function ()
+    Engine.DoOnStartBlock = function ()
     {
         
         if(!TaskArr.length)

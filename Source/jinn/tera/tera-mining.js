@@ -21,7 +21,7 @@ function Init(Engine)
         var Tx = SERVER.GetDAppTransactions(Block.BlockNum);
         if(Tx)
         {
-            Tx = Engine.GetTx(Tx.body);
+            Tx = Engine.GetTx(Tx.body, undefined, undefined, 8);
             Block.TxData.unshift(Tx);
         }
     };
@@ -79,6 +79,7 @@ function Init(Engine)
                     if(msg.Meta)
                         MiningBlock.DB = msg.Meta.DB;
                     Engine.CalcBlockData(MiningBlock);
+                    
                     bWas = 2;
                 }
             }
@@ -96,6 +97,7 @@ function Init(Engine)
                 if(msg.Meta)
                     MiningBlock.DB = msg.Meta.DB;
                 Engine.CalcBlockData(MiningBlock);
+                
                 bWas = 1;
                 
                 Arr.push(MiningBlock);

@@ -17,6 +17,7 @@ global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"NetCache"});
 global.glUseBlockCache = 1;
 global.glUsePackMaxHash = 1;
 
+
 function DoNode(Engine)
 {
     var LastBlockNum = Engine.CurrentBlockNum;
@@ -30,103 +31,178 @@ function DoNode(Engine)
 
 function InitClass(Engine)
 {
+    
     Engine.ProcessBlockOnSend = function (Child,Block,TxData)
     {
+        var Level = Child.Level;
         var BlockNum = Block.BlockNum;
         var DeltaBlockNum = Engine.CurrentBlockNum - BlockNum;
         
-        var bFullData = 0;
+        var Size = 4 + 4 + 32;
+        var ArrFull = [];
+        var ArrTtTx = [];
+        var TicketCount = 0;
+        var SysCount = 0;
         if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM - JINN_CONST.MAX_DELTA_PROCESSING)
         {
-            bFullData = 1;
-        }
-        else
-        {
             for(var i = 0; i < TxData.length; i++)
             {
                 var Tx = TxData[i];
-                if(!Tx || !Tx.TTReceiveIndex || !Tx.TTReceiveIndex[Child.Level] || !GetBit(Tx.TXSend, Child.Level))
-                {
-                    bFullData = 1;
-                    break;
-                }
-            }
-        }
-        
-        var Size = 0;
-        var TxArr = [];
-        var TxRaw = [];
-        
-        if(bFullData)
-        {
-            for(var i = 0; i < TxData.length; i++)
-            {
-                var Tx = TxData[i];
-                TxRaw.push(Tx);
-                Size += Tx.body.length;
+                ArrFull.push(Tx);
+                Size += Tx.body.length + 2;
             }
         }
         else
         {
+            var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
+            
             for(var i = 0; i < TxData.length; i++)
             {
-                var Tx = TxData[i];
-                var TTIndex = Tx.TTReceiveIndex[Child.Level];
-                if(!TTIndex)
+                var Item = TxData[i];
+                Engine.CheckHashExist(Item);
+                var Tx = TreeTTAll.find(Item);
+                if(!Tx)
                 {
-                    ToLogOne("Not found TTIndex on Block=" + Block.BlockNum, " KEY: " + Tx.KEY);
+                    SysCount++;
+                    ArrTtTx.push(Item);
+                    Size += 10 + Item.body.length + 2;
+                    continue;
                 }
                 
-                TxArr.push(TTIndex - 1);
+                if(!Tx.IsTx)
+                {
+                    ToLogOne("-----Not IsTx in BlockNum = " + BlockNum);
+                    return 0;
+                }
+                if(GetBit(Tx.TXReceive, Level) || GetBit(Tx.TXSend, Level))
+                {
+                    TicketCount++;
+                    ArrTtTx.push({HashTicket:Tx.HashTicket});
+                    Size += 10 + 2;
+                }
+                else
+                {
+                    ArrTtTx.push(Tx);
+                    Size += 10 + Tx.body.length + 2;
+                    Tx.TXSend = SetBit(Tx.TXSend, Level);
+                }
             }
-            Size = TxArr.length * 2;
         }
-        Block.TxArr = TxArr;
-        Block.TxRaw = TxRaw;
+        
+        Block.ArrFull = ArrFull;
+        Block.ArrTtTx = ArrTtTx;
         
         return Size;
     };
     
-    Engine.ProcessBlockOnReceive = function (Child,Block,bTest)
+    Engine.ProcessBlockOnReceive = function (Child,Block)
     {
+        var Level = Child.Level;
         var BlockNum = Block.BlockNum;
+        
         Block.TxData = [];
-        if(Block.TxRaw.length)
+        if(Block.ArrFull.length)
         {
-            for(var i = 0; i < Block.TxRaw.length; i++)
+            
+            var ArrFull = Block.ArrFull;
+            for(var i = 0; i < ArrFull.length; i++)
             {
-                var Value = Block.TxRaw[i];
-                var Tx = Engine.GetTx(Value.body);
+                var Value = ArrFull[i];
+                var Tx = Engine.GetTx(Value.body, undefined, undefined, 4);
                 Block.TxData.push(Tx);
                 
-                CheckTx("" + Engine.ID + ". #1 ProcessBlockOnReceive", Tx, BlockNum);
+                CheckTx("1.ProcessBlockOnReceive", Tx, BlockNum);
             }
+            Engine.SetReceiveBits(Child, Block);
         }
         else
-            if(Block.TxArr.length)
+            if(Block.ArrTtTx.length)
             {
-                var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
+                var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
                 
-                var TxArr = Block.TxArr;
-                for(var i = 0; i < TxArr.length; i++)
+                var TicketCount = 0;
+                var ArrTtTx = Block.ArrTtTx;
+                for(var i = 0; i < ArrTtTx.length; i++)
                 {
-                    var TTIndex = TxArr[i];
-                    
-                    var Tx = ArrTTAll[TTIndex];
-                    if(!Tx || !Tx.IsTx)
+                    var Item = ArrTtTx[i];
+                    var Tx = TreeTTAll.find(Item);
+                    if(Tx)
                     {
-                        Child.ToError("Error tx index = " + TTIndex);
-                        return 0;
+                        if(!Tx.IsTx)
+                        {
+                            if(!Item.body.length)
+                            {
+                                Child.ToError("--1.Error load tx - not found body in BlockNum=" + BlockNum, 3);
+                                return 0;
+                            }
+                            
+                            Tx = Engine.GetTxFromReceiveBody(Tx, Item.body, BlockNum, 2);
+                        }
+                    }
+                    else
+                    {
+                        
+                        if(!Item.body.length)
+                        {
+                            Child.ToError("--2.Error load tx - not found body in BlockNum=" + BlockNum, 3);
+                            return 0;
+                        }
+                        
+                        var Key = GetHexFromArr(Item.HashTicket);
+                        var Tt = Engine.GetTicket(Item.HashTicket, Key, BlockNum);
+                        Engine.InitItemTT(Tt);
+                        TreeTTAll.insert(Tt);
+                        
+                        Tx = Engine.GetTxFromReceiveBody(Tt, Item.body, BlockNum, 3);
                     }
                     
+                    if(!Tx)
+                        return 0;
+                    
+                    CheckTx("2.ProcessBlockOnReceive", Tx, BlockNum, 1);
+                    
+                    if(!Item.body.length)
+                        TicketCount++;
+                    
                     Block.TxData.push(Tx);
+                    Tx.TXReceive = SetBit(Tx.TXReceive, Level);
                 }
             }
         
-        delete Block.TxArr;
-        delete Block.TxRaw;
+        delete Block.ArrFull;
+        delete Block.ArrTtTx;
         
         return 1;
+    };
+    
+    Engine.SetReceiveBits = function (Child,Block)
+    {
+        var BlockNum = Block.BlockNum;
+        var DeltaBlockNum = Engine.CurrentBlockNum - BlockNum;
+        if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM)
+            return;
+        
+        var Level = Child.Level;
+        var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
+        
+        for(var i = 0; i < Block.TxData.length; i++)
+        {
+            var Item = Block.TxData[i];
+            if(!Item.HashTicket)
+            {
+                Child.ToLog("SetReceiveBits: Not find HashTicket in BlockNum=" + BlockNum, 2);
+                return;
+            }
+            
+            var Tx = TreeTTAll.find(Item);
+            if(Tx)
+            {
+                Tx.TXReceive = SetBit(Tx.TXReceive, Level);
+            }
+            else
+            {
+            }
+        }
     };
     Engine.GetPackedArray = function (Arr)
     {

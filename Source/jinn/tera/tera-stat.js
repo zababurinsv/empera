@@ -38,6 +38,21 @@ function Init(Engine)
         return Arr;
     };
     
+    SERVER.GetHotNodesCount = function ()
+    {
+        var Count = 0;
+        for(var i = 0; i < Engine.ConnectArray.length; i++)
+        {
+            var Child = Engine.ConnectArray[i];
+            if(!Child || !Child.IsHot())
+                continue;
+            
+            Count++;
+        }
+        
+        return Count;
+    };
+    
     Engine.GetNodesArr = function ()
     {
         var Arr = [];
@@ -266,10 +281,12 @@ function Init(Engine)
     
     Engine.OnStatSecond = function ()
     {
-        var MaxCurNumTime = Engine.CurrentBlockNum;
-        if(SERVER.CurrentBlockNum === MaxCurNumTime)
+        SERVER.CurrentBlockNum = Engine.CurrentBlockNum;
+        
+        var StatNum = Math.floor(Engine.TickNum / 10);
+        if(Engine.TeraLastStatNum === StatNum)
             return;
-        SERVER.CurrentBlockNum = MaxCurNumTime;
+        Engine.TeraLastStatNum = StatNum;
         
         PrepareStatEverySecond();
         
@@ -277,7 +294,7 @@ function Init(Engine)
         
         global.CountAllNode = Engine.GetCountAddr();
         global.CountConnectedNode = Arr.length;
-        ADD_TO_STAT("MAX:HOT_NODES", global.CountConnectedNode);
+        ADD_TO_STAT("MAX:HOT_NODES", SERVER.GetHotNodesCount());
         ADD_TO_STAT("MAX:CONNECTED_NODES", global.CountConnectedNode);
         ADD_TO_STAT("MAX:ALL_NODES", global.CountAllNode);
         

@@ -70,7 +70,7 @@ function SetCodeVersionJSON()
     if(!Data.BlockNum)
     {
         Data.LevelUpdate = 16;
-        Data.BlockPeriod = 3;
+        Data.BlockPeriod = 1;
     }
     
     Data.BlockNum = CONFIG_DATA.CurBlockNum;

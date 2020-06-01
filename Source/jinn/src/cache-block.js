@@ -65,6 +65,14 @@ class CTimeCache
             if(this.DataTree.size !== this.TimeTree.size)
                 ToLogTrace("#2 Error trees size")
         }
+        else
+        {
+            var Find2 = this.TimeTree.find(Item);
+            if(Find2)
+            {
+                ToLogTrace("Error TimeTree find TimeTree tree")
+            }
+        }
         this.DataTree.insert(Item)
         this.TimeTree.insert(Item)
         

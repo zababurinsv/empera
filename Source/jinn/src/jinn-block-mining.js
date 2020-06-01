@@ -234,6 +234,8 @@ function InitClass(Engine)
         if(MinerMaxArr)
         {
             
+            Block = Engine.GetCopyBlock(Block);
+            
             Block.MinerHash = MinerMaxArr;
             Engine.CalcBlockData(Block);
             
@@ -258,7 +260,11 @@ function InitClass(Engine)
             var MiningBlock = Arr[i];
             
             if(Engine.AddBlockToChain(MiningBlock, 1))
+            {
                 Engine.ToLog("AddBlockToChain Block = " + BlockInfo(MiningBlock) + " Power=" + MiningBlock.Power, 4);
+                
+                Engine.StepTaskMax[BlockNum] = 1;
+            }
         }
     };
     Engine.AddBlockToChain = function (Block,bAddOnlyMax)

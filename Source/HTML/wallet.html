@@ -716,8 +716,10 @@
 
         //JINN
         $("idChains").disabled=!!JinnStat;
+        $("idChains").disabled=!!JinnStat;
         SetVisibleBlock("idUseDirectIPView",!JinnStat);
         SetVisibleBlock("idAMIDRow",!!JinnStat?"table-row":"none");
+        SetVisibleBlock("idSetDeltaTime",!JinnStat);
 
 
     }
@@ -1352,7 +1354,7 @@
                             <td style="width: 100px">
                                 <BR>
                                 <INPUT type="button" class="bt btdoit" onclick="SetCodeVersionJSON()" value="CODE VERS >>"><BR>
-                                <INPUT type="button" class="bt btdoit" onclick="SetCorrTimeJSON()" value="DELTA TIME >>"><BR>
+                                <INPUT type="button" class="bt btdoit" onclick="SetCorrTimeJSON()" value="DELTA TIME >>" id="idSetDeltaTime"><BR>
                                 <INPUT type="button" class="bt btdoit" onclick="SetNetConstJSON()" value="NET CONST >>"><BR>
 
                             </td>

@@ -35,7 +35,7 @@ var COUNT_LIST_LOOP = 3;
 
 
 
-global.GETNODES_VERSION = 4;
+global.GETNODES_VERSION = 5;
 
 function InitClass(Engine)
 {

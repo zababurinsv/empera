@@ -43,7 +43,7 @@ function InitClass(Engine)
             Child.EncodeZip.pipe(Child.WriterZip);
             Child.EncodeZip.on('error', function (err)
             {
-                Child.ToError("EncodeZip: " + err);
+                Child.ToError("EncodeZip: " + err, 3);
             });
             Child.WriterZip.WorkNum = Child.WorkNum;
         }

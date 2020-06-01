@@ -540,7 +540,10 @@
     function AddDiagram()
     {
         var Name = document.getElementById("idNameDiagram").value.trim();
-        AddDiagramInner(Name);
+        if(Name)
+            AddDiagramInner(Name);
+        else
+            window.Open('./HTML/stat.html','counters',920);
     }
 
     function AddDiagramInner(Name)

@@ -53,7 +53,7 @@ function InitClass(Engine)
         var Item = MapM[Method];
         if(!Item)
         {
-            Child.ToError("Error Method name: " + Method);
+            Child.ToError("Error Method name: " + Method, 3);
             return 0;
         }
         

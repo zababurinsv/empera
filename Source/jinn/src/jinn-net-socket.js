@@ -166,7 +166,7 @@ function InitClass(Engine)
     Engine.LinkSocketToChild = function (Socket,Child,ConnectType)
     {
         if(Socket.WasChild)
-            ToLogTrace("Error LinkSocketToChild was Linked");
+            ToLogTrace("Error LinkSocketToChild was Linked - " + ChildName(Child));
         
         Child.ConnectType = ConnectType;
         Socket.WasChild = 1;

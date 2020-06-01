@@ -718,6 +718,7 @@ function SetExplorerData(Data)
         return;
     CONFIG_DATA = Data;
     window.FIRST_TIME_BLOCK = Data.FIRST_TIME_BLOCK;
+    window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
     if(FirstCallDiagram)
     {
         ViewEnd(DefAccounts, CONFIG_DATA.MaxAccID, 1);

@@ -216,6 +216,23 @@ function InitClass(Engine)
     Engine.AddBlockBody = function (Context,Child,Block,Store)
     {
         
+        if(Engine.DB.GetTxDataCache)
+        {
+            var TxData = Engine.DB.GetTxDataCache(Block.TreeHash);
+            if(TxData)
+            {
+                Block.TxData = TxData;
+                Engine.SetReceiveBits(Child, Block);
+                return 1;
+            }
+        }
+        
+        var LID = Engine.FindHashInStore(Store, "LoadTreeHash", Block.TreeHash);
+        if(!LID)
+        {
+            return 1;
+        }
+        
         if(Engine.ProcessBlockOnReceive)
         {
             if(!Engine.ProcessBlockOnReceive(Child, Block))
@@ -223,7 +240,13 @@ function InitClass(Engine)
         }
         
         //we calculate the sent data hash
-        Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+        var TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+        if(!IsEqArr(TreeHash, Block.TreeHash))
+        {
+            Child.ToError("Error " + Block.BlockNum + "  BAD TreeHash=" + GetHexFromArr(Block.TreeHash) + "/" + GetHexFromArr(TreeHash),
+            3);
+            return 0;
+        }
         
         if(global.TEST_DOUBLE_LOAD_BLOCK)
         {
@@ -238,10 +261,7 @@ function InitClass(Engine)
             }
         }
         
-        Child.ToDebug("Receive Body Block:" + Block.BlockNum + "  TreeHash=" + Block.TreeHash);
-        
         //making an entry in the array of loaded blocks
-        var LID = Engine.FindHashInStore(Store, "LoadTreeHash", Block.TreeHash);
         
         var bSaveChain = Engine.DB.SetTxData(Block.BlockNum, Block.TreeHash, Block.TxData);
         if(bSaveChain)
@@ -252,7 +272,7 @@ function InitClass(Engine)
         else
         {
             
-            Child.ToLog("B:" + Block.BlockNum + " Error block body  - not found TreeHash", 4);
+            Child.ToLog("B:" + Block.BlockNum + " Error block body  - not found TreeHash", 3);
         }
         
         return LID;
@@ -392,7 +412,7 @@ function InitClass(Engine)
         if(!Data.DataHash || IsZeroArr(Data.DataHash))
             ToLogTrace("ZERO DataHash on block:" + BlockNum);
         
-        Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash).concat(GetArrFromValue(Data.BlockNum)), 10);
+        Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash).concat(GetArrFromValue(Data.BlockNum)), 13);
         Data.PowHash = Data.Hash;
         Data.Power = GetPowPowerBlock(BlockNum, Data.Hash);
     };
@@ -596,8 +616,6 @@ function InitClass(Engine)
         if(BlockNumDB === BlockSeed.BlockNum)
         {
             var BlockDB = Engine.GetBlockHeaderDB(BlockNumDB);
-            CalcAvgSumPow(BlockDB);
-            CalcAvgSumPow(BlockSeed);
             if(BlockSeed.SumPow <= BlockDB.SumPow)
             {
                 return 0;
@@ -612,7 +630,7 @@ function InitClass(Engine)
         var Miner = ReadUintFromArr(BlockSeed.MinerHash, 0);
         if(BlockSeed.BlockNum > 20)
             Engine.ToLog("SaveChainToDB: " + BlockInfo(BlockHead) + " - " + BlockInfo(BlockSeed) + "  ### SumPow=" + BlockSeed.SumPow + " Miner=" + Miner + " COUNT=" + Count,
-            3);
+            4);
         
         if(Res !== 1)
         {
@@ -639,8 +657,9 @@ function InitClass(Engine)
     Engine.CanProcessMaxHash = function (BlockNum)
     {
         var CurBlockNumTime = Engine.CurrentBlockNum;
-        var BlockNum1 = CurBlockNumTime - JINN_CONST.STEP_CALC_POW_FIRST - JINN_CONST.MAX_DELTA_PROCESSING;
-        var BlockNum2 = CurBlockNumTime - JINN_CONST.STEP_CALC_POW_LAST + 1;
+        
+        var BlockNum1 = CurBlockNumTime - JINN_CONST.STEP_NEW_BLOCK - JINN_CONST.TEST_DELTA_TIMING_HASH;
+        var BlockNum2 = CurBlockNumTime - JINN_CONST.STEP_NEW_BLOCK + JINN_CONST.TEST_NDELTA_TIMING_HASH;
         if(BlockNum1 <= BlockNum && BlockNum <= BlockNum2)
             return 1;
         

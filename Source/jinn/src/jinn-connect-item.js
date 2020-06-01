@@ -192,7 +192,7 @@ function InitClass(Engine)
         Child.ToError = function (Str,WarningLevel)
         {
             if(WarningLevel === undefined)
-                WarningLevel = 4;
+                WarningLevel = 3;
             Engine.ToError(Child, Str, WarningLevel);
         };
         Child.ToLog = function (Str,StartLevel)

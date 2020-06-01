@@ -1254,7 +1254,7 @@ function DateFromBlock(BlockNum)
     var Str;
     if(window.FIRST_TIME_BLOCK)
     {
-        var now = new Date(window.FIRST_TIME_BLOCK + BlockNum * 1000);
+        var now = new Date(window.FIRST_TIME_BLOCK + BlockNum * window.CONSENSUS_PERIOD_TIME);
         Str = formatDate(now);
     }
     else

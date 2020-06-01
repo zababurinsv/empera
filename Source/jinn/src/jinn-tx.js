@@ -35,7 +35,7 @@ function InitClass(Engine)
     Engine.AddCurrentProcessingTx = function (BlockNum,TxArr)
     {
         if(BlockNum < JINN_CONST.START_ADD_TX)
-            return;
+            return 0;
         
         var Tree = Engine.GetTreeTx(BlockNum);
         var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
@@ -54,6 +54,12 @@ function InitClass(Engine)
             if(TreeTT.WasInit)
                 Engine.AddTxToTree(TreeTT, Tx);
         }
+        
+        Engine.StepTaskTt[BlockNum] = 1;
+        Engine.StepTaskTx[BlockNum] = 1;
+        Engine.StepTaskMax[BlockNum] = 1;
+        
+        return 1;
     };
     
     Engine.SendTx = function (BlockNum)
@@ -86,8 +92,6 @@ function InitClass(Engine)
                 if(GetBit(Tx.TXSend, Child.Level))
                     continue;
                 Tx.TXSend = SetBit(Tx.TXSend, Child.Level);
-                if(!GetBit(Tx.TXSend, Child.Level))
-                    ToLog("**********Error set TXSend on " + Child.Level);
                 
                 global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Send TX=" + Tx.KEY);
                 var TTIndex = Tx.TTReceiveIndex[Child.Level];
@@ -144,34 +148,30 @@ function InitClass(Engine)
             var Find = ArrTTAll[ItemReceive.TTIndex];
             if(!Find)
             {
-                Child.ToError("Error tx index = " + ItemReceive.TTIndex);
+                Child.ToError("Error tx index = " + ItemReceive.TTIndex, 3);
                 continue;
             }
+            var Tx;
+            if(Find.IsTx)
+                Tx = Find;
+            else
+                Tx = Engine.GetTxFromReceiveBody(Find, ItemReceive.body, BlockNum, 1);
             
-            var TxRaw = Engine.GetTx(ItemReceive.body, undefined, MAX_ARR_32);
-            if(!Engine.IsValidateTx(TxRaw, "TRANSFERTX", BlockNum))
+            if(!Tx)
                 continue;
-            if(!IsEqArr(Find.HashTicket, TxRaw.HashTicket) && BlockNum > 23)
-            {
-                Child.ToLog("B=" + BlockNum + " **************** Error ticket/tx KEY:" + Find.KEY + "/" + TxRaw.KEY + " index=" + ItemReceive.TTIndex,
-                2);
-                continue;
-            }
-            Engine.DoTicketFromTx(Find, TxRaw);
-            
-            var Tx = Find;
             
             global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got TX=" + Tx.KEY);
-            if(global.glUseTicket)
+            if(global.glUseTicket && !JINN_CONST.TEST_MODE_DOUBLE_TX)
             {
                 var Find = Tree.find(Tx);
                 if(Find)
                 {
                     ErrCount++;
-                    global.JINN_WARNING >= 4 && Child.ToLog("B=" + BlockNum + " WAS TX IN CACHE : Tx=" + Tx.KEY + " TTSend=[" + Tx.TTSend + "]  TTReceive=[" + Tx.TTReceive + "]");
+                    global.JINN_WARNING >= 4 && Child.ToLog("B=" + BlockNum + " WAS TX IN CACHE : Tx=" + Tx.KEY + " TTSend=[" + Tx.TTSend + "]");
                     continue;
                 }
             }
+            Tx.TXReceive = SetBit(Tx.TXReceive, Child.Level);
             
             CountNew++;
             TxArr2.push(Tx);
@@ -194,6 +194,23 @@ function InitClass(Engine)
             Engine.StepTaskTx[BlockNum] = 1;
     };
     
+    Engine.GetTxFromReceiveBody = function (Tt,body,BlockNum,NumTx)
+    {
+        var TxRaw;
+        
+        TxRaw = Engine.GetTx(body, undefined, MAX_ARR_32, NumTx);
+        if(!Engine.IsValidateTx(TxRaw, "GetTxFromReceiveBody", BlockNum))
+            return undefined;
+        if(!IsEqArr(Tt.HashTicket, TxRaw.HashTicket))
+        {
+            Engine.ToLog("B=" + BlockNum + " **************** Error ticket/tx KEY: " + Tt.KEY + " / " + TxRaw.KEY, 3);
+            return undefined;
+        }
+        
+        Engine.DoTxFromTicket(Tt, TxRaw);
+        return Tt;
+    };
+    
     Engine.CreateTx = function (Params)
     {
         glTxNum++;
@@ -208,7 +225,7 @@ function InitClass(Engine)
         var nonce = 0;
         WriteUintToArr(body, Params.BlockNum);
         WriteUintToArr(body, nonce);
-        var Tx = Engine.GetTx(body);
+        var Tx = Engine.GetTx(body, undefined, undefined, 9);
         
         return Tx;
     };

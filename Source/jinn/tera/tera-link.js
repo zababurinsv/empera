@@ -25,7 +25,7 @@ function Init(Engine)
     
     SERVER.AddTransaction = function (Tr,ToAll)
     {
-        var Tx = Engine.GetTx(Tr.body);
+        var Tx = Engine.GetTx(Tr.body, undefined, undefined, 6);
         
         if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", Tx.num))
             return  - 4;
@@ -38,9 +38,7 @@ function Init(Engine)
             return  - 5;
         
         var TxArr = [Tx];
-        Engine.AddCurrentProcessingTx(Tx.num, TxArr);
-        
-        return 1;
+        return Engine.AddCurrentProcessingTx(Tx.num, TxArr);
     };
     let CloseOld = SERVER.Close.bind(SERVER);
     SERVER.ClearDataBase = function ()

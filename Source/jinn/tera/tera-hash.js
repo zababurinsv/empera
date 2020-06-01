@@ -13,8 +13,10 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
-    Engine.GetTx = function (body,HASH,HashPow)
+    Engine.GetTx = function (body,HASH,HashPow,TestNum)
     {
+        JINN_STAT["GetTx" + TestNum]++;
+        
         var Tx = {};
         Tx.IsTx = 1;
         Tx.nonce = ReadUintFromArr(body, body.length - 6);
@@ -231,7 +233,7 @@ function Init(Engine)
             var Arr = [];
             for(var i = 0; i < Block.arrContent.length; i++)
             {
-                var Tx = Engine.GetTx(Block.arrContent[i]);
+                var Tx = Engine.GetTx(Block.arrContent[i], undefined, undefined, 7);
                 Arr.push(Tx);
             }
         }

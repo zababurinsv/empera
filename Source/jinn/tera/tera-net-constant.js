@@ -22,11 +22,11 @@ const FORMAT_NET_CONSTANT = {NetConstVer:"uint", NetConstStartNum:"uint", PROTOC
     MAX_BLOCK_SIZE:"uint32", __RESRV02:"uint", MAX_ERR_PROCESS_COUNT:"uint", RECONNECT_MIN_TIME:"uint", MAX_LEVEL_CONNECTION:"byte",
     EXTRA_SLOTS_COUNT:"byte", MAX_CONNECT_TIMEOUT:"uint32", __RESRV03:"uint", MAX_LEVEL_NODES:"byte", MAX_RET_NODE_LIST:"uint16",
     MAX_CACHE_BODY_LENGTH:"uint32", MAX_DEPTH_FOR_SECONDARY_CHAIN:"uint32", MAX_DELTA_PROCESSING:"byte", METHOD_ALIVE_TIME:"uint32",
-    __RESRV04:"uint", STEP_ADDTX:"byte", STEP_TICKET:"byte", STEP_TX:"byte", STEP_NEW_BLOCK:"byte", STEP_CALC_POW_LAST:"byte",
-    STEP_CALC_POW_FIRST:"byte", STEP_SAVE:"byte", STEP_LAST:"byte", STEP_CLEAR_MEM:"byte", _ReservT1:"byte", _ReservT2:"uint",
-    _ReservT3:"uint", _ReservT4:"byte", _ReservT5:"uint", UNIQUE_IP_MODE:"uint16", CHECK_POINT_NUM:"uint", CHECK_POINT_HASH:"hash",
-    __RESRV05:"uint", TEST_MODE_DOUBLE_TX:"uint32", TEST_COUNT_BLOCK:"uint32", TEST_COUNT_TX:"uint32", TEST_MODE4:"uint32", TEST_MODE5:"uint32",
-    TEST_MODE6:"uint32", RESERVE_DATA:"arr370", NET_SIGN:"arr64"};
+    __RESRV04:"uint", __RESRV041:"uint", __RESRV042:"uint16", __RESRV043:"byte", STEP_ADDTX:"uint16", STEP_TICKET:"uint16", STEP_TX:"uint16",
+    STEP_NEW_BLOCK:"uint16", STEP_SAVE:"uint16", STEP_LAST:"uint16", STEP_CLEAR_MEM:"uint16", _ReservT5:"uint", UNIQUE_IP_MODE:"uint16",
+    CHECK_POINT_NUM:"uint", CHECK_POINT_HASH:"hash", __RESRV05:"uint", TEST_MODE_DOUBLE_TX:"uint32", TEST_COUNT_BLOCK:"uint32",
+    TEST_COUNT_TX:"uint32", TEST_DELTA_TIMING_TX:"uint32", TEST_DELTA_TIMING_HASH:"uint32", TEST_DIV_TIMING_HASH:"uint32", TEST_NDELTA_TIMING_HASH:"uint32",
+    TEST_MAX_TRANSFER_TX:"uint32", RUN_RESET:"uint16", RESERVE_DATA:"arr360", NET_SIGN:"arr64"};
 
 var FormatForSign = CopyNetConstant({}, FORMAT_NET_CONSTANT, 1);
 
@@ -98,7 +98,7 @@ function Init(Engine)
         if(Delta < 1)
             Delta = 1;
         
-        ToLog("Got NEW NetConstant (wait " + Delta + " s) Ver: " + Data.NetConstVer, 2);
+        ToLog("Got NEW NetConstant (wait " + Delta + " blocks) Ver: " + Data.NetConstVer, 2);
         
         CopyNetConstant(JINN_NET_CONSTANT, Data);
         
@@ -108,7 +108,7 @@ function Init(Engine)
         {
             Engine.DoNetConst();
             Engine.idTimerSetConst = 0;
-        }, Delta * 1000);
+        }, Delta * global.CONSENSUS_PERIOD_TIME);
         
         return 1;
     };
@@ -129,6 +129,20 @@ function Init(Engine)
         {
             ToLog("*************CountBlockCreate: " + CountCreate + " witch TX=" + JINN_CONST.TEST_COUNT_TX, 2);
             global.SendTestCoin(1, random(1000000), 1, JINN_CONST.TEST_COUNT_TX, CountCreate, 1);
+        }
+        if(JINN_NET_CONSTANT.RUN_RESET && JINN_NET_CONSTANT.NetConstStartNum >= Engine.CurrentBlockNum)
+        {
+            
+            if(JINN_NET_CONSTANT.RUN_RESET === 100)
+            {
+                ToLog("****ClearCommonStat*****");
+                global.ClearCommonStat();
+            }
+            if(JINN_NET_CONSTANT.RUN_RESET === 200)
+            {
+                ToLog("****RewriteAllTransactions*****");
+                SERVER.RewriteAllTransactions();
+            }
         }
     };
 }

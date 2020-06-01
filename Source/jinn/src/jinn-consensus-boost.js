@@ -323,7 +323,8 @@ function InitClass(Engine)
     };
     Engine.MAXHASH_RET = {result:"byte", errnum:"byte", result2:"byte", Reserve:"uint32", Mode:"byte", HeaderArr:[{BlockNum:"uint32",
             PrevSumPow:"uint", LinkSumHash:"hash", TreeHash:"zhash", MinerHash:"hash"}], Reserv01:"uint32", BodyArr:[{BlockNum:"uint32",
-            TxArr:["uint16"], TxRaw:[{body:"tr"}], }], BodyTreeNum:"uint32", BodyTreeHash:"zhash", };
+            TreeHash:"hash", ArrFull:[{body:"tr"}], ArrTtTx:[{HashTicket:"arr" + JINN_CONST.TX_TICKET_HASH_LENGTH, body:"tr"}], }], BodyTreeNum:"uint32",
+        BodyTreeHash:"zhash", };
     Engine.MAXHASH = function (Child,Data)
     {
         Engine.MaxHashReceiveCount++;
@@ -332,6 +333,7 @@ function InitClass(Engine)
             return {result:0, errnum:1};
         
         var BlockNum = Data.BlockNum;
+        
         if(!Engine.ProcessMaxHashOnReceive(Child, BlockNum, Data.Arr, Data.ArrRepeat))
             return {result:0, errnum:2};
         
@@ -641,14 +643,17 @@ function InitClass(Engine)
         
         var Item = {BlockNum:BlockBody.BlockNum, TreeHash:BlockBody.TreeHash};
         
-        Arr.push(Item);
+        var BlockSize = Engine.ProcessBlockOnSend(Child, Item, BlockBody.TxData);
+        if(!BlockSize)
+            return Size;
         
-        var RetSize = Engine.ProcessBlockOnSend(Child, Item, BlockBody.TxData);
-        Size += RetSize;
+        Arr.push(Item);
+        Size += BlockSize;
         
         JINN_STAT.BodyTxSend += BlockBody.TxData.length;
         
-        if(BlockBody.TxData.length && Engine.DB.SetTxDataCache)
+        var DeltaBlockNum = Engine.CurrentBlockNum - BlockNum;
+        if(DeltaBlockNum < JINN_CONST.STEP_CLEAR_MEM && BlockBody.TxData.length && Engine.DB.SetTxDataCache)
         {
             Engine.DB.SetTxDataCache(BlockBody.TreeHash, BlockBody.TxData);
         }

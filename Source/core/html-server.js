@@ -1063,7 +1063,7 @@ HTTPCaller.SetCheckNetConstant = function (Data)
     }
     
     var Num = GetCurrentBlockNumByTime();
-    var BlockNum = GetCurrentBlockNumByTime() + 10;
+    var BlockNum = GetCurrentBlockNumByTime() + Math.abs(10 * 1000 / global.CONSENSUS_PERIOD_TIME);
     if(global.JINN)
     {
         var DataJinn = Data.JINN;
@@ -1603,7 +1603,8 @@ HTTPCaller.GetHistoryTransactions = function (Params)
             }
         }
         var Result = {Value:{SumCOIN:Account.Value.SumCOIN, SumCENT:Account.Value.SumCENT}, Name:Account.Name, Currency:Account.Currency,
-            MaxBlockNum:GetCurrentBlockNumByTime(), FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, result:arr.length > 0 ? 1 : 0, History:arr};
+            MaxBlockNum:GetCurrentBlockNumByTime(), FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, result:arr.length > 0 ? 1 : 0,
+            History:arr};
         return Result;
     }
     return {result:0};

@@ -251,7 +251,7 @@ function InitClass(Engine)
     {
         if(!Tx.KEY)
         {
-            var Tx2 = Engine.GetTx(Tx.body);
+            var Tx2 = Engine.GetTx(Tx.body, undefined, undefined, 10);
             CopyObjKeys(Tx, Tx2);
         }
     };
@@ -267,7 +267,7 @@ function InitClass(Engine)
         Tx.TimePow = GetPowPower(Tx.HashPow);
     };
     
-    Engine.DoTicketFromTx = function (Tt,Tx)
+    Engine.DoTxFromTicket = function (Tt,Tx)
     {
         Tt.IsTx = Tx.IsTx;
         Tt.HASH = Tx.HASH;

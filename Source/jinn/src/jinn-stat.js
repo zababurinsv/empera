@@ -22,6 +22,10 @@ var StatKeys = {BlockTx:"BlockTx", TxSend:"TxSend", TTSend:"TtSend", HeaderLoad:
     WantBody:"-WantBody", UploadBody:"-UploadBody", DeltaTime:"-DeltaTime", ErrProcessBlock:"-ErrProcessBlock", SkipMethod:"-SkipMethod",
     TtReceive:"-TtReceive", TxReceive:"-TxReceive", TxReceiveErr:"TxReceiveErr", BanCount:"-BanCount", MainDelta:"MainDelta", ErrTt1:"-ErrTt1",
     ErrTt2:"-ErrTt2", ErrTx1:"-ErrTx1", ErrTx2:"-ErrTx2", };
+
+for(var num = 1; num <= 10; num++)
+    StatKeys["GetTx" + num] = "-GetTx" + num;
+
 if(typeof process === "object")
 {
 }
@@ -76,10 +80,12 @@ function DoNode(Engine)
     if(Engine.ROOT_NODE)
         return;
     
-    var BlockNum = Engine.CurrentBlockNum - JINN_CONST.STEP_LAST;
-    if(Engine.StatLastCurBlockNum === BlockNum)
+    var StatNum = Math.floor(Engine.TickNum / 10);
+    if(Engine.LastStatNum === StatNum)
         return;
-    Engine.StatLastCurBlockNum = BlockNum;
+    Engine.LastStatNum = StatNum;
+    
+    var BlockNum = Engine.CurrentBlockNum - JINN_CONST.STEP_LAST;
     
     JINN_STAT.ActiveCount += Engine.ConnectArray.length;
     if(Engine.GetBlockHeaderDB)
@@ -130,6 +136,6 @@ function InitClass(Engine)
         var Name = "SIZE:" + Method;
         if(!JINN_STAT.Methods[Name])
             JINN_STAT.Methods[Name] = 0;
-        JINN_STAT.Methods[Name] += Length;
+        JINN_STAT.Methods[Name] += Length / 1024;
     };
 }
