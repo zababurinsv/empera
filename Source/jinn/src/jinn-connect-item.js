@@ -64,6 +64,10 @@ function InitClass(Engine)
             return undefined;
         }
         
+        var NodesCount = Engine.GetActualNodesCount();
+        if(JINN_CONST.MAX_CONNECT_COUNT && NodesCount >= JINN_CONST.MAX_CONNECT_COUNT)
+            return undefined;
+        
         var IDStr = GetHexFromArr(IDArr);
         var Child = {IDStr:IDStr, IDArr:IDArr};
         

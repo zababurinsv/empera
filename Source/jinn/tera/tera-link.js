@@ -29,8 +29,10 @@ function Init(Engine)
         
         if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", Tx.num))
             return  - 4;
-        
-        var CurBlockNumT = Engine.CurrentBlockNum;
+        var Delta_Time = 0;
+        if(CONSENSUS_PERIOD_TIME > 1000)
+            Delta_Time = 1000;
+        var CurBlockNumT = GetCurrentBlockNumByTime(Delta_Time);
         
         if(Tx.num < CurBlockNumT)
             return  - 3;
@@ -159,6 +161,24 @@ function Init(Engine)
     {
         Engine.ChildIDCounter++;
         Child.ID = Engine.ChildIDCounter;
+    };
+    
+    SERVER.GetNodesArrWithAlive = function ()
+    {
+        var Arr = [];
+        var it = Engine.NodesTree.iterator(), Item;
+        while((Item = it.next()) !== null)
+        {
+            var Power = Engine.GetAddrPower(Item.AddrHashPOW, Item.BlockNum);
+            if(Item.System)
+                Power += global.MIN_POW_ADDRES;
+            
+            if(Power > global.MIN_POW_ADDRES)
+            {
+                Arr.push({ip:Item.ip, port:Item.ip, portweb:Item.portweb});
+            }
+        }
+        return Arr;
     };
     SERVER.ConnectToAll = function ()
     {

@@ -42,19 +42,8 @@ if(global.HTTP_HOSTING_PORT && !global.NWMODE)
     {
         if(WebProcess.Worker && WebProcess.Worker.connected)
         {
-            var arr = SERVER.GetDirectNodesArray(true, true).slice(1, 500);
-            var arr2 = [];
-            var CurTime = GetCurrentTime() - 0;
-            for(var i = 0; i < SERVER.NodesArr.length; i++)
-            {
-                var Item = SERVER.NodesArr[i];
-                if(Item.LastTime && (CurTime - Item.LastTime) < NODES_DELTA_CALC_HOUR * 3600 * 1000)
-                    arr2.push({ip:Item.ip, port:Item.port, webport:Item.webport});
-                else
-                    if(Item.LastTimeGetNode && (CurTime - Item.LastTimeGetNode) < NODES_DELTA_CALC_HOUR * 3600 * 1000)
-                        arr2.push({ip:Item.ip, port:Item.port, webport:Item.webport});
-            }
-            WebProcess.Worker.send({cmd:"NodeList", Value:arr, ValueAll:arr2});
+            var arrAlive = SERVER.GetNodesArrWithAlive();
+            WebProcess.Worker.send({cmd:"NodeList", ValueAll:arrAlive});
         }
     }, 5000);
 }

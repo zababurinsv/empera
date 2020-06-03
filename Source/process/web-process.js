@@ -46,8 +46,8 @@ process.on('message', function (msg)
             ADD_TO_STAT(msg.Name, msg.Value);
             break;
         case "NodeList":
-            HostNodeList = msg.Value;
             AllNodeList = msg.ValueAll;
+            HostNodeList = GetArrWithWebOnly(AllNodeList);
             break;
         case "NodeBlockChain":
             NodeBlockChain = msg.Value;
@@ -710,6 +710,22 @@ HostingCaller.GetDappList = function (Params)
     return {result:1, arr:arr};
 }
 
+function GetArrWithWebOnly(arrAlive)
+{
+    var arrWeb = [];
+    for(var i = 0; i < arrAlive.length; i++)
+    {
+        var Item = arrAlive[i];
+        if(Item.portweb)
+        {
+            arrWeb.push(Item);
+            if(arrWeb.length > 100)
+                break;
+        }
+    }
+    return arrWeb;
+}
+
 HostingCaller.GetNodeList = function (Params)
 {
     var arr = [];
@@ -719,7 +735,7 @@ HostingCaller.GetNodeList = function (Params)
     else
         List = HostNodeList;
     
-    var MaxNodes = 30;
+    var MaxNodes = 50;
     var len = List.length;
     var UseRandom = 0;
     if(len > MaxNodes)

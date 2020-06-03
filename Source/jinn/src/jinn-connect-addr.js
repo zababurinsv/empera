@@ -25,6 +25,8 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Addr"});
 
+global.GETNODES_VERSION = 6;
+
 const POW_MEMORY_BIT_SIZE = 18;
 const POW_MAX_ITEM_IN_MEMORRY = 1 << POW_MEMORY_BIT_SIZE;
 const POW_SHIFT_MASKA = 32 - POW_MEMORY_BIT_SIZE;
@@ -33,9 +35,6 @@ global.MIN_POW_ADDRES = 10;
 
 var COUNT_LIST_LOOP = 3;
 
-
-
-global.GETNODES_VERSION = 5;
 
 function InitClass(Engine)
 {
@@ -120,7 +119,7 @@ function InitClass(Engine)
         {
             var Power = Engine.GetAddrPower(Item.AddrHashPOW, Item.BlockNum);
             if(Item.System || global.MODELING)
-                Power += MIN_POW_ADDRES;
+                Power += global.MIN_POW_ADDRES;
             
             if(Power > global.MIN_POW_ADDRES)
             {
@@ -168,6 +167,7 @@ function InitClass(Engine)
                     Arr.push(ArrItem);
                     
                     Arr.DeltaPosLoop++;
+                    
                     return 3;
                 }
             }
@@ -177,12 +177,6 @@ function InitClass(Engine)
             Tree.insert(AddrItem);
             AddrItem.ID = Tree.size;
             Engine.InitAddrItem(AddrItem);
-        }
-        
-        if(Arr.length >= JINN_CONST.MAX_LEVEL_NODES)
-        {
-            Arr.splice(0, 1);
-            Arr.DeltaPosLoop++;
         }
         
         AddrItem.IsLocal = IsLocalIP(AddrItem.ip);
@@ -266,7 +260,9 @@ function InitClass(Engine)
             if(!WasItem.BlockNum)
                 WasItem.BlockNum = 0;
             
-            if(Engine.GetAddrPower(NewItem.AddrHashPOW, NewItem.BlockNum) > Engine.GetAddrPower(WasItem.AddrHashPOW, WasItem.BlockNum))
+            var NewAddrPower = Engine.GetAddrPower(NewItem.AddrHashPOW, NewItem.BlockNum);
+            var WasAddrPower = Engine.GetAddrPower(WasItem.AddrHashPOW, WasItem.BlockNum);
+            if(NewAddrPower > WasAddrPower)
             {
                 
                 WasItem.AddrHashPOW = NewItem.AddrHashPOW;
@@ -294,6 +290,12 @@ function InitClass(Engine)
         var Power = 1000 * (GetPowPower(AddrHashPOW)) / DeltaNum;
         return Power;
     };
+    Engine.GetAddrPowerFomItem = function (Item)
+    {
+        if(!Item.AddrHashPOW)
+            Engine.CalcAddrHash(Item);
+        return Engine.GetAddrPower(Item.AddrHashPOW, Item.BlockNum, Item.Nonce);
+    };
     Engine.CalcAddrHash = function (Item)
     {
         Item.AddrHashPOW = GetHashFromArrNum2(Item.IDArr, Item.BlockNum, Item.Nonce);
@@ -307,6 +309,9 @@ function InitClass(Engine)
     
     Engine.SetOwnIP = function (ip)
     {
+        if(!ip)
+            return;
+        
         Engine.ip = ip;
         if(Engine.ip === "0.0.0.0")
             return;

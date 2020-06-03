@@ -124,6 +124,7 @@ function InitClass(Engine)
     Engine.InitItemTT = function (Item)
     {
         Item.TTSend = 0;
+        Item.TTReceive = 0;
         Item.TXWait = 0;
         
         Item.TXSend = 0;
@@ -138,7 +139,7 @@ function InitClass(Engine)
         
         var Count = 0;
         var ArrChilds = Engine.GetTransferSession(BlockNum);
-        
+        var WasBreak = 0;
         for(var i = 0; i < ArrChilds.length; i++)
         {
             var Child = ArrChilds[i];
@@ -166,9 +167,17 @@ function InitClass(Engine)
                     continue;
                 }
                 
-                if(Tt.TTReceiveIndex[Child.Level])
+                if(JINN_CONST.TEST_NEW_TT_MODE)
                 {
-                    continue;
+                    if(Tt.FromLevel === Child.Level)
+                        continue;
+                }
+                else
+                {
+                    if(Tt.TTReceiveIndex[Child.Level])
+                    {
+                        continue;
+                    }
                 }
                 
                 global.DEBUG_KEY && Tt.KEY === DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Send TT=" + Tt.KEY + " TO Level=" + Child.Level + " TTSend=" + Tt.TTSend);
@@ -178,12 +187,22 @@ function InitClass(Engine)
                 
                 JINN_STAT.TTSend++;
                 Count++;
+                
+                if(JINN_CONST.TEST_MAX_TRANSFER_TX && TTArr.length >= JINN_CONST.TEST_MAX_TRANSFER_TX)
+                {
+                    WasBreak = 1;
+                    break;
+                }
             }
+            
             if(!TTArr.length)
                 continue;
             
             Engine.Send("TRANSFERTT", Child, {BlockNum:BlockNum, TtArr:TTArr}, function (Child,Data)
             {
+                if(JINN_CONST.TEST_NEW_TT_MODE)
+                    return;
+                
                 if(!Data || !Data.result)
                     return;
                 
@@ -224,6 +243,9 @@ function InitClass(Engine)
                 }
             });
         }
+        
+        if(!WasBreak)
+            Engine.StepTaskTt[BlockNum] = 0;
         
         return Count;
     };
@@ -271,6 +293,8 @@ function InitClass(Engine)
                 CountNew++;
                 var Key = GetHexFromArr(ItemReceive.HashTicket);
                 Tt = Engine.GetTicket(ItemReceive.HashTicket, Key, BlockNum);
+                
+                Tt.FromLevel = Child.Level;
                 Tt.TxCounter = 0;
                 
                 Key === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got NEW TT=" + Key);
@@ -292,6 +316,8 @@ function InitClass(Engine)
             }
             
             RetArrIndex.push(Tt.TTIndex);
+            Tt.TTReceive = SetBit(Tt.TTReceive, Child.Level);
+            
             if(Tt.TTReceiveIndex)
             {
                 Tt.TTReceiveIndex[Child.Level] = 1 + ItemReceive.TTIndex;
@@ -304,6 +330,9 @@ function InitClass(Engine)
         {
             Engine.StepTaskTt[BlockNum] = 1;
         }
+        
+        if(JINN_CONST.TEST_NEW_TT_MODE)
+            return {result:1, ArrIndex:[], TxArr:[]};
         
         return {result:1, ArrIndex:RetArrIndex, TxArr:RetTxArr};
     };

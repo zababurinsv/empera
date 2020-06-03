@@ -151,7 +151,10 @@ window.SetBlockChainConstant = function (Data)
     {
         var CurrentTime = Date.now() + DELTA_CURRENT_TIME2;
         var CurTimeNum = CurrentTime - FIRST_TIME_BLOCK;
-        var StartBlockNum = Math.floor((CurTimeNum + CONSENSUS_PERIOD_TIME) / CONSENSUS_PERIOD_TIME);
+        var Delta_Time = 0;
+        if(CONSENSUS_PERIOD_TIME > 1000)
+            Delta_Time = 1000;
+        var StartBlockNum = Math.floor((CurTimeNum + CONSENSUS_PERIOD_TIME + Delta_Time) / CONSENSUS_PERIOD_TIME);
         return StartBlockNum;
     };
     

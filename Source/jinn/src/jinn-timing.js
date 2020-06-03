@@ -307,13 +307,6 @@ function DoNode(Engine)
                 Engine.StepTaskMax[CurBlockNumT - JINN_CONST.STEP_NEW_BLOCK - Delta] = 2;
         }
     
-    if(JINN_CONST.TEST_DELTA_TIMING_TX)
-        for(var Delta = 0; Delta < JINN_CONST.TEST_DELTA_TIMING_TX; Delta++)
-        {
-            Engine.StepTaskTt[CurBlockNumT - JINN_CONST.STEP_TICKET - Delta] = 2;
-            Engine.StepTaskTx[CurBlockNumT - JINN_CONST.STEP_TX - Delta] = 2;
-        }
-    
     for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING; BlockNum <= CurBlockNumT; BlockNum++)
     {
         var Delta = CurBlockNumT - BlockNum;
@@ -324,14 +317,12 @@ function DoNode(Engine)
             if(Engine.StepTaskTt[BlockNum])
             {
                 Engine.SendTicket(BlockNum);
-                Engine.StepTaskTt[BlockNum] = 0;
             }
         
         if(Delta >= JINN_CONST.STEP_TX)
             if(Engine.StepTaskTx[BlockNum])
             {
                 Engine.SendTx(BlockNum);
-                Engine.StepTaskTx[BlockNum] = 0;
             }
         
         if(Delta >= JINN_CONST.STEP_NEW_BLOCK - JINN_CONST.TEST_NDELTA_TIMING_HASH)

@@ -64,6 +64,17 @@ function Init(Engine)
         return Arr;
     };
     
+    function GetNodesArr()
+    {
+        var Arr = [];
+        var it = Engine.NodesTree.iterator(), Item;
+        while((Item = it.next()) !== null)
+        {
+            Arr.push("" + Item.ip + ":" + Item.port + " pow=" + Engine.GetAddrPowerFomItem(Item));
+        }
+        return Arr;
+    };
+    
     function AddNodeToArr(Arr,Node)
     {
         if(!Node.IDStr)

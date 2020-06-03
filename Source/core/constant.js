@@ -8,7 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 2064;
+global.UPDATE_CODE_VERSION_NUM = 2076;
 global.MIN_JINN_VERSION_NUM = 2046;
 
 global.MIN_CODE_VERSION_NUM = 1850;

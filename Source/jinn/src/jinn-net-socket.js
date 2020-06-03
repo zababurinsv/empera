@@ -45,7 +45,9 @@ function InitClass(Engine)
                 Engine.SetEventsProcessing(Socket, Child, "Client", 1);
             }
             else
+            {
                 Engine.CloseSocket(Socket, Child, "Error child");
+            }
         });
         
         Engine.Server.on('close', function ()

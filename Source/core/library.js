@@ -103,10 +103,12 @@ global.BufLib = require("../core/buffer");
 require('../HTML/JS/sha3.js');
 require('../HTML/JS/coinlib.js');
 
-global.GetCurrentBlockNumByTime = function GetCurrentBlockNumByTime()
+global.GetCurrentBlockNumByTime = function GetCurrentBlockNumByTime(Delta_Time)
 {
+    if(!Delta_Time)
+        Delta_Time = 0;
     var CurTimeNum = GetCurrentTime() - FIRST_TIME_BLOCK;
-    var StartBlockNum = Math.trunc((CurTimeNum + CONSENSUS_PERIOD_TIME) / CONSENSUS_PERIOD_TIME);
+    var StartBlockNum = Math.trunc((CurTimeNum + CONSENSUS_PERIOD_TIME + Delta_Time) / CONSENSUS_PERIOD_TIME);
     return StartBlockNum;
 }
 

@@ -60,7 +60,7 @@ function Init(Engine)
     {
         var AddrData = LoadParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), {});
         
-        if(AddrData.AddrItem)
+        if(AddrData.AddrItem && AddrData.AddrItem.ip)
         {
             Engine.AddrItem = AddrData.AddrItem;
         }

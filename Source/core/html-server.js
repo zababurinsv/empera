@@ -1063,7 +1063,7 @@ HTTPCaller.SetCheckNetConstant = function (Data)
     }
     
     var Num = GetCurrentBlockNumByTime();
-    var BlockNum = GetCurrentBlockNumByTime() + Math.abs(10 * 1000 / global.CONSENSUS_PERIOD_TIME);
+    var BlockNum = GetCurrentBlockNumByTime() + Math.floor(10 * 1000 / global.CONSENSUS_PERIOD_TIME);
     if(global.JINN)
     {
         var DataJinn = Data.JINN;

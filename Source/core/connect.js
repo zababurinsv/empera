@@ -826,6 +826,23 @@ module.exports = class CConnect extends require("./connect2")
         return Count;
     }
     
+    GetNodesArrWithAlive()
+    {
+        var arr2 = [];
+        var CurTime = GetCurrentTime() - 0;
+        for(var i = 0; i < this.NodesArr.length; i++)
+        {
+            var Item = this.NodesArr[i];
+            if(Item.LastTime && (CurTime - Item.LastTime) < NODES_DELTA_CALC_HOUR * 3600 * 1000)
+                arr2.push({ip:Item.ip, port:Item.port, webport:Item.webport})
+            else
+                if(Item.LastTimeGetNode && (CurTime - Item.LastTimeGetNode) < NODES_DELTA_CALC_HOUR * 3600 * 1000)
+                    arr2.push({ip:Item.ip, port:Item.port, webport:Item.webport})
+        }
+        
+        return arr2;
+    }
+    
     GetDirectNodesArray(bAll, bWebPort, bGetAddrArr)
     {
         var ret = [];

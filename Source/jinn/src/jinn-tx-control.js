@@ -84,9 +84,16 @@ function InitClass(Engine)
     
     Engine.CheckSizeTXArray = function (Child,TxArr)
     {
+        
+        if(JINN_CONST.TEST_MAX_TRANSFER_TX && TxArr.length > JINN_CONST.TEST_MAX_TRANSFER_TX)
+        {
+            Child.ToError("#1 Error Tx Arr length = " + TxArr.length, 4);
+            TxArr.length = JINN_CONST.TEST_MAX_TRANSFER_TX;
+        }
+        
         if(TxArr.length > JINN_CONST.MAX_TRANSACTION_COUNT)
         {
-            Child.ToError("Error Tx Arr length = " + TxArr.length, 4);
+            Child.ToError("#2 Error Tx Arr length = " + TxArr.length, 4);
             TxArr.length = JINN_CONST.MAX_TRANSACTION_COUNT;
         }
     };

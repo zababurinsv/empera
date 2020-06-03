@@ -64,7 +64,23 @@ function InitClass(Engine)
     
     Engine.SendTx = function (BlockNum)
     {
+        if(JINN_CONST.TEST_NEW_TT_MODE)
+            Engine.SendTx1(BlockNum);
+        else
+            Engine.SendTx0(BlockNum);
+    };
+    Engine.TRANSFERTX = function (Child,Data)
+    {
+        if(JINN_CONST.TEST_NEW_TT_MODE)
+            Engine.TRANSFERTX1(Child, Data);
+        else
+            Engine.TRANSFERTX0(Child, Data);
+    };
+    
+    Engine.SendTx1 = function (BlockNum)
+    {
         var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
+        var WasBreak = 0;
         var ArrChilds = Engine.GetTransferSession(BlockNum);
         for(var i = 0; i < ArrChilds.length; i++)
         {
@@ -84,13 +100,66 @@ function InitClass(Engine)
                 if(!Engine.IsValidateTx(Tx, "SendTx", BlockNum))
                     continue;
                 
+                if(GetBit(Tx.TXSend, Child.Level))
+                    continue;
+                
+                if(GetBit(Tx.TTReceive, Child.Level))
+                    continue;
+                Tx.TXSend = SetBit(Tx.TXSend, Child.Level);
+                
+                global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Send TX=" + Tx.KEY);
+                Arr.push({TTIndex:0, HashTicket:Tx.HashTicket, body:Tx.body});
+                JINN_STAT.TxSend++;
+                
+                if(JINN_CONST.TEST_MAX_TRANSFER_TX && Arr.length >= JINN_CONST.TEST_MAX_TRANSFER_TX)
+                {
+                    WasBreak = 1;
+                    break;
+                }
+            }
+            
+            if(!Arr.length)
+                continue;
+            
+            Engine.Send("TRANSFERTX", Child, {BlockNum:BlockNum, TxArr:Arr});
+        }
+        
+        if(!WasBreak)
+            Engine.StepTaskTx[BlockNum] = 0;
+    };
+    
+    Engine.SendTx0 = function (BlockNum)
+    {
+        var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
+        var WasBreak = 0;
+        var ArrChilds = Engine.GetTransferSession(BlockNum);
+        for(var i = 0; i < ArrChilds.length; i++)
+        {
+            var Child = ArrChilds[i];
+            if(!Child)
+            {
+                if(Child)
+                    JINN_STAT.ErrTx1++;
+                continue;
+            }
+            
+            var Arr = [];
+            for(var t = 0; t < ArrTop.length; t++)
+            {
+                var Tx = ArrTop[t];
+                
+                if(!Engine.IsValidateTx(Tx, "SendTx", BlockNum))
+                    continue;
+                if(!Tx.TTReceiveIndex)
+                    continue;
+                
+                if(GetBit(Tx.TXSend, Child.Level))
+                    continue;
+                
                 if(!GetBit(Tx.TXWait, Child.Level))
                 {
                     continue;
                 }
-                
-                if(GetBit(Tx.TXSend, Child.Level))
-                    continue;
                 Tx.TXSend = SetBit(Tx.TXSend, Child.Level);
                 
                 global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Send TX=" + Tx.KEY);
@@ -102,15 +171,115 @@ function InitClass(Engine)
                 
                 Arr.push({TTIndex:TTIndex - 1, body:Tx.body});
                 JINN_STAT.TxSend++;
+                
+                if(JINN_CONST.TEST_MAX_TRANSFER_TX && Arr.length >= JINN_CONST.TEST_MAX_TRANSFER_TX)
+                {
+                    WasBreak = 1;
+                    break;
+                }
             }
+            
             if(!Arr.length)
                 continue;
             
             Engine.Send("TRANSFERTX", Child, {BlockNum:BlockNum, TxArr:Arr});
         }
+        
+        if(!WasBreak)
+            Engine.StepTaskTx[BlockNum] = 0;
     };
-    Engine.TRANSFERTX_SEND = {Reserve:"uint", BlockNum:"uint32", TxArr:[{TTIndex:"uint16", body:"tr"}]};
-    Engine.TRANSFERTX = function (Child,Data)
+    
+    Engine.TRANSFERTX_SEND = {Reserve:"uint", BlockNum:"uint32", TxArr:[{TTIndex:"uint16", HashTicket:"arr" + JINN_CONST.TX_TICKET_HASH_LENGTH,
+            body:"tr"}]};
+    Engine.TRANSFERTX1 = function (Child,Data)
+    {
+        if(!Data)
+            return;
+        
+        var TxArr = Data.TxArr;
+        var BlockNum = Data.BlockNum;
+        
+        if(!Engine.CanProcessBlock(BlockNum, JINN_CONST.STEP_TX))
+        {
+            Engine.ToError(Child, "TRANSFERTX : CanProcessBlock Error BlockNum=" + BlockNum, 4);
+            return;
+        }
+        
+        Engine.CheckHotConnection(Child);
+        if(!Child || !Child.IsHot())
+        {
+            JINN_STAT.ErrTx2++;
+            return;
+        }
+        
+        Engine.CheckSizeTXArray(Child, TxArr);
+        
+        var Tree = Engine.GetTreeTx(BlockNum);
+        var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
+        var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
+        
+        var TxArr2 = [];
+        var ErrCount = 0;
+        var CountNew = 0;
+        for(var t = 0; t < TxArr.length; t++)
+        {
+            JINN_STAT.TxReceive++;
+            
+            var ItemReceive = TxArr[t];
+            
+            var Tx;
+            var Find = TreeTTAll.find(ItemReceive);
+            if(!Find)
+            {
+                Tx = Engine.GetTx(ItemReceive.body, undefined, undefined, 1);
+                Tx.FromLevel = Child.Level + 100;
+            }
+            else
+            {
+                if(Find.IsTx)
+                    Tx = Find;
+                else
+                    Tx = Engine.GetTxFromReceiveBody(Find, ItemReceive.body, BlockNum, 1);
+            }
+            if(!Engine.IsValidateTx(Tx, "TRANSFERTX", BlockNum))
+                return undefined;
+            
+            global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got TX=" + Tx.KEY);
+            if(global.glUseTicket && global.JINN_WARNING >= 4)
+            {
+                var FindTT = Tree.find(Tx);
+                if(FindTT)
+                {
+                    ErrCount++;
+                    Child.ToLog("B=" + BlockNum + " WAS TX = " + Tx.KEY + " IN CACHE, Find=" + FindTT.KEY + " TTSend=" + FindTT.TTSend + " TTReceive=" + FindTT.TTReceive + "  from " + FindTT.FromLevel);
+                }
+                else
+                {
+                }
+            }
+            Tx.TXReceive = SetBit(Tx.TXReceive, Child.Level);
+            
+            CountNew++;
+            TxArr2.push(Tx);
+        }
+        
+        if(ErrCount)
+        {
+            if(!Child.INFO_DATA)
+                Child.INFO_DATA = {};
+            if(!Child.INFO_DATA.TxReceiveErr)
+                Child.INFO_DATA.TxReceiveErr = 0;
+            
+            JINN_STAT.TxReceiveErr += ErrCount;
+            Child.INFO_DATA.TxReceiveErr += ErrCount;
+        }
+        
+        Engine.AddCurrentProcessingTx(BlockNum, TxArr2);
+        
+        if(CountNew)
+            Engine.StepTaskTx[BlockNum] = 1;
+    };
+    Engine.TRANSFERTX0 = function (Child,Data)
     {
         if(!Data)
             return;
@@ -161,16 +330,6 @@ function InitClass(Engine)
                 continue;
             
             global.DEBUG_KEY && Tx.KEY === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got TX=" + Tx.KEY);
-            if(global.glUseTicket && !JINN_CONST.TEST_MODE_DOUBLE_TX)
-            {
-                var Find = Tree.find(Tx);
-                if(Find)
-                {
-                    ErrCount++;
-                    global.JINN_WARNING >= 4 && Child.ToLog("B=" + BlockNum + " WAS TX IN CACHE : Tx=" + Tx.KEY + " TTSend=[" + Tx.TTSend + "]");
-                    continue;
-                }
-            }
             Tx.TXReceive = SetBit(Tx.TXReceive, Child.Level);
             
             CountNew++;

@@ -31,7 +31,7 @@ function InitClass(Engine)
         
         var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
             RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum, FindSelfIP:Child.FindSelfIP,
-        };
+            RemoteIP:Child.ip, };
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
     };
     Engine.HANDSHAKE_SEND = {Protocol:"str20", Shard:"str5", RemoteIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash",
@@ -62,9 +62,9 @@ function InitClass(Engine)
         else
             if(IsEqArr(Engine.RndHash, Data.RndHash))
             {
-                if(Engine.ip === "0.0.0.0" && !IsLocalIP(Data.RemoteIP))
+                if(Data.RemoteIP && Engine.ip === "0.0.0.0" && !IsLocalIP(Data.RemoteIP))
                 {
-                    Child.ToLogNet("Set self IP: " + Data.RemoteIP, 4);
+                    Child.ToLogNet("Set self IP: " + Data.RemoteIP, 3);
                     Engine.SetOwnIP(Data.RemoteIP);
                 }
                 

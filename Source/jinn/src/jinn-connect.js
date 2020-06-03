@@ -157,6 +157,17 @@ function InitClass(Engine)
                 CountHot++;
         }
     };
+    Engine.ConnectToNode = function (ip,port)
+    {
+        var Child = Engine.RetNewConnectByIPPort(ip, port);
+        if(!Child)
+            return  - 1;
+        
+        if(Engine.SendConnectReq(Child))
+            return 1;
+        else
+            return  - 2;
+    };
     
     Engine.SendConnectReq = function (Child)
     {
@@ -325,6 +336,22 @@ function InitClass(Engine)
         }
         
         return ArrLevels;
+    };
+    
+    Engine.GetActualNodesCount = function ()
+    {
+        var Count = 0;
+        
+        for(var i = 0; i < Engine.ConnectArray.length; i++)
+        {
+            var Child = Engine.ConnectArray[i];
+            if(!Child || !Child.IsOpen())
+                continue;
+            
+            Count++;
+        }
+        
+        return Count;
     };
     Engine.DoConnectLevels = function ()
     {
