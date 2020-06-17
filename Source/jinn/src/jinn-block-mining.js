@@ -139,7 +139,7 @@ function InitClass(Engine)
                 Block = Engine.GetMaxPowerBlockFromArr(ArrBlock, PrevBlock.SumHash);
                 if(!Block)
                 {
-                    Block = Engine.GetNewBlock(PrevBlock);
+                    Block = Engine.GetNewBlock(PrevBlock, 1);
                     if(Block)
                     {
                         Block.CreateMode = CreateMode;
@@ -166,10 +166,14 @@ function InitClass(Engine)
         return MaxBlock;
     };
     
-    Engine.PrepareBodyCurrentTx = function (Block)
+    Engine.FillBodyFromTransfer = function (Block)
     {
-        Block.TxData = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
-        Engine.SortBlock(Block);
+        Block.TxData = Engine.GetArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
+        Engine.SortBlockPriority(Block);
+        Engine.CheckSizeBlockTXArray(Block.TxData);
+        
+        if(Engine.FillBodyFromTransferNext)
+            Engine.FillBodyFromTransferNext(Block);
     };
     
     Engine.FillBodyTransferTx = function (Block)
@@ -182,22 +186,24 @@ function InitClass(Engine)
         {
             Block.TreeHash = ZERO_ARR_32;
             Block.TxCount = 0;
-            return;
+            return 0;
         }
         
         var Find = Engine.CurrentBodyTx.FindItemInCache(Block);
-        if(!Find)
+        if(Find)
         {
-            Engine.PrepareBodyCurrentTx(Block);
+            Engine.CopyBodyTx(Block, Find);
+        }
+        else
+        {
+            Engine.FillBodyFromTransfer(Block);
             
             Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
             Block.TxCount = Block.TxData.length;
             Engine.CurrentBodyTx.AddItemToCache(Block);
         }
-        else
-        {
-            Engine.CopyBodyTx(Block, Find);
-        }
+        
+        return 1;
     };
     Engine.CopyBodyTx = function (BlockDst,BlockSrc)
     {

@@ -79,7 +79,9 @@ function InitClass(Engine)
     
     Engine.SendTx1 = function (BlockNum)
     {
-        var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
+        
+        var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum], BlockNum, 1);
+        
         var WasBreak = 0;
         var ArrChilds = Engine.GetTransferSession(BlockNum);
         for(var i = 0; i < ArrChilds.length; i++)
@@ -111,7 +113,7 @@ function InitClass(Engine)
                 Arr.push({TTIndex:0, HashTicket:Tx.HashTicket, body:Tx.body});
                 JINN_STAT.TxSend++;
                 
-                if(JINN_CONST.TEST_MAX_TRANSFER_TX && Arr.length >= JINN_CONST.TEST_MAX_TRANSFER_TX)
+                if(JINN_CONST.MAX_TRANSFER_TX && Arr.length >= JINN_CONST.MAX_TRANSFER_TX)
                 {
                     WasBreak = 1;
                     break;
@@ -130,7 +132,9 @@ function InitClass(Engine)
     
     Engine.SendTx0 = function (BlockNum)
     {
-        var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
+        
+        var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum], BlockNum, 1);
+        
         var WasBreak = 0;
         var ArrChilds = Engine.GetTransferSession(BlockNum);
         for(var i = 0; i < ArrChilds.length; i++)
@@ -172,7 +176,7 @@ function InitClass(Engine)
                 Arr.push({TTIndex:TTIndex - 1, body:Tx.body});
                 JINN_STAT.TxSend++;
                 
-                if(JINN_CONST.TEST_MAX_TRANSFER_TX && Arr.length >= JINN_CONST.TEST_MAX_TRANSFER_TX)
+                if(JINN_CONST.MAX_TRANSFER_TX && Arr.length >= JINN_CONST.MAX_TRANSFER_TX)
                 {
                     WasBreak = 1;
                     break;
@@ -212,7 +216,7 @@ function InitClass(Engine)
             return;
         }
         
-        Engine.CheckSizeTXArray(Child, TxArr);
+        Engine.CheckSizeTransferTXArray(Child, TxArr);
         
         var Tree = Engine.GetTreeTx(BlockNum);
         var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
@@ -300,7 +304,7 @@ function InitClass(Engine)
             return;
         }
         
-        Engine.CheckSizeTXArray(Child, TxArr);
+        Engine.CheckSizeTransferTXArray(Child, TxArr);
         
         var Tree = Engine.GetTreeTx(BlockNum);
         var ArrTTAll = Engine.GetArrTicketAll(BlockNum);

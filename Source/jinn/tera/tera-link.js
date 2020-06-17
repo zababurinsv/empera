@@ -29,9 +29,7 @@ function Init(Engine)
         
         if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", Tx.num))
             return  - 4;
-        var Delta_Time = 0;
-        if(CONSENSUS_PERIOD_TIME > 1000)
-            Delta_Time = 1000;
+        var Delta_Time = CONSENSUS_PERIOD_TIME / 2;
         var CurBlockNumT = GetCurrentBlockNumByTime(Delta_Time);
         
         if(Tx.num < CurBlockNumT)
@@ -41,6 +39,28 @@ function Init(Engine)
         
         var TxArr = [Tx];
         return Engine.AddCurrentProcessingTx(Tx.num, TxArr);
+    };
+    
+    Engine.GetTxSenderNum = function (Tx,BlockNum)
+    {
+        if(JINN_CONST.TX_PRIORITY_RND_SENDER)
+            return (Tx.HashTicket[0] * 256 + Tx.HashTicket[1]) % JINN_CONST.TX_PRIORITY_RND_SENDER;
+        
+        var type = Tx.body[0];
+        var App = DAppByType[type];
+        if(App)
+            return App.GetSenderNum(BlockNum, Tx.body);
+        else
+            return 0;
+    };
+    
+    Engine.GetSenderBaseValue = function (SenderNum)
+    {
+        var RestData = DApps.Accounts.ReadRest(SenderNum);
+        if(RestData)
+            return RestData.Arr[1].Value.SumCOIN;
+        else
+            return 0;
     };
     let CloseOld = SERVER.Close.bind(SERVER);
     SERVER.ClearDataBase = function ()

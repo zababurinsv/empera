@@ -616,7 +616,7 @@ function InitClass(Engine)
         if(BlockNumDB === BlockSeed.BlockNum)
         {
             var BlockDB = Engine.GetBlockHeaderDB(BlockNumDB);
-            if(BlockSeed.SumPow <= BlockDB.SumPow)
+            if(BlockSeed.SumPow < BlockDB.SumPow || BlockSeed.SumPow === BlockDB.SumPow && CompareArr(BlockDB.Hash, BlockSeed.Hash) <= 0)
             {
                 return 0;
             }
@@ -630,7 +630,7 @@ function InitClass(Engine)
         var Miner = ReadUintFromArr(BlockSeed.MinerHash, 0);
         if(BlockSeed.BlockNum > 20)
             Engine.ToLog("SaveChainToDB: " + BlockInfo(BlockHead) + " - " + BlockInfo(BlockSeed) + "  ### SumPow=" + BlockSeed.SumPow + " Miner=" + Miner + " COUNT=" + Count,
-            4);
+            3);
         
         if(Res !== 1)
         {

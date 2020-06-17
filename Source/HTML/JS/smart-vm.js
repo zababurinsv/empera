@@ -642,6 +642,7 @@ ListF.$ReadAccount = function (ID)
     return GET_ACCOUNT(Account);
 }
 
+
 ListF.$ReadSmart = function (ID)
 {
     if(RunContext.BlockNum < global.UPDATE_CODE_2)
@@ -966,6 +967,7 @@ function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,M
         context.GetBlockHeader = StaticGetBlockHeader;
         context.GetBlockNumDB = StaticGetBlockNumDB;
         context.GetSmart = StaticGetSmart;
+        context.GetMaxAccountNum = StaticGetMaxAccountNum;
     }
     
     var LocalRunContext = {Block:Block, Smart:Smart, Account:Account, BlockNum:BlockNum, TrNum:TrNum, context:context};
@@ -1030,6 +1032,7 @@ function StaticGetBlockHeader(BlockNum)
 }
 function StaticGetBlockNumDB()
 {
+    DO(100);
     return SERVER.GetMaxNumBlockDB();
 }
 function StaticGetSmart(Num)
@@ -1037,6 +1040,11 @@ function StaticGetSmart(Num)
     DO(100);
     var Smart = DApps.Smart.ReadSmart(Num);
     return GET_SMART(Smart);
+}
+function StaticGetMaxAccountNum()
+{
+    DO(100);
+    return DApps.Accounts.GetMaxAccount();
 }
 
 InitEval();

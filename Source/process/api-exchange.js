@@ -363,7 +363,11 @@ global.DELTA_FOR_TIME_TX = 1;
 
 function GetBlockNumTr(arr)
 {
-    var BlockNum = DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime();
+    var Delta_Time = 0;
+    if(CONSENSUS_PERIOD_TIME > 2000)
+        Delta_Time = 2000;
+    
+    var BlockNum = DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime(Delta_Time);
     if(arr[0] === TYPE_TRANSACTION_CREATE)
     {
         var BlockNum2 = Math.floor(BlockNum / 10) * 10;

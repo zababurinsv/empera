@@ -79,7 +79,7 @@ function InitClass(Engine)
             return;
         Tree.WasInit = 1;
         
-        var ArrTx = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[BlockNum]);
+        var ArrTx = Engine.GetArrayFromTree(Engine.ListTreeTx[BlockNum]);
         var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
         var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
         
@@ -133,9 +133,12 @@ function InitClass(Engine)
     
     Engine.SendTicket = function (BlockNum)
     {
+        if(!glUseTicket)
+            return;
+        
         Engine.InitTicket(BlockNum);
         
-        var ArrTop = Engine.GetTopTxArrayFromTree(Engine.ListTreeTicket[BlockNum]);
+        var ArrTop = Engine.GetArrayFromTree(Engine.ListTreeTicket[BlockNum]);
         
         var Count = 0;
         var ArrChilds = Engine.GetTransferSession(BlockNum);
@@ -188,7 +191,7 @@ function InitClass(Engine)
                 JINN_STAT.TTSend++;
                 Count++;
                 
-                if(JINN_CONST.TEST_MAX_TRANSFER_TX && TTArr.length >= JINN_CONST.TEST_MAX_TRANSFER_TX)
+                if(JINN_CONST.MAX_TRANSFER_TX && TTArr.length >= JINN_CONST.MAX_TRANSFER_TX)
                 {
                     WasBreak = 1;
                     break;
@@ -277,7 +280,7 @@ function InitClass(Engine)
         var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
         
         var TTArr = Data.TtArr;
-        Engine.CheckSizeTXArray(Child, TTArr);
+        Engine.CheckSizeTransferTXArray(Child, TTArr);
         
         var RetArrIndex = [];
         var RetTxArr = [];

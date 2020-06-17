@@ -1,4 +1,5 @@
 <!DOCTYPE HTML>
+<!DOCTYPE HTML>
 
 <html>
 <html lang="en">
@@ -36,7 +37,7 @@
 
 <script type="text/javascript" src="/HTML/JS/wallet-hash-info.js"></script>
 
-
+<script type="text/javascript" src="./JS/sign-lib-min.js"></script>
 
 
 <script>
@@ -305,8 +306,8 @@
     }
     function SetVisibleItemByTypeKey()
     {
-        var Select=$("idTypeKey");
-        if(Select.value==="brain")
+        var SelectType=$("idTypeKey").value;
+        if(SelectType==="brain")
         {
             SetVisibleBlock("idViewKeyNew2","table-row");
             SetVisibleBlock("idBtConvertKey","inline-block");
@@ -318,6 +319,15 @@
             SetVisibleBlock("idBtConvertKey",false);
             SetVisibleBlock("idBtSaveKey","inline-block");
         }
+
+        var StrPrivHex=$("idKeyNew").value;
+        if(StrPrivHex && window.SignLib)
+        {
+            var PrivKeyArr = GetArrFromHex($("idKeyNew").value);
+            $("idPubKey").innerText=GetHexFromArr(SignLib.publicKeyCreate(PrivKeyArr, 1));
+        }
+
+
     }
 
     //SEND
@@ -629,8 +639,6 @@
 
         SetArrLog(Data.ArrLog);
 
-        // if($("idPubKey").innerText!==PubKeyStr)
-        //     $("idPubKey").innerText=PubKeyStr;
         if($("idDataPath").innerText!==Data.DATA_PATH)
             $("idDataPath").innerText=Data.DATA_PATH;
 //        if($("idNodeAddr").innerText!==Data.NodeAddrStr)
@@ -1390,7 +1398,6 @@
 
             <DIV id="wallet_config_tab" style="display: none;float: left">
                 Wallet data path: <B id="idDataPath"></B><BR>
-<!--                Public key: <B id="idPubKey"></B><BR>-->
                 <!--Node addr: <B id="idNodeAddr"></B><BR>-->
 
 
@@ -1420,6 +1427,11 @@
 
                 <DIV id="edit_keys" style="display: none">
                     <table class="form_input keys" id="grid_edit_key">
+                        <tr style="font-family: monospace;">
+                            <td style="padding-left: 7px"> Public key:</td>
+                            <td><DIV id="idPubKey"></DIV></td>
+                        </tr>
+
                         <tr>
                             <td>
                                 <select size="1" id="idTypeKey" onkeyup="SelectTypeKey();" onchange="SelectTypeKey();">
@@ -1433,6 +1445,8 @@
                             <td>You can repeat the secret words:</td>
                             <td><INPUT type="string" id="idKeyNew2" value=""></td>
                         </tr>
+
+
 
                         <tr>
                             <td></td>

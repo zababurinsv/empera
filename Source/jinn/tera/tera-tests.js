@@ -11,7 +11,7 @@
 
 var TaskArr = [];
 global.SendTestCoin = SendTestCoin;
-function SendTestCoin(FromID,ToID,Sum,Count,TimeRepeat,bClear)
+function SendTestCoin(FromID,ToID,Sum,Count,TimeRepeat,bClear,Mode)
 {
     if(bClear)
         TaskArr.length = 0;
@@ -19,7 +19,7 @@ function SendTestCoin(FromID,ToID,Sum,Count,TimeRepeat,bClear)
     if(!TimeRepeat)
         TimeRepeat = 1;
     for(var i = 0; i < TimeRepeat; i++)
-        TaskArr.unshift({FromID:FromID, ToID:ToID, Sum:Sum, Count:Count});
+        TaskArr.unshift({FromID:FromID, ToID:ToID, Sum:Sum, Count:Count, Mode:Mode});
     return TaskArr.length;
 }
 
@@ -34,7 +34,24 @@ function SendTestCoinInner(FromID,ToID,Sum,Count,Mode)
     var Params = {"FromID":FromID, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Test", "Confirm":0};
     
     var WasSend = 0;
-    if(!Mode)
+    if(Mode)
+    {
+        var BlockNum = 0;
+        var TxArr = [];
+        for(var i = 0; i < Count; i++)
+        {
+            var Res = WebApi2.Send(Params, 0, 0, 0, 2);
+            if(Res.result)
+            {
+                var Tx = Engine.GetTx(Res.Body, undefined, undefined, 6);
+                TxArr.push(Tx);
+                BlockNum = Tx.num;
+            }
+        }
+        
+        Engine.AddCurrentProcessingTx(BlockNum, TxArr);
+    }
+    else
     {
         for(var i = 0; i < Count; i++)
         {
@@ -46,7 +63,10 @@ function SendTestCoinInner(FromID,ToID,Sum,Count,Mode)
                 if(Res2 ===  - 3)
                     global.DELTA_FOR_TIME_TX++;
                 if(Res2 === 1)
+                {
+                    
                     WasSend++;
+                }
             }
         }
         return WasSend;
@@ -61,6 +81,7 @@ function Init(Engine)
         
         if(!TaskArr.length)
         {
+            
             return;
         }
         
@@ -69,8 +90,10 @@ function Init(Engine)
         
         if(!Item.Count)
         {
+            
             return;
         }
+        
         SendTestCoinInner(Item.FromID, Item.ToID, Item.Sum, Item.Count, Item.Mode);
     };
     

@@ -151,7 +151,6 @@ class CDBChain
         
         if(Block.BlockNum >= this.MaxSumPowNum)
         {
-            
             this.MaxSumPowNum = Block.BlockNum
             this.MaxSumPow = Block.SumPow
         }
@@ -168,6 +167,9 @@ class CDBChain
         
         if(!this.WriteMainIndex(Block.BlockNum, Block.Position))
             return 0;
+        
+        if(this.OnSaveMainDB)
+            this.OnSaveMainDB(Block)
         
         this.TruncateMain(Block.BlockNum)
         
@@ -449,6 +451,9 @@ class CDBChain
         var PrevBlock = this.GetPrevBlockDBInner(Block, bMustHave);
         if(PrevBlock)
         {
+            if(JINN_CONST.HOT_BLOCK_DELTA && Block.BlockNum > JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.HOT_BLOCK_DELTA)
+                return PrevBlock;
+            
             Block.PrevBlockPosition = PrevBlock.Position
             this.WriteBlock(Block)
         }
@@ -472,6 +477,8 @@ class CDBChain
     }
     SetBlockJump(BlockSeed, Block, StrType)
     {
+        if(JINN_CONST.HOT_BLOCK_DELTA && BlockSeed.BlockNum > JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.HOT_BLOCK_DELTA)
+            return 0;
         
         if(!Block.BlockNum)
             ToLogTrace("SetBlockJump: Block.BlockNum on BlockNum=" + BlockSeed.BlockNum + " to " + Block.BlockNum)
@@ -497,6 +504,8 @@ class CDBChain
     
     GetBlockJump(BlockSeed, StrType, bRaw)
     {
+        if(JINN_CONST.HOT_BLOCK_DELTA && BlockSeed.BlockNum > JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.HOT_BLOCK_DELTA)
+            return undefined;
         
         var BlockPosJump = BlockSeed["HeadPos" + StrType];
         if(!BlockPosJump)
@@ -590,7 +599,7 @@ class CDBChain
     
     SaveChainToDB(BlockHead, BlockSeed)
     {
-        var StartHotBlockNum = BlockSeed.BlockNum - 10;
+        var StartHotBlockNum = BlockSeed.BlockNum - JINN_CONST.HOT_BLOCK_DELTA;
         
         var Arr = [];
         while(BlockSeed.BlockNum >= StartHotBlockNum)
@@ -608,6 +617,8 @@ class CDBChain
         if(BlockSeed.BlockNum > BlockHead.BlockNum)
         {
             Result = this.SaveChainToDBInner(BlockHead, BlockSeed)
+            if(this.InvalidateBufferMainDB)
+                this.InvalidateBufferMainDB(BlockHead)
         }
         
         if(Result <= 0)

@@ -147,13 +147,12 @@ window.SetBlockChainConstant = function (Data)
     window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
     window.NEW_SIGN_TIME = Data.NEW_SIGN_TIME;
     window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
-    window.GetCurrentBlockNumByTime = function ()
+    window.GetCurrentBlockNumByTime = function (Delta_Time)
     {
         var CurrentTime = Date.now() + DELTA_CURRENT_TIME2;
         var CurTimeNum = CurrentTime - FIRST_TIME_BLOCK;
-        var Delta_Time = 0;
-        if(CONSENSUS_PERIOD_TIME > 1000)
-            Delta_Time = 1000;
+        if(!Delta_Time)
+            Delta_Time = 0;
         var StartBlockNum = Math.floor((CurTimeNum + CONSENSUS_PERIOD_TIME + Delta_Time) / CONSENSUS_PERIOD_TIME);
         return StartBlockNum;
     };
@@ -175,7 +174,11 @@ function SetMinPow()
 }
 function GetBlockNumTr(arr)
 {
-    var BlockNum = window.DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime();
+    var Delta_Time = 0;
+    if(CONSENSUS_PERIOD_TIME > 2000)
+        Delta_Time = 2000;
+    
+    var BlockNum = window.DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime(Delta_Time);
     if(arr[0] === TYPE_TRANSACTION_CREATE)
     {
         var BlockNum2 = Math.floor(BlockNum / 10) * 10;

@@ -13,10 +13,11 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
-    Engine.PrepareBodyCurrentTx = function (Block)
+    Engine.FillBodyFromTransferNext = function (Block)
     {
-        Block.TxData = Engine.GetTopTxArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
-        Engine.SortBlock(Block);
+        
+        if(global.LOCAL_RUN)
+            return;
         
         var Tx = SERVER.GetDAppTransactions(Block.BlockNum);
         if(Tx)
@@ -92,11 +93,15 @@ function Init(Engine)
             {
                 var MiningBlock = Engine.GetNewBlock(PrevBlock);
                 MiningBlock.PrevHash = PrevHash;
-                MiningBlock.DataHash = DataHash;
                 MiningBlock.MinerHash = MinerHash;
                 if(msg.Meta)
                     MiningBlock.DB = msg.Meta.DB;
                 Engine.CalcBlockData(MiningBlock);
+                
+                if(!IsEqArr(DataHash, MiningBlock.DataHash))
+                {
+                    return;
+                }
                 
                 bWas = 1;
                 

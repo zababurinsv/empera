@@ -413,6 +413,90 @@ function Init(Engine)
         
         return 0;
     };
+    
+    Engine.GetBlockchainStatForMonitor = function (Param)
+    {
+        if(Param.Mode === "POW")
+            return SERVER.GetStatBlockchainPeriod(Param);
+        
+        if(Param.Mode === "SenderGistogram")
+        {
+            
+            var StartNum = Param.BlockNum;
+            if(!Param.Count || Param.Count < 0)
+                Param.Count = 1000;
+            var EndNum = StartNum + Param.Count;
+            
+            if(JINN_CONST.TX_PRIORITY_RND_SENDER)
+            {
+                
+                var ArrList = new Array(JINN_CONST.TX_PRIORITY_RND_SENDER);
+                var ArrX = [];
+                for(var i = 0; i < ArrList.length; i++)
+                {
+                    ArrX[i] = i;
+                    ArrList[i] = 0;
+                }
+                for(var num = StartNum; num < EndNum; num++)
+                {
+                    var Block = Engine.GetBlockDB(num);
+                    if(!Block)
+                        break;
+                    
+                    for(var i = 0; Block.TxData && i < Block.TxData.length; i++)
+                    {
+                        var Tx = Block.TxData[i];
+                        var SenderNum = Engine.GetTxSenderNum(Tx, Block.BlockNum);
+                        if(SenderNum >= 0)
+                            ArrList[SenderNum]++;
+                    }
+                }
+            }
+            else
+            {
+                
+                var Map = {};
+                var Arr = [];
+                for(var num = StartNum; num < EndNum; num++)
+                {
+                    var Block = Engine.GetBlockDB(num);
+                    if(!Block)
+                        break;
+                    
+                    for(var i = 0; Block.TxData && i < Block.TxData.length; i++)
+                    {
+                        var Tx = Block.TxData[i];
+                        var SenderNum = Engine.GetTxSenderNum(Tx, Block.BlockNum);
+                        if(SenderNum >= 0)
+                        {
+                            var Item = Map[SenderNum];
+                            if(!Item)
+                            {
+                                Item = {SenderNum:SenderNum, Count:0};
+                                Arr.push(Item);
+                                Map[SenderNum] = Item;
+                            }
+                            Item.Count++;
+                        }
+                    }
+                }
+                Arr.sort(function (a,b)
+                {
+                    return a.SenderNum - b.SenderNum;
+                });
+                var ArrList = [];
+                var ArrX = [];
+                for(var i = 0; i < Arr.length; i++)
+                {
+                    var Item = Arr[i];
+                    ArrList[i] = Item.Count;
+                    ArrX[i] = Item.SenderNum;
+                }
+            }
+            
+            return {ArrList:ArrList, ArrX:ArrX, steptime:1};
+        }
+    };
 }
 
 

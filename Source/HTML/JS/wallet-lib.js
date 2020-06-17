@@ -231,7 +231,7 @@ function CreateTransaction(F,CheckErr,Run)
     
     if(CheckErr && ToID <= 0 && ToPubKey === "" && !AttachItem)
     {
-        SetError("Valid 'Pay to' - required!");
+        SetError("Valid 'Pay to' - required!!");
         return;
     }
     

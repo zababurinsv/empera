@@ -285,6 +285,7 @@ function DoNode(Engine)
     
     if(Engine.LastCurBlockNum !== CurBlockNumT)
     {
+        
         if(Engine.DoOnStartBlock)
             Engine.DoOnStartBlock();
         

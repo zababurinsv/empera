@@ -549,6 +549,8 @@ const $ReadAccount = function (ID)
     var AccObj = GetVMAccount(ID);
     return GET_ACCOUNT(AccObj);
 }
+
+
 const $ReadSmart = function (ID)
 {
     DO(900);

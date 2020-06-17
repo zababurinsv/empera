@@ -463,7 +463,7 @@ function DrawDiagram(Item)
                 Str += ":" + Rigth("0" + Time.getSeconds(), 2);
             }
         
-        ctx.fillText(Str, StartX + i * KX3, StartY + 10);
+        ctx.fillText(Str, StartX + (i + 0.5) * KX3, StartY + 10);
     }
 }
 

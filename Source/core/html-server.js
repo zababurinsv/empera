@@ -48,6 +48,8 @@ ContenTypeMap["msi"] = "application/octet-stream";
 ContenTypeMap["woff"] = "application/font-woff";
 ContenTypeMap["psd"] = "application/octet-stream";
 
+ContenTypeMap["wasm"] = "application/wasm";
+
 var DefaultContentType = "application/octet-stream";
 
 
@@ -171,6 +173,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
                 switch(type)
                 {
                     case ".js":
+                    case "asm":
                         if(params[0] === "HTML" && params[1] === "Ace")
                         {
                             LongTime = 1000000;
@@ -1339,7 +1342,12 @@ function GetCopyNode(Node,bSimple)
 
 HTTPCaller.GetBlockchainStat = function (Param)
 {
-    var Result = SERVER.GetStatBlockchainPeriod(Param);
+    var Result;
+    if(global.JINN)
+        Result = global.JINN.GetBlockchainStatForMonitor(Param);
+    else
+        Result = SERVER.GetStatBlockchainPeriod(Param);
+    
     Result.result = 1;
     Result.sessionid = sessionid;
     return Result;

@@ -23,7 +23,7 @@ MapM["GETNODES"] = {Period:1000};
 MapM["HANDSHAKE"] = {Period:1000};
 MapM["CONNECTLEVEL"] = {Period:1000};
 MapM["DISCONNECTLEVEL"] = {Period:1000};
-MapM["MAXHASH"] = {Period:0};
+MapM["MAXHASH"] = {Period:20};
 MapM["TRANSFERTT"] = {Period:50};
 MapM["TRANSFERTX"] = {Period:100};
 

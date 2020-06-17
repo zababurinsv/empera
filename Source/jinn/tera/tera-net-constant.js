@@ -17,17 +17,18 @@
 module.exports.Init = Init;
 
 const FORMAT_NET_CONSTANT = {NetConstVer:"uint", NetConstStartNum:"uint", PROTOCOL_MODE:"uint", MAX_TRANSACTION_COUNT:"uint16",
-    __RESRV00:"uint", MIN_COUNT_FOR_CORRECT_TIME:"uint", CORRECT_TIME_TRIGGER:"uint16", CORRECT_TIME_VALUE:"uint16", INFLATION_TIME_VALUE:"byte",
-    __RESRV01:"uint", MAX_LEADER_COUNT:"byte", MAX_ITEMS_FOR_LOAD:"uint32", MAX_PACKET_SIZE:"uint32", MAX_PACKET_SIZE_RET_DATA:"uint32",
-    MAX_BLOCK_SIZE:"uint32", __RESRV02:"uint", MAX_ERR_PROCESS_COUNT:"uint", RECONNECT_MIN_TIME:"uint", MAX_LEVEL_CONNECTION:"byte",
-    EXTRA_SLOTS_COUNT:"byte", MAX_CONNECT_TIMEOUT:"uint32", MAX_CONNECT_COUNT:"uint16", __RESRV03:"uint32", MAX_LEVEL_NODES:"byte",
-    MAX_RET_NODE_LIST:"uint16", MAX_CACHE_BODY_LENGTH:"uint32", MAX_DEPTH_FOR_SECONDARY_CHAIN:"uint32", MAX_DELTA_PROCESSING:"byte",
-    METHOD_ALIVE_TIME:"uint32", __RESRV04:"uint", __RESRV041:"uint", __RESRV042:"uint16", __RESRV043:"byte", STEP_ADDTX:"uint16",
-    STEP_TICKET:"uint16", STEP_TX:"uint16", STEP_NEW_BLOCK:"uint16", STEP_SAVE:"uint16", STEP_LAST:"uint16", STEP_CLEAR_MEM:"uint16",
-    _ReservT5:"uint", UNIQUE_IP_MODE:"uint16", CHECK_POINT_NUM:"uint", CHECK_POINT_HASH:"hash", __RESRV05:"uint32", TEST_NEW_TT_MODE:"uint16",
-    TEST_MODE_DOUBLE_TX:"uint16", __RESRV06:"uint16", TEST_COUNT_BLOCK:"uint32", TEST_COUNT_TX:"uint32", __RESRV07:"uint32", TEST_DELTA_TIMING_HASH:"uint32",
-    TEST_DIV_TIMING_HASH:"uint32", TEST_NDELTA_TIMING_HASH:"uint32", TEST_MAX_TRANSFER_TX:"uint32", RUN_RESET:"uint16", RESERVE_DATA:"arr360",
-    NET_SIGN:"arr64"};
+    __RESRV000:"uint16", __RESRV00:"uint32", MIN_COUNT_FOR_CORRECT_TIME:"uint", CORRECT_TIME_TRIGGER:"uint16", CORRECT_TIME_VALUE:"uint16",
+    INFLATION_TIME_VALUE:"byte", __RESRV01:"uint", MAX_LEADER_COUNT:"byte", MAX_ITEMS_FOR_LOAD:"uint32", MAX_PACKET_SIZE:"uint32",
+    MAX_PACKET_SIZE_RET_DATA:"uint32", MAX_BLOCK_SIZE:"uint32", __RESRV02:"uint", MAX_ERR_PROCESS_COUNT:"uint", RECONNECT_MIN_TIME:"uint",
+    MAX_LEVEL_CONNECTION:"byte", EXTRA_SLOTS_COUNT:"byte", MAX_CONNECT_TIMEOUT:"uint32", MAX_CONNECT_COUNT:"uint16", __RESRV03:"uint32",
+    MAX_LEVEL_NODES:"byte", MAX_RET_NODE_LIST:"uint16", MAX_CACHE_BODY_LENGTH:"uint32", MAX_DEPTH_FOR_SECONDARY_CHAIN:"uint32",
+    MAX_DELTA_PROCESSING:"byte", METHOD_ALIVE_TIME:"uint32", __RESRV04:"uint", __RESRV041:"uint", __RESRV042:"uint16", __RESRV043:"byte",
+    STEP_ADDTX:"uint16", STEP_TICKET:"uint16", STEP_TX:"uint16", STEP_NEW_BLOCK:"uint16", STEP_SAVE:"uint16", STEP_LAST:"uint16",
+    STEP_CLEAR_MEM:"uint16", _ReservT5:"uint", UNIQUE_IP_MODE:"uint16", CHECK_POINT_NUM:"uint", CHECK_POINT_HASH:"hash", __RESRV05:"uint32",
+    TEST_NEW_TT_MODE:"uint16", TEST_MODE_DOUBLE_TX:"uint16", __RESRV06:"uint16", TEST_COUNT_BLOCK:"uint32", TEST_COUNT_TX:"uint32",
+    __RESRV07:"uint32", TEST_DELTA_TIMING_HASH:"uint32", TEST_DIV_TIMING_HASH:"uint32", TEST_NDELTA_TIMING_HASH:"uint32", MAX_TRANSFER_TX:"uint32",
+    RUN_RESET:"uint16", HOT_BLOCK_DELTA:"uint16", TX_PRIORITY_MODE:"byte", TX_PRIORITY_RND_SENDER:"byte", TX_PRIORITY_LENGTH:"uint16",
+    TX_BASE_VALUE:"uint", TX_FREE_COUNT:"uint16", __RESRV08:"uint", RESERVE_DATA:"arr340", NET_SIGN:"arr64"};
 
 var FormatForSign = CopyNetConstant({}, FORMAT_NET_CONSTANT, 1);
 
@@ -124,26 +125,40 @@ function Init(Engine)
     {
         ToLog("DoNetConstant: " + JINN_NET_CONSTANT.NetConstVer, 2);
         
+        var WasConst = CopyNetConstant({}, JINN_CONST);
+        
         CopyNetConstant(JINN_CONST, JINN_NET_CONSTANT);
         var CountCreate = JINN_NET_CONSTANT.TEST_COUNT_BLOCK + JINN_NET_CONSTANT.NetConstStartNum - Engine.CurrentBlockNum;
         if(JINN_NET_CONSTANT.TEST_COUNT_BLOCK && CountCreate > 0)
         {
             ToLog("*************CountBlockCreate: " + CountCreate + " witch TX=" + JINN_CONST.TEST_COUNT_TX, 2);
-            global.SendTestCoin(1, random(1000000), 1, JINN_CONST.TEST_COUNT_TX, CountCreate, 1);
+            var Num = random(1 + DApps.Accounts.GetMaxAccount());
+            global.SendTestCoin(Num, Num, 1, JINN_CONST.TEST_COUNT_TX, CountCreate, 1);
         }
         if(JINN_NET_CONSTANT.RUN_RESET && JINN_NET_CONSTANT.NetConstStartNum >= Engine.CurrentBlockNum)
         {
             
             if(JINN_NET_CONSTANT.RUN_RESET === 100)
             {
-                ToLog("****ClearCommonStat*****");
+                ToLog("****ClearCommonStat*****", 2);
                 global.ClearCommonStat();
             }
             if(JINN_NET_CONSTANT.RUN_RESET === 200)
             {
-                ToLog("****RewriteAllTransactions*****");
+                ToLog("****RewriteAllTransactions*****", 2);
                 SERVER.RewriteAllTransactions();
             }
+            if(JINN_NET_CONSTANT.RUN_RESET === 300)
+            {
+                ToLog("****Exit*****", 2);
+                global.RestartNode(1);
+            }
+        }
+        
+        if(WasConst.TX_PRIORITY_MODE !== JINN_CONST.TX_PRIORITY_MODE || WasConst.TX_PRIORITY_LENGTH !== JINN_CONST.TX_PRIORITY_LENGTH || WasConst.TX_PRIORITY_RND_SENDER !== JINN_CONST.TX_PRIORITY_RND_SENDER)
+        {
+            ToLog("InitPriorityTree", 2);
+            Engine.InitPriorityTree();
         }
     };
 }

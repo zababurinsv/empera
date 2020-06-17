@@ -29,6 +29,9 @@ function InitClass(Engine)
         else
             Engine.DB = new CDBBodyCache(Engine.ID, Engine.CalcBlockData);
         
+        Engine.DB.OnSaveMainDB = Engine.OnSaveMainDB;
+        Engine.DB.InvalidateBufferMainDB = Engine.InvalidateBufferMainDB;
+        
         Engine.DBResult = new CDBResult(Engine.ID);
     };
     Engine.Close = function ()
@@ -44,6 +47,13 @@ function InitClass(Engine)
             var Block = Engine.GetGenesisBlock(Num);
             Engine.SaveToDB(Block, 0, 1);
         }
+    };
+    
+    Engine.OnSaveMainDB = function (Block)
+    {
+    };
+    Engine.InvalidateBufferMainDB = function (Block)
+    {
     };
     
     Engine.GetBlockDB = function (BlockNum)

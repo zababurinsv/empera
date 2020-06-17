@@ -86,7 +86,7 @@ function InitClass(Engine)
         return BlockNew;
     };
     
-    Engine.GetNewBlock = function (PrevBlock)
+    Engine.GetNewBlock = function (PrevBlock,bNew)
     {
         if(!PrevBlock)
             return undefined;
@@ -103,6 +103,7 @@ function InitClass(Engine)
             Engine.GetNewBlockNext(Block, PrevBlock);
         
         Engine.CalcBlockData(Block);
+        
         return Block;
     };
     
@@ -172,7 +173,10 @@ function InitClass(Engine)
         if(!Block || !Block.TxData || Block.TxData.length <= 1)
             return;
         for(var i = 0; i < Block.TxData.length; i++)
-            Engine.CheckHashExist(Block.TxData[i]);
+        {
+            var Tx = Block.TxData[i];
+            Engine.CheckHashExist(Tx);
+        }
         Block.TxData.sort(function (a,b)
         {
             
@@ -289,8 +293,8 @@ function InitClass(Engine)
         
         var Tx = {};
         Tx.IsTx = 1;
-        Tx.nonce = ReadUintFromArr(body, body.length - 6);
         Tx.num = ReadUintFromArr(body, body.length - 12);
+        Tx.nonce = ReadUintFromArr(body, body.length - 6);
         if(HASH)
             Tx.HASH = HASH;
         else

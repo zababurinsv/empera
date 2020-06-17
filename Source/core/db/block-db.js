@@ -921,8 +921,6 @@ module.exports = class CDB extends require("../code")
             Param.Count = 1000
         if(!Param.Miner)
             Param.Miner = 0
-        if(!Param.Adviser)
-            Param.Adviser = 0
         
         var Map = {};
         var ArrList = new Array(Param.Count);
@@ -940,33 +938,17 @@ module.exports = class CDB extends require("../code")
                     var Nonce = ReadUintFromArr(Block.AddrHash, 6);
                     if(Param.Miner < 0)
                     {
-                        if(Param.Adviser)
-                        {
-                            var Adviser = DApps.Accounts.GetAdviserByMiner(Map, Miner);
-                            if(Adviser === Param.Adviser)
-                                PowerMy = Power
-                        }
-                        else
-                        {
-                            PowerMy = Power
-                        }
+                        PowerMy = Power
                     }
                     else
-                        if(Miner === Param.Miner && !Param.bMinerLess)
+                        if(Miner === Param.Miner)
                         {
                             PowerMy = Power
                         }
-                        else
-                            if(Miner <= Param.Miner && Param.bMinerLess)
-                            {
-                                PowerMy = Power
-                            }
                 }
             }
             
             ArrList[i] = PowerMy
-            if(Param.bNonce && PowerMy)
-                ArrList[i] = Nonce
             
             i++
         }
