@@ -22,7 +22,7 @@ function Init(Engine)
         var Tx = SERVER.GetDAppTransactions(Block.BlockNum);
         if(Tx)
         {
-            Tx = Engine.GetTx(Tx.body, undefined, undefined, 8);
+            Tx = Engine.GetTx(Tx.body, undefined, 8);
             Block.TxData.unshift(Tx);
         }
     };

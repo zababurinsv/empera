@@ -26,7 +26,10 @@ function InitClass(Engine)
     Engine.RetNewConnectByIPPort = function (ip,port)
     {
         if(!port || typeof port !== "number")
-            throw "RetNewConnectByIPPort : Error port number = " + port;
+        {
+            ToLogTrace("RetNewConnectByIPPort : Error port number = " + port);
+            return undefined;
+        }
         
         if(ip === "0.0.0.0")
             return undefined;
@@ -57,7 +60,10 @@ function InitClass(Engine)
             return undefined;
         
         if(!port || typeof port !== "number")
-            throw "NewConnect : Error port number = " + port;
+        {
+            ToLogTrace("NewConnect : Error port number = " + port);
+            return undefined;
+        }
         
         if(CompareArr(IDArr, Engine.IDStr) === 0)
         {
@@ -134,6 +140,8 @@ function InitClass(Engine)
         Child.LastGetNetConstant = 0;
         Child.LastGetCodeVersion = 0;
         Child.LastGetCode = 0;
+        
+        Child.StartHotTransferNum = 0;
         
         Object.defineProperty(Child, "Score", {get:function ()
             {

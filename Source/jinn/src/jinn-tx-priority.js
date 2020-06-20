@@ -168,6 +168,10 @@ function InitClass(Engine)
         var RndNum = Tx.HashTicket[0] >>> 4;
         return RndNum;
     };
+    Engine.GetTxSenderOperationID = function (Tx,BlockNum)
+    {
+        return 0;
+    };
     
     Engine.GetSenderBaseValue = function (Num)
     {
@@ -214,15 +218,7 @@ function InitClass(Engine)
     
     Engine.SortArrPriority = function (Arr,BlockNum)
     {
-        for(var i = 0; i < Arr.length; i++)
-        {
-            var Tx = Arr[i];
-            Engine.CheckHashExist(Tx);
-            
-            Tx.SenderNum = Engine.GetTxSenderNum(Tx, BlockNum);
-            Tx.BaseValue = Engine.GetSenderBaseValue(Tx.SenderNum);
-            Tx.CountTX = Engine.GetTxSenderCount(Tx.SenderNum);
-        }
+        Engine.CheckHashExistArr(Arr, BlockNum);
         Arr.sort(function (a,b)
         {
             if(typeof a.SenderNum !== "number")
@@ -230,15 +226,22 @@ function InitClass(Engine)
             if(typeof b.SenderNum !== "number")
                 ToLogTrace("Error type b.SenderNum");
             
+            if(typeof a.OperationID !== "number")
+                ToLogTrace("Error type a.OperationID");
+            if(typeof b.OperationID !== "number")
+                ToLogTrace("Error type b.OperationID");
+            
+            if(!a.HASH)
+                ToLogTrace("Error a.HASH");
+            if(!b.HASH)
+                ToLogTrace("Error b.HASH");
+            
             if(a.SenderNum !== b.SenderNum)
                 return a.SenderNum - b.SenderNum;
             
-            if(a.nonce !== b.nonce)
-                return a.nonce - b.nonce;
-            
-            if(b.TimePow !== a.TimePow)
-                return b.TimePow - a.TimePow;
-            return CompareArr(a.HashPow, b.HashPow);
+            if(a.OperationID !== b.OperationID)
+                return a.OperationID - b.OperationID;
+            return CompareArr(a.HASH, b.HASH);
         });
         var SumAdd = 0;
         var PrevSenderNum = undefined;
@@ -272,31 +275,35 @@ function InitClass(Engine)
         }
         Arr.sort(function (a,b)
         {
+            if(typeof a.OperationID !== "number")
+                ToLogTrace("Error type a.OperationID");
+            if(typeof b.OperationID !== "number")
+                ToLogTrace("Error type b.OperationID");
             if(typeof a.Priority !== "number")
                 ToLogTrace("Error type a.Priority");
             if(typeof b.Priority !== "number")
                 ToLogTrace("Error type b.Priority");
+            
+            if(!a.HASH)
+                ToLogTrace("Error a.HASH");
+            if(!b.HASH)
+                ToLogTrace("Error b.HASH");
+            
             if(a.Priority !== b.Priority)
                 return a.Priority - b.Priority;
             
-            if(a.nonce !== b.nonce)
-                return a.nonce - b.nonce;
-            
-            if(b.TimePow !== a.TimePow)
-                return b.TimePow - a.TimePow;
-            return CompareArr(a.HashPow, b.HashPow);
+            if(a.OperationID !== b.OperationID)
+                return a.OperationID - b.OperationID;
+            return CompareArr(a.HASH, b.HASH);
         });
-        if(JINN_CONST.TX_FREE_COUNT)
+        for(var i = JINN_CONST.TX_FREE_COUNT; i < Arr.length; i++)
         {
-            for(var i = JINN_CONST.TX_FREE_COUNT; i < Arr.length; i++)
+            var Tx = Arr[i];
+            var Delta = Tx.CanBaseTx - Tx.CountTX - 1;
+            if(Delta < 0)
             {
-                var Tx = Arr[i];
-                var Delta = Tx.CanBaseTx - Tx.CountTX - 1;
-                if(Delta < 0)
-                {
-                    Arr.length = i;
-                    break;
-                }
+                Arr.length = i;
+                break;
             }
         }
         

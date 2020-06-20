@@ -141,6 +141,7 @@ function InitClass(Engine)
             return 0;
         }
         Engine.LevelArr[Child.Level] = Child;
+        Child.StartHotTransferNum = Engine.CurrentBlockNum;
         Child.ToLogNet("TryHotConnection SetLevel: " + Child.Level);
         
         Child.HotReady = 0;
@@ -222,6 +223,7 @@ function InitClass(Engine)
         Child.HotItem.DenyHotStart = 0;
         Child.HotReady = 1;
         
+        Child.StartHotTransferNum = Engine.CurrentBlockNum;
         Engine.LevelArr[Child.Level] = Child;
         Child.ToLogNet("SetHotConnection Level: " + Child.Level + (Child.Level >= JINN_CONST.MAX_LEVEL_CONNECTION ? " (Extra slot)" : ""));
         

@@ -267,8 +267,8 @@ function CreateTransaction(F,CheckErr,Run)
     if(ToPubKey)
         ToPubKeyArr = GetArrFromHex(ToPubKey);
     
-    var TR = {Type:111, Version:3, Reserve:0, FromID:FromID, OperationID:OperationID, To:[{PubKey:ToPubKeyArr, ID:ToID, SumCOIN:Coin.SumCOIN,
-            SumCENT:Coin.SumCENT}], Description:Description, Body:AttachBody, Sign:CurrentTR.Sign, };
+    var TR = {Type:111, Version:3, OperationSortID:OperationID, FromID:FromID, OperationID:OperationID, To:[{PubKey:ToPubKeyArr,
+            ID:ToID, SumCOIN:Coin.SumCOIN, SumCENT:Coin.SumCENT}], Description:Description, Body:AttachBody, Sign:CurrentTR.Sign, };
     Object.defineProperties(TR, {bFindAcc:{configurable:true, writable:true, enumerable:false, value:bFindAcc}});
     Object.defineProperties(TR, {Run:{configurable:true, writable:true, enumerable:false, value:Run}});
     

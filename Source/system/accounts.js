@@ -72,7 +72,7 @@ global.FORMAT_MONEY_TRANSFER_BODY2 = FORMAT_MONEY_TRANSFER2.replace("Sign:arr64,
 global.FORMAT_MONEY_TRANSFER3 = "{\
     Type:byte,\
     Version:byte,\
-    Reserve:uint,\
+    OperationSortID:uint,\
     FromID:uint,\
     To:[{PubKey:tr,ID:uint,SumCOIN:uint,SumCENT:uint32}],\
     Description:str,\
@@ -404,8 +404,7 @@ class AccountApp extends require("./dapp")
                     {
                         if(BlockNum % BLOCK_CREATE_INTERVAL !== 0)
                             return 0;
-                        
-                        var Num = BlockNum;
+                        var Num = this.GetMaxAccount() + 1;
                         return Num;
                     }
                 case TYPE_TRANSACTION_TRANSFER:
@@ -415,6 +414,25 @@ class AccountApp extends require("./dapp")
                     
                 case TYPE_TRANSACTION_ACC_HASH:
                     return  - 1;
+            }
+        }
+        
+        return 0;
+    }
+    GetSenderOperationID(BlockNum, Body)
+    {
+        var Type = Body[0];
+        if(Type && Body.length > 90)
+        {
+            switch(Type)
+            {
+                case TYPE_TRANSACTION_TRANSFER:
+                    
+                    var Num = ReadUintFromArr(Body, 1 + 1);
+                    return Num;
+                    
+                case TYPE_TRANSACTION_ACC_HASH:
+                    return 0;
             }
         }
         

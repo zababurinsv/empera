@@ -168,7 +168,9 @@ function InitClass(Engine)
     
     Engine.FillBodyFromTransfer = function (Block)
     {
-        Block.TxData = Engine.GetArrayFromTree(Engine.ListTreeTx[Block.BlockNum]);
+        var Arr = Engine.GetArrTx(Block.BlockNum);
+        
+        Block.TxData = Arr.slice(0);
         Engine.SortBlockPriority(Block);
         Engine.CheckSizeBlockTXArray(Block.TxData);
         

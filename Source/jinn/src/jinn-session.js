@@ -21,7 +21,6 @@ function InitClass(Engine)
             var Child = Engine.LevelArr[i];
             if(Child && Child.IsHotReady())
             {
-                Child.TransferSessionNum = BlockNum;
                 Arr.push(Child);
             }
         }

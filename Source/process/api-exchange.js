@@ -126,8 +126,8 @@ WebApi2.Send = function (Params,response,A,request,nJsonRet)
     MapSendID[FromNum].OperationID = OperationID;
     MapSendID[FromNum].Date = Date.now();
     
-    var TR = {Type:111, Version:3, Reserve:0, FromID:FromNum, OperationID:OperationID, To:[{PubKey:ToPubKeyArr, ID:ToID, SumCOIN:Coin.SumCOIN,
-            SumCENT:Coin.SumCENT}], Description:Params.Description, Body:[], };
+    var TR = {Type:111, Version:3, OperationSortID:OperationID, FromID:FromNum, OperationID:OperationID, To:[{PubKey:ToPubKeyArr,
+            ID:ToID, SumCOIN:Coin.SumCOIN, SumCENT:Coin.SumCENT}], Description:Params.Description, Body:[], };
     
     if(nJsonRet === 1)
         return {result:1, Tx:TR};
@@ -364,8 +364,8 @@ global.DELTA_FOR_TIME_TX = 1;
 function GetBlockNumTr(arr)
 {
     var Delta_Time = 0;
-    if(CONSENSUS_PERIOD_TIME > 2000)
-        Delta_Time = 2000;
+    if(CONSENSUS_PERIOD_TIME >= 3000)
+        Delta_Time = CONSENSUS_PERIOD_TIME / 3;
     
     var BlockNum = DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime(Delta_Time);
     if(arr[0] === TYPE_TRANSACTION_CREATE)

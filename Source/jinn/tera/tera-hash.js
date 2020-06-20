@@ -13,7 +13,7 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
-    Engine.GetTx = function (body,HASH,HashPow,TestNum)
+    Engine.GetTx = function (body,HASH,TestNum)
     {
         JINN_STAT["GetTx" + TestNum]++;
         
@@ -27,7 +27,7 @@ function Init(Engine)
         else
             if(Tx.num >= global.BLOCKNUM_TICKET_ALGO)
             {
-                Tx.HASH = sha3(body, 10);
+                Tx.HASH = sha3(body, 8);
             }
             else
             {
@@ -37,16 +37,6 @@ function Init(Engine)
         Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
         Tx.KEY = GetHexFromArr(Tx.HashTicket);
         Tx.body = body;
-        if(HashPow)
-        {
-            Tx.HashPow = HashPow;
-            Tx.TimePow = GetPowPower(HashPow);
-        }
-        else
-        {
-            
-            Engine.FillTicket(Tx, 11);
-        }
         
         return Tx;
     };
@@ -233,7 +223,7 @@ function Init(Engine)
             var Arr = [];
             for(var i = 0; i < Block.arrContent.length; i++)
             {
-                var Tx = Engine.GetTx(Block.arrContent[i], undefined, undefined, 7);
+                var Tx = Engine.GetTx(Block.arrContent[i], undefined, 7);
                 Arr.push(Tx);
             }
         }

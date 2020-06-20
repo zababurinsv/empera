@@ -17,111 +17,6 @@ if(!window.toStaticHTML)
     {
         return Str;
     };
-
-function Rigth(Str,Count)
-{
-    if(Str.length < Count)
-        return Str;
-    else
-        return Str.substr(Str.length - Count);
-}
-
-function SetHTMLDiagramItem(Item,width,Param)
-{
-    Item.mouseX = width - 50;
-    
-    if(Item.Extern || Item.Delete)
-        return;
-    
-    var MinHeight = 80;
-    
-    if(!Item.id)
-        Item.id = "DgrmId" + Item.num;
-    
-    DiagramMap[Item.name] = Item;
-    DiagramMapId[Item.id] = Item;
-    
-    var Str;
-    if(Item.isLine)
-    {
-        if(Item.text)
-            Str = "<BR>" + GetDiagramHeadHTML(Item, Param);
-        else
-            Str = "<HR>";
-    }
-    else
-    {
-        Str = '<BR><DIV>' + GetDiagramHeadHTML(Item, Param) + '<BR><canvas  class="DIAGRAM" width="' + width + '" height="' + MinHeight + '" id="' + Item.id + '"></canvas>';
-    }
-    
-    var ElBlock = document.getElementById("B" + Item.id);
-    if(ElBlock)
-    {
-        ElBlock.innerHTML = toStaticHTML(Str);
-    }
-    else
-    {
-        var diargams = document.getElementById("diargams");
-        diargams.innerHTML = toStaticHTML(diargams.innerHTML + "<DIV id='B" + Item.id + "'>" + Str + "</DIV>");
-    }
-}
-
-function GetDiagramHeadHTML(Item,Param)
-{
-    var Str = "";
-    if(Item.isLine)
-        Str += "<B>";
-    Str += Item.text;
-    if(Item.isLine)
-        Str += '</B>';
-    if(Param)
-    {
-        Str += '<INPUT type="button" class="move" onclick="MoveDiagram(\'' + Item.id + '\',1)" value="↓">';
-        Str += '<INPUT type="button" class="move" onclick="MoveDiagram(\'' + Item.id + '\',-1)" value="↑">';
-        Str += '<INPUT type="button" class="move" onclick="DeleteDiagram(\'' + Item.id + '\')" value="X">';
-    }
-    
-    return Str;
-}
-
-function SetDiagramMouseX(event,mode)
-{
-    if(event.srcElement && event.srcElement.className && event.srcElement.className.indexOf && event.srcElement.className.indexOf("DIAGRAM") >= 0)
-    {
-        if(mode === "down")
-            LMouseOn = true;
-        else
-            if(mode === "up")
-                LMouseOn = false;
-        
-        event.preventDefault();
-        if(LMouseOn === true)
-        {
-            var obj = event.srcElement;
-            var mouse = getMouse(obj, event);
-            
-            if(event.ctrlKey === true)
-            {
-                for(var key in DiagramMapId)
-                {
-                    var Item = DiagramMapId[key];
-                    Item.mouseX = mouse.x;
-                    DrawDiagram(Item);
-                }
-            }
-            else
-            {
-                var Item = DiagramMapId[obj.id];
-                if(Item)
-                {
-                    Item.mouseX = mouse.x;
-                    DrawDiagram(Item);
-                }
-            }
-        }
-    }
-}
-
 function DrawDiagram(Item)
 {
     if(Item.Delete)
@@ -463,7 +358,114 @@ function DrawDiagram(Item)
                 Str += ":" + Rigth("0" + Time.getSeconds(), 2);
             }
         
-        ctx.fillText(Str, StartX + (i + 0.5) * KX3, StartY + 10);
+        var x = StartX + (i + 0.5) * KX3;
+        var y = StartY + 10;
+        if(x < MaxWidth)
+            ctx.fillText(Str, x, y);
+    }
+}
+
+function Rigth(Str,Count)
+{
+    if(Str.length < Count)
+        return Str;
+    else
+        return Str.substr(Str.length - Count);
+}
+
+function SetHTMLDiagramItem(Item,width,Param)
+{
+    Item.mouseX = width - 50;
+    
+    if(Item.Extern || Item.Delete)
+        return;
+    
+    var MinHeight = 80;
+    
+    if(!Item.id)
+        Item.id = "DgrmId" + Item.num;
+    
+    DiagramMap[Item.name] = Item;
+    DiagramMapId[Item.id] = Item;
+    
+    var Str;
+    if(Item.isLine)
+    {
+        if(Item.text)
+            Str = "<BR>" + GetDiagramHeadHTML(Item, Param);
+        else
+            Str = "<HR>";
+    }
+    else
+    {
+        Str = '<BR><DIV>' + GetDiagramHeadHTML(Item, Param) + '<BR><canvas  class="DIAGRAM" width="' + width + '" height="' + MinHeight + '" id="' + Item.id + '"></canvas>';
+    }
+    
+    var ElBlock = document.getElementById("B" + Item.id);
+    if(ElBlock)
+    {
+        ElBlock.innerHTML = toStaticHTML(Str);
+    }
+    else
+    {
+        var diargams = document.getElementById("diargams");
+        diargams.innerHTML = toStaticHTML(diargams.innerHTML + "<DIV id='B" + Item.id + "'>" + Str + "</DIV>");
+    }
+}
+
+function GetDiagramHeadHTML(Item,Param)
+{
+    var Str = "";
+    if(Item.isLine)
+        Str += "<B>";
+    Str += Item.text;
+    if(Item.isLine)
+        Str += '</B>';
+    if(Param)
+    {
+        Str += '<INPUT type="button" class="move" onclick="MoveDiagram(\'' + Item.id + '\',1)" value="↓">';
+        Str += '<INPUT type="button" class="move" onclick="MoveDiagram(\'' + Item.id + '\',-1)" value="↑">';
+        Str += '<INPUT type="button" class="move" onclick="DeleteDiagram(\'' + Item.id + '\')" value="X">';
+    }
+    
+    return Str;
+}
+
+function SetDiagramMouseX(event,mode)
+{
+    if(event.srcElement && event.srcElement.className && event.srcElement.className.indexOf && event.srcElement.className.indexOf("DIAGRAM") >= 0)
+    {
+        if(mode === "down")
+            LMouseOn = true;
+        else
+            if(mode === "up")
+                LMouseOn = false;
+        
+        event.preventDefault();
+        if(LMouseOn === true)
+        {
+            var obj = event.srcElement;
+            var mouse = getMouse(obj, event);
+            
+            if(event.ctrlKey === true)
+            {
+                for(var key in DiagramMapId)
+                {
+                    var Item = DiagramMapId[key];
+                    Item.mouseX = mouse.x;
+                    DrawDiagram(Item);
+                }
+            }
+            else
+            {
+                var Item = DiagramMapId[obj.id];
+                if(Item)
+                {
+                    Item.mouseX = mouse.x;
+                    DrawDiagram(Item);
+                }
+            }
+        }
     }
 }
 

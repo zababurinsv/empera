@@ -139,12 +139,6 @@ function InitClass(Engine)
         return Data;
     };
     
-    Engine.CheckHashExistArr = function (TxArr)
-    {
-        for(var n = 0; TxArr && n < TxArr.length; n++)
-            Engine.CheckHashExist(TxArr[n]);
-    };
-    
     Engine.CalcTreeHash = function (BlockNum,TxArr)
     {
         if(!TxArr || !TxArr.length)
@@ -168,24 +162,47 @@ function InitClass(Engine)
         return arr;
     };
     
+    Engine.CheckHashExistArr = function (Arr,BlockNum)
+    {
+        if(!Arr)
+            return;
+        for(var i = 0; i < Arr.length; i++)
+        {
+            var Tx = Arr[i];
+            if(Tx.OperationID === undefined)
+            {
+                Engine.CheckHashExist(Tx);
+                Tx.OperationID = Engine.GetTxSenderOperationID(Tx, BlockNum);
+                if(JINN_CONST.TX_PRIORITY_MODE)
+                    Tx.SenderNum = Engine.GetTxSenderNum(Tx, BlockNum);
+                if(JINN_CONST.TX_BASE_VALUE)
+                    Tx.BaseValue = Engine.GetSenderBaseValue(Tx.SenderNum);
+                if(JINN_CONST.TX_PRIORITY_MODE)
+                    Tx.CountTX = Engine.GetTxSenderCount(Tx.SenderNum);
+            }
+        }
+    };
+    
     Engine.SortBlock = function (Block)
     {
         if(!Block || !Block.TxData || Block.TxData.length <= 1)
             return;
-        for(var i = 0; i < Block.TxData.length; i++)
-        {
-            var Tx = Block.TxData[i];
-            Engine.CheckHashExist(Tx);
-        }
+        
+        Engine.CheckHashExistArr(Block.TxData, Block.BlockNum);
         Block.TxData.sort(function (a,b)
         {
+            if(typeof a.OperationID !== "number")
+                ToLogTrace("Error type a.OperationID");
+            if(typeof b.OperationID !== "number")
+                ToLogTrace("Error type b.OperationID");
+            if(!a.HASH)
+                ToLogTrace("Error a.HASH");
+            if(!b.HASH)
+                ToLogTrace("Error b.HASH");
             
-            if(a.nonce !== b.nonce)
-                return a.nonce - b.nonce;
-            
-            if(b.TimePow !== a.TimePow)
-                return b.TimePow - a.TimePow;
-            return CompareArr(a.HashPow, b.HashPow);
+            if(a.OperationID !== b.OperationID)
+                return a.OperationID - b.OperationID;
+            return CompareArr(a.HASH, b.HASH);
         });
     };
     
@@ -253,22 +270,11 @@ function InitClass(Engine)
     
     Engine.CheckHashExist = function (Tx)
     {
-        if(!Tx.KEY)
+        if(!Tx.HASH)
         {
-            var Tx2 = Engine.GetTx(Tx.body, undefined, undefined, 10);
+            var Tx2 = Engine.GetTx(Tx.body, undefined, 10);
             CopyObjKeys(Tx, Tx2);
         }
-    };
-    
-    Engine.FillTicket = function (Tx,Sha3Num)
-    {
-        var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        for(var i = 0; i < JINN_CONST.TX_TICKET_HASH_LENGTH; i++)
-            FullHashTicket[i] = Tx.HashTicket[i];
-        WriteUintToArrOnPos(FullHashTicket, Tx.num, JINN_CONST.TX_TICKET_HASH_LENGTH);
-        
-        Tx.HashPow = sha3(FullHashTicket, Sha3Num);
-        Tx.TimePow = GetPowPower(Tx.HashPow);
     };
     
     Engine.DoTxFromTicket = function (Tt,Tx)
@@ -283,12 +289,11 @@ function InitClass(Engine)
     {
         
         var Tx = {HashTicket:HashTicket, KEY:Key, num:Num};
-        Engine.FillTicket(Tx, 9);
         
         return Tx;
     };
     
-    Engine.GetTx = function (body,HASH,HashPow)
+    Engine.GetTx = function (body,HASH)
     {
         
         var Tx = {};
@@ -303,15 +308,6 @@ function InitClass(Engine)
         Tx.HashTicket = Tx.HASH.slice(0, JINN_CONST.TX_TICKET_HASH_LENGTH);
         Tx.KEY = GetHexFromArr(Tx.HashTicket);
         Tx.body = body;
-        if(HashPow)
-        {
-            Tx.HashPow = HashPow;
-            Tx.TimePow = GetPowPower(HashPow);
-        }
-        else
-        {
-            Engine.FillTicket(Tx, 8);
-        }
         
         return Tx;
     };

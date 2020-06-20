@@ -21,7 +21,8 @@ var StatKeys = {BlockTx:"BlockTx", TxSend:"TxSend", TTSend:"TtSend", HeaderLoad:
     MaxReqErr:"-MaxReqErr", MaxIteration:"-MaxIteration", MaxLoad:"-MaxLoad", WantHeader:"-WantHeader", UploadHeader:"-UploadHeader",
     WantBody:"-WantBody", UploadBody:"-UploadBody", DeltaTime:"-DeltaTime", ErrProcessBlock:"-ErrProcessBlock", SkipMethod:"-SkipMethod",
     TtReceive:"-TtReceive", TxReceive:"-TxReceive", TxReceiveErr:"TxReceiveErr", BanCount:"-BanCount", MainDelta:"MainDelta", ErrTt1:"-ErrTt1",
-    ErrTt2:"-ErrTt2", ErrTx1:"-ErrTx1", ErrTx2:"-ErrTx2", };
+    ErrTt2:"-ErrTt2", ErrTx1:"-ErrTx1", ErrTx2:"-ErrTx2", TxCache1:"-TxCache1", TxCache2:"-TxCache2", TxCacheErr:"-TxCacheErr",
+};
 
 for(var num = 1; num <= 10; num++)
     StatKeys["GetTx" + num] = "-GetTx" + num;

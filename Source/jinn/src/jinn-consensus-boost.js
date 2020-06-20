@@ -411,6 +411,9 @@ function InitClass(Engine)
             else
                 if(Status.Mode === 2)
                 {
+                    if(!Engine.CanCacheExchange(Child, BlockNum))
+                        continue;
+                    
                     var CountItem = Status.CountItem;
                     var bFirstBody = 0;
                     if(CountItem === 0)

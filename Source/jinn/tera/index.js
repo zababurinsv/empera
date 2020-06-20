@@ -68,11 +68,6 @@ module.exports.Create = function (Node,MapName)
         
         JINN_CONST.MAX_LEVEL_CONNECTION = 3;
         JINN_CONST.EXTRA_SLOTS_COUNT = 1;
-        
-        if(global.JINN_PORT === 50001)
-            setTimeout(function ()
-            {
-            }, 100);
     }
     
     var Engine = {};

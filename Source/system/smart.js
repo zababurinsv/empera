@@ -168,6 +168,32 @@ class SmartApp extends require("./dapp")
         
         return 0;
     }
+    GetSenderOperationID(BlockNum, Body)
+    {
+        var Type = Body[0];
+        if(Type && Body.length > 90)
+        {
+            switch(Type)
+            {
+                case TYPE_TRANSACTION_SMART_RUN:
+                    var len = 1 + 6;
+                    len += 2 + Body[len] + Body[len + 1] * 256
+                    if(len + 64 > Body.length)
+                        return 0;
+                    len += 2 + Body[len] + Body[len + 1] * 256
+                    if(len + 64 > Body.length)
+                        return 0;
+                    len += 6
+                    var Num = ReadUintFromArr(Body, len);
+                    return Num;
+                case TYPE_TRANSACTION_SMART_CHANGE:
+                    var Num = ReadUintFromArr(Body, 1 + 26);
+                    return Num;
+            }
+        }
+        
+        return 0;
+    }
     
     OnDeleteBlock(Block)
     {

@@ -19,15 +19,12 @@ global.JINN_MODULES.push({InitClass:InitClass, Name:"TxControl"});
 
 function InitClass(Engine)
 {
-    Engine.AddTxToTree = function (Tree,Tx)
-    {
-        if(!Tree.find(Tx))
-            Tree.insert(Tx);
-    };
     
-    Engine.GetTopTxArrayFromTree = function (Tree,BlockNum)
+    Engine.GetTopTxArray = function (Arr,BlockNum)
     {
-        var Arr = Engine.GetArrayFromTree(Tree);
+        if(JINN_CONST.TEST_MODE_1)
+            return Arr;
+        
         if(Engine.PrepareLastStatFromDB())
         {
             Engine.SortArrPriority(Arr, BlockNum);
@@ -35,6 +32,7 @@ function InitClass(Engine)
         
         return Arr;
     };
+    
     Engine.GetArrayFromTree = function (Tree)
     {
         if(!Tree)
@@ -72,7 +70,7 @@ function InitClass(Engine)
         
         if(JINN_CONST.MAX_TRANSFER_TX && Arr.length > JINN_CONST.MAX_TRANSFER_TX)
         {
-            Child.ToError("#1 Error Tx Arr length = " + Arr.length, 4);
+            Child.ToError("#1 Error Tx Arr length = " + Arr.length, 3);
             Arr.length = JINN_CONST.MAX_TRANSFER_TX;
         }
     };
@@ -84,13 +82,3 @@ function InitClass(Engine)
         return Result;
     };
 }
-
-function FSortTx(a,b)
-{
-    if(!a.HashPow)
-        throw "Error a.HashPow";
-    if(!b.HashPow)
-        throw "Error b.HashPow";
-    return CompareArr(a.HashPow, b.HashPow);
-}
-global.FSortTx = FSortTx;

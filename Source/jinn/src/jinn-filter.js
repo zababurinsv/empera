@@ -65,6 +65,8 @@ function InitClass(Engine)
     
     Engine.StopDoSendPacket = function (Child,Item,Method)
     {
+        return 0;
+        
         if(!Item.Period)
             return 0;
         
@@ -105,7 +107,7 @@ function InitClass(Engine)
         }
         
         if(!bSilent)
-            Child.ToLog(StrErr, 4);
+            Child.ToLog(StrErr, 3);
         
         if(Child.Score <  - JINN_CONST.MAX_ERR_PROCESS_COUNT)
         {

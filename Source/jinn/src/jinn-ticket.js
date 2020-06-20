@@ -34,20 +34,8 @@ global.OLD_TICKET = "OLD";
 
 function InitClass(Engine)
 {
-    Engine.ListTreeTicket = {};
     Engine.ListTreeTicketAll = {};
-    Engine.ListArrTicketAll = {};
     
-    Engine.GetTreeTicket = function (BlockNum)
-    {
-        var Tree = Engine.ListTreeTicket[BlockNum];
-        if(!Tree)
-        {
-            Tree = new RBTree(FSortTx);
-            Engine.ListTreeTicket[BlockNum] = Tree;
-        }
-        return Tree;
-    };
     Engine.GetTreeTicketAll = function (BlockNum)
     {
         var Tree = Engine.ListTreeTicketAll[BlockNum];
@@ -61,74 +49,36 @@ function InitClass(Engine)
         }
         return Tree;
     };
-    Engine.GetArrTicketAll = function (BlockNum)
-    {
-        var Arr = Engine.ListArrTicketAll[BlockNum];
-        if(!Arr)
-        {
-            Arr = [];
-            Engine.ListArrTicketAll[BlockNum] = Arr;
-        }
-        return Arr;
-    };
-    
-    Engine.InitTicket = function (BlockNum)
-    {
-        var Tree = Engine.GetTreeTicket(BlockNum);
-        if(Tree.WasInit)
-            return;
-        Tree.WasInit = 1;
-        
-        var ArrTx = Engine.GetArrayFromTree(Engine.ListTreeTx[BlockNum]);
-        var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
-        var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
-        
-        for(var i = 0; i < ArrTx.length; i++)
-        {
-            var Tx = ArrTx[i];
-            CheckTx("InitTicket", Tx, BlockNum, 1);
-            
-            Engine.AddToTreeWithAll(TreeTTAll, ArrTTAll, Tree, Tx);
-        }
-    };
-    
-    Engine.AddToTreeWithAll = function (TreeTTAll,ArrTTAll,Tree,Item)
-    {
-        Engine.AddTxToTree(Tree, Item);
-        
-        var Find = TreeTTAll.find(Item);
-        
-        if(Find)
-        {
-            if(Item.IsTx)
-            {
-                Engine.DoTxFromTicket(Find, Item);
-            }
-            if(!Find.TTReceiveIndex)
-                ToLogTrace("************* Error !Find.TTReceiveIndex");
-            return;
-        }
-        TreeTTAll.insert(Item);
-        
-        Item.TTIndex = ArrTTAll.length;
-        ArrTTAll.push(Item);
-        
-        var ArrLength = 1 + Math.max(JINN_CONST.MAX_LEVEL_ALL(), Engine.LevelArr.length);
-        if(Item.TTReceiveIndex)
-            ToLog("WAS Item.TTReceiveIndex=" + Item.TTReceiveIndex);
-        
-        Item.TTReceiveIndex = new Uint16Array(ArrLength);
-        Engine.InitItemTT(Item);
-    };
     
     Engine.InitItemTT = function (Item)
     {
         Item.TTSend = 0;
         Item.TTReceive = 0;
-        Item.TXWait = 0;
         
         Item.TXSend = 0;
         Item.TXReceive = 0;
+        Item.TXSend2 = 0;
+    };
+    
+    Engine.AddToTreeWithAll = function (Tree,Item)
+    {
+        
+        var Find = Tree.find(Item);
+        if(Find)
+        {
+            if(Item.IsTx && !Find.IsTx)
+            {
+                Engine.DoTxFromTicket(Find, Item);
+                
+                return Find;
+            }
+            
+            return 0;
+        }
+        Tree.insert(Item);
+        Engine.InitItemTT(Item);
+        
+        return Item;
     };
     
     Engine.SendTicket = function (BlockNum)
@@ -136,9 +86,7 @@ function InitClass(Engine)
         if(!glUseTicket)
             return;
         
-        Engine.InitTicket(BlockNum);
-        
-        var ArrTop = Engine.GetArrayFromTree(Engine.ListTreeTicket[BlockNum]);
+        var ArrTop = Engine.GetArrayFromTree(Engine.GetTreeTicketAll(BlockNum));
         
         var Count = 0;
         var ArrChilds = Engine.GetTransferSession(BlockNum);
@@ -153,40 +101,24 @@ function InitClass(Engine)
                 continue;
             }
             
-            let TTArr = [];
+            var Level = Child.Level;
+            var TTArr = [];
             for(var t = 0; t < ArrTop.length; t++)
             {
                 var Tt = ArrTop[t];
-                CheckTx("SendTicket", Tt, BlockNum, 1);
                 
-                if(!Tt.TTReceiveIndex)
-                {
-                    ToLog("Error - Not TTReceiveIndex, KEY=" + Tt.KEY);
-                    continue;
-                }
-                
-                if(GetBit(Tt.TTSend, Child.Level))
+                if(GetBit(Tt.TTSend, Level))
                 {
                     continue;
                 }
                 
-                if(JINN_CONST.TEST_NEW_TT_MODE)
-                {
-                    if(Tt.FromLevel === Child.Level)
-                        continue;
-                }
-                else
-                {
-                    if(Tt.TTReceiveIndex[Child.Level])
-                    {
-                        continue;
-                    }
-                }
+                if(Tt.FromLevel === Level)
+                    continue;
                 
-                global.DEBUG_KEY && Tt.KEY === DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Send TT=" + Tt.KEY + " TO Level=" + Child.Level + " TTSend=" + Tt.TTSend);
+                global.DEBUG_KEY && Tt.KEY === DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Send TT=" + Tt.KEY + " TO Level=" + Level + " TTSend=" + Tt.TTSend);
                 
                 TTArr.push(Tt);
-                Tt.TTSend = SetBit(Tt.TTSend, Child.Level);
+                Tt.TTSend = SetBit(Tt.TTSend, Level);
                 
                 JINN_STAT.TTSend++;
                 Count++;
@@ -201,50 +133,7 @@ function InitClass(Engine)
             if(!TTArr.length)
                 continue;
             
-            Engine.Send("TRANSFERTT", Child, {BlockNum:BlockNum, TtArr:TTArr}, function (Child,Data)
-            {
-                if(JINN_CONST.TEST_NEW_TT_MODE)
-                    return;
-                
-                if(!Data || !Data.result)
-                    return;
-                
-                if(!Engine.CanProcessBlock(BlockNum, JINN_CONST.STEP_TICKET))
-                {
-                    Engine.ToError(Child, "RET TRANSFERTT : CanProcessBlock Error BlockNum=" + BlockNum, 4);
-                    return;
-                }
-                
-                if(Data.ArrIndex.length !== TTArr.length)
-                {
-                    Child.ToError("Error length ArrIndex");
-                    return;
-                }
-                for(var i = 0; i < TTArr.length; i++)
-                {
-                    var Tx = TTArr[i];
-                    if(!Tx.TTReceiveIndex)
-                    {
-                        Child.ToError("Error TTReceiveIndex");
-                        return;
-                    }
-                    
-                    Tx.TTReceiveIndex[Child.Level] = 1 + Data.ArrIndex[i];
-                }
-                var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
-                
-                for(var i = 0; i < Data.TxArr.length; i++)
-                {
-                    var TxIndex = Data.TxArr[i];
-                    var Tt = ArrTTAll[TxIndex];
-                    if(!Tt)
-                    {
-                        Child.ToError("Error ticket index = " + TxIndex);
-                        break;
-                    }
-                    Tt.TXWait = SetBit(Tt.TXWait, Child.Level);
-                }
-            });
+            Engine.Send("TRANSFERTT", Child, {BlockNum:BlockNum, TtArr:TTArr});
         }
         
         if(!WasBreak)
@@ -253,8 +142,7 @@ function InitClass(Engine)
         return Count;
     };
     
-    Engine.TRANSFERTT_SEND = {BlockNum:"uint32", TtArr:[{TTIndex:"uint16", HashTicket:"arr" + JINN_CONST.TX_TICKET_HASH_LENGTH}]};
-    Engine.TRANSFERTT_RET = {result:"byte", ArrIndex:["uint16"], TxArr:["uint16"]};
+    Engine.TRANSFERTT_SEND = {BlockNum:"uint32", TtArr:[{HashTicket:"arr" + JINN_CONST.TX_TICKET_HASH_LENGTH}]};
     Engine.TRANSFERTT = function (Child,Data)
     {
         if(!Data)
@@ -274,16 +162,11 @@ function InitClass(Engine)
             JINN_STAT.ErrTt2++;
             return {result:0};
         }
-        
-        var Tree = Engine.GetTreeTicket(BlockNum);
         var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
-        var ArrTTAll = Engine.GetArrTicketAll(BlockNum);
         
         var TTArr = Data.TtArr;
         Engine.CheckSizeTransferTXArray(Child, TTArr);
-        
-        var RetArrIndex = [];
-        var RetTxArr = [];
+        var Level = Child.Level;
         
         var CountNew = 0;
         for(var t = 0; t < TTArr.length; t++)
@@ -297,46 +180,21 @@ function InitClass(Engine)
                 var Key = GetHexFromArr(ItemReceive.HashTicket);
                 Tt = Engine.GetTicket(ItemReceive.HashTicket, Key, BlockNum);
                 
-                Tt.FromLevel = Child.Level;
-                Tt.TxCounter = 0;
+                Tt.FromLevel = Level;
                 
                 Key === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got NEW TT=" + Key);
                 
-                Engine.AddToTreeWithAll(TreeTTAll, ArrTTAll, Tree, Tt);
-                RetTxArr.push(ItemReceive.TTIndex);
-                Tt.TxCounter++;
+                Engine.AddToTreeWithAll(TreeTTAll, Tt);
             }
             else
             {
-                var Key = GetHexFromArr(ItemReceive.HashTicket);
-                Key === global.DEBUG_KEY && Child.ToLog("B=" + BlockNum + ":" + Engine.TickNum + " Got OLD TT=" + Key);
-                
-                if(Tt.TxCounter < JINN_CONST.TEST_MODE_DOUBLE_TX)
-                {
-                    RetTxArr.push(ItemReceive.TTIndex);
-                    Tt.TxCounter++;
-                }
             }
-            
-            RetArrIndex.push(Tt.TTIndex);
-            Tt.TTReceive = SetBit(Tt.TTReceive, Child.Level);
-            
-            if(Tt.TTReceiveIndex)
-            {
-                Tt.TTReceiveIndex[Child.Level] = 1 + ItemReceive.TTIndex;
-                if(!Tt.TTReceiveIndex[Child.Level])
-                    ToLog("**********Error set TTReceiveIndex on " + Child.Level);
-            }
+            Tt.TTReceive = SetBit(Tt.TTReceive, Level);
         }
         
         if(CountNew)
         {
             Engine.StepTaskTt[BlockNum] = 1;
         }
-        
-        if(JINN_CONST.TEST_NEW_TT_MODE)
-            return {result:1, ArrIndex:[], TxArr:[]};
-        
-        return {result:1, ArrIndex:RetArrIndex, TxArr:RetTxArr};
     };
 }

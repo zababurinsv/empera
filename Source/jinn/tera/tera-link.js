@@ -25,11 +25,11 @@ function Init(Engine)
     
     SERVER.AddTransaction = function (Tr,ToAll)
     {
-        var Tx = Engine.GetTx(Tr.body, undefined, undefined, 6);
+        var Tx = Engine.GetTx(Tr.body, undefined, 6);
         
         if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", Tx.num))
             return  - 4;
-        var Delta_Time = CONSENSUS_PERIOD_TIME / 2;
+        var Delta_Time = CONSENSUS_PERIOD_TIME / 3 - 100;
         var CurBlockNumT = GetCurrentBlockNumByTime(Delta_Time);
         
         if(Tx.num < CurBlockNumT)
@@ -52,6 +52,18 @@ function Init(Engine)
             return App.GetSenderNum(BlockNum, Tx.body);
         else
             return 0;
+    };
+    
+    Engine.GetTxSenderOperationID = function (Tx,BlockNum)
+    {
+        var OperationID;
+        var type = Tx.body[0];
+        var App = DAppByType[type];
+        if(App)
+            OperationID = App.GetSenderOperationID(BlockNum, Tx.body);
+        else
+            OperationID = 0;
+        return OperationID;
     };
     
     Engine.GetSenderBaseValue = function (SenderNum)

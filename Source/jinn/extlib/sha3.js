@@ -214,7 +214,7 @@
         !Array.isArray(message) && 
         !(ARRAY_BUFFER && ArrayBuffer.isView(message)))
       {
-          //throw 'input is invalid type message='+JSON.stringify(message);
+
           TO_ERROR_LOG("SHA3",20,'ERROR: Input is invalid type, message='+JSON.stringify(message));
           return [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
       }

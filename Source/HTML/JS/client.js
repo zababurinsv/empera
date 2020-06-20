@@ -1861,7 +1861,6 @@ function GetOperationIDFromItem(Item)
         OperationID = Math.max(Item.Value.OperationID, OperationID);
     }
     OperationID++;
-    OperationID++;
     MapSendID[FromNum].OperationID = OperationID;
     MapSendID[FromNum].Date = Date.now();
     
@@ -1981,7 +1980,7 @@ function GetArrFromTR(TR)
     var Body = [];
     WriteByte(Body, TR.Type);
     WriteByte(Body, TR.Version);
-    WriteUint(Body, 0);
+    WriteUint(Body, TR.OperationSortID);
     WriteUint(Body, TR.FromID);
     WriteUint32(Body, TR.To.length);
     for(var i = 0; i < TR.To.length; i++)

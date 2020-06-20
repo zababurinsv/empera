@@ -11,9 +11,6 @@ module.exports.Init = Init;
 
 const os = require('os');
 
-global.MAX_BUSY_VALUE = 200;
-global.MAX_SHA3_VALUE = 500;
-
 var GlSumUser;
 var GlSumSys;
 var GlSumIdle;

@@ -43,7 +43,7 @@ function SendTestCoinInner(FromID,ToID,Sum,Count,Mode)
             var Res = WebApi2.Send(Params, 0, 0, 0, 2);
             if(Res.result)
             {
-                var Tx = Engine.GetTx(Res.Body, undefined, undefined, 6);
+                var Tx = Engine.GetTx(Res.Body, undefined, 6);
                 TxArr.push(Tx);
                 BlockNum = Tx.num;
             }

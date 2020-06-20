@@ -87,6 +87,10 @@ class DApp
     {
         return 0;
     }
+    GetSenderOperationID(BlockNum, Body)
+    {
+        return 0;
+    }
     OnWriteBlockStart(Block)
     {
     }

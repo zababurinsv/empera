@@ -185,7 +185,7 @@ function InitClass(Engine)
             var Item = Block.TxData[i];
             if(Item.HASH)
                 break;
-            var Tx = Engine.GetTx(Item.body, undefined, undefined, 5);
+            var Tx = Engine.GetTx(Item.body, undefined, 5);
             Block.TxData[i] = Tx;
             CheckTx("GetBlock", Tx, Block.BlockNum);
             Count++;
