@@ -1802,7 +1802,18 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
     else
         Path = name;
     
-    if(!fs.existsSync(Path) || !fs.lstatSync(Path).isFile())
+    var bErr = 0;
+    var FStat = undefined;
+    if(!fs.existsSync(Path))
+        bErr = 1;
+    else
+    {
+        FStat = fs.lstatSync(Path);
+        if(!FStat.isFile())
+            bErr = 1;
+    }
+    
+    if(bErr)
     {
         if(!global.DEV_MODE || type === "ico")
         {
@@ -1897,13 +1908,18 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
             else
             {
                 response.writeHead(200, Headers);
+                
+                var TimePeriod = 30 * 60 * 1000;
+                if(type === "zip")
+                    TimePeriod += Math.floor(FStat.size / 100000) * 1000;
+                
                 setTimeout(function ()
                 {
                     
                     stream.close();
                     stream.push(null);
                     stream.read(0);
-                }, 30 * 60 * 1000);
+                }, TimePeriod);
                 
                 stream.pipe(response);
             }

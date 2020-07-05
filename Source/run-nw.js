@@ -1,5 +1,5 @@
 
-global.MODE_RUN="MAIN";
+global.MODE_RUN="MAIN_JINN";
 const crypto = require('crypto');
 
 global.HTTP_PORT_NUMBER=Math.trunc(10000*Math.random())+50000;

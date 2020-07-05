@@ -25,7 +25,9 @@ function InitClass(Engine)
     
     Engine.RetNewConnectByIPPort = function (ip,port)
     {
-        if(!port || typeof port !== "number")
+        port = port >>> 0;
+        
+        if(!port)
         {
             ToLogTrace("RetNewConnectByIPPort : Error port number = " + port);
             return undefined;
@@ -59,7 +61,9 @@ function InitClass(Engine)
         if(global.LOCAL_RUN && ip !== "127.0.0.1")
             return undefined;
         
-        if(!port || typeof port !== "number")
+        port = port >>> 0;
+        
+        if(!port)
         {
             ToLogTrace("NewConnect : Error port number = " + port);
             return undefined;

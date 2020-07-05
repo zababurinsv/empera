@@ -234,8 +234,9 @@ switch(global.MODE_RUN)
         
         break;
         
-    case "MAIN":
     case "MAIN_JINN":
+        global.JINN_MODE = 1;
+    case "MAIN":
         global.NETWORK = "MAIN-JINN";
         var NewStartNum = 63510000;
         global.UPDATE_CODE_JINN_HASH8 = NewStartNum;
@@ -247,6 +248,7 @@ switch(global.MODE_RUN)
         global.CONSENSUS_PERIOD_TIME = 3000;
         var StartSec = 1530446400;
         global.START_NETWORK_DATE = 1000 * (StartSec - NewStartNum * 2);
+        
         break;
         
     default:

@@ -1,6 +1,6 @@
 
 if(!global.MODE_RUN)
-    global.MODE_RUN="MAIN";
+    global.MODE_RUN="MAIN_JINN";
 const fs = require('fs');
 const os = require('os');
 if(!global.DATA_PATH || global.DATA_PATH==="")
