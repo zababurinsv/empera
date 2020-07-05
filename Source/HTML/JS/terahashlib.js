@@ -27,23 +27,8 @@ if(typeof global === "object")
     if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE || global.JINN_MODE)
     {
         BLOCKNUM_ALGO2 = 0;
-        
-        if(global.JINN_MODE)
-        {
-            BLOCKNUM_HASH_NEW = 0;
-            BLOCKNUM_TICKET_ALGO = 0;
-        }
-        else
-            if(global.TEST_NETWORK)
-            {
-                BLOCKNUM_HASH_NEW = 100;
-                BLOCKNUM_TICKET_ALGO = 0;
-            }
-            else
-            {
-                BLOCKNUM_HASH_NEW = 100;
-                BLOCKNUM_TICKET_ALGO = 0;
-            }
+        BLOCKNUM_HASH_NEW = 0;
+        BLOCKNUM_TICKET_ALGO = 0;
     }
 }
 
@@ -406,6 +391,7 @@ function GetBlockArrFromBuffer(BufRead,Info)
         return [];
     }
     
+    var PowTotal = 0;
     var PrevBlock;
     var BlockArr = [];
     for(var i = 0; i < CountLoad + BLOCK_PROCESSING_LENGTH2; i++)
@@ -434,8 +420,11 @@ function GetBlockArrFromBuffer(BufRead,Info)
                 var Prev = BlockArr[start + n];
                 arr.push(Prev.Hash);
             }
+            var PrevSumPow = 0;
+            if(PrevBlock)
+                PrevSumPow = PrevBlock.SumPow;
             Block.PrevHash = CalcLinkHashFromArray(arr, Block.BlockNum);
-            Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash);
+            Block.SeqHash = GetSeqHash(Block.BlockNum, Block.PrevHash, Block.TreeHash, PrevSumPow);
             var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
             var PrevAddrNum = ReadUint32FromArr(Block.AddrHash, 28);
             if(PrevHashNum !== PrevAddrNum && Block.BlockNum > 20000000)
@@ -457,6 +446,7 @@ function GetBlockArrFromBuffer(BufRead,Info)
             {
                 Block.SumHash = CalcSumHash(PrevBlock.SumHash, Block.Hash, Block.BlockNum, Block.SumPow);
             }
+            PowTotal += Block.Power;
             
             PrevBlock = Block;
         }
@@ -475,6 +465,19 @@ function GetBlockArrFromBuffer(BufRead,Info)
             break;
         }
     }
+    
+    if(BlockArr.length && global.WATCHDOG_DEV)
+    {
+        
+        var AvgPow = PowTotal / BlockArr.length;
+        if(AvgPow < 30)
+        {
+            if(BlockArr.length > 100)
+                ToLog("Error AvgPow=" + AvgPow + " POW Arr= " + BlockArr.length + " PowTotal=" + PowTotal, 2);
+            return [];
+        }
+    }
+    
     return BlockArr;
 }
 
@@ -483,17 +486,26 @@ function shaarrblock2(Value1,Value2,BlockNum)
     return shaarrblock(arr2(Value1, Value2), BlockNum);
 }
 
-function GetSeqHash(BlockNum,PrevHash,TreeHash)
+function GetSeqHash(BlockNum,PrevHash,TreeHash,PrevSumPow)
 {
-    return CalcDataHash(PrevHash, TreeHash, BlockNum);
+    return CalcDataHash(BlockNum, PrevHash, TreeHash, PrevSumPow);
 }
 
-function CalcDataHash(PrevHash,TreeHash,BlockNum)
+function CalcDataHash(BlockNum,PrevHash,TreeHash,PrevSumPow)
 {
-    if(BlockNum >= global.UPDATE_CODE_JINN_1)
+    if(BlockNum > 15 && BlockNum >= global.UPDATE_CODE_JINN_HASH8)
     {
         // new code
-        return sha3(PrevHash.concat(TreeHash), 45);
+        
+        if(BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
+        {
+            if(PrevSumPow === undefined)
+                ToLogTrace("Error PrevSumPow=undefinde on Block=" + BlockNum);
+            
+            return sha3(PrevHash.concat(TreeHash).concat(GetArrFromValue(PrevSumPow)), 45);
+        }
+        else
+            return sha3(PrevHash.concat(TreeHash), 45);
     }
     else
     {
@@ -515,10 +527,17 @@ function CalcSumHash(PrevSumHash,Hash,BlockNum,SumPow)
 {
     if(BlockNum === 0)
         return ZERO_ARR_32;
+    if(BlockNum <= 15)
+    {
+        return shaarr2(PrevSumHash, Hash);
+    }
     
-    if(BlockNum >= global.UPDATE_CODE_JINN_1)
+    if(BlockNum >= global.UPDATE_CODE_JINN_HASH8)
     {
         // new code
+        
+        if(BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
+            return Hash;
         
         if(SumPow === undefined)
             ToLogTrace("Error: SumPow===undefined");
@@ -536,10 +555,10 @@ function CalcSumHash(PrevSumHash,Hash,BlockNum,SumPow)
 
 function CalcLinkHashFromArray(ArrHashes,BlockNum)
 {
-    if(BlockNum >= global.UPDATE_CODE_JINN_1)
+    if(BlockNum >= global.UPDATE_CODE_JINN_HASH8)
     {
         // new code
-        ToLogTrace("Error algo for new mode CalcLinkHashFromArray");
+        ToLogTrace("Error algo for new mode CalcLinkHashFromArray BlockNum=" + BlockNum + "/" + global.UPDATE_CODE_JINN_HASH8);
     }
     
     // old code

@@ -37,15 +37,22 @@ else
         global.StartPortMapping = StartUseStun;
     }
 
+var PortMappingOK = 0;
 function StartUseUPNP(ip,port,F)
 {
+    if(PortMappingOK === port)
+        return;
+    
     if(F)
         ToLog("USE UPNP");
     
     ClientUPNP.portMapping({public:port, private:port, ttl:0}, function (err,results)
     {
         if(!err)
+        {
+            PortMappingOK = port;
             ToLog("OK port mapping");
+        }
         else
         {
             ToLog("----------- Cannt port mapping: " + port);
@@ -122,6 +129,7 @@ function StartUseStun(ip,port,F)
 
 function CheckMapping()
 {
+    
     ClientUPNP.getMappings({local:true}, function (err,arr)
     {
         var WasFind = 0;

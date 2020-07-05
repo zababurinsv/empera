@@ -20,6 +20,9 @@ global.DB_HEADER_FORMAT = {VersionDB:"byte", BlockNum:"uint", PrevPosition:"uint
     PrevSumHash:"hash", TxCount:"uint16", TxPosition:"uint", HeadPosH:"uint", HeadPosB:"uint", PrevBlockPosition:"uint", CreateMode:"byte",
     TestZero:"arr8", };
 
+if(global.Init_DB_HEADER_FORMAT)
+    global.Init_DB_HEADER_FORMAT(DB_HEADER_FORMAT);
+
 const BODY_FORMAT = {PrevPosition:"uint", PrevCountTx:"uint16", TxArr:[{body:"tr"}], TxIndex:["uint16"]};
 
 class CDBChain
@@ -59,7 +62,7 @@ class CDBChain
             var Find2 = this.FindBlockByHash(Block.BlockNum, Block.SumHash);
             if(Find2)
             {
-                ToLogTrace("Find2: on Block=" + Block.BlockNum)
+                ToLog("Find double block on Block=" + Block.BlockNum, 2)
             }
         }
         
@@ -144,7 +147,8 @@ class CDBChain
             }
             if(!IsEqArr(PrevBlock.SumHash, Block.PrevSumHash))
             {
-                ToLog("Error PrevSumHash on block=" + Block.BlockNum, 3)
+                ToLog("Error PrevSumHash on block=" + Block.BlockNum + "  " + GetHexFromArr(Block.PrevSumHash) + "/" + GetHexFromArr(PrevBlock.SumHash),
+                3)
                 return 0;
             }
         }
@@ -477,7 +481,7 @@ class CDBChain
     }
     SetBlockJump(BlockSeed, Block, StrType)
     {
-        if(JINN_CONST.HOT_BLOCK_DELTA && BlockSeed.BlockNum > JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.HOT_BLOCK_DELTA)
+        if(StrType === "H" && JINN_CONST.HOT_BLOCK_DELTA && BlockSeed.BlockNum > JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.HOT_BLOCK_DELTA)
             return 0;
         
         if(!Block.BlockNum)
@@ -504,8 +508,6 @@ class CDBChain
     
     GetBlockJump(BlockSeed, StrType, bRaw)
     {
-        if(JINN_CONST.HOT_BLOCK_DELTA && BlockSeed.BlockNum > JINN_EXTERN.GetCurrentBlockNumByTime() - JINN_CONST.HOT_BLOCK_DELTA)
-            return undefined;
         
         var BlockPosJump = BlockSeed["HeadPos" + StrType];
         if(!BlockPosJump)

@@ -67,7 +67,7 @@ if(global.JINN_MODE)
     
     var JinnLib = require("../jinn/tera");
     var Map = {"Block":1, "BlockDB":1, "Log":1, };
-    JinnLib.Create(SERVER, Map);
+    JinnLib.Create(Map);
 }
 
 global.bShowDetail = 0;
@@ -336,7 +336,8 @@ class CTXProcess
             if(!IsEqArr(PrevHashData.SumHash, PrevSumHash))
             {
                 if(bShowDetail)
-                    ToLog("SumHash:DeleteTX on Block=" + PrevBlockNum)
+                    ToLog("SumHash:DeleteTX on Block=" + PrevBlockNum, 2)
+                
                 BlockDeleteTX(PrevBlockNum)
                 return  - 1;
             }
@@ -344,8 +345,9 @@ class CTXProcess
             var AccHash = DApps.Accounts.GetCalcHash();
             if(!IsEqArr(PrevHashData.AccHash, AccHash))
             {
+                ToLog("AccHash:DeleteTX on Block=" + PrevBlockNum, 2)
+                
                 this.ErrorAccHash++
-                ToLog("AccHash:DeleteTX on Block=" + PrevBlockNum)
                 BlockDeleteTX(PrevBlockNum)
                 return 0;
             }

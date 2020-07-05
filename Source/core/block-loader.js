@@ -35,7 +35,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         this.LoadHistoryMode = false
         this.MapBlockBodyLoad = {}
         
-        if(!global.ADDRLIST_MODE && !this.VirtualMode && !global.TEST_JINN)
+        if(!global.ADDRLIST_MODE && !this.VirtualMode && !global.JINN_MODE)
         {
             
             let Self = this;
@@ -101,7 +101,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
             require(GetCodePath("EXPERIMENTAL/_run.js"))
         }
         
-        if(global.TEST_JINN)
+        if(global.JINN_MODE)
             return;
         
         GenerateStartedBlocks()
@@ -720,6 +720,22 @@ module.exports = class CBlock extends require("./rest-loader.js")
         }
         else
         {
+            if(!Context.WasLoadNum)
+            {
+                ToLog("Not found block: " + Context.BlockNum + " from node:" + NodeName(Info.Node), 1)
+                if(UseScoreBlockLoad(Info.Node, Context.BlockNum))
+                {
+                    this.AddCheckErrCount(Info.Node, 10)
+                }
+                
+                Context.BlockNum = Math.floor(Context.BlockNum - Context.DeltaBlockNum)
+                if(Context.BlockNum < BLOCK_PROCESSING_LENGTH2)
+                    Context.BlockNum = BLOCK_PROCESSING_LENGTH2 - 1
+                
+                this.BlockNumDB = Context.BlockNum
+                this.SetTruncateBlockDB(Context.BlockNum)
+            }
+            else
             {
                 var keysend = "" + Info.Node.addrStr + ":" + Context.BlockNum;
                 Context.MapSend[keysend] = 1
@@ -1427,19 +1443,22 @@ module.exports = class CBlock extends require("./rest-loader.js")
                         this.BADHashCount++
                         
                         ToLog("**** BAD ACCOUNT Hash in block=" + Block.BlockNum + " from:" + NodeName(Info.Node) + " ****")
-                        ToLog("May be need to Rewrite transactions from: " + (Block.BlockNum - 2 * DELTA_BLOCK_ACCOUNT_HASH))
-                        this.SetBlockNOSendToNode(Block, Info.Node, "BAD CMP ACC HASH")
-                        if(global.WATCHDOG_BADACCOUNT && this.BADHashCount > 60)
+                        if(global.WATCHDOG_BADACCOUNT)
                         {
-                            ToLog("Run WATCHDOG!")
-                            this.BADHashCount = 0
-                            this.FREE_ALL_MEM_CHAINS()
-                            this.SetTruncateBlockDB(Block.BlockNum - 5 * DELTA_BLOCK_ACCOUNT_HASH)
+                            ToLog("May be need to Rewrite transactions from: " + (Block.BlockNum - 2 * DELTA_BLOCK_ACCOUNT_HASH))
+                            this.SetBlockNOSendToNode(Block, Info.Node, "BAD CMP ACC HASH")
+                            if(global.WATCHDOG_BADACCOUNT && this.BADHashCount > 60)
+                            {
+                                ToLog("Run WATCHDOG!")
+                                this.BADHashCount = 0
+                                this.FREE_ALL_MEM_CHAINS()
+                                this.SetTruncateBlockDB(Block.BlockNum - 5 * DELTA_BLOCK_ACCOUNT_HASH)
+                            }
+                            else
+                            {
+                            }
+                            return 0;
                         }
-                        else
-                        {
-                        }
-                        return 0;
                     }
                 }
             }
@@ -1766,7 +1785,7 @@ module.exports = class CBlock extends require("./rest-loader.js")
         if(DeltaScore < 5)
             DeltaScore = 5
         var DeltaNode = Node.BlockNumDB - Node.BlockNumDBMin;
-        if(DeltaNode < 10000)
+        if(DeltaNode < 10000 && Node.BlockNumDB > 10000)
         {
             ToLog("BAD DeltaDB  " + NodeName(Node), 3)
             Node.BlockProcessCount -= DeltaScore
@@ -1798,12 +1817,10 @@ module.exports = class CBlock extends require("./rest-loader.js")
                     }
                     if(arr && arr.length === 1 && CompareArr(arr[0].Hash, BlockDB.Hash) === 0)
                     {
-                        ToLog("WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " arr=" + arr.length, 5)
                         Node.BlockProcessCount += DeltaScore + 2
                     }
                     else
                     {
-                        ToLog("NOT WAS HL Random Block: " + BlockNum + "  from " + NodeName(Info.Node) + " Data.length=" + Info.Data.length, 3)
                     }
                 }}})
     }
@@ -1916,7 +1933,7 @@ function TransactionGenerate()
 
 function GenerateChain(StartBlockTime)
 {
-    if(global.TEST_JINN)
+    if(global.JINN_MODE)
         return true;
     if(StartBlockTime < BLOCK_PROCESSING_LENGTH)
         StartBlockTime = BLOCK_PROCESSING_LENGTH * 2 - 1;

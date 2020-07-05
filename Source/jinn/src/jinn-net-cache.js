@@ -31,19 +31,6 @@ function DoNode(Engine)
 
 function InitClass(Engine)
 {
-    Engine.CanCacheExchange = function (Child,BlockNum)
-    {
-        var DeltaBlockNum = Engine.CurrentBlockNum - BlockNum;
-        if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM - JINN_CONST.MAX_DELTA_PROCESSING)
-            return 1;
-        
-        if(Child.StartHotTransferNum > BlockNum)
-        {
-            return 0;
-        }
-        else
-            return 1;
-    };
     
     Engine.ProcessBlockOnSend = function (Child,Block,TxData)
     {
@@ -54,9 +41,7 @@ function InitClass(Engine)
         var Size = 4 + 4 + 32;
         var ArrFull = [];
         var ArrTtTx = [];
-        var TicketCount = 0;
-        var SysCount = 0;
-        if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM - JINN_CONST.MAX_DELTA_PROCESSING)
+        if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM - JINN_CONST.MAX_DELTA_PROCESSING || Child.StartHotTransferNum + 5 >= BlockNum)
         {
             for(var i = 0; i < TxData.length; i++)
             {
@@ -72,26 +57,28 @@ function InitClass(Engine)
             for(var i = 0; i < TxData.length; i++)
             {
                 var Item = TxData[i];
-                Engine.CheckHashExist(Item);
+                Engine.CheckHashExist(Item, BlockNum);
                 var Tx = TreeTTAll.find(Item);
-                if(!Tx || !Tx.IsTx)
+                if(!Tx)
                 {
-                    SysCount++;
-                    ArrTtTx.push(Item);
-                    Size += JINN_CONST.TX_TICKET_HASH_LENGTH + Item.body.length + 2;
-                    
-                    continue;
+                    Tx = Item;
+                    Engine.InitItemTT(Tx);
+                    TreeTTAll.insert(Tx);
                 }
-                if(GetBit(Tx.TXReceive, Level) || GetBit(Tx.TXSend, Level))
+                else
+                    if(!Tx.IsTx)
+                    {
+                        Engine.DoTxFromTicket(Tx, Item);
+                    }
+                if(GetBit(Tx.TXReceive, Level) || GetBit(Tx.TXSend, Level) || GetBit(Tx.TTTXReceive, Level))
                 {
-                    TicketCount++;
                     ArrTtTx.push({HashTicket:Tx.HashTicket});
-                    Size += 10 + 2;
+                    Size += JINN_CONST.TX_TICKET_HASH_LENGTH + 2;
                 }
                 else
                 {
                     ArrTtTx.push(Tx);
-                    Size += 10 + Tx.body.length + 2;
+                    Size += JINN_CONST.TX_TICKET_HASH_LENGTH + Tx.body.length + 2;
                     Tx.TXSend = SetBit(Tx.TXSend, Level);
                 }
             }
@@ -108,6 +95,13 @@ function InitClass(Engine)
         var Level = Child.Level;
         var BlockNum = Block.BlockNum;
         
+        if(Block.WasProcessBlockOnReceive)
+        {
+            ToLog("WasProcessBlockOnReceive " + BlockNum, 2);
+            return 1;
+        }
+        Block.WasProcessBlockOnReceive = 1;
+        
         Block.TxData = [];
         if(Block.ArrFull.length)
         {
@@ -116,7 +110,8 @@ function InitClass(Engine)
             for(var i = 0; i < ArrFull.length; i++)
             {
                 var Value = ArrFull[i];
-                var Tx = Engine.GetTx(Value.body, undefined, 4);
+                var Tx = Engine.GetTx(Value.body, BlockNum, undefined, 4);
+                Tx.FromChildID = Child.ID;
                 Block.TxData.push(Tx);
                 
                 JINN_STAT.TxCache1++;
@@ -129,7 +124,6 @@ function InitClass(Engine)
             {
                 var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
                 var WasError = 0;
-                var TicketCount = 0;
                 var ArrTtTx = Block.ArrTtTx;
                 for(var i = 0; i < ArrTtTx.length; i++)
                 {
@@ -147,13 +141,16 @@ function InitClass(Engine)
                         {
                             if(!Item.body.length)
                             {
-                                Child.ToError("Error #1 load tx:" + Tx.KEY + " Receive:" + GetBit(Tx.TXReceive, Level) + " Send:" + GetBit(Tx.TXSend, Level) + " Send2:" + GetBit(Tx.TXSend2,
-                                Level) + " - not found body in BlockNum=" + BlockNum, 3);
+                                if(!WasError)
+                                    Child.ToError("Error #1 load tx:" + Tx.KEY + " Receive:" + GetBit(Tx.TXReceive, Level) + " Send:" + GetBit(Tx.TXSend, Level) + " - not found body in BlockNum=" + BlockNum,
+                                    3);
                                 WasError = 1;
                                 continue;
                             }
                             
-                            Tx = Engine.GetTxFromReceiveBody(Tx, Item.body, BlockNum, 2);
+                            Tx = Engine.GetTxFromReceiveBody(Child, Tx, Item.body, BlockNum, 2);
+                            if(!Tx)
+                                return 0;
                         }
                     }
                     else
@@ -161,25 +158,28 @@ function InitClass(Engine)
                         
                         if(!Item.body.length)
                         {
-                            Child.ToError("Error #2 load tx - not found body in BlockNum=" + BlockNum, 3);
-                            return 0;
+                            if(!WasError)
+                                Child.ToError("---------Error #2 load tx - not found body in BlockNum=" + BlockNum, 2);
+                            WasError = 1;
+                            continue;
                         }
                         
-                        var Key = GetHexFromArr(Item.HashTicket);
-                        var Tt = Engine.GetTicket(Item.HashTicket, Key, BlockNum);
-                        Engine.InitItemTT(Tt);
-                        TreeTTAll.insert(Tt);
+                        Tx = Engine.GetTx(Item.body, BlockNum, undefined, 3);
                         
-                        Tx = Engine.GetTxFromReceiveBody(Tt, Item.body, BlockNum, 3);
+                        if(!Engine.IsValidateTx(Tx, "ProcessBlockOnReceive", BlockNum))
+                        {
+                            if(!WasError)
+                                Child.ToError("---------Error #3 load tx - bad tx in BlockNum=" + BlockNum, 2);
+                            WasError = 1;
+                            continue;
+                        }
+                        
+                        Tx.FromChildID = Child.ID;
+                        Engine.InitItemTT(Tx);
+                        TreeTTAll.insert(Tx);
                     }
                     
-                    if(!Tx)
-                        return 0;
-                    
                     CheckTx("2.ProcessBlockOnReceive", Tx, BlockNum, 1);
-                    
-                    if(!Item.body.length)
-                        TicketCount++;
                     
                     Block.TxData.push(Tx);
                     Tx.TXReceive = SetBit(Tx.TXReceive, Level);
@@ -197,6 +197,8 @@ function InitClass(Engine)
     
     Engine.SetReceiveBits = function (Child,Block)
     {
+        return;
+        
         var BlockNum = Block.BlockNum;
         var DeltaBlockNum = Engine.CurrentBlockNum - BlockNum;
         if(DeltaBlockNum >= JINN_CONST.STEP_CLEAR_MEM)
@@ -427,7 +429,9 @@ function InitClass(Engine)
     {
         
         global.AllCacheTreeRemoveTo(LastBlockNum);
+        ClearListMap(Engine.ListArrTicket, LastBlockNum);
         ClearListMap(Engine.ListArrTx, LastBlockNum);
+        ClearListMap(Engine.ListArrErrTx, LastBlockNum);
         
         ClearListTree(Engine.ListTreeTicketAll, LastBlockNum);
         ClearListMap(Engine.ListArrTicketAll, LastBlockNum, function (Arr)

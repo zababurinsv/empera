@@ -1,4 +1,5 @@
 
+global.MODE_RUN="TEST_JINN";
 global.TEST_NETWORK = 1;
 global.TEST_JINN=1;
 global.JINN_MODE=1;

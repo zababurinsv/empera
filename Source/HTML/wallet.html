@@ -481,16 +481,18 @@
 
         window.NETWORK_NAME=CONFIG_DATA.NETWORK;
         if(!WasInitCurrency)
-            FillCurrencyAsync("idCurrencyList");
-        WasInitCurrency=1;
-
-        var StrVersion=" 1."+Data.VersionNum;
-        if(Data.CODE_VERSION.VersionNum && Data.VersionNum<Data.CODE_VERSION.VersionNum)
         {
-            StrVersion=StrVersion+"/0."+Data.CODE_VERSION.VersionNum;
+
+            WasInitCurrency=1;FillCurrencyAsync("idCurrencyList");
         }
 
-        SetTitle(Name+StrVersion);
+        var StrVersion=""+Data.VersionNum;
+        if(Data.CODE_VERSION.VersionNum && Data.VersionNum<Data.CODE_VERSION.VersionNum)
+        {
+            StrVersion=StrVersion+"/"+Data.CODE_VERSION.VersionNum;
+        }
+
+        SetTitle(Name+":"+StrVersion);
 
         DeltaTime=DeltaTime.toFixed(3);
         var DeltaDB=Data.CurBlockNum-Data.BlockNumDB;
@@ -1466,13 +1468,13 @@
                             <td>
                                 <INPUT type="string" maxlength="40" style="width: 260px;text-align: left" autocomplete="off" id="idAccountName" onkeyup="CheckLengthAccDesription('idAccountName',40)">
                                 Currency:
-                                <input list="idCurrencyList" id="idCurrency" style="width: 110px;" onchange="ValidateCurrency(this)"/>
+                                <input list="idCurrencyList" id="idCurrency" style="width: 100px;" onchange="ValidateCurrency(this)"/>
                                 <datalist id="idCurrencyList" style="width: 80px;">
                                     <option value="Loading"></option>
                                 </datalist>
 
                                 Smart:
-                                <INPUT type="number" id="idSmart" min=0 max=100000000 value="0" style="width: 100px;">
+                                <INPUT type="number" id="idSmart" min=0 max=100000000 value="0" style="width: 90px;">
                             </td>
                         </tr>
 
@@ -1604,7 +1606,12 @@
                 <tr>
                     <td>Pay to</td>
                     <td>
-                        <INPUT style="float: left" type="string" id="idTo" value="" onkeyup="OnEditIdTo()" onchange="OnEditIdTo()"placeholder="Payee (required)" >
+                        <INPUT list="idToList" style="float: left" type="string" id="idTo" value="" onkeyup="OnEditIdTo()" onchange="OnEditIdTo()" placeholder="Payee (required)" >
+                        <datalist id="idToList" style2="width: 80px;">
+                            <option value="Loading"></option>
+                        </datalist>
+
+
                     </td>
                 </tr>
                 <tr>
@@ -1788,7 +1795,7 @@
                             <th id="GetHexFromArr(Item.PowHash)" class="hash">PowHash</th>
                             <th id="GetHexFromArr(Item.Hash)" class="hash">Hash</th>
 
-<!--                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
+                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>
 <!--                            <th id="GetHexFromArr(Item.SeqHash)" class="hash">SeqHash</th>-->
                             <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>
 <!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->

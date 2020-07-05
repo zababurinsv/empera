@@ -1,3 +1,5 @@
+
+global.MODE_RUN="TEST_JINN";
 const fs = require('fs');
 const os = require('os');
 if(!global.DATA_PATH || global.DATA_PATH==="")
@@ -11,4 +13,8 @@ global.TEST_NETWORK=1;
 global.NO_HISTORY_MODE=1;
 global.START_PORT_NUMBER = 33000;
 
+//new
+global.JINN_PORT=33000;
+
 require('./process/main-process');
+

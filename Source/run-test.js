@@ -1,3 +1,5 @@
+
+global.MODE_RUN="TEST";
 const fs = require('fs');
 const os = require('os');
 if(!global.DATA_PATH || global.DATA_PATH==="")

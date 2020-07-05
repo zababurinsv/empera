@@ -40,8 +40,7 @@ WebApi2.CreateAccount = function (Params,response)
         
         SendTransaction(Body, TR, Confirm, function (result,text)
         {
-            var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
-                Meta:Params.Meta, };
+            var Result = {result:result, text:text, TxID:TR._TxID, BlockNum:TR._BlockNum, Meta:Params.Meta, };
             if(typeof Params.F === "function")
                 Params.F(Result);
             if(!Confirm || !result)
@@ -128,6 +127,8 @@ WebApi2.Send = function (Params,response,A,request,nJsonRet)
     
     var TR = {Type:111, Version:3, OperationSortID:OperationID, FromID:FromNum, OperationID:OperationID, To:[{PubKey:ToPubKeyArr,
             ID:ToID, SumCOIN:Coin.SumCOIN, SumCENT:Coin.SumCENT}], Description:Params.Description, Body:[], };
+    if(global.JINN_MODE)
+        TR.Version = 4;
     
     if(nJsonRet === 1)
         return {result:1, Tx:TR};
@@ -147,8 +148,7 @@ WebApi2.Send = function (Params,response,A,request,nJsonRet)
     
     SendTransaction(Body, TR, Confirm, function (result,text)
     {
-        
-        var TxID = GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6));
+        var TxID = TR._TxID;
         var Result = {result:result, text:text, TxID:TxID, BlockNum:TR._BlockNum, Meta:Params.Meta, };
         if(typeof Params.F === "function")
             Params.F(Result);
@@ -316,8 +316,7 @@ WebApi2.SendRawTransaction = function (Params,response)
         
         SendTransaction(Body, TR, Params.Wait, function (result,text)
         {
-            var Result = {result:result, text:text, TxID:GetHexFromArr(TR._TxID.slice(0, TX_TICKET_HASH_LENGTH + 6)), BlockNum:TR._BlockNum,
-                Meta:Params.Meta, };
+            var Result = {result:result, text:text, TxID:TR._TxID, BlockNum:TR._BlockNum, Meta:Params.Meta, };
             
             var Str = JSON.stringify(Result);
             response.end(Str);
@@ -363,11 +362,7 @@ global.DELTA_FOR_TIME_TX = 1;
 
 function GetBlockNumTr(arr)
 {
-    var Delta_Time = 0;
-    if(CONSENSUS_PERIOD_TIME >= 3000)
-        Delta_Time = CONSENSUS_PERIOD_TIME / 3;
-    
-    var BlockNum = DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime(Delta_Time);
+    var BlockNum = DELTA_FOR_TIME_TX + GetCurrentBlockNumByTime(0);
     if(arr[0] === TYPE_TRANSACTION_CREATE)
     {
         var BlockNum2 = Math.floor(BlockNum / 10) * 10;
@@ -383,6 +378,14 @@ var glNonce = 0;
 function CreateHashBodyPOWInnerMinPower(TR,arr,MinPow)
 {
     var BlockNum = GetBlockNumTr(arr);
+    if(global.JINN_MODE)
+    {
+        var TxID = CreateTxID(arr.slice(0, arr.length - 12), BlockNum);
+        TR._TxID = GetHexFromArr(TxID);
+        TR._BlockNum = BlockNum;
+        return 0;
+    }
+    
     if(MinPow === undefined)
     {
         MinPow = MIN_POWER_POW_TR + Math.log2(arr.length / 128);
@@ -394,7 +397,7 @@ function CreateHashBodyPOWInnerMinPower(TR,arr,MinPow)
         var power = GetPowPower(sha3(TxID));
         if(power >= MinPow)
         {
-            TR._TxID = TxID;
+            TR._TxID = GetHexFromArr(TxID.slice(0, TX_TICKET_HASH_LENGTH + 6));
             TR._BlockNum = BlockNum;
             return glNonce;
         }
@@ -432,9 +435,15 @@ function SendTransaction(Body,TR,Wait,F)
         
         var nonce = CreateHashBodyPOWInnerMinPower(TR, Body, undefined, startnonce);
         
-        process.RunRPC("AddTransactionFromWeb", {WebID:WebID, HexValue:GetHexFromArr(Body)}, function (Err,Result)
+        process.RunRPC("AddTransactionFromWeb", {WebID:WebID, HexValue:GetHexFromArr(Body)}, function (Err,Data)
         {
-            var text = AddTrMap[Result];
+            var Result = Data.Result;
+            var text = TR_MAP_RESULT[Result];
+            
+            if(Data._TxID)
+                TR._TxID = Data._TxID;
+            if(Data._BlockNum)
+                TR._BlockNum = Data._BlockNum;
             
             TR._result = Err ? 0 : 1;
             TR._text = text;

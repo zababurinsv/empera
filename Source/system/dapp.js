@@ -91,6 +91,35 @@ class DApp
     {
         return 0;
     }
+    CheckSignTransferTx(BlockNum, Body)
+    {
+        return 0;
+    }
+    
+    CheckSignAccountTx(BlockNum, Body)
+    {
+        var FromNum = this.GetSenderNum(BlockNum, Body);
+        if(!FromNum)
+            return 0;
+        var AccountFrom = DApps.Accounts.ReadState(FromNum);
+        if(!AccountFrom)
+            return 0;
+        
+        var hash = Buffer.from(sha3(Body.slice(0, Body.length - 64)));
+        var Sign = Buffer.from(Body.slice(Body.length - 64));
+        var Result = 0;
+        if(AccountFrom.PubKey[0] === 2 || AccountFrom.PubKey[0] === 3)
+            try
+            {
+                Result = secp256k1.verify(hash, Sign, AccountFrom.PubKey)
+            }
+            catch(e)
+            {
+                ToLog("" + e)
+            }
+        
+        return Result;
+    }
     OnWriteBlockStart(Block)
     {
     }

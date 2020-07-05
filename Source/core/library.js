@@ -12,19 +12,28 @@
 var fs = require('fs');
 const os = require('os');
 
-var AddTrMap = {};
-AddTrMap[ - 6] = "Inner node error";
-AddTrMap[ - 5] = "Bad block num";
-AddTrMap[ - 4] = "Bad type transaction";
-AddTrMap[ - 3] = "Bad time";
-AddTrMap[ - 2] = "Bad PoW";
-AddTrMap[ - 1] = "Bad length";
-AddTrMap[0] = "Not add";
-AddTrMap[1] = "OK";
-AddTrMap[2] = "Update OK";
-AddTrMap[3] = "Was send";
-AddTrMap[4] = "Added to timer";
-global.AddTrMap = AddTrMap;
+global.TX_RESULT_SIGN =  - 8;
+global.TX_RESULT_OPERATIOON_ID =  - 7;
+global.TX_RESULT_BAD_TYPE =  - 4;
+global.TX_RESULT_WAS_SEND = 3;
+
+global.TR_MAP_RESULT = {};
+TR_MAP_RESULT[TX_RESULT_SIGN] = "Error sign";
+TR_MAP_RESULT[TX_RESULT_OPERATIOON_ID] = "Error Operatioon ID";
+
+TR_MAP_RESULT[ - 6] = "Inner node error";
+TR_MAP_RESULT[ - 5] = "Bad block num";
+
+TR_MAP_RESULT[TX_RESULT_BAD_TYPE] = "Bad type transaction";
+
+TR_MAP_RESULT[ - 3] = "Bad time";
+TR_MAP_RESULT[ - 2] = "Bad PoW";
+TR_MAP_RESULT[ - 1] = "Bad length";
+TR_MAP_RESULT[0] = "Not add";
+TR_MAP_RESULT[1] = "OK";
+TR_MAP_RESULT[2] = "Update OK";
+TR_MAP_RESULT[TX_RESULT_WAS_SEND] = "Was send";
+TR_MAP_RESULT[4] = "Added to timer";
 
 require("./constant.js");
 if(global.USE_PARAM_JS)
@@ -416,6 +425,9 @@ global.SAVE_CONST = function (bForce)
 
 function CheckGlobalTime()
 {
+    if(global.JINN_MODE)
+        return;
+    return;
     ntpClient.getNetworkTime("pool.ntp.org", 123, function (err,NetTime)
     {
         if(err)

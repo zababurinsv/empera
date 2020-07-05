@@ -34,43 +34,27 @@ function SendTestCoinInner(FromID,ToID,Sum,Count,Mode)
     var Params = {"FromID":FromID, "FromPrivKey":PrivHex, "ToID":ToID, "Amount":Sum, "Description":"Test", "Confirm":0};
     
     var WasSend = 0;
-    if(Mode)
+    
+    for(var i = 0; i < Count; i++)
     {
-        var BlockNum = 0;
-        var TxArr = [];
-        for(var i = 0; i < Count; i++)
+        var Res = WebApi2.Send(Params, 0, 0, 0, 2);
+        if(!Res.Body)
         {
-            var Res = WebApi2.Send(Params, 0, 0, 0, 2);
-            if(Res.result)
-            {
-                var Tx = Engine.GetTx(Res.Body, undefined, 6);
-                TxArr.push(Tx);
-                BlockNum = Tx.num;
-            }
+            ToLog("Error WebApi2.Send Res: " + JSON.stringify(Res), 2);
+            continue;
         }
         
-        Engine.AddCurrentProcessingTx(BlockNum, TxArr);
-    }
-    else
-    {
-        for(var i = 0; i < Count; i++)
+        var Body = Res.Body.slice(0, Res.Body.length - 12);
+        if(Res.result)
         {
-            var Res = WebApi2.Send(Params, 0, 0, 0, 2);
-            var Body = Res.Body;
-            if(Res.result)
+            var Res2 = SERVER.AddTransaction({body:Body}, 1);
+            if(Res2 === 1)
             {
-                var Res2 = SERVER.AddTransaction({body:Body}, 1);
-                if(Res2 ===  - 3)
-                    global.DELTA_FOR_TIME_TX++;
-                if(Res2 === 1)
-                {
-                    
-                    WasSend++;
-                }
+                WasSend++;
             }
         }
-        return WasSend;
     }
+    return WasSend;
 }
 
 module.exports.Init = Init;

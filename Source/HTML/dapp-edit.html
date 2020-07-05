@@ -303,6 +303,8 @@
                 Body:Body,
                 Sign:"",
             };
+        if(window.JINN_MODE)
+            TR.Version=4;
 
         GetSignTransaction(TR,"",function (TR)
         {

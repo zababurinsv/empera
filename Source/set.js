@@ -1,4 +1,5 @@
 
+global.MODE_RUN="MAIN";
 global.DATA_PATH="../DATA";
 global.CODE_PATH=process.cwd();
 

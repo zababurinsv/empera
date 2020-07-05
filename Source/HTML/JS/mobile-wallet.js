@@ -499,6 +499,10 @@ function SetAccountsCard(Data,AccountsDataStr)
     
     var ListTotal = {};
     
+    var dataList = $("idToList");
+    if(dataList)
+        dataList.innerHTML = "";
+    
     for(var i = 0; arr && i < arr.length; i++)
     {
         var Item = arr[i];
@@ -581,6 +585,13 @@ function SetAccountsCard(Data,AccountsDataStr)
             ListTotal[Item.Currency] = Total;
         }
         ADD(Total, Item.Value);
+        
+        if(!dataList)
+            continue;
+        var Options = document.createElement('option');
+        Options.value = Num;
+        Options.label = StrText;
+        dataList.appendChild(Options);
     }
     $("idAccountsList").innerHTML = StrList;
     StrList = "";
@@ -727,7 +738,7 @@ function SetExplorerData(Data)
     }
     FirstCallDiagram = 0;
     
-    var StrVersion = " 1." + Data.VersionNum;
+    var StrVersion = "" + Data.VersionNum;
     $("idBHeight").innerText = Data.MaxNumBlockDB;
     $("idBVersion").innerText = StrVersion;
     $("idWVersion").innerText = WEB_WALLET_VERSION;

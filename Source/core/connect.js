@@ -38,7 +38,7 @@ global.MAX_WAIT_PERIOD_FOR_HOT = 4 * CONSENSUS_PERIOD_TIME;
 
 const PERIOD_FOR_START_CHECK_TIME = 300;
 
-module.exports = class CConnect extends require("./connect2")
+module.exports = class CConnect extends require("./transfer-msg")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
@@ -535,12 +535,40 @@ module.exports = class CConnect extends require("./connect2")
     
     DoNetConst()
     {
+        ToLog("DoNetConstant", 2)
         global.MAX_TRANSACTION_LIMIT = NET_CONSTANT.MaxTrasactionLimit
         
         global.PROTOCOL_VER = NET_CONSTANT.ProtocolVer
         global.PROTOCOL_MODE = NET_CONSTANT.ProtocolMode
         global.MAX_LEVEL = NET_CONSTANT.MaxLevel
-        this.OnSetProtocolMode()
+        
+        if(PROTOCOL_MODE && (NET_CONSTANT.BlockNum + 3) >= this.CurrentBlockNum)
+        {
+            if(PROTOCOL_MODE === 10)
+            {
+                ToLog("****ClearCommonStat*****", 2)
+                global.ClearCommonStat()
+            }
+            
+            if(PROTOCOL_MODE === 20)
+            {
+                ToLog("****RewriteAllTransactions*****", 2)
+                if(!global.DEV_MODE)
+                    SERVER.RewriteAllTransactions()
+            }
+            if(PROTOCOL_MODE === 30)
+            {
+                ToLog("****Exit*****", 2)
+                if(!global.DEV_MODE)
+                    global.RestartNode(1)
+            }
+            
+            if(PROTOCOL_MODE === 40)
+            {
+                ToLog("****Update to jinn*****", 2)
+                global.UpdateToJinn()
+            }
+        }
     }
     
     CheckCodeVersion(Data, Node)
@@ -1171,6 +1199,12 @@ module.exports = class CConnect extends require("./connect2")
                 }
             }
         }
+    }
+    
+    GetMaxConnectChilds()
+    {
+        var Count = global.MAX_CONNECT_CHILD;
+        return Count;
     }
     CheckDisconnectHot(Level)
     {
@@ -1891,6 +1925,18 @@ module.exports = class CConnect extends require("./connect2")
                 return Node;
         }
         return undefined;
+    }
+    GetBitsByLevel()
+    {
+        var Maska = 0;
+        for(var i = 0; i < this.LevelNodes.length; i++)
+        {
+            var arr = this.LevelNodes[i];
+            if(arr && arr.length)
+                Maska |= 1 << i
+        }
+        
+        return Maska;
     }
 };
 

@@ -13,7 +13,7 @@ global.RunOnUpdate = RunOnUpdate;
 function RunOnUpdate()
 {
     var fname = GetDataPath("DB/update.lst");
-    var UpdateInfo = LoadParams(fname, {UPDATE_NUM_COMPLETE:1071});
+    var UpdateInfo = LoadParams(fname, {UPDATE_NUM_COMPLETE:2000, JINN_MODE:1});
     
     if(!UpdateInfo.UPDATE_NUM_COMPLETE)
         UpdateInfo.UPDATE_NUM_COMPLETE = 0;
@@ -22,28 +22,12 @@ function RunOnUpdate()
     {
         UpdateInfo.UPDATE_NUM_COMPLETE = UPDATE_CODE_VERSION_NUM;
         
-        ToLog("UPDATER Start");
+        ToLog("UPDATER Start from:" + CurNum);
         
         SaveParams(fname, UpdateInfo);
         
         if(global.JINN_MODE)
         {
-            if(CurNum < 1648)
-            {
-                setTimeout(function ()
-                {
-                    ToLog("UPD: START RewriteAllTransactions");
-                    SERVER.RewriteAllTransactions();
-                }, 3000);
-            }
-            if(CurNum < 1665)
-            {
-                setTimeout(function ()
-                {
-                    ToLog("UPD: START ClearDataBase");
-                    SERVER.ClearDataBase();
-                }, 3000);
-            }
         }
         else
             if(global.LOCAL_RUN)
@@ -55,11 +39,6 @@ function RunOnUpdate()
                 }
                 else
                 {
-                    
-                    if(CurNum < 1417)
-                    {
-                        UpdateSumHash();
-                    }
                 }
         ToLog("UPDATER Finish");
     }
@@ -316,4 +295,66 @@ function UpdateSumHash()
         ToLog("############ Update ERROR");
     
     return 1;
+}
+function GetJinEngine()
+{
+    
+    var Map = {"Block":1, "BlockDB":1, "Log":1, };
+    
+    require("../jinn/tera");
+    var Engine = {};
+    global.CreateNodeEngine(Engine, Map);
+    require("../jinn/tera/tera-hash").Init(Engine);
+    
+    return Engine;
+}
+
+
+function LogTestJinn()
+{
+    var Engine = GetJinEngine();
+    ToLog("TestJinn MaxNumBlockDB=" + Engine.GetMaxNumBlockDB());
+    for(var Num = 420; Num < 430; Num++)
+    {
+        var Block = Engine.DB.ReadBlockMain(Num);
+        if(!Block)
+            return 0;
+        
+        ToLog("BlockNum=" + Num + " Hash=" + GetHexFromArr(Block.Hash) + " SumHash=" + GetHexFromArr(Block.SumHash) + " OldPrevHash8=" + GetHexFromArr(Block.OldPrevHash8),
+        2);
+    }
+}
+
+function TestBodyTree()
+{
+    var CountErr = 0;
+    var BlockNum = 16;
+    while(1)
+    {
+        var Block = Engine.DB.ReadBlockMain(BlockNum);
+        if(!Block)
+        {
+            ToLog("Stop at Block=" + BlockNum);
+            break;
+        }
+        
+        if(!IsZeroArr(Block.TreeHash))
+        {
+            Engine.CheckLoadBody(Block);
+            var TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+            if(!IsEqArr(TreeHash, Block.TreeHash))
+            {
+                CountErr++;
+                var Str = GetHexFromArr(Block.TreeHash) + " Need:" + GetHexFromArr(TreeHash);
+                ToLog("" + CountErr + " ERROR TREE BLOCK=" + BlockNum + " Tree=" + Str);
+                TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+            }
+        }
+        
+        BlockNum % 10000 === 0 && ToLog("Check: " + BlockNum);
+        
+        BlockNum++;
+    }
+    
+    return CountErr;
 }

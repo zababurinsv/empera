@@ -322,7 +322,7 @@ function InitClass(Engine)
             DataHashNum:"byte", DataHash:"zhash", MinerHash:"hash", CountItem:"uint16", LoadN:"uint", LoadH:"zhash"}], Debug:"byte", ArrRepeat:["byte"],
     };
     Engine.MAXHASH_RET = {result:"byte", errnum:"byte", result2:"byte", Reserve:"uint32", Mode:"byte", HeaderArr:[{BlockNum:"uint32",
-            PrevSumPow:"uint", LinkSumHash:"hash", TreeHash:"zhash", MinerHash:"hash"}], Reserv01:"uint32", BodyArr:[{BlockNum:"uint32",
+            PrevSumPow:"uint", LinkSumHash:"hash", TreeHash:"zhash", MinerHash:"hash", OldPrevHash8:"zhash"}], Reserv01:"uint32", BodyArr:[{BlockNum:"uint32",
             TreeHash:"hash", ArrFull:[{body:"tr"}], ArrTtTx:[{HashTicket:"arr" + JINN_CONST.TX_TICKET_HASH_LENGTH, body:"tr"}], }], BodyTreeNum:"uint32",
         BodyTreeHash:"zhash", };
     Engine.MAXHASH = function (Child,Data)
@@ -411,8 +411,6 @@ function InitClass(Engine)
             else
                 if(Status.Mode === 2)
                 {
-                    if(!Engine.CanCacheExchange(Child, BlockNum))
-                        continue;
                     
                     var CountItem = Status.CountItem;
                     var bFirstBody = 0;

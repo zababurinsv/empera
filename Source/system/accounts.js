@@ -83,6 +83,8 @@ global.FORMAT_MONEY_TRANSFER3 = "{\
 const WorkStructTransfer3 = {};
 global.FORMAT_MONEY_TRANSFER_BODY3 = FORMAT_MONEY_TRANSFER3.replace("Sign:arr64,", "");
 
+
+
 global.FORMAT_ACCOUNT_HASH3 = "{\
     Type:byte,\
     BlockNum:uint,\
@@ -404,6 +406,7 @@ class AccountApp extends require("./dapp")
                     {
                         if(BlockNum % BLOCK_CREATE_INTERVAL !== 0)
                             return 0;
+                        
                         var Num = this.GetMaxAccount() + 1;
                         return Num;
                     }
@@ -580,6 +583,10 @@ class AccountApp extends require("./dapp")
         
         var Data = this.ReadStateTR(AccountID);
         
+        var KTERA = global.NEW_FORMULA_KTERA;
+        if(Block.BlockNum >= global.UPDATE_CODE_JINN_KTERA)
+            KTERA = global.NEW_FORMULA_JINN_KTERA
+        
         if(Data && Data.Currency === 0 && Data.BlockNumCreate < Block.BlockNum)
         {
             var Sum;
@@ -594,7 +601,7 @@ class AccountApp extends require("./dapp")
                 }
                 else
                 {
-                    Sum = NEW_FORMULA_KTERA * SysBalance / TOTAL_SUPPLY_TERA
+                    Sum = KTERA * SysBalance / TOTAL_SUPPLY_TERA
                 }
             }
             else
@@ -860,6 +867,9 @@ class AccountApp extends require("./dapp")
             return "Error sender's account ID: " + TR.FromID;
         if(TR.Version < 3 && TR.Currency !== Data.Currency)
             return "Error sender's currency";
+        
+        if(TR.Version === 4 && BlockNum >= global.UPDATE_CODE_6)
+            TR.OperationID = TR.OperationSortID
         if(TR.Version < 3)
         {
             if(TR.OperationID !== Data.Value.OperationID)
@@ -880,7 +890,7 @@ class AccountApp extends require("./dapp")
         if(BlockNum >= SMART_BLOCKNUM_START)
         {
             if(TR.To.length > 10)
-                return "The number of recipients has been exceeded (max=5, current count=" + TR.To.length + ")";
+                return "The number of recipients has been exceeded (max=10, current count=" + TR.To.length + ")";
         }
         
         if(TR.Body && TR.Body.length && TR.To.length > 1)
@@ -995,14 +1005,19 @@ class AccountApp extends require("./dapp")
             hash = SHA3BUF(arrpub, BlockNum)
         }
         else
-            if(!TR.Version)
+            if(TR.Version === 4 && BlockNum >= global.UPDATE_CODE_6)
             {
-                hash = SHA3BUF(Body.slice(0, Body.length - 64 - 12), BlockNum)
+                hash = SHA3BUF(Body.slice(0, Body.length - 64), BlockNum)
             }
             else
-            {
-                return "Error transaction version";
-            }
+                if(!TR.Version)
+                {
+                    hash = SHA3BUF(Body.slice(0, Body.length - 64 - 12), BlockNum)
+                }
+                else
+                {
+                    return "Error transaction version";
+                }
         var Result = 0;
         if(Data.PubKey[0] === 2 || Data.PubKey[0] === 3)
             try
@@ -1554,7 +1569,7 @@ class AccountApp extends require("./dapp")
         var SumHash = CalcSumHash(PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
         if(!Block.NoChechkSumHash && !IsEqArr(Block.SumHash, SumHash))
         {
-            ToLog("#SUMHASH: Error sum hash on Block=" + Block.BlockNum, 4)
+            ToLog("#SUMHASH: Error sum hash on Block=" + Block.BlockNum, 3)
             this.ErrSumHashCount++
         }
         else
@@ -1856,40 +1871,60 @@ class AccountApp extends require("./dapp")
     GetSignTransferTx(TR, PrivKey)
     {
         var Arr;
-        if(TR.Version === 2 || TR.Version === 3)
+        if(TR.Version === 4)
         {
-            var format;
-            if(TR.Version === 2)
-                format = FORMAT_MONEY_TRANSFER_BODY2
-            else
-                format = FORMAT_MONEY_TRANSFER_BODY3
-            
-            Arr = []
-            for(var i = 0; i < TR.To.length; i++)
-            {
-                var Item = TR.To[i];
-                
-                var DataTo = DApps.Accounts.ReadState(Item.ID);
-                if(!DataTo)
-                {
-                    return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-                }
-                for(var j = 0; j < 33; j++)
-                    Arr[Arr.length] = DataTo.PubKey[j]
-            }
-            var Body = BufLib.GetBufferFromObject(TR, format, GetTxSize(TR), {});
-            
-            for(var j = 0; j < Body.length; j++)
-                Arr[Arr.length] = Body[j]
+            Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY3, GetTxSize(TR), {})
         }
         else
-        {
-            Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY, GetTxSize(TR), {})
-        }
+            if(TR.Version === 2 || TR.Version === 3)
+            {
+                var format;
+                if(TR.Version === 2)
+                    format = FORMAT_MONEY_TRANSFER_BODY2
+                else
+                    format = FORMAT_MONEY_TRANSFER_BODY3
+                
+                Arr = []
+                for(var i = 0; i < TR.To.length; i++)
+                {
+                    var Item = TR.To[i];
+                    
+                    var DataTo = DApps.Accounts.ReadState(Item.ID);
+                    if(!DataTo)
+                    {
+                        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                    }
+                    for(var j = 0; j < 33; j++)
+                        Arr[Arr.length] = DataTo.PubKey[j]
+                }
+                var Body = BufLib.GetBufferFromObject(TR, format, GetTxSize(TR), {});
+                
+                for(var j = 0; j < Body.length; j++)
+                    Arr[Arr.length] = Body[j]
+            }
+            else
+            {
+                Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY, GetTxSize(TR), {})
+            }
         
         var sigObj = secp256k1.sign(SHA3BUF(Arr), Buffer.from(PrivKey));
         return sigObj.signature;
+    }
+    
+    CheckSignTransferTx(BlockNum, Body)
+    {
+        if(Body.length < 64)
+            return 0;
+        
+        var Type = Body[0];
+        if(Type === TYPE_TRANSACTION_CREATE && BlockNum % BLOCK_CREATE_INTERVAL === 0)
+            return 1;
+        else
+            if(Type !== TYPE_TRANSACTION_TRANSFER)
+                return 0;
+        
+        return this.CheckSignAccountTx(BlockNum, Body);
     }
     SaveHistory(Data)
     {

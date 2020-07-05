@@ -29,13 +29,13 @@ function InitClass(Engine)
         
         Child.ToLogNet("StartHandShake");
         
-        var Data = {Protocol:JINN_CONST.PROTOCOL_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
+        var Data = {Network:JINN_CONST.NETWORK_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
             RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum, FindSelfIP:Child.FindSelfIP,
             RemoteIP:Child.ip, };
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
     };
-    Engine.HANDSHAKE_SEND = {Protocol:"str20", Shard:"str5", RemoteIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash",
-        RunVersionNum:"uint", CodeVersionNum:"uint", FindSelfIP:"byte"};
+    Engine.HANDSHAKE_SEND = {Network:"str20", Shard:"str5", RemoteIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash", RunVersionNum:"uint",
+        CodeVersionNum:"uint", FindSelfIP:"byte"};
     Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", RemoteIP:"str30", RunVersionNum:"uint", CodeVersionNum:"uint", text:"str",
         NetConstVer:"uint"};
     Engine.HANDSHAKE = function (Child,Data)
@@ -54,9 +54,9 @@ function InitClass(Engine)
         var AddrChild = {ip:Child.ip, port:Data.port, BlockNum:0, Nonce:0, RndHash:Data.RndHash};
         
         var StrError;
-        if(Data.Protocol !== JINN_CONST.PROTOCOL_NAME)
+        if(Data.Network !== JINN_CONST.NETWORK_NAME)
         {
-            StrError = "ERROR PROTOCOL_NAME";
+            StrError = "ERROR NETWORK_NAME";
             Engine.OnDeleteConnect(Child, StrError);
         }
         else

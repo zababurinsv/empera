@@ -45,6 +45,15 @@ function SetAccountsData(Data,AccountsDataStr)
     
     MaxBlockNum = GetCurrentBlockNumByTime();
     
+    if(document.activeElement !== $("idTo"))
+    {
+        var dataList = $("idToList");
+        if(dataList)
+        {
+            dataList.innerHTML = "";
+        }
+    }
+    
     SetGridData(arr, "grid_accounts", "idMyTotalSum");
     for(var i = 0; arr && i < arr.length; i++)
     {
@@ -62,6 +71,13 @@ function SetAccountsData(Data,AccountsDataStr)
             CheckNameAccTo();
         option.value = Num;
         option.text = StrText;
+        
+        if(!dataList)
+            continue;
+        var Options = document.createElement('option');
+        Options.value = Num;
+        Options.label = StrText;
+        dataList.appendChild(Options);
     }
     
     var CurentValue = LoadMapAfter["idAccount"];
@@ -269,6 +285,9 @@ function CreateTransaction(F,CheckErr,Run)
     
     var TR = {Type:111, Version:3, OperationSortID:OperationID, FromID:FromID, OperationID:OperationID, To:[{PubKey:ToPubKeyArr,
             ID:ToID, SumCOIN:Coin.SumCOIN, SumCENT:Coin.SumCENT}], Description:Description, Body:AttachBody, Sign:CurrentTR.Sign, };
+    if(window.JINN_MODE)
+        TR.Version = 4;
+    
     Object.defineProperties(TR, {bFindAcc:{configurable:true, writable:true, enumerable:false, value:bFindAcc}});
     Object.defineProperties(TR, {Run:{configurable:true, writable:true, enumerable:false, value:Run}});
     
@@ -745,13 +764,15 @@ function SetSmartToAccount(NumAccount,Smart)
     }
     OperationID++;
     
-    var TR = {Type:140, Account:NumAccount, Smart:Smart, FromNum:NumAccount, Reserve:[], OperationID:OperationID, Sign:"", };
+    var TR = {Type:140, Account:NumAccount, Smart:Smart, FromNum:NumAccount, Version:4, Reserve:[], OperationID:OperationID, Sign:"",
+    };
     
     var Body = [];
     WriteByte(Body, TR.Type);
     WriteUint(Body, TR.Account);
     WriteUint32(Body, TR.Smart);
-    WriteArr(Body, TR.Reserve, 10);
+    Body.push(TR.Version);
+    WriteArr(Body, TR.Reserve, 9);
     WriteUint(Body, TR.FromNum);
     WriteUint(Body, TR.OperationID);
     

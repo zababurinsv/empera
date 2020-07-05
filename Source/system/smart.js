@@ -51,7 +51,8 @@ global.FORMAT_SMART_RUN = "{\
     Params:str,\
     FromNum:uint,\
     OperationID:uint,\
-    Reserve:arr10,\
+    Version:byte,\
+    Reserve:arr9,\
     Sign:arr64,\
     }";
 const WorkStructRun = {};
@@ -60,7 +61,8 @@ global.FORMAT_SMART_CHANGE = "{\
     Type:byte,\
     Account:uint,\
     Smart:uint32,\
-    Reserve:arr10,\
+    Version:byte,\
+    Reserve:arr9,\
     FromNum:uint,\
     OperationID:uint,\
     Sign:arr64,\
@@ -193,6 +195,11 @@ class SmartApp extends require("./dapp")
         }
         
         return 0;
+    }
+    
+    CheckSignTransferTx(BlockNum, Body)
+    {
+        return this.CheckSignAccountTx(BlockNum, Body);
     }
     
     OnDeleteBlock(Block)
@@ -376,7 +383,12 @@ class SmartApp extends require("./dapp")
             MaxCountOperationID = 1000000
         if(TR.OperationID > AccountFrom.Value.OperationID + MaxCountOperationID)
             return "Error too much OperationID (expected max: " + (AccountFrom.Value.OperationID + MaxCountOperationID) + " for ID: " + TR.FromNum + ")";
-        var hash = SHA3BUF(Body.slice(0, Body.length - 64 - 12), BlockNum);
+        var hash;
+        if(TR.Version === 4 && BlockNum >= global.UPDATE_CODE_6)
+            hash = SHA3BUF(Body.slice(0, Body.length - 64), BlockNum)
+        else
+            hash = SHA3BUF(Body.slice(0, Body.length - 64 - 12), BlockNum)
+        
         var Result = 0;
         if(AccountFrom.PubKey[0] === 2 || AccountFrom.PubKey[0] === 3)
             try

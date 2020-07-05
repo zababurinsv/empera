@@ -201,18 +201,12 @@ function InitClass(Engine)
             Engine.FillBodyFromTransfer(Block);
             
             Block.TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData);
+            
             Block.TxCount = Block.TxData.length;
             Engine.CurrentBodyTx.AddItemToCache(Block);
         }
         
         return 1;
-    };
-    Engine.CopyBodyTx = function (BlockDst,BlockSrc)
-    {
-        BlockDst.TreeHash = BlockSrc.TreeHash;
-        BlockDst.TxData = BlockSrc.TxData;
-        BlockDst.TxCount = BlockSrc.TxCount;
-        BlockDst.TxPosition = BlockSrc.TxPosition;
     };
     Engine.InitMiningBlockArr = function ()
     {
@@ -221,21 +215,23 @@ function InitClass(Engine)
     
     Engine.AddToMiningInner = function (Block)
     {
+        var BlockTest = Engine.GetCopyBlock(Block);
+        BlockTest.DataHash = Block.DataHash;
         
         var MinerMaxArr;
         var HashMaxArr = Block.Hash;
-        var MinerHash = [Engine.ID % 256, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0];
+        BlockTest.MinerHash = [Engine.ID % 256, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0];
         for(var i = 0; i < 8; i++)
         {
-            MinerHash[10] = random(255);
-            MinerHash[11] = random(255);
+            BlockTest.MinerHash[10] = random(255);
+            BlockTest.MinerHash[11] = random(255);
             
-            var HashTest = sha3(Block.DataHash.concat(MinerHash).concat(GetArrFromValue(Block.BlockNum)), 6);
+            var HashTest = Engine.CalcBlockHashInner(BlockTest);
             if(CompareArr(HashTest, HashMaxArr) < 0)
             {
                 HashMaxArr = HashTest;
-                MinerMaxArr = MinerHash.slice(0);
+                MinerMaxArr = BlockTest.MinerHash.slice(0);
             }
         }
         

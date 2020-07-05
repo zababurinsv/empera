@@ -151,7 +151,7 @@ function InitClass(Engine)
             Length = ReadUint32FromArr(Arr, 4);
             if(PacketNum !== Child.ReceivePacketCount)
             {
-                Engine.ToError(Child, "Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, 4);
+                Child.ToError("Bad packet num = " + PacketNum + "/" + Child.ReceivePacketCount, 4);
                 if(PacketNum > Child.ReceivePacketCount)
                     Child.ReceivePacketCount = PacketNum;
             }
@@ -168,7 +168,7 @@ function InitClass(Engine)
         
         if(Length > JINN_CONST.MAX_PACKET_SIZE)
         {
-            Engine.ToError(Child, "Bad packet size = " + Length, 4);
+            Child.ToError("Bad packet size = " + Length, 4);
             return;
         }
         
@@ -205,7 +205,7 @@ function InitClass(Engine)
         var Obj = Engine.GetObjectFromRAW(Chunk);
         if(Obj.Error)
         {
-            Engine.ToError(Child, "Bad receive data", 0);
+            Child.ToError("Bad receive data", 0);
             return;
         }
         
@@ -215,7 +215,7 @@ function InitClass(Engine)
             var Cont = Child.ContextCallMap[Key];
             if(!Cont || Cont.Method !== Obj.Method)
             {
-                Engine.ToError(Child, "Bad context " + Obj.Method + " key=" + Key, 4);
+                Child.ToError("Bad context " + Obj.Method + " key=" + Key, 4);
                 return;
             }
             
@@ -233,7 +233,7 @@ function InitClass(Engine)
             var F = Engine[Obj.Method];
             if(typeof F !== "function")
             {
-                Engine.ToError(Child, "Not fount method " + Obj.Method, 0);
+                Child.ToError("Not fount method " + Obj.Method, 0);
                 return;
             }
             
@@ -320,6 +320,8 @@ function InitClass(Engine)
     
     Engine.LogBufTransfer = function (Child,Data,StrDirect)
     {
+        if(!global.DEBUG_TRAFFIC)
+            return;
         if(0 && global.DEBUG_ID && Data)
         {
             Engine.ToDebug(StrDirect + Child.ID + " " + GetHexFromArr(Data) + " - " + Data.length + "/" + Engine.Traffic);
@@ -341,7 +343,8 @@ function InitClass(Engine)
             if(Child.Debug)
                 Child.ToLogNet(Str);
             else
-                Engine.ToDebug(Str);
+                if(global.DEBUG_TRAFFIC)
+                    Engine.ToDebug(Str);
         }
     };
     

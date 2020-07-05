@@ -67,8 +67,14 @@ function OnMessageWeb(msg)
 
 function AddTransactionFromWeb(Params)
 {
+    if(typeof Params.HexValue !== "string")
+        return {Result:0};
     
-    var body = GetArrFromHex(Params.HexValue);
+    var body;
+    if(global.JINN_MODE)
+        body = GetArrFromHex(Params.HexValue.substr(0, Params.HexValue.length - 12 * 2));
+    else
+        body = GetArrFromHex(Params.HexValue);
     
     if(global.TX_PROCESS && global.TX_PROCESS.Worker)
     {
@@ -76,21 +82,22 @@ function AddTransactionFromWeb(Params)
         global.TX_PROCESS.Worker.send({cmd:"FindTX", TX:StrHex, Web:1, WebID:Params.WebID});
     }
     
-    var Res = SERVER.AddTransaction({body:body}, 1);
-    var text = AddTrMap[Res];
+    var Tx0 = {body:body};
+    var Res = SERVER.AddTransaction(Tx0, 1);
+    var text = TR_MAP_RESULT[Res];
     var final = false;
     if(Res <= 0 && Res !==  - 3)
         final = true;
     ToLogClient("Send: " + text, GetHexFromArr(sha3(body)), final);
     
-    return Res;
+    return {Result:Res, _BlockNum:Tx0._BlockNum, _TxID:Tx0._TxID};
 }
 
 
 
 global.STATIC_PROCESS = {Name:"STATIC PROCESS", NodeOnly:1, idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(),
     Worker:undefined, Path:"./process/static-process.js", OnMessage:OnMessageStatic, PeriodAlive:50000};
-if(!global.TEST_JINN)
+if(!global.JINN_MODE)
     ArrChildProcess.push(STATIC_PROCESS);
 
 function OnMessageStatic(msg)

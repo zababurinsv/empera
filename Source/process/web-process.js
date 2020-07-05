@@ -118,7 +118,7 @@ if(global.JINN_MODE)
     
     var JinnLib = require("../jinn/tera");
     var Map = {"Block":1, "BlockDB":1, "Log":1, };
-    JinnLib.Create(SERVER, Map);
+    JinnLib.Create(Map);
 }
 
 global.HTTP_PORT_NUMBER = 0;
@@ -605,7 +605,7 @@ HostingCaller.GetCurrentInfo = function (Params)
         MaxNumBlockDB:MaxNumBlockDB, BlockNumDBMin:SERVER.BlockNumDBMin, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:DApps.Accounts.GetMaxAccount(),
         MaxDappsID:DApps.Smart.GetMaxNum(), CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR,
         FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME, PRICE_DAO:PRICE_DAO(MaxNumBlockDB),
-        GrayConnect:GrayConnect(), sessionid:sessionid, };
+        GrayConnect:GrayConnect(), JINN_MODE:global.JINN_MODE, sessionid:sessionid, };
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {
@@ -933,11 +933,12 @@ HostingCaller.SendTransactionHex = function (Params,response,ArrPath,request)
         return null;
     }
     
-    process.RunRPC("AddTransactionFromWeb", {HexValue:Params.Hex}, function (Err,Result)
+    process.RunRPC("AddTransactionFromWeb", {HexValue:Params.Hex}, function (Err,Data)
     {
-        var text = AddTrMap[Result];
+        var Result = Data.Result;
+        var text = TR_MAP_RESULT[Result];
         
-        var Result2 = {result:(Result > 0 ? 1 : 0), text:text};
+        var Result2 = {result:(Result > 0 ? 1 : 0), text:text, _BlockNum:Data._BlockNum, _TxID:Data._TxID};
         var Str = JSON.stringify(Result2);
         response.end(Str);
     });

@@ -27,8 +27,10 @@ const FORMAT_NET_CONSTANT = {NetConstVer:"uint", NetConstStartNum:"uint", PROTOC
     STEP_CLEAR_MEM:"uint16", _ReservT5:"uint", UNIQUE_IP_MODE:"uint16", CHECK_POINT_NUM:"uint", CHECK_POINT_HASH:"hash", __RESRV05:"uint32",
     __RESRV006:"uint16", __RESRV0006:"uint16", __RESRV06:"uint16", TEST_COUNT_BLOCK:"uint32", TEST_COUNT_TX:"uint32", __RESRV07:"uint32",
     TEST_DELTA_TIMING_HASH:"uint32", TEST_DIV_TIMING_HASH:"uint32", TEST_NDELTA_TIMING_HASH:"uint32", MAX_TRANSFER_TX:"uint32",
-    RUN_RESET:"uint16", HOT_BLOCK_DELTA:"uint16", TX_PRIORITY_MODE:"byte", TX_PRIORITY_RND_SENDER:"byte", TX_PRIORITY_LENGTH:"uint16",
-    TX_BASE_VALUE:"uint", TX_FREE_COUNT:"uint16", TEST_MODE_1:"uint", RESERVE_DATA:"arr340", NET_SIGN:"arr64"};
+    RUN_RESET:"uint16", HOT_BLOCK_DELTA:"uint16", TX_PRIORITY_MODE:"byte", __RESRV08:"byte", TX_PRIORITY_LENGTH:"uint16", TX_BASE_VALUE:"uint",
+    TX_FREE_COUNT:"uint16", TEST_MODE_1:"uint16", TEST_MODE_2:"uint16", TEST_MODE_3:"uint16", TX_FREE_BYTES_MAX:"uint32", TX_CHECK_OPERATION_ID:"byte",
+    TX_CHECK_SIGN_ON_ADD:"uint16", TX_CHECK_SIGN_ON_TRANSFER:"uint16", MAX_ONE_NODE_TX:"uint32", MIN_TIME_SEND_TT_PERIOD:"uint16",
+    MAX_TIME_SEND_TT_PERIOD:"uint16", DELTA_TIME_NEW_BLOCK:"uint16", RESERVE_DATA:"arr321", NET_SIGN:"arr64"};
 
 var FormatForSign = CopyNetConstant({}, FORMAT_NET_CONSTANT, 1);
 
@@ -132,35 +134,43 @@ function Init(Engine)
         if(JINN_NET_CONSTANT.TEST_COUNT_BLOCK && CountCreate > 0)
         {
             ToLog("*************CountBlockCreate: " + CountCreate + " witch TX=" + JINN_CONST.TEST_COUNT_TX, 2);
-            var Num = random(1 + DApps.Accounts.GetMaxAccount());
+            var Num = 10 + random(DApps.Accounts.GetMaxAccount() - 10);
             global.SendTestCoin(Num, Num, 1, JINN_CONST.TEST_COUNT_TX, CountCreate, 1);
         }
-        if(JINN_NET_CONSTANT.RUN_RESET && JINN_NET_CONSTANT.NetConstStartNum >= Engine.CurrentBlockNum)
+        if(JINN_NET_CONSTANT.RUN_RESET && (JINN_NET_CONSTANT.NetConstStartNum + 1) >= Engine.CurrentBlockNum)
         {
             
-            if(JINN_NET_CONSTANT.RUN_RESET === 100)
+            if(JINN_NET_CONSTANT.RUN_RESET === 10)
             {
                 ToLog("****ClearCommonStat*****", 2);
                 global.ClearCommonStat();
             }
-            if(JINN_NET_CONSTANT.RUN_RESET === 200)
+            if(JINN_NET_CONSTANT.RUN_RESET === 20)
             {
                 ToLog("****RewriteAllTransactions*****", 2);
-                SERVER.RewriteAllTransactions();
+                if(!global.DEV_MODE)
+                    SERVER.RewriteAllTransactions();
             }
-            if(JINN_NET_CONSTANT.RUN_RESET === 300)
+            if(JINN_NET_CONSTANT.RUN_RESET === 30)
             {
                 ToLog("****Exit*****", 2);
                 if(!global.DEV_MODE)
                     global.RestartNode(1);
             }
+            
+            if(JINN_NET_CONSTANT.RUN_RESET === 40)
+            {
+                ToLog("****Update to jinn*****", 2);
+                global.UpdateToJinn();
+            }
         }
         
-        if(WasConst.TX_PRIORITY_MODE !== JINN_CONST.TX_PRIORITY_MODE || WasConst.TX_PRIORITY_LENGTH !== JINN_CONST.TX_PRIORITY_LENGTH || WasConst.TX_PRIORITY_RND_SENDER !== JINN_CONST.TX_PRIORITY_RND_SENDER)
+        if(WasConst.TX_PRIORITY_MODE !== JINN_CONST.TX_PRIORITY_MODE || WasConst.TX_PRIORITY_LENGTH !== JINN_CONST.TX_PRIORITY_LENGTH)
         {
             ToLog("InitPriorityTree", 2);
             Engine.InitPriorityTree();
         }
+        JINN_CONST.MAX_TRANSFER_TT = 10 * JINN_CONST.MAX_TRANSFER_TX;
     };
 }
 

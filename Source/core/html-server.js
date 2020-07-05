@@ -522,7 +522,7 @@ HTTPCaller.DappInfo = function (Params,responce,ObjectOnly)
     
     var Ret = {result:1, DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
         CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NEW_SIGN_TIME:NEW_SIGN_TIME, Smart:Smart,
-        Account:Account, NETWORK:global.NETWORK, ArrWallet:WLData.arr, ArrEvent:EArr, ArrLog:ArrLog, };
+        Account:Account, NETWORK:global.NETWORK, JINN_MODE:global.JINN_MODE, ArrWallet:WLData.arr, ArrEvent:EArr, ArrLog:ArrLog, };
     
     if(global.WALLET)
     {
@@ -770,7 +770,8 @@ HTTPCaller.GetWalletInfo = function (Params)
         MiningAccount:global.GENERATE_BLOCK_ACCOUNT, CountMiningCPU:GetCountMiningCPU(), CountRunCPU:global.ArrMiningWrk.length, MiningPaused:global.MiningPaused,
         HashRate:HashRateOneSec, MIN_POWER_POW_TR:MIN_POWER_POW_TR, PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NWMODE:global.NWMODE, PERIOD_ACCOUNT_HASH:PERIOD_ACCOUNT_HASH,
         MAX_ACCOUNT_HASH:DApps.Accounts.DBAccountsHash.GetMaxNum(), TXBlockNum:TXBlockNum, SpeedSignLib:global.SpeedSignLib, NETWORK:global.NETWORK,
-        RestContext:RestContext, MaxLogLevel:global.MaxLogLevel, JINN_NET_CONSTANT:global.JINN_NET_CONSTANT, sessionid:sessionid, };
+        RestContext:RestContext, MaxLogLevel:global.MaxLogLevel, JINN_NET_CONSTANT:global.JINN_NET_CONSTANT, JINN_MODE:global.JINN_MODE,
+        sessionid:sessionid, };
     
     if(Params.Account)
         Ret.PrivateKey = GetHexFromArr(WALLET.GetPrivateKey(WALLET.AccountMap[Params.Account]));
@@ -838,12 +839,19 @@ HTTPCaller.GetSignFromHEX = function (Params)
 
 HTTPCaller.SendTransactionHex = function (Params)
 {
-    var body = GetArrFromHex(Params.Hex);
+    if(typeof Params.Hex !== "string")
+        return {result:0};
+    
+    var body;
+    if(global.JINN_MODE)
+        body = GetArrFromHex(Params.Hex.substr(0, Params.Hex.length - 12 * 2));
+    else
+        body = GetArrFromHex(Params.Hex);
     
     var Result = {result:1};
     var Res = SERVER.AddTransactionOwn({body:body, ToAll:1});
     Result.sessionid = sessionid;
-    Result.text = AddTrMap[Res];
+    Result.text = TR_MAP_RESULT[Res];
     var final = false;
     if(Res <= 0 && Res !==  - 3)
         final = true;
@@ -1070,8 +1078,10 @@ HTTPCaller.SetCheckNetConstant = function (Data)
     if(global.JINN)
     {
         var DataJinn = Data.JINN;
-        DataJinn.NetConstVer = Num;
-        DataJinn.NetConstStartNum = BlockNum;
+        if(!DataJinn.NetConstVer)
+            DataJinn.NetConstVer = Num;
+        if(!DataJinn.NetConstStartNum)
+            DataJinn.NetConstStartNum = BlockNum;
         var SignArr = JINN.GetSignCheckNetConstant(DataJinn);
         DataJinn.NET_SIGN = secp256k1.sign(SHA3BUF(SignArr), WALLET.KeyPair.getPrivateKey('')).signature;
         JINN.CheckNetConstant(DataJinn);
@@ -1280,7 +1290,7 @@ HTTPCaller.GetHotArray = function (Param)
     
     var Ret = {result:1, ArrTree:ArrTree};
     if(global.JINN)
-        Ret.JINNMODE = 1;
+        Ret.JINN_MODE = 1;
     return Ret;
 }
 

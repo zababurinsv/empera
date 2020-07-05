@@ -68,7 +68,7 @@ function Init(Engine)
     {
         
         var bLoadVer = 0;
-        if(CodeVersion.BlockNum && (CodeVersion.BlockNum <= GetCurrentBlockNumByTime() || CodeVersion.BlockPeriod === 0) && CodeVersion.BlockNum > CODE_VERSION.BlockNum && !IsZeroArr(CodeVersion.Hash) && (CodeVersion.VersionNum > CODE_VERSION.VersionNum && CodeVersion.VersionNum > START_LOAD_CODE.StartLoadVersionNum || CodeVersion.VersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash)))
+        if(CodeVersion.BlockNum && (CodeVersion.BlockNum <= GetCurrentBlockNumByTime() || CodeVersion.BlockPeriod === 0) && (CodeVersion.BlockNum > CODE_VERSION.BlockNum || CodeVersion.BlockNum === 1) && !IsZeroArr(CodeVersion.Hash) && (CodeVersion.VersionNum > CODE_VERSION.VersionNum && CodeVersion.VersionNum > START_LOAD_CODE.StartLoadVersionNum || CodeVersion.VersionNum === CODE_VERSION.VersionNum && IsZeroArr(CODE_VERSION.Hash)))
         {
             bLoadVer = 1;
         }

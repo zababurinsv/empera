@@ -1064,7 +1064,7 @@ function RetOpenBlock(BlockNum,bTrDataLen)
 }
 function PrevValueToString(Item)
 {
-    if(Item.Mode === 200)
+    if(Item.Mode === 200 && Item.HashData)
     {
         return "Acc:\n" + GetHexFromArr(Item.HashData.AccHash) + "\n" + "Sum:\n" + GetHexFromArr(Item.HashData.SumHash);
     }
@@ -1251,6 +1251,9 @@ function formatDate(now)
 }
 function DateFromBlock(BlockNum)
 {
+    if(!window.CONSENSUS_PERIOD_TIME)
+        window.CONSENSUS_PERIOD_TIME = 1000;
+    
     var Str;
     if(window.FIRST_TIME_BLOCK)
     {
@@ -1579,6 +1582,9 @@ function FillCurrencyNext(IdName,StartNum)
 function FillDataList(IdName,Map)
 {
     var dataList = $(IdName);
+    if(!dataList)
+        return;
+    
     dataList.innerHTML = "";
     
     for(var key in Map)
@@ -1845,24 +1851,26 @@ function GetOperationIDFromItem(Item)
     
     var FromNum = Item.Num;
     var OperationID = 0;
-    if(!MapSendID[FromNum])
+    
+    var MapItem = MapSendID[FromNum];
+    if(!MapItem)
+    {
+        MapItem = {Date:0};
+        MapSendID[FromNum] = MapItem;
+    }
+    
+    var CurTime = Date.now();
+    OperationID = MapItem.OperationID;
+    if((CurTime - MapItem.Date) > 10 * 1000)
     {
         var BlockNum = GetCurrentBlockNumByTime();
         OperationID = Item.Value.OperationID + BlockNum % 100;
-        MapSendID[FromNum] = {};
     }
-    else
-    {
-        OperationID = MapSendID[FromNum].OperationID;
-        if((new Date() - MapSendID[FromNum].Date) > 8 * 1000)
-        {
-            OperationID += 10;
-        }
-        OperationID = Math.max(Item.Value.OperationID, OperationID);
-    }
+    OperationID = Math.max(Item.Value.OperationID, OperationID);
+    
     OperationID++;
-    MapSendID[FromNum].OperationID = OperationID;
-    MapSendID[FromNum].Date = Date.now();
+    MapItem.OperationID = OperationID;
+    MapItem.Date = CurTime;
     
     return OperationID;
 }
@@ -1912,7 +1920,8 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
                 var OperationID = GetOperationIDFromItem(Data.Item);
                 
                 WriteUint(Body, OperationID);
-                Body.length += 10;
+                Body.push(4);
+                Body.length += 9;
                 
                 SendTrArrayWithSign(Body, FromNum, TR);
             });
@@ -1921,7 +1930,8 @@ function SendCallMethod(Account,MethodName,Params,FromNum,FromSmartNum)
     else
     {
         WriteUint(Body, 0);
-        Body.length += 10;
+        Body.push(4);
+        Body.length += 9;
         Body.length += 64;
         Body.length += 12;
         SendTransaction(Body, TR);
@@ -2017,42 +2027,49 @@ function GetSignTransaction(TR,StrPrivKey,F)
 {
     if(window.SignLib && !Storage.getItem("BIGWALLET"))
     {
-        if(TR.Version === 3)
+        if(TR.Version === 4)
         {
-            var Arr = [];
-            
-            var GetCount = 0;
-            for(var i = 0; i < TR.To.length; i++)
-            {
-                var Item = TR.To[i];
-                
-                GetData("GetAccountList", {StartNum:Item.ID}, function (Data)
-                {
-                    if(Data && Data.result === 1 && Data.arr.length)
-                    {
-                        GetCount++;
-                        var DataItem = Data.arr[0];
-                        var DataPubArr = DataItem.PubKey.data;
-                        for(var j = 0; j < 33; j++)
-                            Arr[Arr.length] = DataPubArr[j];
-                        
-                        if(GetCount === TR.To.length)
-                        {
-                            var Body = GetArrFromTR(TR);
-                            for(var j = 0; j < Body.length; j++)
-                                Arr[Arr.length] = Body[j];
-                            TR.Sign = GetArrFromHex(GetSignFromArr(Arr, StrPrivKey));
-                            F(TR);
-                        }
-                    }
-                });
-            }
-        }
-        else
-        {
-            TR.Sign = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+            var Body = GetArrFromTR(TR);
+            TR.Sign = GetArrFromHex(GetSignFromArr(Body, StrPrivKey));
             F(TR);
         }
+        else
+            if(TR.Version === 3)
+            {
+                var Arr = [];
+                
+                var GetCount = 0;
+                for(var i = 0; i < TR.To.length; i++)
+                {
+                    var Item = TR.To[i];
+                    
+                    GetData("GetAccountList", {StartNum:Item.ID}, function (Data)
+                    {
+                        if(Data && Data.result === 1 && Data.arr.length)
+                        {
+                            GetCount++;
+                            var DataItem = Data.arr[0];
+                            var DataPubArr = DataItem.PubKey.data;
+                            for(var j = 0; j < 33; j++)
+                                Arr[Arr.length] = DataPubArr[j];
+                            
+                            if(GetCount === TR.To.length)
+                            {
+                                var Body = GetArrFromTR(TR);
+                                for(var j = 0; j < Body.length; j++)
+                                    Arr[Arr.length] = Body[j];
+                                TR.Sign = GetArrFromHex(GetSignFromArr(Arr, StrPrivKey));
+                                F(TR);
+                            }
+                        }
+                    });
+                }
+            }
+            else
+            {
+                TR.Sign = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+                F(TR);
+            }
     }
     else
     {

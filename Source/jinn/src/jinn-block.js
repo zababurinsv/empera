@@ -86,6 +86,14 @@ function InitClass(Engine)
         return BlockNew;
     };
     
+    Engine.CopyBodyTx = function (BlockDst,BlockSrc)
+    {
+        BlockDst.TreeHash = BlockSrc.TreeHash;
+        BlockDst.TxData = BlockSrc.TxData;
+        BlockDst.TxCount = BlockSrc.TxCount;
+        BlockDst.TxPosition = BlockSrc.TxPosition;
+    };
+    
     Engine.GetNewBlock = function (PrevBlock,bNew)
     {
         if(!PrevBlock)
@@ -99,12 +107,17 @@ function InitClass(Engine)
         Block.PrevSumHash = PrevBlock.SumHash;
         Block.PrevSumPow = PrevBlock.SumPow;
         
-        if(Engine.GetNewBlockNext)
-            Engine.GetNewBlockNext(Block, PrevBlock);
+        if(!Engine.GetNewBlockNext(Block, PrevBlock))
+            return undefined;
         
         Engine.CalcBlockData(Block);
         
         return Block;
+    };
+    
+    Engine.GetNewBlockNext = function (Block,PrevBlock)
+    {
+        return 1;
     };
     
     // Serylizing...
@@ -117,7 +130,7 @@ function InitClass(Engine)
         if(Block.BlockNum >= JINN_CONST.BLOCK_GENESIS_COUNT && IsZeroArr(Block.PrevSumHash))
             ToLog("ZeroArr PrevSumHash on BlockNum=" + Block.BlockNum);
         var Data = {BlockNum:Block.BlockNum, LinkSumHash:Block.PrevSumHash, TreeHash:Block.TreeHash, MinerHash:Block.MinerHash, PrevSumPow:Block.PrevSumPow,
-            PrevSumHash:Block.PrevSumHash, Size:4 * 32 + 2 * 6, };
+            PrevSumHash:Block.PrevSumHash, OldPrevHash8:Block.OldPrevHash8, Size:4 * 33 + 4 + 6, };
         
         return Data;
     };
@@ -143,13 +156,21 @@ function InitClass(Engine)
     {
         if(!TxArr || !TxArr.length)
             return ZERO_ARR_32;
+        return Engine.CalcTreeHashInner(BlockNum, TxArr);
+    };
+    
+    Engine.CalcTreeHashInner = function (BlockNum,TxArr)
+    {
         
         var Buf = [];
         for(var n = 0; n < TxArr.length; n++)
         {
             var Tx = TxArr[n];
             
-            CheckTx("=CalcTreeHash=", Tx, BlockNum, 1);
+            if(!CheckTx("=CalcTreeHash=", Tx, BlockNum, 0))
+            {
+                return ZERO_ARR_32;
+            }
             
             var Hash = Tx.HASH;
             for(var h = 0; h < Hash.length; h++)
@@ -166,19 +187,32 @@ function InitClass(Engine)
     {
         if(!Arr)
             return;
+        
+        var ArrErr = Engine.GetArrErrTx(BlockNum);
+        var TreeTTAll = Engine.GetTreeTicketAll(BlockNum);
         for(var i = 0; i < Arr.length; i++)
         {
             var Tx = Arr[i];
             if(Tx.OperationID === undefined)
             {
-                Engine.CheckHashExist(Tx);
+                Engine.CheckHashExist(Tx, BlockNum);
                 Tx.OperationID = Engine.GetTxSenderOperationID(Tx, BlockNum);
-                if(JINN_CONST.TX_PRIORITY_MODE)
+                if(JINN_CONST.TX_PRIORITY_MODE || JINN_CONST.TX_CHECK_SIGN_ON_TRANSFER)
                     Tx.SenderNum = Engine.GetTxSenderNum(Tx, BlockNum);
                 if(JINN_CONST.TX_BASE_VALUE)
-                    Tx.BaseValue = Engine.GetSenderBaseValue(Tx.SenderNum);
+                    Tx.BaseValue = Engine.GetAccountBaseValue(Tx.SenderNum);
                 if(JINN_CONST.TX_PRIORITY_MODE)
                     Tx.CountTX = Engine.GetTxSenderCount(Tx.SenderNum);
+            }
+            
+            Engine.CheckErrTx(Tx, BlockNum, TreeTTAll, ArrErr);
+            
+            if(Tx.ErrSign || Tx.ErrOperationID)
+            {
+                ToLog("Remove error tx at " + i + " on Block:" + BlockNum, 3);
+                Arr.splice(i, 1);
+                i--;
+                continue;
             }
         }
     };
@@ -233,7 +267,7 @@ function InitClass(Engine)
         if(Block.PrevSumPow === undefined)
             ToLogTrace("Error No Block.PrevSumPow on Block=" + Block.BlockNum);
         
-        Block.DataHash = sha3(Block.LinkSumHash.concat(Block.TreeHash), 5);
+        Block.DataHash = Engine.CalcDataHashInner(Block);
         
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
@@ -243,36 +277,37 @@ function InitClass(Engine)
         }
         else
         {
-            Block.Hash = sha3(Block.DataHash.concat(Block.MinerHash).concat(GetArrFromValue(Block.BlockNum)), 6);
+            Block.Hash = Engine.CalcBlockHashInner(Block);
         }
         
         Block.Power = GetPowPowerBlock(Block.BlockNum, Block.Hash);
         Block.SumPow = Block.PrevSumPow + Block.Power;
     };
     
-    Engine.CalcSumHash = function (Block)
+    Engine.CalcDataHashInner = function (Block)
     {
-        if(Block.BlockNum === 0)
-            Block.SumHash = ZERO_ARR_32;
-        else
-        {
-            if(!Block.PrevSumHash)
-                ToLogTrace("Error No PrevSumHash on Block=" + Block.BlockNum);
-            
-            if(Block.SumPow === undefined)
-                ToLogTrace("Error No SumPow on Block=" + Block.BlockNum);
-            
-            var arr_sum_pow = [];
-            WriteUintToArr(arr_sum_pow, Block.SumPow);
-            Block.SumHash = sha3(Block.PrevSumHash.concat(Block.Hash).concat(arr_sum_pow), 7);
-        }
+        if(Block.PrevSumPow === undefined)
+            ToLogTrace("Error No Block.PrevSumPow on Block=" + Block.BlockNum);
+        
+        return sha3(Block.LinkSumHash.concat(Block.TreeHash).concat(GetArrFromValue(Block.PrevSumPow)), 5);
     };
     
-    Engine.CheckHashExist = function (Tx)
+    Engine.CalcBlockHashInner = function (Block)
+    {
+        
+        return sha3(Block.DataHash.concat(Block.MinerHash).concat(GetArrFromValue(Block.BlockNum)), 6);
+    };
+    
+    Engine.CalcSumHash = function (Block)
+    {
+        Block.SumHash = Block.Hash;
+    };
+    
+    Engine.CheckHashExist = function (Tx,BlockNum)
     {
         if(!Tx.HASH)
         {
-            var Tx2 = Engine.GetTx(Tx.body, undefined, 10);
+            var Tx2 = Engine.GetTx(Tx.body, BlockNum, undefined, 10);
             CopyObjKeys(Tx, Tx2);
         }
     };
@@ -282,24 +317,21 @@ function InitClass(Engine)
         Tt.IsTx = Tx.IsTx;
         Tt.HASH = Tx.HASH;
         Tt.body = Tx.body;
-        Tt.nonce = Tx.nonce;
     };
     
-    Engine.GetTicket = function (HashTicket,Key,Num)
+    Engine.GetTicket = function (HashTicket)
     {
         
-        var Tx = {HashTicket:HashTicket, KEY:Key, num:Num};
-        
+        var Key = GetHexFromArr(HashTicket);
+        var Tx = {HashTicket:HashTicket, KEY:Key};
         return Tx;
     };
     
-    Engine.GetTx = function (body,HASH)
+    Engine.GetTx = function (body,BlockNum,HASH)
     {
         
         var Tx = {};
         Tx.IsTx = 1;
-        Tx.num = ReadUintFromArr(body, body.length - 12);
-        Tx.nonce = ReadUintFromArr(body, body.length - 6);
         if(HASH)
             Tx.HASH = HASH;
         else
@@ -353,6 +385,8 @@ global.NeedLoadBodyFromDB = NeedLoadBodyFromDB;
 global.BlockInfo = function (Block)
 {
     CalcAvgSumPow(Block);
+    
+    return "" + Block.BlockNum;
     return "" + Block.BlockNum + " (" + GetHexFromArr(Block.SumHash).substr(0, 8) + "<" + GetHexFromArr(Block.PrevSumHash).substr(0,
     8) + ") Avg=" + Block.AvgSumPow + " Pow=" + Block.Power;
 }

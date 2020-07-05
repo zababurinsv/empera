@@ -23,7 +23,7 @@
 <script type="text/javascript" src="../HTML/JS/client.js"></script>
 
 <script>
-    var JINNMODE=0;
+    var JINN_MODE=0;
     var MaxChildCount=1;
     var SaveIdArr=[];
     //var NodesArr=[];
@@ -76,8 +76,8 @@
         {
             if(Data && Data.result)
             {
-                JINNMODE=Data.JINNMODE;
-                if(!JINNMODE)
+                JINN_MODE=Data.JINN_MODE;
+                if(!JINN_MODE)
                 {
                     MaxChildCount = 7;
                 }
@@ -171,7 +171,7 @@
                     else
                         strClass+=" close";
 
-                    if(JINNMODE)
+                    if(JINN_MODE)
                         strClass+=" jinnnode";
 
                     // if(CurNodeID===Node.ID)
@@ -198,7 +198,7 @@
                         Str+='<INPUT type="button" class="connect" onclick="AddConnect('+Node.ID+')" value="Con...">';
                     }
 
-                    if(JINNMODE)
+                    if(JINN_MODE)
                     {
                         Str += '<input type="checkbox" class="checkbox" id="D' + Node.ID + '" '+(Node.Debug?' checked':'')+' onchange = "SetDebug(' + Node.ID + ')"/>';
                     }

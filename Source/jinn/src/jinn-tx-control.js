@@ -65,20 +65,23 @@ function InitClass(Engine)
             }
         }
     };
-    Engine.CheckSizeTransferTXArray = function (Child,Arr)
+    Engine.CheckSizeTransferTXArray = function (Child,Arr,MaxSize)
     {
         
-        if(JINN_CONST.MAX_TRANSFER_TX && Arr.length > JINN_CONST.MAX_TRANSFER_TX)
+        if(MaxSize && Arr.length > MaxSize)
         {
-            Child.ToError("#1 Error Tx Arr length = " + Arr.length, 3);
-            Arr.length = JINN_CONST.MAX_TRANSFER_TX;
+            Child.ToError("Error TT/TX Arr length = " + Arr.length, 3);
+            Arr.length = MaxSize;
         }
     };
     Engine.IsValidateTx = function (Tx,StrCheckName,BlockNum)
     {
+        if(!Tx || !Tx.IsTx || !Tx.body || Tx.body.length < 32 || Tx.body.length > 32000)
+            return 0;
+        
         var Result = CheckTx(StrCheckName, Tx, BlockNum, 1);
         if(!Result)
             JINN_STAT.NoValidateTx++;
-        return Result;
+        return 1;
     };
 }

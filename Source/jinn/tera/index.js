@@ -14,20 +14,27 @@
 
 'use strict';
 
+global.Init_DB_HEADER_FORMAT = function (Obj)
+{
+    if(!global.UPDATE_CODE_JINN_HASH8)
+        return;
+    Obj.OldPrevHash8 = "hash";
+}
+
 
 global.CDBFile = require("../../core/db/db-file");
 require("../src");
 
 
-var BWRITE_MODE_TX = (global.PROCESS_NAME === "TX");
+
+
 
 
 global.JINN_WARNING = 3;
 
 
 
-global.UPDATE_CODE_JINN_1 = JINN_CONST.BLOCK_GENESIS_COUNT;
-JINN_CONST.LINK_HASH_PREV_HASHSUM = global.UPDATE_CODE_JINN_1;
+JINN_CONST.LINK_HASH_PREV_HASHSUM = JINN_CONST.BLOCK_GENESIS_COUNT;
 
 JINN_CONST.BLOCK_PROCESSING_LENGTH = global.BLOCK_PROCESSING_LENGTH;
 
@@ -36,6 +43,7 @@ JINN_CONST.START_CHECK_BLOCKNUM = 50;
 
 
 JINN_CONST.SHARD_NAME = "TERA";
+JINN_CONST.NETWORK_NAME = global.NETWORK;
 
 JINN_CONST.MAX_PACKET_SIZE = 1200000;
 JINN_CONST.MAX_PACKET_SIZE_RET_DATA = Math.floor(JINN_CONST.MAX_PACKET_SIZE / 2);
@@ -53,24 +61,12 @@ JINN_CONST.MAX_DEPTH_FOR_SECONDARY_CHAIN = 100;
 
 JINN_EXTERN.GetCurrentBlockNumByTime = global.GetCurrentBlockNumByTime;
 
-module.exports.Create = function (Node,MapName)
+module.exports.Create = Create;
+
+function GetEngine(MapName)
 {
-    ToLog("JINN Starting...");
-    if(global.LOCAL_RUN)
-    {
-        JINN_CONST.UNIQUE_IP_MODE = 0;
-        global.AUTO_CORRECT_TIME = 0;
-        
-        global.DELTA_CURRENT_TIME = 0;
-        JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME = 10;
-        JINN_CONST.CORRECT_TIME_VALUE = 50;
-        JINN_CONST.CORRECT_TIME_TRIGGER = 5;
-        
-        JINN_CONST.MAX_LEVEL_CONNECTION = 3;
-        JINN_CONST.EXTRA_SLOTS_COUNT = 1;
-    }
-    
     var Engine = {};
+    
     Engine.CanRunStat = !MapName;
     Engine.UseExtraSlot = 0;
     
@@ -97,6 +93,7 @@ module.exports.Create = function (Node,MapName)
     }
     
     require("./tera-hash").Init(Engine);
+    
     require("./tera-link").Init(Engine);
     
     require("./tera-net-constant").Init(Engine);
@@ -111,6 +108,28 @@ module.exports.Create = function (Node,MapName)
     
     require("./tera-addr").Init(Engine);
     
+    return Engine;
+}
+
+function Create(MapName)
+{
+    ToLog("JINN Starting...");
+    if(global.LOCAL_RUN)
+    {
+        JINN_CONST.UNIQUE_IP_MODE = 0;
+        global.AUTO_CORRECT_TIME = 0;
+        
+        global.DELTA_CURRENT_TIME = 0;
+        JINN_CONST.MIN_COUNT_FOR_CORRECT_TIME = 10;
+        JINN_CONST.CORRECT_TIME_VALUE = 50;
+        JINN_CONST.CORRECT_TIME_TRIGGER = 5;
+        
+        JINN_CONST.MAX_LEVEL_CONNECTION = 3;
+        JINN_CONST.EXTRA_SLOTS_COUNT = 0;
+    }
+    
+    var Engine = GetEngine(MapName);
+    
     if(Engine.AddNodeAddr)
     {
         if(global.LOCAL_RUN)
@@ -122,9 +141,7 @@ module.exports.Create = function (Node,MapName)
             Engine.AddNodeAddr({ip:"149.154.70.158", port:33000, Score:1000000000, System:1});
             Engine.AddNodeAddr({ip:"212.80.217.95", port:33006, Score:1000000000, System:1});
             Engine.AddNodeAddr({ip:"212.80.217.187", port:33007, Score:1000000000, System:1});
-            
-            Engine.AddNodeAddr({ip:"109.251.8.131", port:33000, System:1});
-            Engine.AddNodeAddr({ip:"27.155.77.110", port:33000, System:1});
+            Engine.AddNodeAddr({ip:"36.104.146.7", port:33000, System:1});
         }
         
         Engine.LoadAddrOnStart();
@@ -145,7 +162,7 @@ function StartRun()
     if(Engine.CanRunStat)
         Engine.OnStatSecond();
     
-    NextRunEngine(global.JINN);
+    NextRunEngine(Engine);
     Engine.DoNodeAddr();
     
     var CurTimeNum =  + GetCurrentTime();

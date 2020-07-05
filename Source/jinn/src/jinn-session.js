@@ -21,7 +21,7 @@ function InitClass(Engine)
             var Child = Engine.LevelArr[i];
             if(Child && Child.IsHotReady())
             {
-                Arr.push(Child);
+                Arr.push({Child:Child, CountForSend:0, TXSend:0, TxReceive:0});
             }
         }
         
@@ -40,5 +40,17 @@ function InitClass(Engine)
             return Item.Arr;
         else
             return [];
+    };
+    
+    Engine.FindTransferSessionByChild = function (Child,BlockNum)
+    {
+        var Arr = Engine.GetTransferSession(BlockNum);
+        for(var i = 0; i < Arr.length; i++)
+        {
+            var ItemChild = Arr[i];
+            if(ItemChild.Child === Child)
+                return ItemChild;
+        }
+        return undefined;
     };
 }

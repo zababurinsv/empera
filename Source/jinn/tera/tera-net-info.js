@@ -35,6 +35,8 @@ function Init(Engine)
     
     Engine.SendGetInfo = function (Child)
     {
+        return;
+        
         if(!Child || !Child.IsOpen())
             return;
         

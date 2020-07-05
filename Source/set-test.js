@@ -1,4 +1,5 @@
 
+global.MODE_RUN="TEST";
 global.TEST_NETWORK = 1;
 global.DATA_PATH="../DATA-TEST";
 global.CODE_PATH=process.cwd();

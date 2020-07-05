@@ -162,7 +162,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
                         var ResultStr = Result;
                         if(Result === true || typeof Result === "number")
                         {
-                            ResultStr = "Add to blockchain"
+                            ResultStr = "Add to blockchain on Block: " + BlockNum
                             if(type === global.TYPE_TRANSACTION_FILE)
                                 ResultStr += ": file/" + BlockNum + "/" + i
                         }

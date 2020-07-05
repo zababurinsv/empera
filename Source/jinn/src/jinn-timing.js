@@ -279,38 +279,41 @@ function DoNode(Engine)
     if(Engine.ROOT_NODE)
         return;
     
-    var CurBlockNumT = Engine.CurrentBlockNum;
-    
+    var CurBlockNum = Engine.CurrentBlockNum;
     Engine.DoSaveMainWithContinues();
     
-    if(Engine.LastCurBlockNum !== CurBlockNumT)
+    if(Engine.LastCurBlockNum !== CurBlockNum)
     {
         
         if(Engine.DoOnStartBlock)
             Engine.DoOnStartBlock();
         
-        Engine.InitTransferSession(CurBlockNumT);
+        Engine.InitTransferSession(CurBlockNum);
         
-        Engine.LastCurBlockNum = CurBlockNumT;
+        Engine.LastCurBlockNum = CurBlockNum;
         
         Engine.DoTimeCorrect(1);
-        
+        Engine.ClearListToNum(Engine.StepTaskTt, CurBlockNum - JINN_CONST.STEP_CLEAR_MEM);
+        Engine.ClearListToNum(Engine.StepTaskTx, CurBlockNum - JINN_CONST.STEP_CLEAR_MEM);
+        Engine.ClearListToNum(Engine.StepTaskMax, CurBlockNum - JINN_CONST.STEP_CLEAR_MEM);
+    }
+    var CurBlockNum3 = JINN_EXTERN.GetCurrentBlockNumByTime( - JINN_CONST.DELTA_TIME_NEW_BLOCK);
+    if(Engine.LastNewBlockCreate !== CurBlockNum3)
+    {
+        Engine.LastNewBlockCreate = CurBlockNum3;
         Engine.DoCreateNewBlock();
-        Engine.ClearListToNum(Engine.StepTaskTt, CurBlockNumT - JINN_CONST.STEP_CLEAR_MEM);
-        Engine.ClearListToNum(Engine.StepTaskTx, CurBlockNumT - JINN_CONST.STEP_CLEAR_MEM);
-        Engine.ClearListToNum(Engine.StepTaskMax, CurBlockNumT - JINN_CONST.STEP_CLEAR_MEM);
     }
     
     if(JINN_CONST.TEST_DELTA_TIMING_HASH)
         for(var Delta = 0; Delta < JINN_CONST.TEST_DELTA_TIMING_HASH; Delta++)
         {
             if(JINN_CONST.TEST_DIV_TIMING_HASH <= 1 || Engine.TickNum % JINN_CONST.TEST_DIV_TIMING_HASH === 0)
-                Engine.StepTaskMax[CurBlockNumT - JINN_CONST.STEP_NEW_BLOCK - Delta] = 2;
+                Engine.StepTaskMax[CurBlockNum - JINN_CONST.STEP_NEW_BLOCK - Delta] = 2;
         }
     
-    for(var BlockNum = CurBlockNumT - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING; BlockNum <= CurBlockNumT; BlockNum++)
+    for(var BlockNum = CurBlockNum - JINN_CONST.STEP_LAST - JINN_CONST.MAX_DELTA_PROCESSING; BlockNum <= CurBlockNum; BlockNum++)
     {
-        var Delta = CurBlockNumT - BlockNum;
+        var Delta = CurBlockNum - BlockNum;
         
         Engine.AfterMiningDoBlockArr(BlockNum);
         

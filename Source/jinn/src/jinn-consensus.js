@@ -361,7 +361,7 @@ function InitClass(Engine)
         return Store;
     };
     
-    Engine.FillDataMaxLider = function (Data,BlockNum)
+    Engine.CheckDataMaxLider = function (Data,BlockNum)
     {
         if(Data.DataHash === undefined)
             ToLogTrace("PrecessDataMaxLider Error DataHash on block:" + BlockNum);
@@ -409,10 +409,11 @@ function InitClass(Engine)
     Engine.CalcHashMaxLiderInner = function (Data,BlockNum)
     {
         
-        if(!Data.DataHash || IsZeroArr(Data.DataHash))
-            ToLogTrace("ZERO DataHash on block:" + BlockNum);
+        if(!Data.DataHash)
+            ToLogTrace("NO DataHash on block:" + BlockNum);
         
-        Data.Hash = sha3(Data.DataHash.concat(Data.MinerHash).concat(GetArrFromValue(Data.BlockNum)), 13);
+        Data.Hash = Engine.CalcBlockHashInner(Data);
+        
         Data.PowHash = Data.Hash;
         Data.Power = GetPowPowerBlock(BlockNum, Data.Hash);
     };
@@ -451,7 +452,7 @@ function InitClass(Engine)
         Engine.AddMaxHashToTimeStat(Data, BlockNum);
         
         Engine.CalcHashMaxLider(Data, BlockNum);
-        Engine.FillDataMaxLider(Data, BlockNum);
+        Engine.CheckDataMaxLider(Data, BlockNum);
         
         var Store = Engine.GetLiderArrAtNum(BlockNum);
         var LiderArr = Store.LiderArr;
@@ -626,11 +627,12 @@ function InitClass(Engine)
         
         var Count = BlockSeed.BlockNum - BlockHead.BlockNum;
         var Delta = CurBlockNumT - BlockSeed.BlockNum;
-        var Res = Engine.DB.SaveChainToDB(BlockHead, BlockSeed);
         var Miner = ReadUintFromArr(BlockSeed.MinerHash, 0);
-        if(BlockSeed.BlockNum > 20)
+        if(BlockSeed.BlockNum > 25)
             Engine.ToLog("SaveChainToDB: " + BlockInfo(BlockHead) + " - " + BlockInfo(BlockSeed) + "  ### SumPow=" + BlockSeed.SumPow + " Miner=" + Miner + " COUNT=" + Count,
             3);
+        
+        var Res = Engine.DB.SaveChainToDB(BlockHead, BlockSeed);
         
         if(Res !== 1)
         {

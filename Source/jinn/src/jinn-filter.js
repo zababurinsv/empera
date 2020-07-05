@@ -25,13 +25,14 @@ MapM["CONNECTLEVEL"] = {Period:1000};
 MapM["DISCONNECTLEVEL"] = {Period:1000};
 MapM["MAXHASH"] = {Period:20};
 MapM["TRANSFERTT"] = {Period:50};
-MapM["TRANSFERTX"] = {Period:100};
+MapM["TRANSFERTX"] = {Period:50};
+MapM["ERRTX"] = {Period:50};
 
 MapM["NETCONSTANT"] = {Period:10 * 1000};
 MapM["VERSION"] = {Period:10 * 1000};
 MapM["CODE"] = {Period:30 * 1000};
 
-MapM["INFO"] = {Period:0.5 * 1000};
+
 
 MapM["SPEED"] = {Period:100 * 1000};
 

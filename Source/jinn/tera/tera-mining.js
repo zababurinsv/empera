@@ -16,23 +16,27 @@ function Init(Engine)
     Engine.FillBodyFromTransferNext = function (Block)
     {
         
-        if(global.LOCAL_RUN)
-            return;
-        
-        var Tx = SERVER.GetDAppTransactions(Block.BlockNum);
-        if(Tx)
+        var Tx0 = SERVER.GetDAppTransactions(Block.BlockNum);
+        if(Tx0)
         {
-            Tx = Engine.GetTx(Tx.body, undefined, 8);
-            Block.TxData.unshift(Tx);
+            var TreeTTAll = Engine.GetTreeTicketAll(Block.BlockNum);
+            var Tx = Engine.GetTx(Tx0.body, Block.BlockNum, undefined, 8);
+            var TxAdd = Engine.AddToTreeWithAll(TreeTTAll, Tx);
+            if(TxAdd)
+                Block.TxData.unshift(TxAdd);
         }
     };
     
     Engine.GetNewBlockNext = function (Block,PrevBlock)
     {
+        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+            return 0;
         var PrevHashNum = ReadUint32FromArr(Block.PrevSumHash, 28);
         Block.MinerHash = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         WriteUintToArrOnPos(Block.MinerHash, 0, 0);
         WriteUint32ToArrOnPos(Block.MinerHash, PrevHashNum, 28);
+        
+        return 1;
     };
     
     Engine.AddToMiningInner = function (Block)

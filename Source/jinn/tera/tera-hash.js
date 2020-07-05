@@ -13,19 +13,17 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
-    Engine.GetTx = function (body,HASH,TestNum)
+    Engine.GetTx = function (body,BlockNum,HASH,TestNum)
     {
         JINN_STAT["GetTx" + TestNum]++;
         
         var Tx = {};
         Tx.IsTx = 1;
-        Tx.nonce = ReadUintFromArr(body, body.length - 6);
-        Tx.num = ReadUintFromArr(body, body.length - 12);
         
         if(HASH)
             Tx.HASH = HASH;
         else
-            if(Tx.num >= global.BLOCKNUM_TICKET_ALGO)
+            if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
             {
                 Tx.HASH = sha3(body, 8);
             }
@@ -74,7 +72,7 @@ function Init(Engine)
         if(!Block.TreeHash)
             ToLogTrace("No TreeHash on block " + Block.BlockNum);
         
-        Block.DataHash = CalcDataHash(Block.LinkSumHash, Block.TreeHash, Block.BlockNum);
+        Block.DataHash = Engine.CalcDataHashInner(Block);
         
         if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)
         {
@@ -83,17 +81,56 @@ function Init(Engine)
             Block.Hash[31] = Block.Hash[0];
             Block.PowHash = Block.Hash;
             Block.Power = GetPowPowerBlock(Block.BlockNum, Block.Hash);
+            Block.OldPrevHash8 = ZERO_ARR_32;
         }
         else
         {
-            CalcBlockHash(Block, Block.DataHash, Block.MinerHash, Block.BlockNum, Block.LinkSumHash);
+            
+            Block.Hash = Engine.CalcBlockHashInner(Block);
         }
         
         Block.SumPow = Block.PrevSumPow + Block.Power;
     };
+    Engine.CalcDataHashInner = function (Block)
+    {
+        var PrevHash;
+        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+            PrevHash = Block.OldPrevHash8;
+        else
+            PrevHash = Block.LinkSumHash;
+        
+        if(Block.PrevSumPow === undefined)
+            ToLogTrace("Error No Block.PrevSumPow on Block=" + Block.BlockNum);
+        
+        return CalcDataHash(Block.BlockNum, PrevHash, Block.TreeHash, Block.PrevSumPow);
+    };
+    
+    Engine.CalcBlockHashInner = function (Block)
+    {
+        var PrevHash;
+        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+            PrevHash = Block.OldPrevHash8;
+        else
+            PrevHash = Block.LinkSumHash;
+        
+        if(PrevHash === undefined)
+        {
+            ToLogTrace("Error No PrevHash on Block=" + Block.BlockNum);
+            process.exit();
+        }
+        
+        CalcBlockHash(Block, Block.DataHash, Block.MinerHash, Block.BlockNum, PrevHash);
+        return Block.Hash;
+    };
     
     Engine.CalcSumHash = function (Block)
     {
+        
+        if(Block.BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
+        {
+            Block.SumHash = CalcSumHash(Block.PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
+            return;
+        }
         if(Block.BlockNum === 0)
             Block.SumHash = ZERO_ARR_32;
         else
@@ -104,10 +141,20 @@ function Init(Engine)
             Block.SumHash = CalcSumHash(Block.PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
         }
     };
+    Engine.CalcTreeHash = function (BlockNum,TxArr)
+    {
+        if(!TxArr || !TxArr.length)
+            return ZERO_ARR_32;
+        
+        if(BlockNum < global.UPDATE_CODE_JINN_HASH8)
+            return CalcTreeHashFromArrBody(BlockNum, TxArr);
+        else
+            return Engine.CalcTreeHashInner(BlockNum, TxArr);
+    };
     Engine.CalcHashMaxLiderInner = function (Data,BlockNum)
     {
-        if(!Data.DataHash || IsZeroArr(Data.DataHash))
-            ToLogTrace("ZERO DataHash on block:" + BlockNum);
+        if(!Data.DataHash)
+            ToLogTrace("NO DataHash on block:" + BlockNum);
         CalcBlockHash(Data, Data.DataHash, Data.MinerHash, BlockNum);
     };
     Engine.SetBlockDataFromDB = function (Block)
@@ -159,7 +206,11 @@ function Init(Engine)
         if(!Block.DataHash)
             ToLogTrace("!Block.DataHash on Block=" + Block.BlockNum);
         
-        Block.PrevHash = Block.LinkSumHash;
+        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+            Block.PrevHash = Block.OldPrevHash8;
+        else
+            Block.PrevHash = Block.LinkSumHash;
+        
         Block.AddrHash = Block.MinerHash;
         Block.SeqHash = Block.DataHash;
         
@@ -189,6 +240,11 @@ function Init(Engine)
         if(!Block.SeqHash)
             ToLogTrace("!Block.SeqHash on Block=" + Block.BlockNum);
         
+        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+            Block.OldPrevHash8 = Block.PrevHash;
+        else
+            Block.OldPrevHash8 = ZERO_ARR_32;
+        
         Block.LinkSumHash = Block.PrevHash;
         Block.MinerHash = Block.AddrHash;
         Block.DataHash = Block.SeqHash;
@@ -200,6 +256,11 @@ function Init(Engine)
         if(bCalc)
         {
             Engine.SetBlockDataFromDB(Block);
+        }
+        
+        if(Block.BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
+        {
+            Block.SumHash = Block.Hash;
         }
     };
     
@@ -223,7 +284,7 @@ function Init(Engine)
             var Arr = [];
             for(var i = 0; i < Block.arrContent.length; i++)
             {
-                var Tx = Engine.GetTx(Block.arrContent[i], undefined, 7);
+                var Tx = Engine.GetTx(Block.arrContent[i], Block.BlockNum, undefined, 7);
                 Arr.push(Tx);
             }
         }

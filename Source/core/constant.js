@@ -8,11 +8,16 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-global.UPDATE_CODE_VERSION_NUM = 2122;
-global.MIN_JINN_VERSION_NUM = 2046;
+
+"use strict";
+
+
+global.UPDATE_CODE_VERSION_NUM = 2201;
+global.MIN_JINN_VERSION_NUM = 2175;
 
 global.MIN_CODE_VERSION_NUM = 1850;
 global.MINING_VERSION_NUM = 0;
+global.DEBUG_TRAFFIC = 0;
 
 global.FORK_MODE = 0;
 global.NETWORK = "TERA-MAIN";
@@ -38,7 +43,7 @@ global.CONST_NAME_ARR = ["DELTA_CURRENT_TIME", "WALLET_NAME", "WALLET_DESCRIPTIO
 "TRANSACTION_PROOF_COUNT", "LIMIT_SEND_TRAFIC", "WATCHDOG_DEV", "ADDRLIST_MODE", "CheckPointDelta", "MIN_VER_STAT", "DEBUG_WALLET",
 "DEBUG_EXIT_ON_BADS", "HTTP_HOSTING_PORT", "HTTPS_HOSTING_DOMAIN", "HTTP_MAX_COUNT_ROWS", "HTTP_ADMIN_PASSWORD", "HTTP_START_PAGE",
 "HTTP_CACHE_LONG", "HTTP_USE_ZIP", "WATCHDOG_BADACCOUNT", "RESYNC_CONDITION", "MAX_CONNECTIONS_COUNT", "TRUST_PROCESS_COUNT",
-"REST_START_COUNT", "LOAD_TO_BEGIN", "MAX_SIZE_DB", "JINN_MAX_MEMORY_USE", "JINN_DEBUG_INFO", "JINN_IP", "JINN_PORT", ];
+"MAX_SIZE_DB", "JINN_MAX_MEMORY_USE", "JINN_IP", "JINN_PORT", ];
 
 
 global.JINN_AUTO_CORRECT_TIME = 1;
@@ -54,7 +59,11 @@ global.DEBUG_EXIT_ON_BADS = 0;
 
 // Code updates for JINN
 
-global.UPDATE_CODE_JINN_1 = 1000000000;
+global.UPDATE_CODE_JINN_HASH8 = 1000000000;
+global.UPDATE_CODE_JINN_SUMHASH = global.UPDATE_CODE_JINN_HASH8;
+global.UPDATE_CODE_JINN_KTERA = global.UPDATE_CODE_JINN_HASH8;
+global.UPDATE_CODE_6 = global.UPDATE_CODE_JINN_HASH8;
+global.NEW_FORMULA_JINN_KTERA = 3;
 
 
 global.UPDATE_CODE_1 = 36000000;
@@ -94,8 +103,8 @@ global.RESYNC_CONDITION = {"OWN_BLOCKS":20, "K_POW":5};
 
 
 global.REST_BLOCK_SCALE = 1000;
-global.REST_START_COUNT = 1000;
-global.LOAD_TO_BEGIN = 2;
+global.REST_START_COUNT = 0;
+global.LOAD_TO_BEGIN = 0;
 global.MAX_SIZE_DB = 20;
 
 global.DEBUG_WALLET = 0;
@@ -263,162 +272,7 @@ global.NEW_SIGN_TIME = 25500000;
 global.STANDART_PORT_NUMBER = 30000;
 
 InitParamsArg();
-
-if(global.JINN_MODE)
-{
-    NETWORK = "JINN";
-    
-    if(!global.LOCAL_RUN)
-        global.START_NETWORK_DATE = 1591013272000;
-    global.CONSENSUS_PERIOD_TIME = 3000;
-    
-    global.RESYNC_CONDITION = 0;
-    global.REST_BLOCK_SCALE = 100;
-    global.DELTA_BLOCK_ACCOUNT_HASH = 30;
-    global.PERIOD_ACCOUNT_HASH = 10;
-    global.START_BLOCK_ACCOUNT_HASH = 0;
-    global.START_BLOCK_ACCOUNT_HASH3 = 1;
-    
-    global.SMART_BLOCKNUM_START = 0;
-    global.START_MINING = 30;
-    global.REF_PERIOD_END = 0;
-    global.REF_PERIOD_MINING = 10;
-    
-    global.TEST_TRANSACTION_GENERATE = 0;
-    global.MIN_POWER_POW_ACC_CREATE = 8;
-    
-    global.NEW_ACCOUNT_INCREMENT = 1;
-    global.NEW_BLOCK_REWARD1 = 1;
-    global.NEW_FORMULA_START = 1;
-    global.NEW_FORMULA_KTERA = 3 * 3;
-    global.NEW_FORMULA_TARGET1 = 0;
-    global.NEW_FORMULA_TARGET2 = 1;
-    
-    global.ALL_VIEW_ROWS = 1;
-    
-    global.NEW_SIGN_TIME = 0;
-    
-    global.START_BAD_ACCOUNT_CONTROL = 500000;
-    global.BLOCKNUM_TICKET_ALGO = 0;
-    global.MIN_POWER_POW_TR = 0;
-    global.AUTO_CORRECT_TIME = 0;
-    global.CHECK_GLOBAL_TIME = 0;
-    
-    global.UPDATE_CODE_JINN_1 = 0;
-    global.UPDATE_CODE_1 = 0;
-    global.UPDATE_CODE_2 = 0;
-    global.UPDATE_CODE_3 = 0;
-    global.UPDATE_CODE_4 = 0;
-    global.UPDATE_CODE_5 = 0;
-    global.UPDATE_CODE_NEW_ACCHASH = 1;
-    EXPERIMENTAL_CODE = 0;
-    
-    global.REST_START_COUNT = 0;
-    global.LOAD_TO_BEGIN = 0;
-    global.STAT_MODE = 1;
-}
-else
-    if(global.LOCAL_RUN || global.FORK_MODE)
-    {
-        if(!global.FORK_MODE)
-            NETWORK = "LOCAL";
-        
-        if(global.FORK_MODE || global.LOCAL_RUN === 1)
-            global.RESYNC_CONDITION = 0;
-        global.REST_BLOCK_SCALE = 100;
-        
-        global.DELTA_BLOCK_ACCOUNT_HASH = 30;
-        global.PERIOD_ACCOUNT_HASH = 10;
-        global.START_BLOCK_ACCOUNT_HASH = 1;
-        global.START_BLOCK_ACCOUNT_HASH3 = 1;
-        
-        global.SMART_BLOCKNUM_START = 0;
-        global.START_MINING = 60;
-        global.REF_PERIOD_END = 0;
-        global.REF_PERIOD_MINING = 10;
-        
-        global.TEST_TRANSACTION_GENERATE = 0;
-        global.MIN_POWER_POW_ACC_CREATE = 8;
-        
-        global.NEW_ACCOUNT_INCREMENT = 1;
-        global.NEW_BLOCK_REWARD1 = 1;
-        global.NEW_FORMULA_START = 1;
-        global.NEW_FORMULA_KTERA = 3;
-        global.NEW_FORMULA_TARGET1 = 0;
-        global.NEW_FORMULA_TARGET2 = 1;
-        
-        global.ALL_VIEW_ROWS = 1;
-        
-        global.NEW_SIGN_TIME = 0;
-        
-        global.START_BAD_ACCOUNT_CONTROL = 0;
-        global.BLOCKNUM_TICKET_ALGO = 0;
-        global.MIN_POWER_POW_TR = 0;
-        global.AUTO_CORRECT_TIME = 0;
-        global.CHECK_GLOBAL_TIME = 0;
-        global.UPDATE_CODE_1 = 0;
-        global.UPDATE_CODE_2 = 0;
-        global.UPDATE_CODE_3 = 0;
-        global.UPDATE_CODE_4 = 0;
-        global.UPDATE_CODE_5 = 0;
-        EXPERIMENTAL_CODE = 0;
-        
-        global.REST_START_COUNT = 0;
-        global.LOAD_TO_BEGIN = 0;
-    }
-    else
-        if(global.TEST_NETWORK)
-        {
-            global.STANDART_PORT_NUMBER = 40000;
-            
-            global.REST_BLOCK_SCALE = 100;
-            
-            var Num = Date.now() - 50 * 1000;
-            console.log("CURRENT NUM: " + (Math.trunc(Num / 1000) * 1000));
-            
-            global.SMART_BLOCKNUM_START = 0;
-            global.START_NETWORK_DATE = 1582830189000;
-            
-            global.START_MINING = 100;
-            global.REF_PERIOD_END = 0;
-            global.REF_PERIOD_MINING = 200;
-            global.MIN_POWER_POW_ACC_CREATE = 8;
-            
-            global.TRANSACTION_PROOF_COUNT = 200 * 1000;
-            global.MAX_SIZE_LOG = 20 * 1024 * 1024;
-            
-            global.START_BLOCK_ACCOUNT_HASH = 1850000;
-            global.START_BLOCK_ACCOUNT_HASH3 = 1;
-            
-            global.BLOCKNUM_TICKET_ALGO = 0;
-            
-            global.WALLET_NAME = "TEST";
-            NETWORK = "TERA-TEST";
-            
-            global.ALL_VIEW_ROWS = 1;
-            
-            global.NEW_ACCOUNT_INCREMENT = 1;
-            global.NEW_BLOCK_REWARD1 = 1;
-            global.NEW_FORMULA_START = 1;
-            global.NEW_FORMULA_KTERA = 3;
-            global.NEW_FORMULA_TARGET1 = 0;
-            global.NEW_FORMULA_TARGET2 = 1;
-            
-            global.NEW_SIGN_TIME = 1;
-            
-            global.MAX_LENGTH_SENDER_MAP = 100;
-            global.DELTA_START_SENDER_MAP = 12;
-            
-            global.REST_START_COUNT = 10000;
-            global.LOAD_TO_BEGIN = 2;
-            global.START_BAD_ACCOUNT_CONTROL = 0;
-            
-            global.UPDATE_CODE_1 = 0;
-            global.UPDATE_CODE_2 = 0;
-            global.UPDATE_CODE_3 = 0;
-            global.UPDATE_CODE_4 = 0;
-            global.EXPERIMENTAL_CODE = 0;
-        }
+require("./const-mode.js");
 
 global.GetNetworkName = function ()
 {
@@ -523,60 +377,65 @@ function InitParamsArg()
                                         console.log("START_NETWORK_DATE: " + START_NETWORK_DATE);
                                     }
                                     else
-                                    {
-                                        switch(str)
+                                        if(str.substr(0, 5) == "MODE:")
                                         {
-                                            case "CHILDPOW":
-                                                global.CHILD_POW = true;
-                                                break;
-                                            case "ADDRLIST":
-                                                global.ADDRLIST_MODE = true;
-                                                break;
-                                            case "CREATEONSTART":
-                                                global.CREATE_ON_START = true;
-                                                break;
-                                            case "LOCALRUN":
-                                                global.LOCAL_RUN = 1;
-                                                break;
-                                            case "TESTRUN":
-                                                global.TEST_NETWORK = 1;
-                                                break;
-                                            case "NOLOCALRUN":
-                                                global.LOCAL_RUN = 0;
-                                                break;
-                                            case "NOAUTOUPDATE":
-                                                global.USE_AUTO_UPDATE = 0;
-                                                break;
-                                            case "NOPARAMJS":
-                                                global.USE_PARAM_JS = 0;
-                                                break;
-                                            case "READONLYDB":
-                                                global.READ_ONLY_DB = 1;
-                                                break;
-                                            case "NWMODE":
-                                                global.NWMODE = 1;
-                                                break;
-                                            case "NOALIVE":
-                                                global.NOALIVE = 1;
-                                                break;
-                                            case "DEV_MODE":
-                                                global.DEV_MODE = 1;
-                                                break;
-                                            case "API_V2":
-                                                global.USE_HARD_API_V2 = 1;
-                                                break;
-                                                
-                                            case "TESTJINN":
-                                                global.TEST_JINN = 1;
-                                                break;
-                                            case "JINNMODE":
-                                                global.JINN_MODE = 1;
-                                                break;
-                                                
-                                            case "NOPSWD":
-                                                global.NOHTMLPASSWORD = 1;
-                                                break;
+                                            global.MODE_RUN = str.substr(5);
                                         }
-                                    }
+                                        else
+                                        {
+                                            switch(str)
+                                            {
+                                                case "CHILDPOW":
+                                                    global.CHILD_POW = true;
+                                                    break;
+                                                case "ADDRLIST":
+                                                    global.ADDRLIST_MODE = true;
+                                                    break;
+                                                case "CREATEONSTART":
+                                                    global.CREATE_ON_START = true;
+                                                    break;
+                                                case "LOCALRUN":
+                                                    global.LOCAL_RUN = 1;
+                                                    break;
+                                                case "TESTRUN":
+                                                    global.TEST_NETWORK = 1;
+                                                    break;
+                                                case "NOLOCALRUN":
+                                                    global.LOCAL_RUN = 0;
+                                                    break;
+                                                case "NOAUTOUPDATE":
+                                                    global.USE_AUTO_UPDATE = 0;
+                                                    break;
+                                                case "NOPARAMJS":
+                                                    global.USE_PARAM_JS = 0;
+                                                    break;
+                                                case "READONLYDB":
+                                                    global.READ_ONLY_DB = 1;
+                                                    break;
+                                                case "NWMODE":
+                                                    global.NWMODE = 1;
+                                                    break;
+                                                case "NOALIVE":
+                                                    global.NOALIVE = 1;
+                                                    break;
+                                                case "DEV_MODE":
+                                                    global.DEV_MODE = 1;
+                                                    break;
+                                                case "API_V2":
+                                                    global.USE_HARD_API_V2 = 1;
+                                                    break;
+                                                    
+                                                case "TESTJINN":
+                                                    global.TEST_JINN = 1;
+                                                    break;
+                                                case "JINNMODE":
+                                                    global.JINN_MODE = 1;
+                                                    break;
+                                                    
+                                                case "NOPSWD":
+                                                    global.NOHTMLPASSWORD = 1;
+                                                    break;
+                                            }
+                                        }
     }
 }

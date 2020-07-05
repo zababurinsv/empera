@@ -147,6 +147,7 @@ window.SetBlockChainConstant = function (Data)
     window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
     window.NEW_SIGN_TIME = Data.NEW_SIGN_TIME;
     window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
+    window.JINN_MODE = Data.JINN_MODE;
     window.GetCurrentBlockNumByTime = function (Delta_Time)
     {
         var CurrentTime = Date.now() + DELTA_CURRENT_TIME2;
@@ -204,13 +205,16 @@ function CreateHashBodyPOWInnerMinPower(arr,MinPow)
     {
         MinPow = MIN_POWER_POW_TR + Math.log2(arr.length / 128);
     }
+    if(window.JINN_MODE)
+        MinPow = 0;
     while(1)
     {
         var arrhash = CreateHashBody(arr, BlockNum, glNonce);
         var power = GetPowPower(arrhash);
         if(power >= MinPow)
         {
-            if(LastCreatePOWBlockNum === BlockNum && LastCreatePOWTrType === TrType && CompareArr(LastCreatePOWHash, arrhash) > 0)
+            if(!window.JINN_MODE && LastCreatePOWBlockNum === BlockNum && LastCreatePOWTrType === TrType && CompareArr(LastCreatePOWHash,
+            arrhash) > 0)
             {
             }
             else

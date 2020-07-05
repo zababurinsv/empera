@@ -21,6 +21,8 @@ HEADER_FORMAT_CACHE.PowHash = "hash";
 HEADER_FORMAT_CACHE.SumHash = "hash";
 HEADER_FORMAT_CACHE.Power = "uint";
 HEADER_FORMAT_CACHE.SumPow = "uint";
+
+
 HEADER_FORMAT_CACHE.DataHash = "hash";
 
 const WORKSTRUCT_CACHE = {};
@@ -161,15 +163,14 @@ class CDBBlockCache extends global.CDBBodyCache
 
 global.CDBBlockCache = CDBBlockCache;
 
-
 function BlockToArr(Block)
 {
     var Arr = SerializeLib.GetBufferFromObject(Block, HEADER_FORMAT_CACHE, WORKSTRUCT_CACHE, 1);
     return Arr;
 }
+
 function ArrToBlock(Arr)
 {
-    
     var Block = SerializeLib.GetObjectFromBuffer(Arr, HEADER_FORMAT_CACHE, WORKSTRUCT_CACHE);
     
     if(Block.BlockNum < JINN_CONST.BLOCK_GENESIS_COUNT)

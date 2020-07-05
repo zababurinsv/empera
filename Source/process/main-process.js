@@ -20,6 +20,7 @@ global.START_SERVER = 1;
 global.DATA_PATH = GetNormalPathString(global.DATA_PATH);
 global.CODE_PATH = GetNormalPathString(global.CODE_PATH);
 
+console.log("RUN MODE: " + global.MODE_RUN);
 console.log("DATA DIR: " + global.DATA_PATH);
 console.log("PROGRAM DIR: " + global.CODE_PATH);
 
@@ -171,7 +172,7 @@ function DoGetNodes()
 
 function DoConnectToNodes(Arr,Mode)
 {
-    if(!SERVER || global.TEST_JINN)
+    if(!SERVER || global.JINN_MODE)
         return;
     if(!GrayConnect() && SERVER.CanSend < 2)
     {
@@ -208,9 +209,35 @@ function DoConnectToNodes(Arr,Mode)
     }
 }
 
+function CheckJINNMODE()
+{
+    if(global.JINN_MODE)
+        return 1;
+    
+    var fname = GetDataPath("DB/update.lst");
+    var UpdateInfo = LoadParams(fname, {UPDATE_NUM_COMPLETE:2000, JINN_MODE:1});
+    if(UpdateInfo.JINN_MODE)
+    {
+        ToLog("WAS UPDATED TO JINN");
+        global.JINN_MODE = 1;
+        return 1;
+    }
+    
+    UpdateInfo.UPDATE_NUM_COMPLETE = UPDATE_CODE_VERSION_NUM;
+    UpdateInfo.JINN_MODE = 1;
+    SaveParams(fname, UpdateInfo);
+    
+    require("./convert-process.js");
+    process.exit();
+    return 0;
+}
+
 var idRunOnce;
 function RunServer()
 {
+    if(!CheckJINNMODE())
+        return;
+    
     idRunOnce = setInterval(RunOnce, 1000);
     ToLog("NETWORK: " + GetNetworkName());
     ToLog("VERSION: " + DEF_VERSION);
@@ -262,15 +289,15 @@ function RunServer()
     
     KeyPair.setPrivateKey(Buffer.from(ServerPrivKey));
     
-    if(global.TEST_JINN)
+    if(global.JINN_MODE)
     {
         START_IP = global.JINN_IP;
         START_PORT_NUMBER = global.JINN_PORT;
     }
     
-    var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, global.TEST_JINN);
+    var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, global.JINN_MODE);
     
-    if(global.TEST_JINN)
+    if(global.JINN_MODE)
     {
         StartJinn();
         return;
@@ -288,8 +315,7 @@ function StartJinn()
     global.NET_WORK_MODE = undefined;
     StartPortMapping(global.JINN_IP, global.JINN_PORT, function (ip)
     {
-        
-        JinnLib.Create(SERVER);
+        JinnLib.Create();
         SERVER.CanSend = 2;
         setTimeout(function ()
         {
@@ -357,6 +383,8 @@ function RunFork(Path,ArrArgs)
     const child_process = require('child_process');
     ArrArgs = ArrArgs || [];
     
+    ArrArgs.push("MODE:" + global.MODE_RUN);
+    
     if(global.LOCAL_RUN)
     {
         ArrArgs.push("LOCALRUN");
@@ -366,6 +394,8 @@ function RunFork(Path,ArrArgs)
         if(global.TEST_NETWORK)
             ArrArgs.push("TESTRUN");
     
+    if(global.TEST_JINN)
+        ArrArgs.push("TESTJINN");
     if(global.JINN_MODE)
         ArrArgs.push("JINNMODE");
     

@@ -118,19 +118,21 @@ function InitClass(Engine)
             var Tx = Block.TxData[i];
             var SenderNum = Engine.GetTxSenderNum(Tx, Block.BlockNum);
             if(SenderNum >= 0)
-                Arr.push(SenderNum);
+                Arr.push({SenderNum:SenderNum, Count:Tx.body.length});
         }
         
         return Arr;
     };
     
-    Engine.OperationToPriorityTree = function (Arr,Count)
+    Engine.OperationToPriorityTree = function (Arr,Mult)
     {
         for(var i = 0; i < Arr.length; i++)
         {
-            var SenderNum = Arr[i];
+            var Iem = Arr[i];
+            var SenderNum = Iem.SenderNum;
+            var Count = Iem.Count;
             var Find = Engine.SenderRestTree.find({SenderNum:SenderNum});
-            if(!Find && Count > 0)
+            if(!Find && Mult > 0)
             {
                 Find = {SenderNum:SenderNum, Count:0};
                 Engine.SenderRestTree.insert(Find);
@@ -138,7 +140,7 @@ function InitClass(Engine)
             
             if(Find)
             {
-                Find.Count += Count;
+                Find.Count += Count * Mult;
                 if(Find.Count < 0)
                     Engine.ToLog("Error Count=" + Find.Count + " on SenderNum = " + SenderNum, 2);
                 if(Find.Count === 0)
@@ -173,9 +175,17 @@ function InitClass(Engine)
         return 0;
     };
     
-    Engine.GetSenderBaseValue = function (Num)
+    Engine.GetAccountBaseValue = function (Num)
     {
         return 0;
+    };
+    Engine.GetAccountOperationID = function (SenderNum)
+    {
+        return 0;
+    };
+    Engine.CheckSignTx = function (Tx,BlockNum)
+    {
+        return 1;
     };
     
     Engine.AddBlockToSenderTree = function (Block)
@@ -190,7 +200,6 @@ function InitClass(Engine)
         {
             if(Find.Arr.length)
             {
-                ToLog("Was find " + Find.BlockNum + " Find.Arr=" + Find.Arr.length);
                 Engine.OperationToPriorityTree(Find.Arr,  - 1);
             }
             Engine.SenderActTree.remove(Find);
@@ -201,22 +210,21 @@ function InitClass(Engine)
     Engine.SortBlockPriority = function (Block)
     {
         var NumNew = Engine.CurrentBlockNum - JINN_CONST.STEP_NEW_BLOCK;
-        if(!JINN_CONST.TX_PRIORITY_MODE || !Block || !Block.TxData || Block.TxData.length <= 1 || Block.BlockNum !== NumNew)
+        if(!JINN_CONST.TX_PRIORITY_MODE || !Block || !Block.TxData || Block.TxData.length <= 0)
             return Engine.SortBlock(Block);
         
         var NumSave = Engine.CurrentBlockNum - JINN_CONST.STEP_SAVE;
         var bPriority = Engine.PrepareLastStatFromDB(NumSave);
         if(!bPriority)
         {
-            ToLog("OLD SORT MODE = " + Block.BlockNum, 3);
             return Engine.SortBlock(Block);
         }
         
         var Arr = Block.TxData;
-        return Engine.SortArrPriority(Arr, Block.BlockNum);
+        return Engine.SortArrPriority(Arr, Block.BlockNum, 1);
     };
     
-    Engine.SortArrPriority = function (Arr,BlockNum)
+    Engine.SortArrPriority = function (Arr,BlockNum,bBlockSort)
     {
         Engine.CheckHashExistArr(Arr, BlockNum);
         Arr.sort(function (a,b)
@@ -248,25 +256,23 @@ function InitClass(Engine)
         for(var i = 0; i < Arr.length; i++)
         {
             var Tx = Arr[i];
-            if(PrevSenderNum === Tx.SenderNum)
-            {
-                SumAdd++;
-                Tx.CountTX += SumAdd;
-            }
-            else
+            Tx.CurCountTX = Tx.CountTX;
+            if(PrevSenderNum != Tx.SenderNum)
             {
                 SumAdd = 0;
             }
+            SumAdd += Tx.body.length;
+            Tx.CurCountTX += SumAdd;
             
             PrevSenderNum = Tx.SenderNum;
         }
         for(var i = 0; i < Arr.length; i++)
         {
             var Tx = Arr[i];
-            if(typeof Tx.CountTX !== "number")
-                ToLogTrace("Error type Tx.CountTX");
+            if(typeof Tx.CurCountTX !== "number")
+                ToLogTrace("Error type Tx.CurCountTX");
             
-            Tx.Priority = Tx.CountTX;
+            Tx.Priority = Tx.CurCountTX;
             if(JINN_CONST.TX_BASE_VALUE)
             {
                 Tx.CanBaseTx = Tx.BaseValue / JINN_CONST.TX_BASE_VALUE;
@@ -296,18 +302,76 @@ function InitClass(Engine)
                 return a.OperationID - b.OperationID;
             return CompareArr(a.HASH, b.HASH);
         });
-        for(var i = JINN_CONST.TX_FREE_COUNT; i < Arr.length; i++)
+        for(var i = 0; i < Arr.length; i++)
         {
             var Tx = Arr[i];
-            var Delta = Tx.CanBaseTx - Tx.CountTX - 1;
-            if(Delta < 0)
+            var Delta = Tx.CanBaseTx - Tx.CurCountTX;
+            if(Delta < 0 && i >= JINN_CONST.TX_FREE_COUNT)
             {
                 Arr.length = i;
                 break;
             }
+            
+            if(JINN_CONST.TX_FREE_BYTES_MAX)
+                if(Delta <  - JINN_CONST.TX_FREE_BYTES_MAX)
+                {
+                    Arr.length = i;
+                    break;
+                }
         }
         
         return 1;
+    };
+    
+    Engine.LogArrPriority = function (Name,Arr,BlockNum)
+    {
+        var Arr2 = [];
+        for(var i = 0; i < Arr.length; i++)
+        {
+            var Tx = Arr[i];
+            Arr2.push({SenderNum:Tx.SenderNum, Priority:Tx.Priority, OperationID:Tx.OperationID, BaseValue:Tx.BaseValue, CanBaseTx:Tx.CanBaseTx,
+                CountTX:Tx.CountTX, CurCountTX:Tx.CurCountTX, });
+        }
+        ToLog(Name + " SortArrPriority for Block=" + BlockNum + " Arr=" + JSON.stringify(Arr2));
+    };
+    
+    Engine.CheckSortArrPriority = function (Arr,BlockNum)
+    {
+        if(global.JINN_WARNING < 3)
+            return;
+        
+        if(!Arr || Arr.length <= 1)
+            return;
+        var CountErr = 0;
+        var PrevSenderNum = undefined;
+        var PrevOperationID =  - 1;
+        var Str = "";
+        
+        for(var i = 0; i < Arr.length; i++)
+        {
+            var Tx = Arr[i];
+            var OperationID = Engine.GetTxSenderOperationID(Tx, BlockNum);
+            if(PrevSenderNum === Tx.SenderNum && PrevOperationID >= OperationID)
+            {
+                CountErr++;
+                ToLog("Error OperationID=" + OperationID + " in Block=" + BlockNum);
+            }
+            Str += OperationID;
+            if(Tx.Priority !== undefined)
+                Str += "/" + Tx.Priority;
+            Str += ",";
+            
+            PrevOperationID = OperationID;
+            PrevSenderNum = Tx.SenderNum;
+        }
+        
+        if(CountErr)
+        {
+            ToLog("WAS ERROR CheckSortArrPriority for Block=" + BlockNum + " Str=" + Str);
+        }
+        else
+        {
+        }
     };
     
     Engine.InitPriorityTree();

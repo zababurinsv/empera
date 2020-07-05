@@ -87,12 +87,7 @@ function InitClass(Engine)
     Engine.SaveToDB = function (Block)
     {
         Block.BlockNum = Math.floor(Block.BlockNum);
-        var MaxCurNumTime = Engine.CurrentBlockNum;
         var MaxNumDB = Engine.GetMaxNumBlockDB();
-        var Delta = MaxCurNumTime - MaxNumDB;
-        JINN_STAT.DBDelta = Math.max(JINN_STAT.DBDelta, Delta);
-        if(MaxNumDB < Engine.MaxSumPowNum)
-            Engine.MaxSumPow = 0;
         if(global.TEST_DB_BLOCK)
         {
             var BlockNum = Block.BlockNum;
@@ -185,7 +180,7 @@ function InitClass(Engine)
             var Item = Block.TxData[i];
             if(Item.HASH)
                 break;
-            var Tx = Engine.GetTx(Item.body, undefined, 5);
+            var Tx = Engine.GetTx(Item.body, Block.BlockNum, undefined, 5);
             Block.TxData[i] = Tx;
             CheckTx("GetBlock", Tx, Block.BlockNum);
             Count++;

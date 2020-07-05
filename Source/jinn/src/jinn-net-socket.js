@@ -226,12 +226,12 @@ function InitAfter(Engine)
     {
         if(Child.Close)
         {
-            Engine.ToError(Child, "Socket was closed", "t");
+            Child.ToError("Socket was closed", "t");
             return;
         }
         if(!Child.IsOpen())
         {
-            Engine.ToError(Child, "Socket not was opened", "t");
+            Child.ToError("Socket not was opened", "t");
             return;
         }
         

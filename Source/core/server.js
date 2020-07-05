@@ -88,7 +88,7 @@ module.exports = class CTransport extends require("./connect")
             this.ip = RunIP.trim()
         this.port = RunPort
         
-        if(global.TEST_JINN)
+        if(global.JINN_MODE)
             return;
         
         this.CanSend = 0

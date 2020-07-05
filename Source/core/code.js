@@ -20,7 +20,7 @@ module.exports = class CCode extends require("./base")
     {
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
         
-        if(!global.ADDRLIST_MODE && !this.VirtualMode || global.TEST_JINN)
+        if(!global.ADDRLIST_MODE && !this.VirtualMode || global.JINN_MODE)
         {
             setInterval(this.CheckLoadCodeTime.bind(this), 10 * 1000)
         }

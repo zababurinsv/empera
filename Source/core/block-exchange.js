@@ -52,7 +52,7 @@ var FORMAT_DATA_TRANSFER = "{\
 
 const WorkStructSend = {};
 
-module.exports = class CConsensus extends require("./block-exchange2")
+module.exports = class CConsensus extends require("./block-loader")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
@@ -64,13 +64,24 @@ module.exports = class CConsensus extends require("./block-exchange2")
         this.RelayMode = false
         this.TreeSendPacket = new RBTree(CompareItemHash)
         
-        if(!global.ADDRLIST_MODE && (!this.VirtualMode) && !global.TEST_JINN)
+        if(!global.ADDRLIST_MODE && (!this.VirtualMode) && !global.JINN_MODE)
         {
             
             this.idBlockChainTimer = setInterval(this.StartBlockChain.bind(this), CONSENSUS_PERIOD_TIME - 5)
             
             setInterval(this.DoTransfer.bind(this), CONSENSUS_CHECK_TIME)
         }
+    }
+    
+    OnStartSecond()
+    {
+        if(!this.CanSend)
+            return;
+        
+        PrepareStatEverySecond()
+        this.AddStatOnTimer()
+        
+        this.DoBlockChain()
     }
     
     StartBlockChain()
@@ -276,8 +287,12 @@ module.exports = class CConsensus extends require("./block-exchange2")
         Block.TransferNodesCount++
     }
     
-    DoTransfer0()
+    DoTransfer()
     {
+        if(glStopNode)
+            return;
+        if(!CAN_START)
+            return;
         
         var MaxPOWList;
         var MaxSumList;

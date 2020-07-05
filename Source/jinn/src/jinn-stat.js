@@ -9,10 +9,9 @@
 
 'use strict';
 
-'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Stat"});
 
-var StatKeys = {BlockTx:"BlockTx", TxSend:"TxSend", TTSend:"TtSend", HeaderLoad:"HeaderLoad", BodyLoad:"BodyLoad", BodyTxSend:"BodyTx",
+var StatKeys = {BlockTx:"BlockTx", TXSend:"TxSend", TTSend:"TtSend", HeaderLoad:"HeaderLoad", BodyLoad:"BodyLoad", BodyTxSend:"BodyTx",
     DBDelta:"-DB-Delta", MaxSumPow:"-SumPow", ReadRowsDB:"Reads", WriteRowsDB:"Writes", TeraReadRowsDB:"-TReads", TeraWriteRowsDB:"-TWrites",
     ReadBlock:"ReadBlock", WriteBlock:"WriteBlock", ReadBody:"ReadBody", WriteBody:"WriteBody", MAXChainHeight:"Chains", MAXCacheBodyLength:"-CacheB",
     MAXCacheLength:"-Cache", CacheErrDB:"CacheErr", FindHeadCount:"-FHead", MAXFindHeadCount:"MFHead", FindEmptyCount:"-FEmpty",
@@ -20,12 +19,20 @@ var StatKeys = {BlockTx:"BlockTx", TxSend:"TxSend", TTSend:"TtSend", HeaderLoad:
     AddToTreeTx:"-AddTreeTx", WasSendOnAddTxToTree:0, NotAddTxToTree:0, ErrorCount:"NetErr", MaxReqAll:"-MaxReqAll", MaxLoadAll:"-MaxLoadAll",
     MaxReqErr:"-MaxReqErr", MaxIteration:"-MaxIteration", MaxLoad:"-MaxLoad", WantHeader:"-WantHeader", UploadHeader:"-UploadHeader",
     WantBody:"-WantBody", UploadBody:"-UploadBody", DeltaTime:"-DeltaTime", ErrProcessBlock:"-ErrProcessBlock", SkipMethod:"-SkipMethod",
-    TtReceive:"-TtReceive", TxReceive:"-TxReceive", TxReceiveErr:"TxReceiveErr", BanCount:"-BanCount", MainDelta:"MainDelta", ErrTt1:"-ErrTt1",
-    ErrTt2:"-ErrTt2", ErrTx1:"-ErrTx1", ErrTx2:"-ErrTx2", TxCache1:"-TxCache1", TxCache2:"-TxCache2", TxCacheErr:"-TxCacheErr",
-};
+    TtReceive:"-TtReceive", TxReceive:"-TxReceive", TxReceiveErr:"-TxReceiveErr", BanCount:"-BanCount", MainDelta:"MainDelta",
+    ErrTt1:"-ErrTt1", ErrTt2:"-ErrTt2", ErrTx1:"-ErrTx1", ErrTx2:"-ErrTx2", TxCache1:"-TxCache1", TxCache2:"-TxCache2", TxCacheErr:"-TxCacheErr",
+    TTTXSend:"-TTTXSend", TTTXReceive:"-TtTxReceive", ErrTxSend:"-ErrTxSend", TXReq:"-TxReq", };
 
 for(var num = 1; num <= 10; num++)
     StatKeys["GetTx" + num] = "-GetTx" + num;
+
+for(var num = 0; num <= 7; num++)
+    StatKeys["TtReceive" + num] = "-TtReceive" + num;
+for(var num = 0; num <= 7; num++)
+    StatKeys["TtSend" + num] = "-TtSend" + num;
+
+for(var num = 0; num <= 7; num++)
+    StatKeys["TxReceive" + num] = "-TxReceive" + num;
 
 if(typeof process === "object")
 {

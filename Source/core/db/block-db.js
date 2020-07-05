@@ -199,7 +199,16 @@ module.exports = class CDB extends require("../code")
             
             if(bCheckBody)
             {
-                var TreeHash = CalcTreeHashFromArrBody(Block.BlockNum, Block.arrContent);
+                var TreeHash;
+                if(!global.JINN_MODE)
+                {
+                    TreeHash = CalcTreeHashFromArrBody(Block.BlockNum, Block.arrContent)
+                }
+                else
+                {
+                    
+                    TreeHash = Engine.CalcTreeHash(Block.BlockNum, Block.TxData)
+                }
                 if(CompareArr(Block.TreeHash, TreeHash) !== 0)
                 {
                     ToLog("BAD TreeHash block=" + Block.BlockNum)
@@ -210,7 +219,7 @@ module.exports = class CDB extends require("../code")
             if(PrevBlock)
             {
                 var PrevHash;
-                if(Block.BlockNum < global.UPDATE_CODE_JINN_1)
+                if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
                 {
                     if(arr.length !== BLOCK_PROCESSING_LENGTH)
                     {
@@ -234,7 +243,7 @@ module.exports = class CDB extends require("../code")
                 {
                     PrevHash = Block.PrevHash
                 }
-                var SeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash);
+                var SeqHash = GetSeqHash(Block.BlockNum, PrevHash, Block.TreeHash, PrevBlock.SumPow);
                 
                 var Value = GetHashFromSeqAddr(SeqHash, Block.AddrHash, Block.BlockNum, PrevHash);
                 
@@ -810,7 +819,7 @@ module.exports = class CDB extends require("../code")
             if(Filter)
             {
                 var Num = Block.BlockNum;
-                var Bytes = Block.TrDataLen;
+                var Count = Block.TrDataLen;
                 var Pow = Block.Power;
                 var Miner = Block.Miner;
                 var Date = DateFromBlock(Block.BlockNum);
@@ -847,6 +856,7 @@ module.exports = class CDB extends require("../code")
                     continue;
                 if(num >= Block.arrContent.length)
                     break;
+                
                 var Tr = {body:Block.arrContent[num]};
                 this.CheckCreateTransactionObject(Tr, 1)
                 
@@ -1097,6 +1107,7 @@ module.exports = class CDB extends require("../code")
     
     CheckCreateTransactionObject(Tr, SetTxID)
     {
+        
         if(!Tr.HashPow)
         {
             

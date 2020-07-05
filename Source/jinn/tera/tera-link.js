@@ -23,28 +23,68 @@ function Init(Engine)
             return Engine.GetMaxNumBlockDB();
         }, });
     
-    SERVER.AddTransaction = function (Tr,ToAll)
+    function GetBlockNumTx(arr)
     {
-        var Tx = Engine.GetTx(Tr.body, undefined, 6);
+        var Delta_Time = 0;
         
-        if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", Tx.num))
-            return  - 4;
-        var Delta_Time = CONSENSUS_PERIOD_TIME / 3 - 100;
-        var CurBlockNumT = GetCurrentBlockNumByTime(Delta_Time);
+        var BlockNum = GetCurrentBlockNumByTime(Delta_Time);
+        if(arr[0] === TYPE_TRANSACTION_CREATE)
+        {
+            var BlockNum2 = Math.floor(BlockNum / 10) * 10;
+            if(BlockNum2 < BlockNum)
+                BlockNum2 = BlockNum2 + 10;
+            BlockNum = BlockNum2;
+        }
         
-        if(Tx.num < CurBlockNumT)
-            return  - 3;
-        if(Tx.num > CurBlockNumT + 20)
-            return  - 5;
+        return BlockNum;
+    };
+    
+    SERVER.AddTransaction = function (Tx0)
+    {
+        var Body = Tx0.body;
+        var BlockNum = GetBlockNumTx(Body);
+        var Tx = Engine.GetTx(Body, BlockNum, undefined, 6);
+        
+        if(JINN_CONST.TX_CHECK_OPERATION_ID)
+        {
+            Engine.CheckTxOperationID(Tx, BlockNum);
+            if(Tx.ErrOperationID)
+                return TX_RESULT_OPERATIOON_ID;
+        }
+        
+        if(JINN_CONST.TX_CHECK_SIGN_ON_ADD)
+        {
+            Engine.CheckTxSign(Tx, BlockNum);
+            if(Tx.ErrSign)
+                return TX_RESULT_SIGN;
+        }
+        
+        if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", BlockNum))
+            return TX_RESULT_BAD_TYPE;
+        
+        Tx0._TxID = GetStrTxIDFromHash(Tx.HASH, BlockNum);
+        Tx0._BlockNum = BlockNum;
         
         var TxArr = [Tx];
-        return Engine.AddCurrentProcessingTx(Tx.num, TxArr);
+        var CountSend = Engine.AddCurrentProcessingTx(BlockNum, TxArr);
+        if(CountSend === 1)
+            return 1;
+        else
+            return TX_RESULT_WAS_SEND;
+    };
+    
+    SERVER.CheckCreateTransactionObject = function (Tr,SetTxID)
+    {
+        var Body = Tr.body;
+        Tr.IsTx = 1;
+        if(SetTxID)
+            Tr.TxID = GetHexFromArr(GetTxID(0, Body));
+        Tr.power = 0;
+        Tr.TimePow = 0;
     };
     
     Engine.GetTxSenderNum = function (Tx,BlockNum)
     {
-        if(JINN_CONST.TX_PRIORITY_RND_SENDER)
-            return (Tx.HashTicket[0] * 256 + Tx.HashTicket[1]) % JINN_CONST.TX_PRIORITY_RND_SENDER;
         
         var type = Tx.body[0];
         var App = DAppByType[type];
@@ -66,11 +106,43 @@ function Init(Engine)
         return OperationID;
     };
     
-    Engine.GetSenderBaseValue = function (SenderNum)
+    Engine.GetAccountBaseValue = function (SenderNum)
     {
+        if(!SenderNum)
+            return 0;
+        
+        var AccData = DApps.Accounts.ReadState(SenderNum);
+        if(!AccData || AccData.Currency !== 0)
+            return 0;
+        
         var RestData = DApps.Accounts.ReadRest(SenderNum);
         if(RestData)
-            return RestData.Arr[1].Value.SumCOIN;
+        {
+            var Value = RestData.Arr[1].Value;
+            return Value.SumCOIN * 1e9 + Value.SumCENT;
+        }
+        else
+            return 0;
+    };
+    
+    Engine.GetAccountOperationID = function (SenderNum)
+    {
+        if(!SenderNum)
+            return 0;
+        
+        var AccData = DApps.Accounts.ReadState(SenderNum);
+        if(AccData)
+            return AccData.Value.OperationID;
+        else
+            return 0;
+    };
+    
+    Engine.CheckSignTx = function (Tx,BlockNum)
+    {
+        var type = Tx.body[0];
+        var App = DAppByType[type];
+        if(App)
+            return App.CheckSignTransferTx(BlockNum, Tx.body);
         else
             return 0;
     };
@@ -165,13 +237,20 @@ function Init(Engine)
             SERVER.TruncateBlockDB(CurNumTime);
         }
         var BlockNum = SERVER.CheckBlocksOnStartReverse(SERVER.BlockNumDB);
-        ToLog("CheckStartedBlocks...");
-        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 10000, 0);
+        BlockNum = BlockNum - 10000;
+        if(BlockNum < 0)
+            BlockNum = 0;
+        ToLog("CheckStartedBlocks at " + BlockNum);
+        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum, 0);
+        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 100, 1);
         
         if(BlockNum < SERVER.BlockNumDB)
         {
             BlockNum--;
             ToLog("******************************** SET NEW BlockNumDB = " + BlockNum + "/" + SERVER.BlockNumDB);
+            if(global.DEV_MODE)
+                throw "STOP AND EXIT!";
+            
             SERVER.TruncateBlockDB(BlockNum);
         }
         global.glStartStat = 1;
