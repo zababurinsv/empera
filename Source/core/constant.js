@@ -12,7 +12,7 @@
 "use strict";
 
 
-global.UPDATE_CODE_VERSION_NUM = 2201;
+global.UPDATE_CODE_VERSION_NUM = 2206;
 global.MIN_JINN_VERSION_NUM = 2175;
 
 global.MIN_CODE_VERSION_NUM = 1850;

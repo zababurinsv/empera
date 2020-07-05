@@ -109,14 +109,13 @@ process.on('error', function (err)
 }
 );
 
-require("./childs-run");
-
 
 
 require("../core/mining");
 
 require("../core/html-server");
 RunServer();
+require("./childs-run");
 
 setInterval(function run1()
 {
@@ -216,7 +215,7 @@ function CheckJINNMODE()
     
     var fname = GetDataPath("DB/update.lst");
     var UpdateInfo = LoadParams(fname, {UPDATE_NUM_COMPLETE:2000, JINN_MODE:1});
-    if(UpdateInfo.JINN_MODE)
+    if(UpdateInfo.JINN_MODE_VER2)
     {
         ToLog("WAS UPDATED TO JINN");
         global.JINN_MODE = 1;
@@ -224,7 +223,7 @@ function CheckJINNMODE()
     }
     
     UpdateInfo.UPDATE_NUM_COMPLETE = UPDATE_CODE_VERSION_NUM;
-    UpdateInfo.JINN_MODE = 1;
+    UpdateInfo.JINN_MODE_VER2 = 1;
     SaveParams(fname, UpdateInfo);
     
     require("./convert-process.js");

@@ -13,10 +13,13 @@ global.RunOnUpdate = RunOnUpdate;
 function RunOnUpdate()
 {
     var fname = GetDataPath("DB/update.lst");
-    var UpdateInfo = LoadParams(fname, {UPDATE_NUM_COMPLETE:2000, JINN_MODE:1});
+    var UpdateInfo = LoadParams(fname, {UPDATE_NUM_COMPLETE:2000, JINN_MODE_VER2:1});
     
     if(!UpdateInfo.UPDATE_NUM_COMPLETE)
+    {
         UpdateInfo.UPDATE_NUM_COMPLETE = 0;
+        UpdateInfo.JINN_MODE_VER2 = 1;
+    }
     var CurNum = UpdateInfo.UPDATE_NUM_COMPLETE;
     if(CurNum !== UPDATE_CODE_VERSION_NUM)
     {
