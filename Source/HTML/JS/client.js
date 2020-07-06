@@ -1253,11 +1253,18 @@ function DateFromBlock(BlockNum)
 {
     if(!window.CONSENSUS_PERIOD_TIME)
         window.CONSENSUS_PERIOD_TIME = 1000;
+    if(window.UPDATE_CODE_JINN === undefined)
+        window.UPDATE_CODE_JINN = 0;
     
     var Str;
     if(window.FIRST_TIME_BLOCK)
     {
-        var now = new Date(window.FIRST_TIME_BLOCK + BlockNum * window.CONSENSUS_PERIOD_TIME);
+        var now;
+        if(BlockNum >= window.UPDATE_CODE_JINN)
+            now = new Date(window.FIRST_TIME_BLOCK + BlockNum * window.CONSENSUS_PERIOD_TIME);
+        else
+            now = new Date(window.FIRST_TIME_BLOCK + BlockNum * 1000 + window.UPDATE_CODE_JINN * 2000);
+        
         Str = formatDate(now);
     }
     else

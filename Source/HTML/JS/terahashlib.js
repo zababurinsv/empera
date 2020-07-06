@@ -493,19 +493,14 @@ function GetSeqHash(BlockNum,PrevHash,TreeHash,PrevSumPow)
 
 function CalcDataHash(BlockNum,PrevHash,TreeHash,PrevSumPow)
 {
-    if(BlockNum > 15 && BlockNum >= global.UPDATE_CODE_JINN_HASH8)
+    if(BlockNum > 15 && BlockNum >= global.UPDATE_CODE_JINN)
     {
         // new code
         
-        if(BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
-        {
-            if(PrevSumPow === undefined)
-                ToLogTrace("Error PrevSumPow=undefinde on Block=" + BlockNum);
-            
-            return sha3(PrevHash.concat(TreeHash).concat(GetArrFromValue(PrevSumPow)), 45);
-        }
-        else
-            return sha3(PrevHash.concat(TreeHash), 45);
+        if(PrevSumPow === undefined)
+            ToLogTrace("Error PrevSumPow=undefinde on Block=" + BlockNum);
+        
+        return sha3(PrevHash.concat(TreeHash).concat(GetArrFromValue(PrevSumPow)), 45);
     }
     else
     {
@@ -532,19 +527,10 @@ function CalcSumHash(PrevSumHash,Hash,BlockNum,SumPow)
         return shaarr2(PrevSumHash, Hash);
     }
     
-    if(BlockNum >= global.UPDATE_CODE_JINN_HASH8)
+    if(BlockNum >= global.UPDATE_CODE_JINN)
     {
         // new code
-        
-        if(BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
-            return Hash;
-        
-        if(SumPow === undefined)
-            ToLogTrace("Error: SumPow===undefined");
-        
-        var arr_sum_pow = [];
-        WriteUintToArr(arr_sum_pow, SumPow);
-        return sha3(PrevSumHash.concat(Hash).concat(arr_sum_pow), 46);
+        return Hash;
     }
     else
     {
@@ -555,10 +541,10 @@ function CalcSumHash(PrevSumHash,Hash,BlockNum,SumPow)
 
 function CalcLinkHashFromArray(ArrHashes,BlockNum)
 {
-    if(BlockNum >= global.UPDATE_CODE_JINN_HASH8)
+    if(BlockNum >= global.UPDATE_CODE_JINN)
     {
         // new code
-        ToLogTrace("Error algo for new mode CalcLinkHashFromArray BlockNum=" + BlockNum + "/" + global.UPDATE_CODE_JINN_HASH8);
+        ToLogTrace("Error algo for new mode CalcLinkHashFromArray BlockNum=" + BlockNum + "/" + global.UPDATE_CODE_JINN);
     }
     
     // old code

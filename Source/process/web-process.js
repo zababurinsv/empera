@@ -523,22 +523,34 @@ function DoCommandNew(request,response,Type,Path,Params)
                     return;
                 }
                 else
-                    if(LangPathMap[Method])
+                    if(Method === "update")
                     {
-                        PrefixPath = "./SITE/" + Method;
+                        PrefixPath = global.DATA_PATH + "Update";
+                        Name = "";
+                        for(var i = 1; i < ArrPath.length; i++)
+                            if(ArrPath[i].indexOf("..") ===  - 1 && ArrPath[i].indexOf("\\") ===  - 1)
+                                Name += "/" + ArrPath[i];
+                        Name = PrefixPath + Name;
+                        SendWebFile(request, response, Name, "", 0, 1000);
+                        return;
                     }
                     else
-                    {
-                        var Name2 = WalletFileMap[Name];
-                        if(!Name2)
-                            PrefixPath = "./SITE";
+                        if(LangPathMap[Method])
+                        {
+                            PrefixPath = "./SITE/" + Method;
+                        }
                         else
                         {
-                            PrefixPath = "./HTML";
-                            if(typeof Name2 === "string")
-                                Name = Name2;
+                            var Name2 = WalletFileMap[Name];
+                            if(!Name2)
+                                PrefixPath = "./SITE";
+                            else
+                            {
+                                PrefixPath = "./HTML";
+                                if(typeof Name2 === "string")
+                                    Name = Name2;
+                            }
                         }
-                    }
                 
                 var type = Path.substr(Path.length - 3, 3);
                 var LongTime = global.HTTP_CACHE_LONG;
@@ -604,8 +616,8 @@ HostingCaller.GetCurrentInfo = function (Params)
     var Ret = {result:1, VersionNum:global.START_CODE_VERSION_NUM, VersionUpd:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK,
         MaxNumBlockDB:MaxNumBlockDB, BlockNumDBMin:SERVER.BlockNumDBMin, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:DApps.Accounts.GetMaxAccount(),
         MaxDappsID:DApps.Smart.GetMaxNum(), CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR,
-        FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME, PRICE_DAO:PRICE_DAO(MaxNumBlockDB),
-        GrayConnect:GrayConnect(), JINN_MODE:global.JINN_MODE, sessionid:sessionid, };
+        FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, UPDATE_CODE_JINN:UPDATE_CODE_JINN, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME,
+        PRICE_DAO:PRICE_DAO(MaxNumBlockDB), GrayConnect:GrayConnect(), JINN_MODE:global.JINN_MODE, sessionid:sessionid, };
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {
@@ -1097,10 +1109,10 @@ HostingCaller.GetHistoryTransactions = function (Params)
 HostingCaller.GetSupplyCalc = function (Params)
 {
     var BlockNum = GetCurrentBlockNumByTime();
-    var BlockNum0 = 53828967;
-    var RestAcc0 = 370714758;
+    var BlockNum0 = 63538017;
+    var RestAcc0 = 359939214;
     var Delta = BlockNum - BlockNum0;
-    var DeltaReward = Math.floor(Delta * NEW_FORMULA_KTERA * RestAcc0 / TOTAL_SUPPLY_TERA);
+    var DeltaReward = Math.floor(Delta * NEW_FORMULA_JINN_KTERA * RestAcc0 / TOTAL_SUPPLY_TERA);
     return TOTAL_SUPPLY_TERA - RestAcc0 + DeltaReward;
 }
 

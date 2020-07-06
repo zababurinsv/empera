@@ -94,7 +94,7 @@ function Init(Engine)
     Engine.CalcDataHashInner = function (Block)
     {
         var PrevHash;
-        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+        if(Block.BlockNum < global.UPDATE_CODE_JINN)
             PrevHash = Block.OldPrevHash8;
         else
             PrevHash = Block.LinkSumHash;
@@ -108,7 +108,7 @@ function Init(Engine)
     Engine.CalcBlockHashInner = function (Block)
     {
         var PrevHash;
-        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+        if(Block.BlockNum < global.UPDATE_CODE_JINN)
             PrevHash = Block.OldPrevHash8;
         else
             PrevHash = Block.LinkSumHash;
@@ -126,7 +126,7 @@ function Init(Engine)
     Engine.CalcSumHash = function (Block)
     {
         
-        if(Block.BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
+        if(Block.BlockNum >= global.UPDATE_CODE_JINN)
         {
             Block.SumHash = CalcSumHash(Block.PrevSumHash, Block.Hash, Block.BlockNum, Block.SumPow);
             return;
@@ -146,7 +146,7 @@ function Init(Engine)
         if(!TxArr || !TxArr.length)
             return ZERO_ARR_32;
         
-        if(BlockNum < global.UPDATE_CODE_JINN_HASH8)
+        if(BlockNum < global.UPDATE_CODE_JINN)
             return CalcTreeHashFromArrBody(BlockNum, TxArr);
         else
             return Engine.CalcTreeHashInner(BlockNum, TxArr);
@@ -206,7 +206,7 @@ function Init(Engine)
         if(!Block.DataHash)
             ToLogTrace("!Block.DataHash on Block=" + Block.BlockNum);
         
-        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+        if(Block.BlockNum < global.UPDATE_CODE_JINN)
             Block.PrevHash = Block.OldPrevHash8;
         else
             Block.PrevHash = Block.LinkSumHash;
@@ -240,7 +240,7 @@ function Init(Engine)
         if(!Block.SeqHash)
             ToLogTrace("!Block.SeqHash on Block=" + Block.BlockNum);
         
-        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+        if(Block.BlockNum < global.UPDATE_CODE_JINN)
             Block.OldPrevHash8 = Block.PrevHash;
         else
             Block.OldPrevHash8 = ZERO_ARR_32;
@@ -258,7 +258,7 @@ function Init(Engine)
             Engine.SetBlockDataFromDB(Block);
         }
         
-        if(Block.BlockNum >= global.UPDATE_CODE_JINN_SUMHASH)
+        if(Block.BlockNum >= global.UPDATE_CODE_JINN)
         {
             Block.SumHash = Block.Hash;
         }

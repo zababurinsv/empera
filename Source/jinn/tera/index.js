@@ -16,7 +16,7 @@
 
 global.Init_DB_HEADER_FORMAT = function (Obj)
 {
-    if(!global.UPDATE_CODE_JINN_HASH8)
+    if(!global.UPDATE_CODE_JINN)
         return;
     Obj.OldPrevHash8 = "hash";
 }

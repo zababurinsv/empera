@@ -219,7 +219,7 @@ module.exports = class CDB extends require("../code")
             if(PrevBlock)
             {
                 var PrevHash;
-                if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+                if(Block.BlockNum < global.UPDATE_CODE_JINN)
                 {
                     if(arr.length !== BLOCK_PROCESSING_LENGTH)
                     {

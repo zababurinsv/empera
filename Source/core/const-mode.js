@@ -156,7 +156,7 @@ switch(global.MODE_RUN)
         global.AUTO_CORRECT_TIME = 0;
         global.CHECK_GLOBAL_TIME = 0;
         
-        global.UPDATE_CODE_JINN_HASH8 = 0;
+        global.UPDATE_CODE_JINN = 0;
         
         global.UPDATE_CODE_1 = 0;
         global.UPDATE_CODE_2 = 0;
@@ -170,8 +170,6 @@ switch(global.MODE_RUN)
         global.REST_START_COUNT = 0;
         global.LOAD_TO_BEGIN = 0;
         global.STAT_MODE = 1;
-        
-        global.UPDATE_CODE_JINN_SUMHASH = 0;
         
         break;
         
@@ -227,9 +225,8 @@ switch(global.MODE_RUN)
         global.REST_START_COUNT = 0;
         global.LOAD_TO_BEGIN = 0;
         
-        global.UPDATE_CODE_JINN_HASH8 = 1641;
-        global.UPDATE_CODE_JINN_SUMHASH = global.UPDATE_CODE_JINN_HASH8;
-        global.UPDATE_CODE_JINN_KTERA = global.UPDATE_CODE_JINN_HASH8;
+        global.UPDATE_CODE_JINN = 1641;
+        global.UPDATE_CODE_JINN_KTERA = global.UPDATE_CODE_JINN;
         global.NEW_FORMULA_JINN_KTERA = 3 * 3;
         
         break;
@@ -239,8 +236,7 @@ switch(global.MODE_RUN)
     case "MAIN":
         global.NETWORK = "MAIN-JINN";
         var NewStartNum = 63510000;
-        global.UPDATE_CODE_JINN_HASH8 = NewStartNum;
-        global.UPDATE_CODE_JINN_SUMHASH = NewStartNum;
+        global.UPDATE_CODE_JINN = NewStartNum;
         global.UPDATE_CODE_JINN_KTERA = NewStartNum;
         global.UPDATE_CODE_6 = NewStartNum;
         global.NEW_FORMULA_JINN_KTERA = 3 * 3;

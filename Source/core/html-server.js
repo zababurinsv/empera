@@ -521,8 +521,9 @@ HTTPCaller.DappInfo = function (Params,responce,ObjectOnly)
     }
     
     var Ret = {result:1, DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
-        CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NEW_SIGN_TIME:NEW_SIGN_TIME, Smart:Smart,
-        Account:Account, NETWORK:global.NETWORK, JINN_MODE:global.JINN_MODE, ArrWallet:WLData.arr, ArrEvent:EArr, ArrLog:ArrLog, };
+        UPDATE_CODE_JINN:UPDATE_CODE_JINN, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NEW_SIGN_TIME:NEW_SIGN_TIME,
+        Smart:Smart, Account:Account, NETWORK:global.NETWORK, JINN_MODE:global.JINN_MODE, ArrWallet:WLData.arr, ArrEvent:EArr, ArrLog:ArrLog,
+    };
     
     if(global.WALLET)
     {
@@ -764,14 +765,14 @@ HTTPCaller.GetWalletInfo = function (Params)
         IsDevelopAccount:IsDeveloperAccount(WALLET.PubKeyArr), AccountMap:WALLET.AccountMap, ArrLog:ArrLogClient, MaxAccID:DApps.Accounts.GetMaxAccount(),
         MaxActNum:DApps.Accounts.GetActsMaxNum(), MaxDappsID:DApps.Smart.GetMaxNum(), NeedRestart:global.NeedRestart, ip:SERVER.ip,
         port:SERVER.port, NET_WORK_MODE:global.NET_WORK_MODE, INTERNET_IP_FROM_STUN:global.INTERNET_IP_FROM_STUN, HistoryMaxNum:MaxHistory,
-        DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME,
-        DATA_PATH:(DATA_PATH.substr(1, 1) === ":" ? DATA_PATH : GetNormalPathString(process.cwd() + "/" + DATA_PATH)), NodeAddrStr:SERVER.addrStr,
-        STAT_MODE:global.STAT_MODE, HTTPPort:global.HTTP_PORT_NUMBER, HTTPPassword:HTTP_PORT_PASSWORD, CONSTANTS:Constants, CheckPointBlockNum:CHECK_POINT.BlockNum,
-        MiningAccount:global.GENERATE_BLOCK_ACCOUNT, CountMiningCPU:GetCountMiningCPU(), CountRunCPU:global.ArrMiningWrk.length, MiningPaused:global.MiningPaused,
-        HashRate:HashRateOneSec, MIN_POWER_POW_TR:MIN_POWER_POW_TR, PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NWMODE:global.NWMODE, PERIOD_ACCOUNT_HASH:PERIOD_ACCOUNT_HASH,
-        MAX_ACCOUNT_HASH:DApps.Accounts.DBAccountsHash.GetMaxNum(), TXBlockNum:TXBlockNum, SpeedSignLib:global.SpeedSignLib, NETWORK:global.NETWORK,
-        RestContext:RestContext, MaxLogLevel:global.MaxLogLevel, JINN_NET_CONSTANT:global.JINN_NET_CONSTANT, JINN_MODE:global.JINN_MODE,
-        sessionid:sessionid, };
+        DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, UPDATE_CODE_JINN:UPDATE_CODE_JINN, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME,
+        NEW_SIGN_TIME:NEW_SIGN_TIME, DATA_PATH:(DATA_PATH.substr(1, 1) === ":" ? DATA_PATH : GetNormalPathString(process.cwd() + "/" + DATA_PATH)),
+        NodeAddrStr:SERVER.addrStr, STAT_MODE:global.STAT_MODE, HTTPPort:global.HTTP_PORT_NUMBER, HTTPPassword:HTTP_PORT_PASSWORD,
+        CONSTANTS:Constants, CheckPointBlockNum:CHECK_POINT.BlockNum, MiningAccount:global.GENERATE_BLOCK_ACCOUNT, CountMiningCPU:GetCountMiningCPU(),
+        CountRunCPU:global.ArrMiningWrk.length, MiningPaused:global.MiningPaused, HashRate:HashRateOneSec, MIN_POWER_POW_TR:MIN_POWER_POW_TR,
+        PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB), NWMODE:global.NWMODE, PERIOD_ACCOUNT_HASH:PERIOD_ACCOUNT_HASH, MAX_ACCOUNT_HASH:DApps.Accounts.DBAccountsHash.GetMaxNum(),
+        TXBlockNum:TXBlockNum, SpeedSignLib:global.SpeedSignLib, NETWORK:global.NETWORK, RestContext:RestContext, MaxLogLevel:global.MaxLogLevel,
+        JINN_NET_CONSTANT:global.JINN_NET_CONSTANT, JINN_MODE:global.JINN_MODE, sessionid:sessionid, };
     
     if(Params.Account)
         Ret.PrivateKey = GetHexFromArr(WALLET.GetPrivateKey(WALLET.AccountMap[Params.Account]));
@@ -1621,8 +1622,8 @@ HTTPCaller.GetHistoryTransactions = function (Params)
             }
         }
         var Result = {Value:{SumCOIN:Account.Value.SumCOIN, SumCENT:Account.Value.SumCENT}, Name:Account.Name, Currency:Account.Currency,
-            MaxBlockNum:GetCurrentBlockNumByTime(), FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, result:arr.length > 0 ? 1 : 0,
-            History:arr};
+            MaxBlockNum:GetCurrentBlockNumByTime(), FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, UPDATE_CODE_JINN:UPDATE_CODE_JINN, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME,
+            result:arr.length > 0 ? 1 : 0, History:arr};
         return Result;
     }
     return {result:0};
@@ -1797,7 +1798,7 @@ function SendWebFile(request,response,name,StrCookie,bParsing,Long)
     type = type.substr(index1 + 1);
     
     var Path;
-    if(name.substr(0, 2) !== "./")
+    if(name.substr(0, 2) !== "./" && name.substr(1, 1) !== ":")
         Path = "./" + name;
     else
         Path = name;

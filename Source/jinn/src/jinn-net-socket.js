@@ -75,7 +75,11 @@ function InitClass(Engine)
     {
         Engine.port = Engine.port >>> 0;
         if(!Engine.port)
-            throw "Error port number = " + Engine.port;
+        {
+            Engine.port = global.STANDART_PORT_NUMBER;
+            if(!Engine.port)
+                Engine.port = 30000;
+        }
         
         var LISTEN_IP = "0.0.0.0";
         Engine.ToDebug("Prepare to run TCP server on " + LISTEN_IP + ":" + Engine.port);

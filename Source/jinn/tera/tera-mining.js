@@ -29,7 +29,7 @@ function Init(Engine)
     
     Engine.GetNewBlockNext = function (Block,PrevBlock)
     {
-        if(Block.BlockNum < global.UPDATE_CODE_JINN_HASH8)
+        if(Block.BlockNum < global.UPDATE_CODE_JINN)
             return 0;
         var PrevHashNum = ReadUint32FromArr(Block.PrevSumHash, 28);
         Block.MinerHash = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];

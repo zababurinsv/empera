@@ -144,7 +144,9 @@ window.SetBlockChainConstant = function (Data)
     window.MIN_POWER_POW_TR = DELTA_POWER_POW_TR + Data.MIN_POWER_POW_TR;
     
     window.FIRST_TIME_BLOCK = Data.FIRST_TIME_BLOCK;
+    window.UPDATE_CODE_JINN = Data.UPDATE_CODE_JINN;
     window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
+    
     window.NEW_SIGN_TIME = Data.NEW_SIGN_TIME;
     window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
     window.JINN_MODE = Data.JINN_MODE;
