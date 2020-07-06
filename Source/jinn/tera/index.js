@@ -140,8 +140,12 @@ function Create(MapName)
         {
             if(!global.TEST_JINN)
             {
-                Engine.AddNodeAddr({ip:"terablockchain.org", port:30000, Score:1000000000, System:1});
+                Engine.AddNodeAddr({ip:"t1.teraexplorer.com", port:30000, Score:1000000000, System:1});
+                Engine.AddNodeAddr({ip:"t2.teraexplorer.com", port:30000, Score:1000000000, System:1});
+                Engine.AddNodeAddr({ip:"t4.teraexplorer.com", port:30000, Score:1000000000, System:1});
                 Engine.AddNodeAddr({ip:"t5.teraexplorer.com", port:30000, Score:1000000000, System:1});
+                Engine.AddNodeAddr({ip:"terablockchain.org", port:30000, Score:1000000000, System:1});
+                Engine.AddNodeAddr({ip:"teraexplorer.org", port:30000, Score:1000000000, System:1});
                 Engine.AddNodeAddr({ip:"212.80.218.35", port:30000, Score:1000000000, System:1});
                 Engine.AddNodeAddr({ip:"149.154.70.158", port:30000, Score:1000000000, System:1});
             }

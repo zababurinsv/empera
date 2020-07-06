@@ -397,8 +397,6 @@ function InitClass(Engine)
             if(Status.Mode === 1)
             {
                 HeaderArr = Engine.GetHeaderArrForChild(Data.BlockNum, Status, Child);
-                
-                if(Data.Debug)
                 {
                     JINN_STAT.WantHeader += Status.CountItem;
                     JINN_STAT.UploadHeader += HeaderArr.length;
@@ -430,8 +428,6 @@ function InitClass(Engine)
                             BodyTreeNum = BodyArr[0].BlockNum;
                             BodyArr = [];
                         }
-                        
-                        if(Data.Debug)
                         {
                             JINN_STAT.WantBody += Status.CountItem;
                             JINN_STAT.UploadBody += BodyArr.length;

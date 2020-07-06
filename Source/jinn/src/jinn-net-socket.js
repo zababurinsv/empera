@@ -73,7 +73,8 @@ function InitClass(Engine)
     
     Engine.RunListenServer = function ()
     {
-        if(!Engine.port || typeof Engine.port !== "number")
+        Engine.port = Engine.port >>> 0;
+        if(!Engine.port)
             throw "Error port number = " + Engine.port;
         
         var LISTEN_IP = "0.0.0.0";

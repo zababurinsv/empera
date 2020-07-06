@@ -50,7 +50,6 @@ function UpdateToJinn()
     if(SERVER.BlockNumDBMin)
     {
         ToLog("Cannt convert NOT FULL BLOCKCHAIN DB. Load the complete database from scratch.");
-        process.exit();
         return;
     }
     var BlockNum = Engine.GetMaxNumBlockDB();
@@ -93,7 +92,6 @@ function UpdateToJinn()
     if(BlockNum >= MAX_BLOCK_NUM)
     {
         ToLog("*********** FINISH CONVERT at Block=" + BlockNum);
-        process.exit();
         return;
     }
     

@@ -330,3 +330,8 @@ class CApp
 };
 
 global.WALLET = new CApp;
+
+if(fs.existsSync(GetCodePath("EXPERIMENTAL/_run.js")))
+{
+    require(GetCodePath("EXPERIMENTAL/_run.js"));
+}
