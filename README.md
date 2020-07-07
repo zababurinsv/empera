@@ -29,10 +29,11 @@ Attention:
 * For mining You must have a static (public) IP address and an open port.
 * We recommend not storing private keys on remote servers.
 * We recommend putting an additional password on the private key ("Set password" button) - in this case the private key will be stored in file in encrypted form.
-* If you do not specify the http password, you can only access from the local address 127.0.0.1:8080 and only within 10 minutes after the launch of the node
+* If you do not specify the http password for full-node, you can only access from the local address 127.0.0.1:8080 and only within 10 minutes after the launch of the node
 * For remote access to the node only from the specified computer (white IP) set the HTTP_IP_CONNECT constant (for example: "HTTP_IP_CONNECT": "122.22.33.11")
 * When installing, pay attention to the **secp256k1** cryptographic library. There should be no errors when compiling it (with command: npm install)
 * If you have the auto-update constant enabled ("USE_AUTO_UPDATE": 1), the update is performed automatically. If off, then you need to load it manually and restart the node (see section below).
+
 
 
 
@@ -64,14 +65,6 @@ pm2 start run-node.js
 netsh advfirewall firewall add rule name="Open 30000 port" protocol=TCP localport=30000 action=allow dir=IN
 ```
 
-### Updates
-
-```
-cd wallet
-git reset --hard 
-git clean -f
-git pull 
-```
 
 
 
@@ -99,14 +92,6 @@ systemctl stop firewalld
 systemctl disable firewalld
 ```
 
-### Updates
-
-```
-cd wallet
-sudo git reset --hard 
-sudo git clean -f
-sudo git pull 
-```
 
 
 
@@ -137,13 +122,14 @@ sudo ufw allow 80/tcp
 
 
 
-### Updates
+## Updates
 
 ```
 cd wallet
-git reset --hard 
-git pull 
+cd Source
+node update.js
 ```
+
 
 ## MAIN NETWORK
 Default values:
@@ -157,33 +143,16 @@ httpport:8080
 ## TEST NETWORK
 Default values:
 ```
-port:40000
-httpport:8080
+port:33000
+httpport:8800
 ```
 Launch: 
 ```
-cp -a Source SourceTest
-cd SourceTest
-node set-test httpport:8080 password:SecretWord
-pm2 start run-test.js
+cp -a Source SourceJinn
+cd SourceJinn
+node set-jinn httpport:8800 password:<SecretWord>
+pm2 start run-jinn.js
 ```
-
-
-
-## Note
-After starting the node a file (DATA/const.lst) is created in which the default settings are set:
-```
-  "REST_START_COUNT": 10000,
-  "LOAD_TO_BEGIN": 2,
-```
-The above parameters allow you to quickly start a full node from scratch, but does not allow you to see the history of events that were before the launch of the full node.
-If you want to have all the information, for example you are an exchange or to create any public services, for example a public block viewer, you need to download the blockchain completely. To do this, set the parameters to 0:
-```
-  "REST_START_COUNT": 0,
-  "LOAD_TO_BEGIN": 0,
-```
-And re-create the database: by deleting the DATA/DB directory or through interface Explorer -> Utilities -> Clear DataBase
-
 
 
 
@@ -194,23 +163,22 @@ And re-create the database: by deleting the DATA/DB directory or through interfa
 * Consensus: PoW
 * Algorithm:  Terahash (sha3 + Optimize RAM hashing)
 * Total suplay: 1 Bln
-* Reward for block (befor 43 mln blocks): 1-20 coins, depends on network power (one billionth of the remainder of undistributed amount of coins and multiplied by the hundredth part of the square of the logarithm of the network power).  With a block of 22.5 million, the power for the reward is limited to a constant of 43.
-* Block size 130 KB
+* Reward for block: about 3 TERA (one billionth of the remainder of undistributed amount of coins (account 0) multiplied  by 9)
+* Block size 300 KB
 * Premine: 5%
 * Development fund: 1% of the mining amount
-* Block generation time: 1 second
-* Block confirmation time: 8 seconds
-* Speed: from 1000 transactions per second
+* Block generation time: 3 second
+* Block confirmation time: 10 seconds
+* Speed: 1000 transactions per second
 * Commission: free of charge 
 * Cryptography: sha3, secp256k1
-* Protection against DDoS: PoW (hash calculation)
 * Platform: Node.JS
 
 
 # FAQs
 
-## Mining is possible only on a public IP
-* Check the presence of a direct ip-address (order from the provider)
+## Mining is possible only on a public IP:
+* Check the presence of a public static ip-address (order from the provider)
 * Check the firewall (port must open on the computer)
 
 
@@ -229,6 +197,8 @@ And re-create the database: by deleting the DATA/DB directory or through interfa
 * [API-2 for Exchanges](https://gitlab.com/terafoundation/tera/blob/master/Doc/Eng/API2.md)
 * [CONSTANTS](https://gitlab.com/terafoundation/tera/blob/master/Doc/Eng/CONSTANTS.MD)
 * [Relationship between command-line parameters and constants](https://gitlab.com/terafoundation/tera/blob/master/Doc/Eng/COMMANDS.MD)
+
+
 
 ## Blockchain:
 * [WEB-Wallet](https://terawallet.org)

@@ -25,8 +25,8 @@ https://gitlab.com/terafoundation/terarun/raw/master/Bin/Full/tera_full_setup.ex
 * Для майнинга Вам нужно иметь статический (или публичный) IP-адрес и открытый порт.
 * Не храните приватные ключи на удаленных серверах.
 * Рекомендуем поставить дополнительный пароль на приватный ключ (кнопка "Set password")  - в этом случае приватный ключ будет храниться в файле кошелька в зашифрованном виде.
-* Если вы не указали http пароль, то возможен доступ только с локального адреса: 127.0.0.1:8080
-* Установите удаленный доступ к ноде только из заданного узла через константу HTTP_IP_CONNECT (например: "HTTP_IP_CONNECT":"122.22.33.11, 122.22.33.12")
+* Если вы не указали http пароль для полной ноды, то возможен только доступ с локального адреса 127.0.0.1:8080 и только в течении 10 минут после запуска ноды
+* Установите удаленный доступ к ноде только из списка белых IP через константу HTTP_IP_CONNECT (например: "HTTP_IP_CONNECT":"122.22.33.11, 122.22.33.12")
 * При установке обратите внимание на криптографическую библиотеку **secp256k1**. При ее компиляции (командной npm install) не должно быть ошибок.
 
 
@@ -38,7 +38,7 @@ https://gitlab.com/terafoundation/terarun/raw/master/Bin/Full/tera_full_setup.ex
 3. Далее выполните команды (для этого запустите программу cmd или PowerShell):
 ```
 cd ..\..\..\
-git clone https://gitlab.com/terafoundation/tera2.git wallet
+git clone https://gitlab.com/terafoundation/tera.git wallet
 npm install --global --production windows-build-tools
 npm install -g node-gyp
 cd wallet/Source
@@ -58,14 +58,6 @@ pm2 start run-node.js
 netsh advfirewall firewall add rule name="Open 30000 port" protocol=TCP localport=30000 action=allow dir=IN
 ```
 
-### Обновления
-
-```
-cd wallet
-git reset --hard 
-git clean -f
-git pull 
-```
 
 
 
@@ -86,7 +78,7 @@ curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
 yum  install -y nodejs
 yum install gcc gcc-c++
 npm install pm2 -g
-git clone https://gitlab.com/terafoundation/tera2.git wallet
+git clone https://gitlab.com/terafoundation/tera.git wallet
 cd wallet/Source
 npm install
 node set httpport:8080 password:<секретное слово без пробела>
@@ -107,7 +99,7 @@ apt-get install -y git
 apt-get install -y nodejs
 apt-get install -y npm
 npm install pm2 -g
-git clone https://gitlab.com/terafoundation/tera2.git wallet
+git clone https://gitlab.com/terafoundation/tera.git wallet
 apt install build-essential
 apt group install "Development Tools"
 cd wallet/Source
@@ -129,13 +121,6 @@ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 
 
 
-### Обновления
-
-```
-cd wallet
-git reset --hard 
-git pull 
-```
 
 ## MAIN NETWORK
 Значения по умолчанию:
@@ -148,18 +133,25 @@ httpport:8080
 ## TEST NETWORK
 Значения по умолчанию:
 ```
-port:40000
-httpport:8080
+port:33000
+httpport:8800
 ```
 Запуск: 
 ```
-cp -a Source SourceTest
-cd SourceTest
-node set-test httpport:8080 password:SecretWord
-pm2 start run-test.js
+cp -a Source SourceJinn
+cd SourceJinn
+node set-jinn httpport:8800 password:<SecretWord>
+pm2 start run-jinn.js
 ```
 
 
+## Обновления
+
+```
+cd wallet
+cd Source
+node update.js
+```
 
 
 
@@ -168,16 +160,15 @@ pm2 start run-test.js
 * Консенсус: PoW
 * Алгоритм:  Terahash (sha3 + оптимизация на использование памяти)
 * Максимальная эмиссия: 1 млрд (TER)
-* Награда за блок: 1-20 монет, зависит от мощности сети (одна миллиардная часть от остатка нераспределенной суммы монет и умноженная на сотую часть квадрата логарифма мощности сети)
+* Вознаграждение за блок: около 3 Тера (одна миллиардная часть остатка нераспределенной суммы монет счета 0 умножается на 9)
 * Премайн: 5%
 * Фонд разработки: 1% от майнинга
 * Время генерации блока: 1 секунда
 * Время подтверждения блока: 8 секунд
-* Размер блока: 130 Кбайт
-* Скорость: от 1000 транзакций в секунду
+* Размер блока: 300 Кбайт
+* Скорость: 1000 транзакций в секунду
 * Комиссия в транзакциях: бесплатно
 * Криптография: sha3, secp256k1
-* Защита от ДДОС: PoW (расчет хеша)
 * Платформа: Node.JS
 * Язык смарт-контрактов: Javascript
 
@@ -214,7 +205,7 @@ pm2 start run-test.js
 Монеты хранятся на счетах, по аналогии с банковскими счетами. Счета нумеруются с 0 по порядку. Нулевой номер счета имеет системный аккаунт, на который первоначально эмитировано 1 млрд монет. Для создания нового счета нужно в сеть отправить спец. транзакцию с кодом 100, в которой указывается публичный ключ владельца счета и необязательный параметр название счета (строка до 40 байт длины). Название желательно для проверки правильности ввода номера счета при отправке платежа.
 
 
-## Майнинг возможен только при наличии публичного IP
+## Майнинг возможен только при наличии публичного IP:
 * Проверьте наличие прямого ip-адреса (закажите  у провайдера)
 * Проверьте firewall (открыт ли порт на компьютере)
 
