@@ -1491,6 +1491,15 @@ HTTPCaller.CleanChain = function (Param)
     return {result:0, sessionid:sessionid};
 }
 
+HTTPCaller.StartLoadNewCode = function (Param)
+{
+    global.NoStartLoadNewCode = 1;
+    require("../update");
+    
+    global.StartLoadNewCode(1);
+    return {result:1, sessionid:sessionid};
+}
+
 
 HTTPCaller.GetArrStats = function (Keys,response)
 {

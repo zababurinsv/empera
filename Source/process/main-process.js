@@ -348,7 +348,7 @@ function RunOnce()
     {
         clearInterval(idRunOnce);
         
-        require("../core/update");
+        require("../core/update-db");
         RunOnUpdate();
         
         setTimeout(function ()

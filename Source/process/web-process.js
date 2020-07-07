@@ -204,7 +204,8 @@ function MainHTTPFunction(request,response)
     var Params = querystring.parse(DataURL.query);
     var Path = querystring.unescape(DataURL.pathname);
     
-    ToLogWeb("Get Path:" + Path);
+    var ip = request.socket.remoteAddress;
+    global.WEB_LOG && ToLogWeb("" + ip + " Get Path:" + Path);
     if(global.STAT_MODE === 2)
     {
         ADD_TO_STAT("HTTP_ALL");

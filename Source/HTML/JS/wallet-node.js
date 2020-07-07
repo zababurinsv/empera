@@ -517,6 +517,11 @@ function CleanChain()
     DoBlockChainProcess("CleanChain", "Clean chain on last %1 blocks", 1);
 }
 
+function StartLoadNewCode()
+{
+    DoBlockChainProcess("StartLoadNewCode", "Download last code and restart node", 0);
+}
+
 function DoBlockChainProcess(FuncName,Text,LastBlock)
 {
     SaveValues();

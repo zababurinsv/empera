@@ -55,7 +55,6 @@ global.ToLog = function (Str,Level)
         ToLogFile(file_name_log, Str);
 }
 
-global.WEB_LOG = 0;
 global.ToLogWeb = function (Str)
 {
     if(global.WEB_LOG)
@@ -123,7 +122,7 @@ function ToLogFile(file_name,Str,bNoFile)
     {
         Str = Str.message + "\n" + Str.stack;
     }
-    if(!global.START_SERVER)
+    if(!global.START_SERVER && global.PROCESS_NAME)
         Str = global.PROCESS_NAME + ": " + Str;
     
     if(global.PROCESS_NAME !== "MAIN" && process.send)
@@ -134,7 +133,10 @@ function ToLogFile(file_name,Str,bNoFile)
     else
     {
         
-        console.log("" + START_PORT_NUMBER + ": " + GetStrOnlyTime() + ": " + Str);
+        if(global.PROCESS_NAME)
+            console.log("" + START_PORT_NUMBER + ": " + GetStrOnlyTime() + ": " + Str);
+        else
+            console.log(Str);
     }
     
     if(bNoFile)
