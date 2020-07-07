@@ -858,7 +858,7 @@ module.exports = class CDB extends require("../code")
                     break;
                 
                 var Tr = {body:Block.arrContent[num]};
-                this.CheckCreateTransactionObject(Tr, 1)
+                this.CheckCreateTransactionObject(Tr, 1, BlockNum)
                 
                 Tr.Num = num
                 Tr.Type = Tr.body[0]
@@ -1254,7 +1254,7 @@ module.exports = class CDB extends require("../code")
         for(var num = 0; num < Arr.length; num++)
         {
             var Tr = {body:Arr[num]};
-            this.CheckCreateTransactionObject(Tr, 1)
+            this.CheckCreateTransactionObject(Tr, 1, Block.BlockNum)
             ArrRet.push(Tr)
         }
         return ArrRet;

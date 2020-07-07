@@ -73,12 +73,12 @@ function Init(Engine)
             return TX_RESULT_WAS_SEND;
     };
     
-    SERVER.CheckCreateTransactionObject = function (Tr,SetTxID)
+    SERVER.CheckCreateTransactionObject = function (Tr,SetTxID,BlockNum)
     {
         var Body = Tr.body;
         Tr.IsTx = 1;
         if(SetTxID)
-            Tr.TxID = GetHexFromArr(GetTxID(0, Body));
+            Tr.TxID = GetHexFromArr(GetTxID(BlockNum, Body));
         Tr.power = 0;
         Tr.TimePow = 0;
     };

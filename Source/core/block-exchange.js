@@ -210,7 +210,7 @@ module.exports = class CConsensus extends require("./block-loader")
         for(var i = 0; i < Array.length; i++)
         {
             var Item = Array[i];
-            this.CheckCreateTransactionObject(Item)
+            this.CheckCreateTransactionObject(Item, 0, Block.BlockNum)
             Str += this.GetStrFromHashShort(shaarr(Item.body)) + "(" + Item.body.length + "),"
         }
         AddInfoBlock(Block, "" + StrInfo + ": Arr=[" + Str + "]")

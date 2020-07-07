@@ -773,7 +773,7 @@ class AccountApp extends require("./dapp")
         if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
         {
             var Tr = {body:Body};
-            SERVER.CheckCreateTransactionObject(Tr)
+            SERVER.CheckCreateTransactionObject(Tr, 0, BlockNum)
             power = Tr.power
         }
         else

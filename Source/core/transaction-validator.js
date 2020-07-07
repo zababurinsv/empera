@@ -218,7 +218,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
         if(!Tr.body || Tr.body.length < MIN_TRANSACTION_SIZE || Tr.body.length > MAX_TRANSACTION_SIZE)
             return  - 1;
         
-        this.CheckCreateTransactionObject(Tr)
+        this.CheckCreateTransactionObject(Tr, 0, BlockNum)
         if(Tr.power - Math.log2(Tr.body.length / 128) < MIN_POWER_POW_TR)
             return  - 2;
         if(Tr.num !== BlockNum)
@@ -293,7 +293,7 @@ module.exports = class CSmartContract extends require("./block-exchange")
         var Tx = this.GetDAppTransactions(BlockNum);
         if(Tx)
         {
-            this.CheckCreateTransactionObject(Tx)
+            this.CheckCreateTransactionObject(Tx, 0, BlockNum)
             Arr.unshift(Tx)
         }
     }
