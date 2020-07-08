@@ -255,5 +255,5 @@ pm2 start run-jinn.js
 
 
 ## RUS
- [Эта же страница на русском](https://gitlab.com/terafoundation/tera/tree/master/Doc/Rus)
+ [Эта же страница на русском](https://gitlab.com/terafoundation/tera2/-/tree/master/Doc/Rus)
 
