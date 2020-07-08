@@ -20,9 +20,8 @@ https://gitlab.com/terafoundation/terarun/raw/master/Bin/Full/tera_full_setup.ex
 
 
 Внимание:
-* Для быстрой начальной загрузки кошелька выложена [ссылка](https://sourceforge.net/p/tera/code/ci/master/tree/Torrent/Tera-folder-DB.torrent?format=raw) на загрузку базы данных по P2P протоколу. Скачайте через торрент файл и распакуйте его. Далее положите папку DB в каталог DATA кошелька (с полной заменой).
-* После установки, указанной ниже, введите в браузере публичный адрес вашего сервера, например: 12.34.56.78:8080
-* Для майнинга Вам нужно иметь статический (или публичный) IP-адрес и открытый порт.
+* После установки, указанной ниже, введите в браузере публичный адрес вашего сервера, например: 195.11.22.33:8080
+* Для майнинга Вам нужно иметь статический публичный IP-адрес и открытый порт.
 * Не храните приватные ключи на удаленных серверах.
 * Рекомендуем поставить дополнительный пароль на приватный ключ (кнопка "Set password")  - в этом случае приватный ключ будет храниться в файле кошелька в зашифрованном виде.
 * Если вы не указали http пароль для полной ноды, то возможен только доступ с локального адреса 127.0.0.1:8080 и только в течении 10 минут после запуска ноды
@@ -43,9 +42,15 @@ npm install --global --production windows-build-tools
 npm install -g node-gyp
 cd wallet/Source
 npm install
-node set httpport:8080 password:<секретное слово без пробела>
-run-node.bat
+node set httpport:8080 password:секретное_слово_без_пробела
 
+```
+Перед запуском ноды мы рекомендуем скачать бэкап блокчейна (zip size 7.6 Gb) по ссылке https://terawallet.org/files/jinn-db.zip
+Распакуйте архив и положите папку DB в каталог DATA кошелька (с полной заменой).
+
+Запустите ноду командой:
+```
+run-node.bat
 ```
 Если вы хотите запускать кошелек в качестве фонового процесса, то вместо последней команды (run-node.bat) выполните следующие:
 ```
@@ -73,6 +78,7 @@ netsh advfirewall firewall add rule name="Open 30000 port" protocol=TCP localpor
 ### Дистрибутив CentOS 7:
 
 ```
+yum install install unzip
 yum install -y git
 curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
 yum  install -y nodejs
@@ -82,7 +88,6 @@ git clone https://gitlab.com/terafoundation/tera.git wallet
 cd wallet/Source
 npm install
 node set httpport:8080 password:<секретное слово без пробела>
-pm2 start run-node.js
 ```
 
 ### открытие всех портов:
@@ -91,10 +96,26 @@ systemctl stop firewalld
 systemctl disable firewalld
 ```
 
+### запуск ноды:
+Перед запуском ноды мы рекомендуем скачать и установить бэкап блокчейна (zip size 7.6 Gb), запустите команды:
+```
+cd ../DATA
+wget https://terawallet.org/files/jinn-db.zip
+unzip -o jinn-db.zip
+
+```
+
+После этого запустите ноду командой:
+```
+cd ../Source
+pm2 start run-node.js
+```
+
 
 ### Дистрибутив UBUNTU 18.4:
 
 ```
+apt-get install unzip
 apt-get install -y git
 apt-get install -y nodejs
 apt-get install -y npm
@@ -105,7 +126,6 @@ apt group install "Development Tools"
 cd wallet/Source
 npm install
 node set httpport:8080 password:<секретное слово без пробела>
-pm2 start run-node.js
 ```
 
 ### открытие портов:
@@ -120,6 +140,20 @@ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 ```
 
 
+### запуск ноды:
+Перед запуском ноды мы рекомендуем скачать и установить бэкап блокчейна (zip size 7.6 Gb), запустите команды:
+```
+cd ../DATA
+wget https://terawallet.org/files/jinn-db.zip
+unzip -o jinn-db.zip
+
+```
+
+После этого запустите ноду командой:
+```
+cd ../Source
+pm2 start run-node.js
+```
 
 
 ## MAIN NETWORK

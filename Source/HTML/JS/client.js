@@ -18,7 +18,6 @@ function $(id)
 }
 
 
-
 window.Storage = {};
 window.Storage.setItem = function (Key,Value)
 {

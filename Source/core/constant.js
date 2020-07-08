@@ -122,8 +122,8 @@ global.SERVER_PRIVATE_KEY_HEX = undefined;
 global.USE_NET_FOR_SERVER_ADDRES = 1;
 
 global.NET_WORK_MODE = undefined;
-global.STAT_MODE = 0;
-global.MAX_STAT_PERIOD = 500;
+global.STAT_MODE = 1;
+global.MAX_STAT_PERIOD = 600;
 global.WALLET_NAME = "TERA";
 global.WALLET_DESCRIPTION = "";
 global.USE_MINING = 0;

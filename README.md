@@ -14,7 +14,7 @@ https://terawallet.org
 * [Light client (zip)](https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/Tera-light.zip)
 
 ## Mobile wallet apk-file for Android:
-* https://gitlab.com/terafoundation/terarun/raw/master/Bin/Mobile/app-release.apk
+* (old version) https://gitlab.com/terafoundation/terarun/raw/master/Bin/Mobile/app-release.apk
 
 
 
@@ -50,10 +50,17 @@ npm install --global --production windows-build-tools
 npm install -g node-gyp
 cd wallet/Source
 npm install
-node set httpport:8080 password:<secret word (no spaces)>
+node set httpport:8080 password:secret_word_no_spaces
 run-node.bat
 
 ```
+Before starting the node, we recommend downloading a backup of the blockchain (zip size 7.6 Gb) at the link https://terawallet.org/files/jinn-db.zip
+Unpack the archive and put the DB folder in the wallet's DATA folder (with full replacement).
+Launch the node with the command:
+```
+run-node.bat
+```
+
 If you want to run the wallet as a background process, then instead of the last command (run-node.bat), do the following:
 ```
 npm install pm2 -g
@@ -74,6 +81,7 @@ netsh advfirewall firewall add rule name="Open 30000 port" protocol=TCP localpor
 
 
 ```
+yum install install unzip
 yum install -y git
 curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
 yum  install -y nodejs
@@ -83,7 +91,6 @@ git clone https://gitlab.com/terafoundation/tera2.git wallet
 cd wallet/Source
 npm install
 node set httpport:8080 password:<secret word (no spaces)>
-pm2 start run-node.js
 ```
 
 ### open ports (all):
@@ -92,12 +99,28 @@ systemctl stop firewalld
 systemctl disable firewalld
 ```
 
+### start node:
+Before starting the node, we recommend downloading and installing a backup of the blockchain (zip size 7.6 Gb), run it:
+```
+cd ../DATA
+wget https://terawallet.org/files/jinn-db.zip
+unzip -o jinn-db.zip
+
+```
+
+Then launch the node with the command:
+```
+cd ../Source
+pm2 start run-node.js
+```
+
 
 
 
 ### UBUNTU 18.4:
 
 ```
+apt-get install unzip
 apt-get install -y git
 apt-get install -y nodejs
 apt-get install -y npm
@@ -108,7 +131,6 @@ apt group install "Development Tools"
 cd wallet/Source
 npm install
 node set httpport:8080 password:<secret word (no spaces)>
-pm2 start run-node.js
 ```
 
 ### open ports:
@@ -119,6 +141,20 @@ sudo ufw allow 8080/tcp
 sudo ufw allow 80/tcp
 ```
 
+
+### start node:
+Before starting the node, we recommend downloading and installing a backup of the blockchain (zip size 7.6 Gb), run it:
+```
+cd ../DATA
+wget https://terawallet.org/files/jinn-db.zip
+unzip -o jinn-db.zip
+```
+
+Then launch the node with the command:
+```
+cd ../Source
+pm2 start run-node.js
+```
 
 
 
