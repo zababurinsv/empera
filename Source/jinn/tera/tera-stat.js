@@ -22,6 +22,8 @@ function Init(Engine)
     SERVER.GetActualNodes = function ()
     {
         var Arr = [];
+        if(!Engine.ConnectArray)
+            return Arr;
         
         for(var i = 0; i < Engine.ConnectArray.length; i++)
         {
@@ -289,6 +291,11 @@ function Init(Engine)
     
     Engine.OnStatSecond = function ()
     {
+        if(!Engine.GetCountAddr)
+            return;
+        if(!SERVER.GetMaxNumBlockDB)
+            return;
+        
         SERVER.CurrentBlockNum = Engine.CurrentBlockNum;
         
         var StatNum = Math.floor(Engine.TickNum / 10);

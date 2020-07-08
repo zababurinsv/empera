@@ -22,7 +22,7 @@ global.MAX_ARR_32 = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 
 global.JINN_MODULES = [];
 
-if(typeof window !== "object")
+if(typeof window !== "object" || global.NWMODE)
 {
     
     if(!global.sha3)
@@ -246,6 +246,7 @@ function CreateNodeEngine(Engine,MapName)
         var module = global.JINN_MODULES[i];
         if(MapName && (!module.Name || !MapName[module.Name]))
             continue;
+        
         module.USE_MODULE = 1;
         if(module.InitClass)
             module.InitClass(Engine);

@@ -56,7 +56,7 @@ JINN_CONST.DELTA_BLOCKS_FOR_LOAD_ONLY = JINN_CONST.BLOCK_GENESIS_COUNT + 10;
 
 JINN_CONST.MAX_ITEMS_FOR_LOAD = 500;
 
-JINN_CONST.MAX_BLOCK_SIZE = 500000;
+JINN_CONST.MAX_BLOCK_SIZE = 300000;
 JINN_CONST.MAX_DEPTH_FOR_SECONDARY_CHAIN = 100;
 
 JINN_EXTERN.GetCurrentBlockNumByTime = global.GetCurrentBlockNumByTime;
@@ -103,8 +103,6 @@ function GetEngine(MapName)
     require("./tera-stat").Init(Engine);
     
     require("./tera-tests").Init(Engine);
-    
-    require("./tera-net-info.js").Init(Engine);
     
     require("./tera-addr").Init(Engine);
     

@@ -17,7 +17,7 @@ var MaxConnectedCount = 50;
 var TIME_LENGTH_CONNECT_ALL = 2 * 1000;
 var StartTimeConnecting = 0;
 var ConnectedCount = 0;
-var NETWORK_NAME = "TERA-MAIN";
+var NETWORK_NAME = "MAIN-JINN";
 var ServerMap = {};
 var ServerMainMap = {"127.0.0.1":{"ip":"127.0.0.1", "port":80, "Name":"LOCAL"}, "terawallet.org":{"ip":"terawallet.org", "port":443,
         "Name":"terawallet", "System":1}, "teraexplorer.org":{"ip":"teraexplorer.org", "port":443, "Name":"teraexplorer", "System":1},
@@ -30,9 +30,9 @@ var ServerTestMap = {"127.0.0.1":{"ip":"127.0.0.1", "port":80, "Name":"LOCAL"}, 
 
 function StartWebWallet()
 {
-    if(NETWORK_NAME === "TERA-MAIN")
+    if(NETWORK_NAME === "MAIN-JINN")
     {
-        MIN_SUM_POWER = COUNT_BLOCK_PROOF * 35;
+        MIN_SUM_POWER = 0;
         ServerMap = ServerMainMap;
     }
     else

@@ -12,6 +12,8 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
+    ToLog("Init tera-addr...");
+    
     Engine.LastAddrSaveTime = Date.now();
     Engine.DoNodeAddr = function ()
     {
