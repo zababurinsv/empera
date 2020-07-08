@@ -213,7 +213,7 @@ pm2 start run-jinn.js
 
 # FAQs
 
-## Mining is possible only on a public IP:
+A public ip address is recommended for starting a node:
 * Check the presence of a public static ip-address (order from the provider)
 * Check the firewall (port must open on the computer)
 
