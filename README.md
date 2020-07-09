@@ -14,7 +14,7 @@ https://terawallet.org
 * [Light client (zip)](https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/Tera-light.zip)
 
 ## Mobile wallet apk-file for Android:
-* (old version) https://gitlab.com/terafoundation/terarun/raw/master/Bin/Mobile/app-release.apk
+* https://gitlab.com/terafoundation/terarun/raw/master/Bin/Mobile/app-release.apk
 
 
 

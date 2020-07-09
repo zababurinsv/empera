@@ -32,15 +32,21 @@ function StartWebWallet()
 {
     if(NETWORK_NAME === "MAIN-JINN")
     {
-        MIN_SUM_POWER = COUNT_BLOCK_PROOF * 30;
         ServerMap = ServerMainMap;
+        MIN_SUM_POWER = COUNT_BLOCK_PROOF * 30;
         UPDATE_CODE_JINN = 63510000;
+        BLOCKNUM_ALGO2 = 6560000;
+        BLOCKNUM_HASH_NEW = 10195000;
+        BLOCKNUM_TICKET_ALGO = 16070000;
     }
     else
     {
-        UPDATE_CODE_JINN = 0;
-        MIN_SUM_POWER = 0;
         ServerMap = ServerTestMap;
+        MIN_SUM_POWER = 0;
+        UPDATE_CODE_JINN = 0;
+        BLOCKNUM_ALGO2 = 0;
+        BLOCKNUM_HASH_NEW = 0;
+        BLOCKNUM_TICKET_ALGO = 0;
     }
     
     $("idNetwork").innerText = NETWORK_NAME;
@@ -298,6 +304,7 @@ function FindLider()
             Item.SumPower = CalcPowFromBlockChain(arr, Item.ip);
             if(Item.SumPower < MIN_SUM_POWER)
             {
+                ToLog("Skip: " + Item.ip + ":" + Item.port + " SumPower(" + Item.SumPower + ") < MIN_SUM_POWER(" + MIN_SUM_POWER + ")");
                 continue;
             }
             if(!MapSumPower[Item.SumPower])

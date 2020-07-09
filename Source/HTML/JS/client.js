@@ -9,7 +9,7 @@
 */
 
 
-window.CLIENT_VERSION = 19;
+window.CLIENT_VERSION = 20;
 var MAX_CLIENT_LOG_SIZE = 64000;
 
 function $(id)
