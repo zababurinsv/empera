@@ -9,7 +9,7 @@
 */
 
 
-var DELTA_LONG_MINING;
+var DELTA_LONG_MINING = 5000;
 var BLOCKNUM_ALGO2;
 var BLOCKNUM_HASH_NEW;
 var BLOCKNUM_TICKET_ALGO;
@@ -30,7 +30,8 @@ InitTeraHashConst();
 
 function InitTeraHashConst()
 {
-    if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE || global.JINN_MODE)
+    
+    if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE)
     {
         BLOCKNUM_ALGO2 = 0;
         BLOCKNUM_HASH_NEW = 0;
@@ -38,7 +39,6 @@ function InitTeraHashConst()
     }
     else
     {
-        DELTA_LONG_MINING = 5000;
         BLOCKNUM_ALGO2 = 6560000;
         BLOCKNUM_HASH_NEW = 10195000;
         BLOCKNUM_TICKET_ALGO = 16070000;

@@ -32,11 +32,13 @@ function StartWebWallet()
 {
     if(NETWORK_NAME === "MAIN-JINN")
     {
-        MIN_SUM_POWER = 0;
+        MIN_SUM_POWER = COUNT_BLOCK_PROOF * 30;
         ServerMap = ServerMainMap;
+        UPDATE_CODE_JINN = 63510000;
     }
     else
     {
+        UPDATE_CODE_JINN = 0;
         MIN_SUM_POWER = 0;
         ServerMap = ServerTestMap;
     }
@@ -293,7 +295,7 @@ function FindLider()
             var arr = Item.BlockChain;
             if(arr.data)
                 arr = arr.data;
-            Item.SumPower = CalcPowFromBlockChain(arr);
+            Item.SumPower = CalcPowFromBlockChain(arr, Item.ip);
             if(Item.SumPower < MIN_SUM_POWER)
             {
                 continue;
@@ -333,7 +335,7 @@ function FindLider()
     OnFindServer();
 }
 
-function CalcPowFromBlockChain(BufRead)
+function CalcPowFromBlockChain(BufRead,name)
 {
     var Sum = 0;
     var Arr = GetBlockArrFromBuffer(BufRead);
@@ -342,18 +344,20 @@ function CalcPowFromBlockChain(BufRead)
         var FirstBlockNum = Arr[0].BlockNum;
         var LastBlockNum = Arr[Arr.length - 1].BlockNum;
         if(LastBlockNum + 10 < GetCurrentBlockNumByTime())
-            return 0;
+            return  - 1;
         
         var PrevBlock = undefined;
         for(var i = 0; i < Arr.length; i++)
         {
             var Block = Arr[i];
             if(!Block || Block.BlockNum !== FirstBlockNum + i)
-                return 0;
+                return  - 2;
             if(PrevBlock)
             {
-                if(!IsEqArr(PrevBlock.Hash, Block.PrevHash))
-                    return 0;
+                if(!IsEqArr(Block.PrevHash, PrevBlock.Hash))
+                {
+                    return  - 3;
+                }
             }
             
             Block.DataHash = CalcDataHash(Block.BlockNum, Block.PrevHash, Block.TreeHash, Block.PrevSumPow);
