@@ -718,6 +718,9 @@ HTTPCaller.GetHistoryAct = function (Params)
     return {arr:arr, result:1};
 }
 
+if(!global.CHECK_POINT)
+    global.CHECK_POINT = {};
+
 var LastTimeGetHashRate = 0;
 var LastHashRate = 0;
 var HashRateOneSec = 0;
@@ -844,10 +847,7 @@ HTTPCaller.SendTransactionHex = function (Params)
         return {result:0};
     
     var body;
-    if(global.JINN_MODE)
-        body = GetArrFromHex(Params.Hex.substr(0, Params.Hex.length - 12 * 2));
-    else
-        body = GetArrFromHex(Params.Hex);
+    body = GetArrFromHex(Params.Hex.substr(0, Params.Hex.length - 12 * 2));
     
     var Result = {result:1};
     var Res = SERVER.AddTransactionOwn({body:body, ToAll:1});
@@ -1261,8 +1261,6 @@ HTTPCaller.GetNodeData = function (Param)
     
     if(global.JINN)
     {
-        if(Item.IsOpen)
-            Engine.SendGetInfo(Item);
         return global.GetJinnNode(Item);
     }
     

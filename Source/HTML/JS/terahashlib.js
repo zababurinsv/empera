@@ -9,10 +9,10 @@
 */
 
 
-var DELTA_LONG_MINING = 5000;
-var BLOCKNUM_ALGO2 = 6560000;
-var BLOCKNUM_HASH_NEW = 10195000;
-var BLOCKNUM_TICKET_ALGO = 16070000;
+var DELTA_LONG_MINING;
+var BLOCKNUM_ALGO2;
+var BLOCKNUM_HASH_NEW;
+var BLOCKNUM_TICKET_ALGO;
 
 if(typeof global === "object")
 {
@@ -24,11 +24,24 @@ if(typeof global === "object")
     global.XORArr = XORArr;
     
     global.GetHash = GetHash;
+}
+
+InitTeraHashConst();
+
+function InitTeraHashConst()
+{
     if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE || global.JINN_MODE)
     {
         BLOCKNUM_ALGO2 = 0;
         BLOCKNUM_HASH_NEW = 0;
         BLOCKNUM_TICKET_ALGO = 0;
+    }
+    else
+    {
+        DELTA_LONG_MINING = 5000;
+        BLOCKNUM_ALGO2 = 6560000;
+        BLOCKNUM_HASH_NEW = 10195000;
+        BLOCKNUM_TICKET_ALGO = 16070000;
     }
 }
 
@@ -374,8 +387,21 @@ function sha3arr2(Value1,Value2)
     return sha3(arr2(Value1, Value2), 44);
 }
 
-function GetBlockArrFromBuffer(BufRead,Info)
+var BlockArrFormat = [{BlockNum:"uint32", PrevSumPow:"uint", PrevHash:"hash", TreeHash:"zhash", MinerHash:"hash"}];
+var BlockFormatWrk = {};
+
+function GetBlockArrFormat()
 {
+    return BlockArrFormat;
+}
+function GetBufferFromBlockArr(ArrBlocks)
+{
+    return SerializeLib.GetBufferFromObject(ArrBlocks, BlockArrFormat, BlockFormatWrk);
+}
+
+function GetBlockArrFromBuffer(BufArr)
+{
+    return SerializeLib.GetObjectFromBuffer(BufArr, BlockArrFormat, BlockFormatWrk);
     
     if(!BufRead || BufRead.length < 10)
         return [];
@@ -610,6 +636,28 @@ function GetArrFromValue(Num)
     return arr;
 }
 
+function GetTxID(BlockNum,Body)
+{
+    var Nonce = ReadUintFromArr(Body, Body.length - 6);
+    var Arr = CreateTxID(Body, BlockNum, Nonce);
+    return Arr.slice(0, TX_TICKET_HASH_LENGTH + 6);
+}
+
+function CreateTxID(body,BlockNum,Nonce)
+{
+    var HASH = sha3(body, 31);
+    WriteUintToArrOnPos(HASH, BlockNum, TX_TICKET_HASH_LENGTH);
+    HASH = HASH.slice(0, TX_TICKET_HASH_LENGTH + 6);
+    return HASH;
+}
+
+function GetStrTxIDFromHash(Hash,BlockNum)
+{
+    var Hash2 = Hash.slice(0, TX_TICKET_HASH_LENGTH + 6);
+    WriteUintToArrOnPos(Hash2, BlockNum, TX_TICKET_HASH_LENGTH);
+    return GetHexFromArr(Hash2);
+}
+
 if(typeof global === "object")
 {
     global.ReadUint32FromArr = ReadUint32FromArr;
@@ -638,6 +686,8 @@ if(typeof global === "object")
     global.arr2 = arr2;
     
     global.GetBlockArrFromBuffer = GetBlockArrFromBuffer;
+    global.GetBufferFromBlockArr = GetBufferFromBlockArr;
+    
     global.shaarrblock2 = shaarrblock2;
     global.GetSeqHash = GetSeqHash;
     
@@ -649,6 +699,10 @@ if(typeof global === "object")
     global.CalcBlockHash = CalcBlockHash;
     
     global.GetArrFromValue = GetArrFromValue;
+    
+    global.GetStrTxIDFromHash = GetStrTxIDFromHash;
+    global.GetTxID = GetTxID;
+    global.CreateTxID = CreateTxID;
 }
 else
     if(typeof window === "object")

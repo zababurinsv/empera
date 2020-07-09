@@ -444,26 +444,8 @@ function SendTransaction(Body,TR,Wait,F)
                 TR._TxID = Data._TxID;
             if(Data._BlockNum)
                 TR._BlockNum = Data._BlockNum;
-            
-            TR._result = Err ? 0 : 1;
+            TR._result = (Result > 0) ? 1 : 0;
             TR._text = text;
-            
-            if(text === "Not add" || text === "Bad PoW")
-            {
-                CreateNonceAndSend(nonce + 1, NumNext + 1);
-                return;
-            }
-            else
-                if(text === "Bad time")
-                {
-                    if(DELTA_FOR_TIME_TX < 6)
-                    {
-                        DELTA_FOR_TIME_TX++;
-                        ToLog("New set Delta time: " + DELTA_FOR_TIME_TX);
-                        CreateNonceAndSend(0, NumNext + 1);
-                        return;
-                    }
-                }
             
             if(Wait && TR._result)
             {
@@ -471,7 +453,7 @@ function SendTransaction(Body,TR,Wait,F)
             }
             else
             {
-                F(TR._result < 1 ? 0 : 1, text);
+                F(TR._result, text);
             }
         });
     };

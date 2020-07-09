@@ -188,6 +188,7 @@ class AccountApp extends require("./dapp")
             }"
         
         this.SIZE_ACCOUNT_ROW = 6 + 33 + 40 + (6 + 4 + 6 + 84) + 6 + 6 + 9
+        
         this.DBState = new MerkleDBRow("accounts-state", this.SIZE_ACCOUNT_ROW, this.FORMAT_ACCOUNT_ROW, bReadOnly)
         this.FORMAT_ACCOUNT_ROW_REST = "{\
             Arr:[{\
@@ -539,13 +540,6 @@ class AccountApp extends require("./dapp")
                     {
                         Result = "BAD ACCOUNT HASH"
                         ToLog("2. ****FIND BAD ACCOUNT HASH IN BLOCK: " + BlockNumHash + " DO BLOCK=" + BlockNum, 3)
-                        if(global.DEBUG_EXIT_ON_BADS)
-                        {
-                            if(!StopTxProcess)
-                                ToLog("STOP TX-PROCESS - ON BAD ACCOUNT HASH, RESTART NODE PLS")
-                            global.StopTxProcess = 1
-                            break;
-                        }
                     }
                     else
                     {

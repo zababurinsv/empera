@@ -225,7 +225,7 @@ switch(global.MODE_RUN)
         global.REST_START_COUNT = 0;
         global.LOAD_TO_BEGIN = 0;
         
-        global.UPDATE_CODE_JINN = 1641;
+        global.UPDATE_CODE_JINN = 0;
         global.UPDATE_CODE_JINN_KTERA = global.UPDATE_CODE_JINN;
         global.NEW_FORMULA_JINN_KTERA = 3 * 3;
         

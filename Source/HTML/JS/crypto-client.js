@@ -134,7 +134,7 @@ window.SetBlockChainConstant = function (Data)
     if(NETWORK === "LOCAL")
         window.LOCAL_RUN = 1;
     else
-        if(window.NETWORK.substr(0, 9) === "TERA-TEST")
+        if(window.NETWORK.substr(0, 9) === "TEST-JINN")
             window.TEST_NETWORK = 1;
     
     var DeltaServerClient = new Date() - Data.CurTime;
@@ -150,6 +150,9 @@ window.SetBlockChainConstant = function (Data)
     window.NEW_SIGN_TIME = Data.NEW_SIGN_TIME;
     window.CONSENSUS_PERIOD_TIME = Data.CONSENSUS_PERIOD_TIME;
     window.JINN_MODE = Data.JINN_MODE;
+    
+    InitTeraHashConst();
+    
     window.GetCurrentBlockNumByTime = function (Delta_Time)
     {
         var CurrentTime = Date.now() + DELTA_CURRENT_TIME2;

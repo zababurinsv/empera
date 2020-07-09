@@ -9,7 +9,7 @@
 */
 
 
-window.CLIENT_VERSION = 18;
+window.CLIENT_VERSION = 19;
 var MAX_CLIENT_LOG_SIZE = 64000;
 
 function $(id)
@@ -1431,7 +1431,7 @@ MapCurrencyIcon[16] = "./PIC/B.svg";
 
 function InitMapCurrency()
 {
-    if(window.NETWORK_NAME === "TERA-TEST")
+    if(window.NETWORK_NAME === "TEST-JINN")
     {
         MapCurrency = {};
         MapCurrency[0] = "TERA";

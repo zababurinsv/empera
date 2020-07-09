@@ -13,76 +13,6 @@ module.exports.Init = Init;
 function Init(Engine)
 {
     
-    SERVER.CheckOnStartComplete = 1;
-    
-    SERVER.BlockNumDBMin = 0;
-    Object.defineProperty(SERVER, "BlockNumDB", {set:function (x)
-        {
-        }, get:function (x)
-        {
-            return Engine.GetMaxNumBlockDB();
-        }, });
-    
-    function GetBlockNumTx(arr)
-    {
-        var Delta_Time = 0;
-        
-        var BlockNum = GetCurrentBlockNumByTime(Delta_Time);
-        if(arr[0] === TYPE_TRANSACTION_CREATE)
-        {
-            var BlockNum2 = Math.floor(BlockNum / 10) * 10;
-            if(BlockNum2 < BlockNum)
-                BlockNum2 = BlockNum2 + 10;
-            BlockNum = BlockNum2;
-        }
-        
-        return BlockNum;
-    };
-    
-    SERVER.AddTransaction = function (Tx0)
-    {
-        var Body = Tx0.body;
-        var BlockNum = GetBlockNumTx(Body);
-        var Tx = Engine.GetTx(Body, BlockNum, undefined, 6);
-        
-        if(JINN_CONST.TX_CHECK_OPERATION_ID)
-        {
-            Engine.CheckTxOperationID(Tx, BlockNum);
-            if(Tx.ErrOperationID)
-                return TX_RESULT_OPERATIOON_ID;
-        }
-        
-        if(JINN_CONST.TX_CHECK_SIGN_ON_ADD)
-        {
-            Engine.CheckTxSign(Tx, BlockNum);
-            if(Tx.ErrSign)
-                return TX_RESULT_SIGN;
-        }
-        
-        if(!Engine.IsValidateTx(Tx, "ERROR SERVER.AddTransaction", BlockNum))
-            return TX_RESULT_BAD_TYPE;
-        
-        Tx0._TxID = GetStrTxIDFromHash(Tx.HASH, BlockNum);
-        Tx0._BlockNum = BlockNum;
-        
-        var TxArr = [Tx];
-        var CountSend = Engine.AddCurrentProcessingTx(BlockNum, TxArr);
-        if(CountSend === 1)
-            return 1;
-        else
-            return TX_RESULT_WAS_SEND;
-    };
-    
-    SERVER.CheckCreateTransactionObject = function (Tr,SetTxID,BlockNum)
-    {
-        var Body = Tr.body;
-        Tr.IsTx = 1;
-        if(SetTxID)
-            Tr.TxID = GetHexFromArr(GetTxID(BlockNum, Body));
-        Tr.power = 0;
-        Tr.TimePow = 0;
-    };
-    
     Engine.GetTxSenderNum = function (Tx,BlockNum)
     {
         
@@ -146,118 +76,6 @@ function Init(Engine)
         else
             return 0;
     };
-    let CloseOld = SERVER.Close.bind(SERVER);
-    SERVER.ClearDataBase = function ()
-    {
-        if(global.TX_PROCESS && global.TX_PROCESS.RunRPC)
-            global.TX_PROCESS.RunRPC("ClearDataBase", {});
-        
-        Engine.ClearDataBase();
-    };
-    SERVER.Close = function ()
-    {
-        CloseOld();
-        Engine.Close();
-    };
-    
-    SERVER.WriteBlockDB = function (Block)
-    {
-        Engine.ConvertFromTera(Block, 1);
-        return Engine.SaveToDB(Block);
-    };
-    SERVER.WriteBlockHeaderDB = function (Block,bPreSave)
-    {
-        Engine.ConvertFromTera(Block);
-        return Engine.SaveToDB(Block);
-    };
-    
-    SERVER.ReadBlockDB = function (BlockNum)
-    {
-        var Block = Engine.GetBlockDB(BlockNum);
-        Engine.ConvertToTera(Block, 1);
-        return Block;
-    };
-    
-    SERVER.CheckLoadBody = function (Block)
-    {
-        Engine.CheckLoadBody(Block);
-        Engine.ConvertToTera(Block, 1);
-    };
-    
-    SERVER.ReadBlockHeaderDB = function (BlockNum)
-    {
-        var Block = Engine.GetBlockHeaderDB(BlockNum);
-        Engine.ConvertToTera(Block, 0);
-        return Block;
-    };
-    SERVER.ReadBlockHeaderFromMapDB = SERVER.ReadBlockHeaderDB;
-    
-    SERVER.TruncateBlockDB = function (LastNum)
-    {
-        var Result = Engine.TruncateChain(LastNum);
-        
-        return Result;
-    };
-    
-    SERVER.GetMaxNumBlockDB = function ()
-    {
-        return Engine.GetMaxNumBlockDB();
-    };
-    
-    SERVER.FindStartBlockNum222 = function ()
-    {
-        return Engine.GetMaxNumBlockDB();
-    };
-    
-    function ErrorAPICall()
-    {
-        ToLogTrace("Error API call");
-        return 0;
-    };
-    
-    function ErrorTODO()
-    {
-        ToLogTrace("TODO");
-        return 0;
-    };
-    
-    SERVER.WriteBlockDBFinaly = ErrorAPICall;
-    SERVER.WriteBodyDB = ErrorAPICall;
-    
-    SERVER.WriteBodyResultDB = ErrorTODO;
-    
-    SERVER.CreateGenesisBlocks = function ()
-    {
-    };
-    SERVER.CheckStartedBlocks = function ()
-    {
-        var CurNumTime = GetCurrentBlockNumByTime();
-        if(SERVER.BlockNumDB > CurNumTime)
-        {
-            SERVER.TruncateBlockDB(CurNumTime);
-        }
-        var BlockNum = SERVER.CheckBlocksOnStartReverse(SERVER.BlockNumDB);
-        BlockNum = BlockNum - 10000;
-        if(BlockNum < 0)
-            BlockNum = 0;
-        ToLog("CheckStartedBlocks at " + BlockNum);
-        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum, 0);
-        BlockNum = SERVER.CheckBlocksOnStartFoward(BlockNum - 100, 1);
-        
-        if(BlockNum < SERVER.BlockNumDB)
-        {
-            BlockNum--;
-            ToLog("******************************** SET NEW BlockNumDB = " + BlockNum + "/" + SERVER.BlockNumDB);
-            if(global.DEV_MODE)
-                throw "STOP AND EXIT!";
-            
-            SERVER.TruncateBlockDB(BlockNum);
-        }
-        global.glStartStat = 1;
-    };
-    
-    SERVER.GetLinkHash = ErrorAPICall;
-    SERVER.GetLinkHashDB = ErrorAPICall;
     
     global.ON_USE_CONST = function ()
     {
@@ -265,6 +83,10 @@ function Init(Engine)
         
         if(global.WEB_PROCESS)
             global.WEB_PROCESS.UpdateConst = 1;
+    };
+    SERVER.DO_CONSTANT = function ()
+    {
+        ON_USE_CONST();
     };
     
     Engine.ChildIDCounter = 10000;

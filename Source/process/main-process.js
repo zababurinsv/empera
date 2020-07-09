@@ -25,6 +25,10 @@ console.log("DATA DIR: " + global.DATA_PATH);
 console.log("PROGRAM DIR: " + global.CODE_PATH);
 
 require("../core/library");
+require("../core/crypto-library");
+require("../core/upnp.js");
+
+require("../system");
 
 ToLog(os.platform() + " (" + os.arch() + ") " + os.release());
 
@@ -37,8 +41,6 @@ if(VerArr[0] < 8)
     ToError("Error version of NodeJS=" + VerArr[0] + "  Pls, download new version from www.nodejs.org and update it. The minimum version must be 8");
     process.exit();
 }
-
-var CServer = require("../core/server");
 
 require("../core/tests");
 
@@ -241,6 +243,19 @@ function RunServer()
     ToLog("NETWORK: " + GetNetworkName());
     ToLog("VERSION: " + DEF_VERSION);
     
+    if(!global.JINN_MODE)
+    {
+        RunServerOld();
+    }
+    else
+    {
+        StartJinn();
+    }
+}
+
+function RunServerOld()
+{
+    
     if(global.NET_WORK_MODE)
     {
         if(!NET_WORK_MODE.ip)
@@ -288,25 +303,17 @@ function RunServer()
     
     KeyPair.setPrivateKey(Buffer.from(ServerPrivKey));
     
-    if(global.JINN_MODE)
-    {
-        START_IP = global.JINN_IP;
-        START_PORT_NUMBER = global.JINN_PORT;
-    }
-    
+    var CServer = require("../core/server");
     var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, global.JINN_MODE);
-    
-    if(global.JINN_MODE)
-    {
-        StartJinn();
-        return;
-    }
     
     DoStartFindList();
 }
 
 function StartJinn()
 {
+    global.START_IP = global.JINN_IP;
+    global.START_PORT_NUMBER = global.JINN_PORT;
+    
     var JinnLib = require("../jinn/tera");
     if(!global.JINN_IP)
         global.JINN_IP = "0.0.0.0";
@@ -316,10 +323,8 @@ function StartJinn()
     {
         JinnLib.Create();
         SERVER.CanSend = 2;
-        setTimeout(function ()
-        {
-            SERVER.CheckStartedBlocks();
-        }, 800);
+        require("../core/wallet");
+        setTimeout(SERVER.CheckStartedBlocks, 800);
     });
 }
 

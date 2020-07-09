@@ -59,6 +59,7 @@ window.onload = function ()
                 Storage.setItem("NETWORK", Data.NETWORK);
                 console.log("Default network: " + Data.NETWORK);
                 SetServerList(Data.NETWORK);
+                SetBlockChainConstant(Data);
                 OnLoad();
             }
         });

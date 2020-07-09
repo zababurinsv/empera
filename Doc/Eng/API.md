@@ -3,10 +3,11 @@ Works with update version 0.1263
 
 Official public gateways supporting this API:
 * https://teraexplorer.org
+* https://t1.teraexplorer.com
 * https://t2.teraexplorer.com
-* https://t3.teraexplorer.com
 * https://t4.teraexplorer.com
 * https://t5.teraexplorer.com
+* http://terablockchain.org
 * http://dappsgate.com
 
 

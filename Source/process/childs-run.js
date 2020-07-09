@@ -71,10 +71,7 @@ function AddTransactionFromWeb(Params)
         return {Result:0};
     
     var body;
-    if(global.JINN_MODE)
-        body = GetArrFromHex(Params.HexValue.substr(0, Params.HexValue.length - 12 * 2));
-    else
-        body = GetArrFromHex(Params.HexValue);
+    body = GetArrFromHex(Params.HexValue.substr(0, Params.HexValue.length - 12 * 2));
     
     if(global.TX_PROCESS && global.TX_PROCESS.Worker)
     {

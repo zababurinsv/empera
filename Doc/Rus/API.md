@@ -3,10 +3,11 @@
 
 Официальные публичные шлюзы, поддерживающие этот API:
 * https://teraexplorer.org
+* https://t1.teraexplorer.com
 * https://t2.teraexplorer.com
-* https://t3.teraexplorer.com
 * https://t4.teraexplorer.com
 * https://t5.teraexplorer.com
+* http://terablockchain.org
 * http://dappsgate.com
 
 

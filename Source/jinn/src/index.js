@@ -30,7 +30,8 @@ if(typeof window !== "object" || global.NWMODE)
     if(!global.RBTree)
         require("../extlib/RBTree.js");
     
-    require("./terabuf.js");
+    if(!global.SerializeLib)
+        require("../extlib/terabuf.js");
     require("./jinn-log.js");
     require("./jinn-stat.js");
     

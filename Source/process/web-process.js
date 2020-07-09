@@ -105,25 +105,17 @@ if(!global.HTTP_HOSTING_PORT)
     process.exit();
 }
 
-var CServerDB = require("../core/db/block-db");
-var KeyPair = crypto.createECDH('secp256k1');
-KeyPair.setPrivateKey(Buffer.from([77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77,
-77, 77, 77, 77, 77, 77, 77, 77, 77, 77]));
-global.SERVER = new CServerDB(KeyPair, undefined, undefined, false, true);
 
-if(global.JINN_MODE)
-{
-    SERVER.port = 0;
-    SERVER.ip = "0.0.0.0";
-    
-    var JinnLib = require("../jinn/tera");
-    var Map = {"Block":1, "BlockDB":1, "Log":1, };
-    JinnLib.Create(Map);
-}
+
+var JinnLib = require("../jinn/tera");
+var Map = {"Block":1, "BlockDB":1, "Log":1, };
+JinnLib.Create(Map);
 
 global.HTTP_PORT_NUMBER = 0;
 require("../core/html-server");
-require("../core/transaction-validator");
+require("../system");
+
+
 
 global.STAT_MODE = 1;
 setInterval(PrepareStatEverySecond, 1000);
@@ -317,6 +309,7 @@ WalletFileMap["coinlib.js"] = 1;
 WalletFileMap["client.js"] = 1;
 WalletFileMap["diagram.js"] = 1;
 WalletFileMap["sha3.js"] = 1;
+WalletFileMap["terabuf.js"] = 1;
 WalletFileMap["terahashlib.js"] = 1;
 WalletFileMap["wallet-web.js"] = 1;
 WalletFileMap["wallet-lib.js"] = 1;
@@ -1176,10 +1169,10 @@ setInterval(function ()
         ADD_TO_STAT("MAX:HASH_RATE_B", AvgPow);
     }
     
-    var Count = COUNT_BLOCK_PROOF + 16 - 1;
+    var Count = COUNT_BLOCK_PROOF;
     if(MaxNumBlockDB > Count)
     {
-        var StartNum = MaxNumBlockDB - Count;
+        var StartNum = MaxNumBlockDB - Count + 1;
         NodeBlockChain = SERVER.BlockChainToBuf(StartNum, StartNum, MaxNumBlockDB);
     }
 }

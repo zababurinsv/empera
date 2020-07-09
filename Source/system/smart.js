@@ -8,7 +8,6 @@
  * Telegram:  https://t.me/terafoundation
 */
 
-
 "use strict";
 
 require("../HTML/JS/lexer.js");

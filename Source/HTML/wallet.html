@@ -1712,13 +1712,13 @@
 
         <DIV id="TabExplorer" style="display: none">
 
+            <INPUT type="button" onclick="RestartNode()"  class="bt btdoit btutil" value="Restart node">
             <INPUT type="button" onclick="window.Open('./HTML/stat.html','counters',920)" class="btdoit btopen bt" id="idCounters" value="Counters">
 <!--            <INPUT type="button" onclick="window.Open('./HTML/chains.html','chains',1240,600)" class="btdoit btopen bt" id="idChains" value="Chains">-->
             <INPUT type="button" onclick="window.Open('./HTML/console.html','console',1240)" class="btdoit btopen bt" id="idConsole" value="Console">
             <INPUT type="button" onclick="window.Open('./HTML/monitor.html','monitor',1200)" class="btdoit btopen bt" id="idMonitor" value="Monitor">
 
             <INPUT type="button" onclick="window.Open('./HTML/network.html','network',1200)" class="btdoit btopen bt" id="idNetwork" value="Network">
-            <INPUT type="button" onclick="RestartNode()"  class="bt btdoit btutil" value="Restart node">
 
 
             <BR>
@@ -1796,7 +1796,7 @@
                             <th id="GetHexFromArr(Item.PowHash)" class="hash">PowHash</th>
                             <th id="GetHexFromArr(Item.Hash)" class="hash">Hash</th>
 
-<!--                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
+                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>
 <!--                            <th id="GetHexFromArr(Item.SeqHash)" class="hash">SeqHash</th>-->
 <!--                            <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>-->
 <!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->
@@ -1889,11 +1889,11 @@
                     <DIV id="view_header" >UTILITES<BR></DIV>
 
                     Number of blocks in depth:<INPUT type="number" id="idBlockCount" onchange = "SaveValues()" value="0"><BR>
+                    <INPUT type="button" onclick="StartLoadNewCode();InitArrInfo();" class="btdoit btutil bt" value="Update code">
                     <INPUT type="button" onclick="RewriteTransactions()"  class="bt btdoit btutil" value="Rewrite tx">
                     <INPUT type="button" onclick="RewriteAllTransactions()"  class="bt btdoit btutil" value="Rewrite All tx">
                     <INPUT type="button" onclick="TruncateBlockChain()" class="btdoit btutil bt" value="Truncate chain">
                     <INPUT type="button" onclick="ClearDataBase();InitArrInfo();" class="btdoit btutil bt" value="Clear DataBase">
-                    <INPUT type="button" onclick="StartLoadNewCode();InitArrInfo();" class="btdoit btutil bt" value="Update code">
 
 
                     <INPUT type="button" id="idCleanChain" onclick="CleanChain()"  class="btdoit btutil bt" style="display: none;" value="DEV:Clean chain">

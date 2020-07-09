@@ -11,11 +11,6 @@
 
 
 const DELTA_LONG_MINING = 5000;
-var BLOCKNUM_ALGO2 = 6560000;
-if(global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE || global.JINN_MODE)
-{
-    BLOCKNUM_ALGO2 = 0;
-}
 
 require('./library.js');
 require('./crypto-library.js');
@@ -25,11 +20,6 @@ var DELTA_NONCE = Math.pow(2, 40) * global.MINING_VERSION_NUM;
 
 function CreateHashMinimal(Block,MinerID)
 {
-    if(Block.BlockNum < BLOCKNUM_ALGO2)
-    {
-        ToLog("BlockNum < BLOCKNUM_ALGO2");
-        return false;
-    }
     
     var PrevHashNum = ReadUint32FromArr(Block.PrevHash, 28);
     
@@ -282,44 +272,3 @@ global.DoPumpMemoryHash = DoPumpMemoryHash;
 global.FindMiningPOW = FindMiningPOW;
 global.CreatePOWVersionX = FindMiningPOW;
 
-
-
-
-global.GetTxID = GetTxID;
-function GetTxID(BlockNum,Body)
-{
-    var Nonce = ReadUintFromArr(Body, Body.length - 6);
-    var Arr = CreateTxID(Body, BlockNum, Nonce);
-    return Arr.slice(0, TX_TICKET_HASH_LENGTH + 6);
-}
-
-global.CreateTxID = CreateTxID;
-function CreateTxID(body,BlockNum,Nonce)
-{
-    if(global.JINN_MODE)
-    {
-        var HASH = sha3(body, 31);
-        WriteUintToArrOnPos(HASH, BlockNum, TX_TICKET_HASH_LENGTH);
-        HASH = HASH.slice(0, TX_TICKET_HASH_LENGTH + 6);
-        return HASH;
-    }
-    
-    body.writeUIntLE(BlockNum, body.length - 12, 6);
-    body.writeUIntLE(Nonce, body.length - 6, 6);
-    
-    var HASH = sha3(body, 31);
-    var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    for(var i = 0; i < TX_TICKET_HASH_LENGTH; i++)
-        FullHashTicket[i] = HASH[i];
-    
-    WriteUintToArrOnPos(FullHashTicket, BlockNum, TX_TICKET_HASH_LENGTH);
-    return FullHashTicket;
-}
-
-global.GetStrTxIDFromHash = GetStrTxIDFromHash;
-function GetStrTxIDFromHash(Hash,BlockNum)
-{
-    var Hash2 = Hash.slice(0, TX_TICKET_HASH_LENGTH + 6);
-    WriteUintToArrOnPos(Hash2, BlockNum, TX_TICKET_HASH_LENGTH);
-    return GetHexFromArr(Hash2);
-}

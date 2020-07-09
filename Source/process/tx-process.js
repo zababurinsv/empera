@@ -22,6 +22,7 @@ require("../core/library");
 
 
 global.READ_ONLY_DB = 0;
+require("../system");
 
 require("./child-process");
 
@@ -50,25 +51,13 @@ global.SetStatMode = function (Val)
     return global.STAT_MODE;
 }
 
-
-global.HTTP_PORT_NUMBER = 0;
-var CServerDB = require("../core/transaction-validator");
 global.TreeFindTX = new STreeBuffer(30 * 1000, CompareItemHashSimple, "string");
 
-var KeyPair = crypto.createECDH('secp256k1');
-KeyPair.setPrivateKey(Buffer.from([77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77,
-77, 77, 77, 77, 77, 77, 77, 77, 77, 77]));
-global.SERVER = new CServerDB(KeyPair, undefined, undefined, false, true);
 
-if(global.JINN_MODE)
-{
-    SERVER.port = 0;
-    SERVER.ip = "0.0.0.0";
-    
-    var JinnLib = require("../jinn/tera");
-    var Map = {"Block":1, "BlockDB":1, "Log":1, };
-    JinnLib.Create(Map);
-}
+
+var JinnLib = require("../jinn/tera");
+var Map = {"Block":1, "BlockDB":1, "Log":1, };
+JinnLib.Create(Map);
 
 global.bShowDetail = 0;
 global.StopTxProcess = 0;

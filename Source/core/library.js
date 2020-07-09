@@ -12,12 +12,14 @@
 var fs = require('fs');
 const os = require('os');
 
+global.TX_RESULT_NOCONNECT =  - 9;
 global.TX_RESULT_SIGN =  - 8;
 global.TX_RESULT_OPERATIOON_ID =  - 7;
 global.TX_RESULT_BAD_TYPE =  - 4;
 global.TX_RESULT_WAS_SEND = 3;
 
 global.TR_MAP_RESULT = {};
+TR_MAP_RESULT[TX_RESULT_NOCONNECT] = "The node has no connections";
 TR_MAP_RESULT[TX_RESULT_SIGN] = "Error sign";
 TR_MAP_RESULT[TX_RESULT_OPERATIOON_ID] = "Error Operatioon ID";
 
@@ -108,9 +110,12 @@ require('../HTML/JS/terahashlib.js');
 require("./crypto-library");
 
 
+require('../HTML/JS/terabuf.js');
 global.BufLib = require("../core/buffer");
 require('../HTML/JS/sha3.js');
 require('../HTML/JS/coinlib.js');
+
+require('./treebuffer.js');
 
 global.GetCurrentBlockNumByTime = function GetCurrentBlockNumByTime(Delta_Time)
 {

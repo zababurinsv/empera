@@ -94,7 +94,10 @@ function GetEngine(MapName)
     
     require("./tera-hash").Init(Engine);
     
+    require("./tera-link-server").Init(Engine);
+    require("./tera-link-process-tx").Init(Engine);
     require("./tera-link").Init(Engine);
+    require("./tera-link-code").Init(Engine);
     
     require("./tera-net-constant").Init(Engine);
     require("./tera-code-updater").Init(Engine);
@@ -185,3 +188,4 @@ function StartRun()
     
     setTimeout(StartRun, DeltaForStart);
 }
+

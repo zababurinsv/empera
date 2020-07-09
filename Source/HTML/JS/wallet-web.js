@@ -9,8 +9,8 @@
 */
 
 
-var MIN_VERSION = 1114;
-var COUNT_BLOCK_PROOF = 300;
+var MIN_VERSION = 2232;
+var COUNT_BLOCK_PROOF = 100;
 var MIN_SUM_POWER = 0;
 var MainServer = undefined;
 var MaxConnectedCount = 50;
@@ -339,9 +339,29 @@ function CalcPowFromBlockChain(BufRead)
     var Arr = GetBlockArrFromBuffer(BufRead);
     if(Arr.length === COUNT_BLOCK_PROOF)
     {
+        var FirstBlockNum = Arr[0].BlockNum;
+        var LastBlockNum = Arr[Arr.length - 1].BlockNum;
+        if(LastBlockNum + 10 < GetCurrentBlockNumByTime())
+            return 0;
+        
+        var PrevBlock = undefined;
         for(var i = 0; i < Arr.length; i++)
         {
+            var Block = Arr[i];
+            if(!Block || Block.BlockNum !== FirstBlockNum + i)
+                return 0;
+            if(PrevBlock)
+            {
+                if(!IsEqArr(PrevBlock.Hash, Block.PrevHash))
+                    return 0;
+            }
+            
+            Block.DataHash = CalcDataHash(Block.BlockNum, Block.PrevHash, Block.TreeHash, Block.PrevSumPow);
+            CalcBlockHash(Block, Block.DataHash, Block.MinerHash, Block.BlockNum, Block.PrevHash);
+            
             Sum += Arr[i].Power;
+            
+            PrevBlock = Block;
         }
     }
     return Sum;

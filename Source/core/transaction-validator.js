@@ -16,15 +16,20 @@ require("../system/accounts");
 require("../system/smart");
 require("../system/file");
 
+
 if(global.PROCESS_NAME === "MAIN")
 {
     require("./wallet");
 }
 
+ToLogTrace("Error - old code loading 1");
+
 module.exports = class CSmartContract extends require("./block-exchange")
 {
     constructor(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
     {
+        ToLogTrace("Error loading 2")
+        
         super(SetKeyPair, RunIP, RunPort, UseRNDHeader, bVirtual)
         
         this.BufHashTree = new RBTree(CompareArr)
