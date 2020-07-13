@@ -289,6 +289,7 @@ function Init(Engine)
         return undefined;
     };
     
+    Engine.StatSecondNum = Date.now();
     Engine.OnStatSecond = function ()
     {
         if(!Engine.GetCountAddr)
@@ -302,6 +303,14 @@ function Init(Engine)
         if(Engine.TeraLastStatNum === StatNum)
             return;
         Engine.TeraLastStatNum = StatNum;
+        
+        var DeltaStat = Date.now() - Engine.StatSecondNum;
+        Engine.StatSecondNum = Date.now();
+        if(global.JINN_WARNING >= 3 && DeltaStat > 1500)
+            ToLog("=============== DeltaStat: " + DeltaStat + " ms  !!!!");
+        else
+            if(global.JINN_WARNING >= 4)
+                ToLog("--------------- DeltaStat: " + DeltaStat + " ms");
         
         PrepareStatEverySecond();
         
@@ -327,6 +336,8 @@ function Init(Engine)
         Engine.NetConfiguration = 0;
         
         ADD_TO_STAT("ERRORS", JINN_STAT.ErrorCount);
+        
+        ADD_TO_STAT("DELTA_STAT", DeltaStat);
         
         global.glMemoryUsage = (process.memoryUsage().heapTotal / 1024 / 1024) >>> 0;
         global.glFreeMem = os.freemem() / 1024 / 1024;
@@ -535,4 +546,20 @@ function GetBusyTime()
 {
     var LocalBusyTime = (Date.now() - LastTimeIdle) * (100 / 50);
     return Math.max(LocalBusyTime, glBusyTime);
+}
+
+var PrevTimeIdle = 0;
+OnTimeIdle();
+function OnTimeIdle()
+{
+    
+    var CurTime = Date.now();
+    var Delta = CurTime - PrevTimeIdle;
+    if(Delta <= 51)
+    {
+        ADD_TO_STAT("TIME_IDLE", 5);
+    }
+    
+    setTimeout(OnTimeIdle, 49);
+    PrevTimeIdle = CurTime;
 }

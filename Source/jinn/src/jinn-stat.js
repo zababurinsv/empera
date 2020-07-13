@@ -146,4 +146,13 @@ function InitClass(Engine)
             JINN_STAT.Methods[Name] = 0;
         JINN_STAT.Methods[Name] += Length / 1024;
     };
+    
+    Engine.AddMethodStatRead = function (Method,deltaRead)
+    {
+        
+        var Name = "READ:" + Method;
+        if(!JINN_STAT.Methods[Name])
+            JINN_STAT.Methods[Name] = 0;
+        JINN_STAT.Methods[Name] += deltaRead;
+    };
 }

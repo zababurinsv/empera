@@ -251,8 +251,12 @@ function InitClass(Engine)
         if(typeof process === "object")
         {
             var startTime = process.hrtime();
+            var WasReads = JINN_STAT.ReadRowsDB;
             
             var Ret = F(Child, Data);
+            
+            var DeltaReads = JINN_STAT.ReadRowsDB - WasReads;
+            Engine.AddMethodStatRead(Method, DeltaReads);
             
             var Time = process.hrtime(startTime);
             var deltaTime = Time[0] * 1000 + Time[1] / 1e6;

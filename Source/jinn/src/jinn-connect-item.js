@@ -23,18 +23,21 @@ var glChildWorkNum = 0;
 function InitClass(Engine)
 {
     
-    Engine.RetNewConnectByIPPort = function (ip,port)
+    Engine.RetNewConnectByIPPort = function (ip,port0)
     {
-        port = port >>> 0;
+        var port = port0 >>> 0;
         
         if(!port)
         {
-            ToLogTrace("RetNewConnectByIPPort : Error port number = " + port);
+            ToLogTrace("RetNewConnectByIPPort : Error port number = " + port0 + " from " + ip);
             return undefined;
         }
         
         if(ip === "0.0.0.0")
             return undefined;
+        
+        ip = GetNormalIP(ip);
+        
         if(ip === Engine.ip && port === Engine.port)
             return undefined;
         
@@ -55,10 +58,12 @@ function InitClass(Engine)
     
     Engine.NewConnect = function (IDArr,ip,port)
     {
+        ip = GetNormalIP(ip);
+        
         if(ip === "0.0.0.0")
             return undefined;
         
-        if(global.LOCAL_RUN && ip !== "127.0.0.1")
+        if(global.LOCAL_RUN && global.IP_VERSION !== 6 && ip !== "127.0.0.1")
             return undefined;
         
         port = port >>> 0;
@@ -96,6 +101,8 @@ function InitClass(Engine)
     };
     Engine.SetIPPort = function (Child,ip,port)
     {
+        ip = GetNormalIP(ip);
+        
         Child.IDArr = CalcIDArr(ip, port);
         Child.IDStr = GetHexFromArr(Child.IDArr);
         

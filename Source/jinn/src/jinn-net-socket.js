@@ -31,6 +31,9 @@ function InitClass(Engine)
         {
             if(global.StopNetwork)
                 return;
+            
+            if(!Socket || !Socket.remoteAddress)
+                return;
             if(Engine.WasBanIP({address:Socket.remoteAddress}))
             {
                 Engine.CloseSocket(Socket, undefined, "WAS BAN", true);
@@ -81,7 +84,11 @@ function InitClass(Engine)
                 Engine.port = 30000;
         }
         
-        var LISTEN_IP = "0.0.0.0";
+        var LISTEN_IP;
+        if(global.IP_VERSION === 6)
+            LISTEN_IP = "::";
+        else
+            LISTEN_IP = "0.0.0.0";
         Engine.ToDebug("Prepare to run TCP server on " + LISTEN_IP + ":" + Engine.port);
         Engine.Server.listen(Engine.port, LISTEN_IP, function ()
         {
@@ -92,6 +99,8 @@ function InitClass(Engine)
     
     Engine.SetEventsProcessing = function (SOCKET,Child,StrConnect,bAll)
     {
+        if(bAll && !Engine.LinkSocketToChild(SOCKET, Child, StrConnect))
+            return;
         
         SOCKET.on('close', function (err)
         {
@@ -110,7 +119,6 @@ function InitClass(Engine)
         
         if(!bAll)
             return;
-        Engine.LinkSocketToChild(SOCKET, Child, StrConnect);
         SOCKET.on('data', function (data)
         {
             if(global.StopNetwork)
@@ -173,7 +181,10 @@ function InitClass(Engine)
     Engine.LinkSocketToChild = function (Socket,Child,ConnectType)
     {
         if(Socket.WasChild)
+        {
             ToLogTrace("Error LinkSocketToChild was Linked - " + ChildName(Child));
+            return 0;
+        }
         
         Child.ConnectType = ConnectType;
         Socket.WasChild = 1;
@@ -181,6 +192,7 @@ function InitClass(Engine)
         if(ConnectType === "Server")
             Child.DirectIP = 1;
         SetSocketStatus(Socket, 100);
+        return 1;
     };
     
     Engine.OnDeleteConnectNext = function (Child,StrError)
@@ -192,7 +204,6 @@ function InitClass(Engine)
 
 function InitAfter(Engine)
 {
-    Engine.CreateServer();
     
     Engine.CreateConnectionToChild = function (Child,F)
     {
@@ -208,9 +219,11 @@ function InitAfter(Engine)
         {
             if(State === 0)
             {
-                Child.ToLog("Connect to " + Child.Name(), 4);
+                Child.ToLog("Try connect to " + Child.Name(), 4);
                 Child.Socket = net.createConnection(Child.port, Child.ip, function ()
                 {
+                    Child.ToLog("OK create connection to " + Child.Name(), 4);
+                    
                     if(Child.Socket)
                     {
                         Engine.SetEventsProcessing(Child.Socket, Child, "Server", 1);
@@ -287,6 +300,10 @@ function InitAfter(Engine)
             return 0;
         }
     };
+    if(global.CLIENT_MODE)
+        return;
+    
+    Engine.CreateServer();
 }
 
 function SetSocketStatus(Socket,Status)

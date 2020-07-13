@@ -49,11 +49,6 @@ function Init(Engine)
         var COUNT_MEM_BLOCKS = 0;
         var NUM1 = 1240000;
         var NUM2 = 1400000;
-        if(global.LOCAL_RUN || global.FORK_MODE)
-        {
-            NUM1 = 1000000000000;
-            NUM2 = 1000000000000;
-        }
         
         if(BlockNum > global.BLOCKNUM_TICKET_ALGO)
         {
@@ -89,69 +84,69 @@ function Init(Engine)
         var arrContentResult = [];
         
         var arr = Block.arrContent;
-        if(arr)
-            for(var i = 0; i < arr.length; i++)
+        for(var i = 0; arr && i < arr.length; i++)
+        {
+            var HASH = sha3(arr[i], 37);
+            
+            if(SERVER.BufHashTree.find(HASH))
             {
-                var HASH = sha3(arr[i], 37);
-                
-                if(SERVER.BufHashTree.find(HASH))
-                {
-                    continue;
-                }
-                
-                var type = arr[i][0];
-                var App = DAppByType[type];
-                if(App)
-                {
-                    App.ResultTx = 0;
-                    DApps.Accounts.BeginTransaction();
-                    var StrHex = GetHexFromArr(HASH);
-                    var item;
-                    global.CurTrItem = undefined;
-                    if(global.TreeFindTX)
-                    {
-                        item = global.TreeFindTX.LoadValue(StrHex);
-                        if(item)
-                            global.CurTrItem = item.TX;
-                    }
-                    var Result = App.OnWriteTransaction(Block, arr[i], BlockNum, i);
-                    var SetResult = Result;
-                    if(Result === true)
-                    {
-                        if(App.ResultTx)
-                            SetResult = App.ResultTx;
-                        if(!DApps.Accounts.CommitTransaction(BlockNum, i))
-                            SetResult = 0;
-                    }
-                    else
-                    {
-                        
-                        DApps.Accounts.RollBackTransaction();
-                        SetResult = 0;
-                    }
-                    if(SetResult === true)
-                        SetResult = 1;
-                    arrContentResult[i] = SetResult;
-                    
-                    if(item)
-                    {
-                        var ResultStr = Result;
-                        if(Result === true || typeof Result === "number")
-                        {
-                            ResultStr = "Add to blockchain on Block: " + BlockNum;
-                            if(type === global.TYPE_TRANSACTION_FILE)
-                                ResultStr += ": file/" + BlockNum + "/" + i;
-                        }
-                        item.cmd = "RetFindTX";
-                        item.ResultStr = "" + ResultStr;
-                        item.bFinal = 1;
-                        item.Result = SetResult;
-                        process.send(item);
-                    }
-                    
-                    global.CurTrItem = undefined;
-                }
+                continue;
             }
+            
+            var type = arr[i][0];
+            var App = DAppByType[type];
+            if(App)
+            {
+                App.ResultTx = 0;
+                DApps.Accounts.BeginTransaction();
+                var StrHex = GetHexFromArr(HASH);
+                var item;
+                global.CurTrItem = undefined;
+                if(global.TreeFindTX)
+                {
+                    item = global.TreeFindTX.LoadValue(StrHex);
+                    if(item)
+                        global.CurTrItem = item.TX;
+                }
+                var Result = App.OnWriteTransaction(Block, arr[i], BlockNum, i);
+                var SetResult = Result;
+                if(Result === true)
+                {
+                    if(App.ResultTx)
+                        SetResult = App.ResultTx;
+                    if(!DApps.Accounts.CommitTransaction(BlockNum, i))
+                        SetResult = 0;
+                }
+                else
+                {
+                    ToLog("Block: " + BlockNum + " TxNum:" + i + " Err Result: " + Result, 3);
+                    
+                    DApps.Accounts.RollBackTransaction();
+                    SetResult = 0;
+                }
+                if(SetResult === true)
+                    SetResult = 1;
+                arrContentResult[i] = SetResult;
+                
+                if(item)
+                {
+                    var ResultStr = Result;
+                    if(Result === true || typeof Result === "number")
+                    {
+                        ResultStr = "Add to blockchain on Block: " + BlockNum;
+                        if(type === global.TYPE_TRANSACTION_FILE)
+                            ResultStr += ": file/" + BlockNum + "/" + i;
+                    }
+                    item.cmd = "RetFindTX";
+                    item.ResultStr = "" + ResultStr;
+                    item.bFinal = 1;
+                    item.Result = SetResult;
+                    process.send(item);
+                }
+                
+                global.CurTrItem = undefined;
+            }
+        }
         
         if(COUNT_MEM_BLOCKS)
         {

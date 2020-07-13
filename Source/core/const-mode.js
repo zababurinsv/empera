@@ -12,9 +12,6 @@
 
 switch(global.MODE_RUN)
 {
-    case "LOCAL":
-        global.NETWORK = "LOCAL";
-        global.LOCAL_RUN = 1;
     case "FORK":
         
         if(global.FORK_MODE || global.LOCAL_RUN === 1)
@@ -61,59 +58,6 @@ switch(global.MODE_RUN)
         
         global.REST_START_COUNT = 0;
         global.LOAD_TO_BEGIN = 0;
-        break;
-        
-    case "TEST":
-        global.TEST_NETWORK = 1;
-        global.STANDART_PORT_NUMBER = 40000;
-        
-        global.REST_BLOCK_SCALE = 100;
-        
-        var Num = Date.now() - 50 * 1000;
-        console.log("CURRENT NUM: " + (Math.trunc(Num / 1000) * 1000));
-        
-        global.SMART_BLOCKNUM_START = 0;
-        global.START_NETWORK_DATE = 1582830189000;
-        
-        global.START_MINING = 100;
-        global.REF_PERIOD_END = 0;
-        global.REF_PERIOD_MINING = 200;
-        global.MIN_POWER_POW_ACC_CREATE = 8;
-        
-        global.TRANSACTION_PROOF_COUNT = 200 * 1000;
-        global.MAX_SIZE_LOG = 20 * 1024 * 1024;
-        
-        global.START_BLOCK_ACCOUNT_HASH = 1850000;
-        global.START_BLOCK_ACCOUNT_HASH3 = 1;
-        
-        global.BLOCKNUM_TICKET_ALGO = 0;
-        
-        global.WALLET_NAME = "TEST";
-        global.NETWORK = "TERA-TEST";
-        
-        global.ALL_VIEW_ROWS = 1;
-        
-        global.NEW_ACCOUNT_INCREMENT = 1;
-        global.NEW_BLOCK_REWARD1 = 1;
-        global.NEW_FORMULA_START = 1;
-        global.NEW_FORMULA_KTERA = 3;
-        global.NEW_FORMULA_TARGET1 = 0;
-        global.NEW_FORMULA_TARGET2 = 1;
-        
-        global.NEW_SIGN_TIME = 1;
-        
-        global.MAX_LENGTH_SENDER_MAP = 100;
-        global.DELTA_START_SENDER_MAP = 12;
-        
-        global.REST_START_COUNT = 10000;
-        global.LOAD_TO_BEGIN = 2;
-        global.START_BAD_ACCOUNT_CONTROL = 0;
-        
-        global.UPDATE_CODE_1 = 0;
-        global.UPDATE_CODE_2 = 0;
-        global.UPDATE_CODE_3 = 0;
-        global.UPDATE_CODE_4 = 0;
-        global.EXPERIMENTAL_CODE = 0;
         break;
         
     case "TEST_JINN":

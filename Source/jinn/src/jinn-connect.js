@@ -173,8 +173,6 @@ function InitClass(Engine)
     {
         if(!Engine.CanConnect(Child))
             return 0;
-        
-        Child.ToLogNet("Create connect");
         Engine.CreateConnectionToChild(Child, function (result)
         {
             if(result)

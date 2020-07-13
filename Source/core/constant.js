@@ -12,7 +12,7 @@
 "use strict";
 
 
-global.UPDATE_CODE_VERSION_NUM = 2237;
+global.UPDATE_CODE_VERSION_NUM = 2247;
 global.MIN_JINN_VERSION_NUM = 2177;
 
 global.MIN_CODE_VERSION_NUM = 0;
@@ -20,7 +20,7 @@ global.MINING_VERSION_NUM = 0;
 global.DEBUG_TRAFFIC = 0;
 
 global.FORK_MODE = 0;
-global.NETWORK = "TERA-MAIN";
+global.NETWORK = "NONE";
 global.START_NETWORK_DATE = 1530446400000;
 global.CONSENSUS_PERIOD_TIME = 1000;
 
@@ -41,7 +41,7 @@ global.CONST_NAME_ARR = ["DELTA_CURRENT_TIME", "WALLET_NAME", "WALLET_DESCRIPTIO
 "USE_MINING", "MINING_START_TIME", "MINING_PERIOD_TIME", "POW_MAX_PERCENT", "COUNT_MINING_CPU", "SIZE_MINING_MEMORY", "POW_RUN_COUNT",
 "USE_AUTO_UPDATE", "RESTART_PERIOD_SEC", "WATCHDOG_DEV", "DEBUG_WALLET", "HTTP_HOSTING_PORT", "HTTPS_HOSTING_DOMAIN", "HTTP_MAX_COUNT_ROWS",
 "HTTP_ADMIN_PASSWORD", "HTTP_START_PAGE", "HTTP_CACHE_LONG", "HTTP_USE_ZIP", "WEB_LOG", "JINN_MAX_MEMORY_USE", "JINN_IP", "JINN_PORT",
-];
+"IP_VERSION", "CLIENT_MODE", ];
 
 global.WEB_LOG = 0;
 
@@ -53,6 +53,8 @@ global.JINN_DEBUG_INFO = 0;
 
 global.JINN_IP = "";
 global.JINN_PORT = 33000;
+global.IP_VERSION = 4;
+global.CLIENT_MODE = 0;
 
 
 global.DEBUG_EXIT_ON_BADS = 0;
@@ -372,7 +374,7 @@ function InitParamsArg()
                                     if(str.substr(0, 13) == "STARTNETWORK:")
                                     {
                                         global.START_NETWORK_DATE = parseInt(str.substr(13));
-                                        console.log("START_NETWORK_DATE: " + START_NETWORK_DATE);
+                                        ToLog("START_NETWORK_DATE: " + START_NETWORK_DATE);
                                     }
                                     else
                                         if(str.substr(0, 5) == "MODE:")

@@ -33,7 +33,7 @@ class CDBBlockCache extends global.CDBBodyCache
     {
         super(EngineID, FCalcBlockHash)
         
-        this.CacheBlock = new CCache(20000)
+        this.CacheBlock = new CCache(100000)
         this.CacheMainIndex = new CCache(200000)
         this.CacheChainIndex = new CCache(200000)
     }

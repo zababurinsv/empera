@@ -142,6 +142,8 @@ function InitClass(Engine)
     
     Engine.DoMyAddres = function (Child,myip)
     {
+        myip = GetNormalIP(myip);
+        
         if(myip && Engine.ip === "0.0.0.0" && !IsLocalIP(myip))
         {
             Child.myip = myip;

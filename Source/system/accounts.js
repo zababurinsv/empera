@@ -747,7 +747,7 @@ class AccountApp extends require("./dapp")
             return "Error length transaction";
         
         var CheckMinPower = 1;
-        if(BlockNum >= 7000000 || global.LOCAL_RUN || global.TEST_NETWORK || global.FORK_MODE)
+        if(BlockNum >= 7000000 || global.NETWORK !== "MAIN-JINN")
         {
             if(ContextFrom && ContextFrom.To.length === 1 && ContextFrom.To[0].ID === 0 && ContextFrom.To[0].SumCOIN >= PRICE_DAO(BlockNum).NewAccount)
             {
@@ -762,45 +762,32 @@ class AccountApp extends require("./dapp")
             }
         }
         this.CreateTrCount++
-        
-        var power;
-        if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
+        if(CheckMinPower && global.NETWORK === "MAIN-JINN")
         {
-            var Tr = {body:Body};
-            SERVER.CheckCreateTransactionObject(Tr, 0, BlockNum)
-            power = Tr.power
-        }
-        else
-        {
-            power = GetPowPower(shaarr(Body))
-        }
-        
-        if(global.TEST_NETWORK && BlockNum >= 3290000)
-        {
-            CheckMinPower = 0
-        }
-        if(global.LOCAL_RUN || global.FORK_MODE)
-        {
-            CheckMinPower = 0
-        }
-        if(global.TEST_NETWORK && global.JINN_MODE)
-        {
-            CheckMinPower = 0
-        }
-        
-        if(CheckMinPower && BlockNum < 19600000)
-        {
-            var MinPower;
-            if(BlockNum < 2500000)
-                MinPower = MIN_POWER_POW_ACC_CREATE
+            var power;
+            if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
+            {
+                power = this.GetPowTx(Body, BlockNum)
+            }
             else
-                if(BlockNum < 2800000)
-                    MinPower = MIN_POWER_POW_ACC_CREATE + 2
-                else
-                    MinPower = MIN_POWER_POW_ACC_CREATE + 3
+            {
+                power = GetPowPower(shaarr(Body))
+            }
             
-            if(power < MinPower)
-                return "Error min power POW for create account (update client)";
+            if(BlockNum < 19600000)
+            {
+                var MinPower;
+                if(BlockNum < 2500000)
+                    MinPower = MIN_POWER_POW_ACC_CREATE
+                else
+                    if(BlockNum < 2800000)
+                        MinPower = MIN_POWER_POW_ACC_CREATE + 2
+                    else
+                        MinPower = MIN_POWER_POW_ACC_CREATE + 3
+                
+                if(power < MinPower)
+                    return "Error min power POW for create account (update client)";
+            }
         }
         
         try
@@ -839,6 +826,22 @@ class AccountApp extends require("./dapp")
         
         this.ResultTx = Account.Num
         return true;
+    }
+    
+    GetPowTx(Body, BlockNum)
+    {
+        var HASH = sha3(Body);
+        var HashTicket = HASH.slice(0, 10);
+        var FullHashTicket = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        for(var i = 0; i < 10; i++)
+            FullHashTicket[i] = HashTicket[i]
+        
+        WriteUintToArrOnPos(FullHashTicket, BlockNum, 10)
+        
+        var HashPow = sha3(FullHashTicket, 32);
+        var power = GetPowPower(HashPow);
+        
+        return power;
     }
     
     TRTransferMoney(Block, Body, BlockNum, TrNum, format_money_transfer, workstructtransfer)

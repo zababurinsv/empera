@@ -12,7 +12,6 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
-    ToLog("Init tera-addr...");
     
     Engine.LastAddrSaveTime = Date.now();
     Engine.DoNodeAddr = function ()
@@ -60,6 +59,8 @@ function Init(Engine)
     
     Engine.LoadAddrOnStart = function ()
     {
+        if(global.LOCAL_RUN)
+            return;
         var AddrData = LoadParams(GetDataPath("jinn-nodes-" + global.GETNODES_VERSION + ".lst"), {});
         
         if(AddrData.AddrItem && AddrData.AddrItem.ip)

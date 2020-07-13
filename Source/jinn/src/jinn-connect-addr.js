@@ -25,7 +25,9 @@
 'use strict';
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Addr"});
 
-global.GETNODES_VERSION = 6;
+global.GETNODES_VERSION = 7;
+if(global.NETWORK === "MAIN-JINN")
+    global.GETNODES_VERSION = 6;
 
 const POW_MEMORY_BIT_SIZE = 18;
 const POW_MAX_ITEM_IN_MEMORRY = 1 << POW_MEMORY_BIT_SIZE;
@@ -83,8 +85,12 @@ function InitClass(Engine)
         });
     };
     Engine.GETNODES_SEND = {Version:"byte", Iterator:{Level:"byte", Arr:["uint16"]}};
-    Engine.GETNODES_RET = {Version:"byte", Iterator:{Level:"byte", Arr:["uint16"]}, Arr:[{ip:"str30", port:"uint16", BlockNum:"uint32",
-            Nonce:"uint"}]};
+    if(global.GETNODES_VERSION <= 6)
+        Engine.GETNODES_RET = {Version:"byte", Iterator:{Level:"byte", Arr:["uint16"]}, Arr:[{ip:"str30", port:"uint16", BlockNum:"uint32",
+                Nonce:"uint"}]};
+    else
+        Engine.GETNODES_RET = {Version:"byte", Iterator:{Level:"byte", Arr:["uint16"]}, Arr:[{ip:"str40", port:"uint16", BlockNum:"uint32",
+                Nonce:"uint"}]};
     Engine.GETNODES = function (Child,Data)
     {
         if(!Data || Data.Version !== GETNODES_VERSION)
@@ -131,7 +137,9 @@ function InitClass(Engine)
     };
     Engine.AddNodeAddr = function (AddrItem,FromChild)
     {
-        if(global.LOCAL_RUN && AddrItem.ip !== "127.0.0.1")
+        AddrItem.ip = GetNormalIP(AddrItem.ip);
+        
+        if(global.LOCAL_RUN && global.IP_VERSION !== 6 && AddrItem.ip !== "127.0.0.1")
             return 0;
         
         if(AddrItem.ip === "0.0.0.0")
@@ -465,8 +473,11 @@ function InitClass(Engine)
         var Arr = ip.match(/[\w\.]/g);
         if(!Arr || Arr.length !== ip.length)
         {
-            Engine.ToLog("Not correct ip address: " + ip, 3);
-            return 0;
+            if(inet_pton(ip) === false)
+            {
+                Engine.ToLog("Not correct ip address: " + ip, 3);
+                return 0;
+            }
         }
         
         if(JINN_CONST.UNIQUE_IP_MODE)
@@ -611,13 +622,18 @@ function FNodeAddr(a,b)
 
 function CalcIDArr(ip,port)
 {
+    ip = GetNormalIP(ip);
     var HostName = String(ip) + ":" + port;
     var IDArr = sha3(HostName, 3);
     return IDArr;
 }
-
-global.CalcIDArr = CalcIDArr;
-global.FNodeAddr = FNodeAddr;
+function GetNormalIP(ip)
+{
+    if(ip.substr(0, 7) === "::ffff:")
+        ip = ip.substr(7);
+    
+    return ip;
+}
 
 function ChildName(Child)
 {
@@ -639,5 +655,63 @@ function IsLocalIP(addr)
         return 0;
 }
 
+function inet_pton(a)
+{
+    
+    var r;
+    var m;
+    var x;
+    var i;
+    var j;
+    var f = String.fromCharCode;
+    m = a.match(/^(?:\d{1,3}(?:\.|$)){4}/);
+    if(m)
+    {
+        m = m[0].split('.');
+        m = f(m[0]) + f(m[1]) + f(m[2]) + f(m[3]);
+        return m.length === 4 ? m : false;
+    }
+    r = /^((?:[\da-f]{1,4}(?::|)){0,8})(::)?((?:[\da-f]{1,4}(?::|)){0,8})$/;
+    m = a.match(r);
+    if(m)
+    {
+        for(j = 1; j < 4; j++)
+        {
+            if(j === 2 || m[j].length === 0)
+            {
+                continue;
+            }
+            m[j] = m[j].split(':');
+            for(i = 0; i < m[j].length; i++)
+            {
+                m[j][i] = parseInt(m[j][i], 16);
+                if(isNaN(m[j][i]))
+                {
+                    return false;
+                }
+                m[j][i] = f(m[j][i] >> 8) + f(m[j][i] & 0xFF);
+            }
+            m[j] = m[j].join('');
+        }
+        x = m[1].length + m[3].length;
+        if(x === 16)
+        {
+            return m[1] + m[3];
+        }
+        else
+            if(x < 16 && m[2].length > 0)
+            {
+                return m[1] + (new Array(16 - x + 1)).join('\x00') + m[3];
+            }
+    }
+    return false;
+}
+
+global.CalcIDArr = CalcIDArr;
+global.FNodeAddr = FNodeAddr;
+global.GetNormalIP = GetNormalIP;
+
 global.ChildName = ChildName;
 global.IsLocalIP = IsLocalIP;
+global.inet_pton = inet_pton;
+

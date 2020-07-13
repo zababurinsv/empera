@@ -327,6 +327,7 @@ function InitClass(Engine)
         BodyTreeHash:"zhash", };
     Engine.MAXHASH = function (Child,Data)
     {
+        var WasReads = JINN_STAT.ReadRowsDB;
         Engine.MaxHashReceiveCount++;
         
         if(!Data)
@@ -443,6 +444,13 @@ function InitClass(Engine)
         
         Engine.MaxHashReceiveCount++;
         
+        var DeltaReads = JINN_STAT.ReadRowsDB - WasReads;
+        if(DeltaReads > 5000 && global.JINN_WARNING >= 3)
+        {
+            Child.ToLog("DeltaReads=" + DeltaReads + " HeaderArr=" + HeaderArr.length + "  BodyArr=" + BodyArr.length + " to " + ChildName(Child));
+            Child.ToLog("Data: " + JSON.stringify(Data));
+        }
+        
         return {result:1, Mode:RetMode, HeaderArr:HeaderArr, BodyArr:BodyArr, BodyTreeNum:BodyTreeNum, BodyTreeHash:BodyTreeHash};
     };
     
@@ -555,6 +563,9 @@ function InitClass(Engine)
                 var Num = LoadNum - n;
                 if(Num <= 0)
                     break;
+                if(n >= JINN_CONST.MAX_ITEMS_FOR_LOAD * 2)
+                    break;
+                
                 var Block = Engine.DB.ReadBlockMain(Num, 1);
                 if(!Block)
                     break;
@@ -596,6 +607,9 @@ function InitClass(Engine)
             
             for(var n = 1; n < true; n++)
             {
+                if(n >= JINN_CONST.MAX_ITEMS_FOR_LOAD * 2)
+                    break;
+                
                 BlockBody = Engine.GetBodyByHash(BlockBody.BlockNum - 1, BlockBody.PrevSumHash);
                 if(!BlockBody)
                     break;
