@@ -405,7 +405,7 @@ class AccountApp extends require("./dapp")
             {
                 case TYPE_TRANSACTION_CREATE:
                     {
-                        if(BlockNum % BLOCK_CREATE_INTERVAL !== 0)
+                        if(BlockNum < global.UPDATE_CODE_7 && BlockNum % BLOCK_CREATE_INTERVAL !== 0)
                             return 0;
                         
                         var Num = this.GetMaxAccount() + 1;
@@ -755,13 +755,15 @@ class AccountApp extends require("./dapp")
             }
             else
             {
-                if(BlockNum % BLOCK_CREATE_INTERVAL !== 0)
+                if(BlockNum < global.UPDATE_CODE_7 && BlockNum % BLOCK_CREATE_INTERVAL !== 0)
                     return "The create transaction is not possible in this block: " + BlockNum;
+                
                 if(this.CreateTrCount > 0)
                     return "The account creation transaction was already in this block: " + BlockNum;
             }
         }
         this.CreateTrCount++
+        
         if(CheckMinPower && global.NETWORK === "MAIN-JINN")
         {
             var power;
@@ -1915,7 +1917,7 @@ class AccountApp extends require("./dapp")
             return 0;
         
         var Type = Body[0];
-        if(Type === TYPE_TRANSACTION_CREATE && BlockNum % BLOCK_CREATE_INTERVAL === 0)
+        if(Type === TYPE_TRANSACTION_CREATE && (BlockNum % BLOCK_CREATE_INTERVAL === 0 || BlockNum >= global.UPDATE_CODE_7))
             return 1;
         else
             if(Type !== TYPE_TRANSACTION_TRANSFER)

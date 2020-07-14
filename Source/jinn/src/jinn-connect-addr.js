@@ -26,8 +26,6 @@
 global.JINN_MODULES.push({InitClass:InitClass, DoNode:DoNode, Name:"Addr"});
 
 global.GETNODES_VERSION = 7;
-if(global.NETWORK === "MAIN-JINN")
-    global.GETNODES_VERSION = 6;
 
 const POW_MEMORY_BIT_SIZE = 18;
 const POW_MAX_ITEM_IN_MEMORRY = 1 << POW_MEMORY_BIT_SIZE;

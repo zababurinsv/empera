@@ -31,13 +31,13 @@ function InitClass(Engine)
         
         var Data = {Network:JINN_CONST.NETWORK_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
             RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum, FindSelfIP:Child.FindSelfIP,
-            RemoteIP:Child.ip, };
+            RemoteIP:Child.ip, NameArr:[]};
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
     };
     Engine.HANDSHAKE_SEND = {Network:"str20", Shard:"str5", RemoteIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash", RunVersionNum:"uint",
-        CodeVersionNum:"uint", FindSelfIP:"byte"};
+        CodeVersionNum:"uint", FindSelfIP:"byte", NameArr:"arr40"};
     Engine.HANDSHAKE_RET = {result:"byte", RndHash:"hash", RemoteIP:"str30", RunVersionNum:"uint", CodeVersionNum:"uint", text:"str",
-        NetConstVer:"uint"};
+        NetConstVer:"uint", NameArr:"arr40"};
     Engine.HANDSHAKE = function (Child,Data)
     {
         if(!Data)

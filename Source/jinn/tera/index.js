@@ -137,7 +137,6 @@ function Create(MapName)
     {
         if(global.NETWORK === "MAIN-JINN")
         {
-            ToLog("*************************** MAIN RUN");
             Engine.AddNodeAddr({ip:"t1.teraexplorer.com", port:30000, Score:1000000000, System:1});
             Engine.AddNodeAddr({ip:"t2.teraexplorer.com", port:30000, Score:1000000000, System:1});
             Engine.AddNodeAddr({ip:"t4.teraexplorer.com", port:30000, Score:1000000000, System:1});

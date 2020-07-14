@@ -119,7 +119,7 @@ function Init(Engine)
                 }
                 else
                 {
-                    ToLog("Block: " + BlockNum + " TxNum:" + i + " Err Result: " + Result, 3);
+                    ToLog("Block: " + BlockNum + " TxNum:" + i + " Err Result: " + Result, 4);
                     
                     DApps.Accounts.RollBackTransaction();
                     SetResult = 0;

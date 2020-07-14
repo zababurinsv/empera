@@ -236,8 +236,6 @@ function CheckJINNMODE()
 var idRunOnce;
 function RunServer()
 {
-    if(!CheckJINNMODE())
-        return;
     
     idRunOnce = setInterval(RunOnce, 1000);
     ToLog("NETWORK: " + GetNetworkName());
@@ -360,8 +358,6 @@ function RunOnce()
         {
             StartAllProcess(1);
         }, 1000);
-        
-        require("./dogs");
         
         if(global.RESTART_PERIOD_SEC)
         {
