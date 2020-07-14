@@ -32,11 +32,15 @@ function RunOnUpdate()
         
         if(global.NETWORK === "MAIN-JINN")
         {
-            if(CurNum < 2248)
+            if(CurNum < 2254)
             {
                 if(!IsValidAccHash(60000000, "606875E0C29CD23BDB1CD57F3A7CDAE2D0560E40009AD36967CCE2635305F737"))
                 {
-                    ToLog("---------- UPD: START RewriteAllTransactions");
+                    setTimeout(function ()
+                    {
+                        ToLog("---------- UPD: START RewriteAllTransactions");
+                        SERVER.RewriteAllTransactions();
+                    }, 4000);
                 }
             }
         }
