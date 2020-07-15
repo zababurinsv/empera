@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+
 "use strict";
 
 const MAX_MESSAGE_COUNT = 1000;

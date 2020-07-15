@@ -870,8 +870,6 @@ HTTPCaller.SendDirectCode = function (Params,response)
             RunProcess = global.TX_PROCESS;
         if(Params.WEB)
             RunProcess = global.WEB_PROCESS;
-        if(Params.ST)
-            RunProcess = global.STATIC_PROCESS;
         
         if(RunProcess && RunProcess.RunRPC)
         {

@@ -91,12 +91,6 @@ function AddTransactionFromWeb(Params)
 }
 
 
-
-global.STATIC_PROCESS = {Name:"STATIC PROCESS", NodeOnly:1, idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(),
-    Worker:undefined, Path:"./process/static-process.js", OnMessage:OnMessageStatic, PeriodAlive:50000};
-if(!global.JINN_MODE)
-    ArrChildProcess.push(STATIC_PROCESS);
-
 function OnMessageStatic(msg)
 {
     switch(msg.cmd)
@@ -256,6 +250,7 @@ function StartChildProcess(Item)
                             ToLogClient(msg.Str, msg.StrKey, msg.bFinal);
                             break;
                         case "RetFindTX":
+                            
                             if(WebProcess && WebProcess.Worker)
                             {
                                 WebProcess.Worker.send(msg);
@@ -264,6 +259,7 @@ function StartChildProcess(Item)
                             }
                             
                             ToLogClient(msg.ResultStr, msg.TX, msg.bFinal);
+                            
                             break;
                         case "online":
                             if(ITEM.Worker)

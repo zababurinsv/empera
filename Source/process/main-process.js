@@ -58,28 +58,6 @@ global.glCurNumFindArr = 0;
 global.ArrReconnect = [];
 global.ArrConnect = [];
 
-var FindList = [{"ip":"185.240.243.182", "port":30000}, {"ip":"t1.teraexplorer.com", "port":30000}, {"ip":"t2.teraexplorer.com",
-    "port":30000}, {"ip":"t4.teraexplorer.com", "port":30000}, {"ip":"212.80.217.199", "port":30000}, {"ip":"teraexplorer.org",
-    "port":30000}, ];
-
-if(global.LOCAL_RUN)
-{
-    FindList = [{"ip":"127.0.0.1", "port":50001}, {"ip":"127.0.0.1", "port":50002}];
-}
-else
-    if(global.TEST_NETWORK)
-    {
-        FindList = [{"ip":"dappsgate.com", "port":40000}, {"ip":"212.80.217.199", "port":40000}, ];
-    }
-
-if(global.FORK_MODE)
-{
-    if(global.FORK_IP_LIST)
-        FindList = global.FORK_IP_LIST;
-    else
-        FindList = [];
-}
-
 global.SERVER = undefined;
 global.NeedRestart = 0;
 
@@ -119,119 +97,11 @@ require("../core/html-server");
 RunServer();
 require("./childs-run");
 
-setInterval(function run1()
-{
-    DoConnectToNodes(ArrReconnect, "RECONNECT");
-}
-, 200);
-
-setInterval(function run2()
-{
-    DoGetNodes();
-    
-    DoConnectToNodes(ArrConnect, "CONNECT");
-}
-, 500);
-
-if(global.ADDRLIST_MODE)
-{
-    return;
-}
 
 
-function DoGetNodes()
-{
-    if(!SERVER)
-        return;
-    if(!GrayConnect() && SERVER.CanSend < 2)
-        return;
-    
-    if(!SERVER.NodesArrUnSort || !SERVER.NodesArrUnSort.length)
-        return;
-    
-    var Num = glCurNumFindArr % SERVER.NodesArrUnSort.length;
-    var Node = SERVER.NodesArrUnSort[Num];
-    if(Num === 0)
-        glCurNumFindArr = 0;
-    glCurNumFindArr++;
-    
-    if(Node.Delete)
-        return;
-    
-    if(SERVER.NodeInBan(Node))
-        return;
-    
-    if(SERVER.BusyLevel && Node.BlockProcessCount <= SERVER.BusyLevel)
-        return;
-    
-    if(GetSocketStatus(Node.Socket) === 100)
-    {
-        
-        SERVER.StartGetNodes(Node);
-    }
-}
 
-function DoConnectToNodes(Arr,Mode)
-{
-    if(!SERVER || global.JINN_MODE)
-        return;
-    if(!GrayConnect() && SERVER.CanSend < 2)
-    {
-        return;
-    }
-    
-    if(GrayConnect() && SERVER.ActualNodes.size > GetGrayServerConnections())
-        return;
-    
-    if(Arr.length)
-    {
-        var MinProcessCount = SERVER.BusyLevel - 1;
-        for(var i = 0; i < Arr.length; i++)
-        {
-            var Node = Arr[i];
-            if(Node.BlockProcessCount > MinProcessCount)
-            {
-                Arr.splice(i, 1);
-                
-                if(Mode === "CONNECT")
-                {
-                    Node.WasAddToConnect = undefined;
-                    SERVER.StartConnectTry(Node);
-                }
-                else
-                    if(Mode === "RECONNECT")
-                    {
-                        Node.WasAddToReconnect = undefined;
-                        Node.CreateConnect();
-                    }
-                break;
-            }
-        }
-    }
-}
 
-function CheckJINNMODE()
-{
-    if(global.JINN_MODE)
-        return 1;
-    
-    var fname = GetDataPath("DB/update.lst");
-    var UpdateInfo = LoadParams(fname, {UPDATE_NUM_COMPLETE:2000, JINN_MODE:1});
-    if(UpdateInfo.JINN_MODE_VER2)
-    {
-        ToLog("WAS UPDATED TO JINN");
-        global.JINN_MODE = 1;
-        return 1;
-    }
-    
-    UpdateInfo.UPDATE_NUM_COMPLETE = UPDATE_CODE_VERSION_NUM;
-    UpdateInfo.JINN_MODE_VER2 = 1;
-    SaveParams(fname, UpdateInfo);
-    
-    require("./convert-process.js");
-    process.exit();
-    return 0;
-}
+
 
 var idRunOnce;
 function RunServer()
@@ -240,72 +110,9 @@ function RunServer()
     idRunOnce = setInterval(RunOnce, 1000);
     ToLog("NETWORK: " + GetNetworkName());
     ToLog("VERSION: " + DEF_VERSION);
-    
-    if(!global.JINN_MODE)
-    {
-        RunServerOld();
-    }
-    else
-    {
-        StartJinn();
-    }
+    StartJinn();
 }
 
-function RunServerOld()
-{
-    
-    if(global.NET_WORK_MODE)
-    {
-        if(!NET_WORK_MODE.ip)
-            NET_WORK_MODE.ip = "";
-        global.START_IP = NET_WORK_MODE.ip;
-        global.START_PORT_NUMBER = NET_WORK_MODE.port;
-    }
-    
-    var KeyPair = crypto.createECDH('secp256k1');
-    if(!global.SERVER_PRIVATE_KEY_HEX)
-    {
-        while(true)
-        {
-            var Arr = crypto.randomBytes(32);
-            KeyPair.setPrivateKey(Buffer.from(Arr));
-            var Arr2 = KeyPair.getPublicKey('', 'compressed');
-            if(Arr2[0] === 2)
-                break;
-        }
-        
-        global.SERVER_PRIVATE_KEY_HEX = GetHexFromArr(Arr);
-        SAVE_CONST(true);
-    }
-    
-    var ServerPrivKey = GetArrFromHex(global.SERVER_PRIVATE_KEY_HEX);
-    if(global.USE_NET_FOR_SERVER_ADDRES)
-    {
-        const os = require('os');
-        var map = os.networkInterfaces();
-        main:
-        for(var key in map)
-        {
-            var arr = map[key];
-            for(var i = 0; i < arr.length; i++)
-            {
-                var item = arr[i];
-                if(!item.internal && item.mac !== "00:00:00:00:00:00")
-                {
-                    ServerPrivKey = sha3(global.SERVER_PRIVATE_KEY_HEX + ":" + item.mac + ":" + global.START_PORT_NUMBER);
-                    break main;
-                }
-            }
-        }
-    }
-    
-    KeyPair.setPrivateKey(Buffer.from(ServerPrivKey));
-    
-    var CServer = require("../core/server");
-    var Worker = new CServer(KeyPair, START_IP, START_PORT_NUMBER, false, global.JINN_MODE);
-    
-    DoStartFindList();
-}
 
 function StartJinn()
 {
@@ -326,24 +133,6 @@ function StartJinn()
     });
 }
 
-function DoStartFindList()
-{
-    var keyThisServer = SERVER.ip + ":" + SERVER.port;
-    
-    for(var n = 0; n < FindList.length; n++)
-    {
-        var item = FindList[n];
-        if(!item.ip)
-            continue;
-        
-        var key = item.ip + ":" + item.port;
-        if(keyThisServer === key)
-            continue;
-        var Node = SERVER.GetNewNode(item.ip, item.port);
-        if(Node)
-            Node.StartFindList = 1;
-    }
-}
 
 function RunOnce()
 {

@@ -26,8 +26,6 @@ require("../system");
 
 require("./child-process");
 
-setInterval(PrepareStatEverySecond, 1000);
-
 process.on('message', function (msg)
 {
     switch(msg.cmd)
@@ -44,6 +42,8 @@ process.on('message', function (msg)
     }
 }
 );
+
+setInterval(PrepareStatEverySecond, 1000);
 
 global.SetStatMode = function (Val)
 {
@@ -79,6 +79,7 @@ function ClearDataBase()
 global.RewriteAllTransactions = RewriteAllTransactions;
 function RewriteAllTransactions(bSilent)
 {
+    
     var StateTX = DApps.Accounts.DBStateTX.Read(0);
     var MinimalValidBlock = StateTX.BlockNumMin;
     if(MinimalValidBlock > 0)
@@ -128,77 +129,6 @@ function ReWriteDAppTransactions(Params,bSilent)
     
     DApps.Accounts.ErrSumHashCount = 0;
 }
-
-function TXPrepareLoadRest(BlockNum)
-{
-    StopTxProcess = 1;
-    ToLog("*************TXPrepareLoadRest:" + BlockNum, 2);
-    
-    ClearDataBase();
-    
-    var StateTX = DApps.Accounts.DBStateTX.Read(0);
-    StateTX.BlockNumMin = BlockNum;
-    DApps.Accounts.DBStateTX.Write(StateTX);
-}
-global.TXPrepareLoadRest = TXPrepareLoadRest;
-
-function TXWriteAccArr(Params)
-{
-    var StateTX = DApps.Accounts.DBStateTX.Read(0);
-    var MinimalValidBlock = StateTX.BlockNumMin;
-    
-    var WorkStruct = {};
-    var WorkFormat = DApps.Accounts.FORMAT_ACCOUNT_ROW;
-    
-    ToLog("Write accounts: " + Params.StartNum + "-" + Params.Arr.length, 2);
-    for(var i = 0; i < Params.Arr.length; i++)
-    {
-        var Data = BufLib.GetObjectFromBuffer(Params.Arr[i], WorkFormat, WorkStruct);
-        Data.Num = Params.StartNum + i;
-        DApps.Accounts.DBStateWriteInner(Data, MinimalValidBlock);
-    }
-}
-global.TXWriteAccArr = TXWriteAccArr;
-
-function TXWriteSmartArr(Params)
-{
-    var WorkStruct = {};
-    var WorkFormat = DApps.Smart.FORMAT_ROW;
-    
-    ToLog("Write smarts: " + Params.StartNum + "-" + Params.Arr.length, 2);
-    for(var i = 0; i < Params.Arr.length; i++)
-    {
-        var Data = BufLib.GetObjectFromBuffer(Params.Arr[i], WorkFormat, WorkStruct);
-        Data.Num = Params.StartNum + i;
-        DApps.Smart.DBSmart.Write(Data);
-    }
-}
-global.TXWriteSmartArr = TXWriteSmartArr;
-
-function TXWriteAccHash()
-{
-    StopTxProcess = 0;
-    
-    ToLog("Start TXWriteAccHash", 2);
-    for(var num = 0; true; num++)
-    {
-        var Item = DApps.Smart.DBSmart.Read(num);
-        if(!Item)
-            break;
-        DApps.Smart.DBSmartWrite(Item);
-    }
-    
-    DApps.Accounts.CalcMerkleTree(1);
-    
-    var StateTX = DApps.Accounts.DBStateTX.Read(0);
-    var MinimalValidBlock = StateTX.BlockNumMin;
-    
-    var Block = {BlockNum:MinimalValidBlock, SumHash:[]};
-    var MaxAccount = DApps.Accounts.GetMaxAccount();
-    var DataHash = DApps.Accounts.CalcHash(Block, MaxAccount);
-    return DataHash;
-}
-global.TXWriteAccHash = TXWriteAccHash;
 
 
 
@@ -300,7 +230,7 @@ class CTXProcess
             if(bShowDetail)
                 ToLog("Block:DeleteTX on Block=" + PrevBlockNum)
             BlockDeleteTX(PrevBlockNum)
-            return  - 1;
+            return 0;
         }
         
         var ForcePrevSumHash;
@@ -328,7 +258,7 @@ class CTXProcess
                     ToLog("SumHash:DeleteTX on Block=" + PrevBlockNum, 2)
                 
                 BlockDeleteTX(PrevBlockNum)
-                return  - 1;
+                return 0;
             }
             
             var AccHash = DApps.Accounts.GetCalcHash();
@@ -357,9 +287,20 @@ class CTXProcess
         this.ErrorAccHash = 0
         Block.NoChechkSumHash = ForcePrevSumHash
         Block.ForcePrevSumHash = ForcePrevSumHash
-        SERVER.BlockProcessTX(Block)
+        
         if(BlockNum % 100000 === 0 || bShowDetail)
             ToLog("CALC: " + BlockNum)
+        
+        try
+        {
+            SERVER.BlockProcessTX(Block)
+        }
+        catch(e)
+        {
+            ToLog("" + e, 1)
+            return 0;
+        }
+        
         return 1;
     }
 };

@@ -12,7 +12,7 @@
 "use strict";
 
 
-global.UPDATE_CODE_VERSION_NUM = 2254;
+global.UPDATE_CODE_VERSION_NUM = 2257;
 global.MIN_JINN_VERSION_NUM = 2177;
 
 global.MIN_CODE_VERSION_NUM = 0;
@@ -52,7 +52,7 @@ global.JINN_DEBUG_INFO = 0;
 
 
 global.JINN_IP = "";
-global.JINN_PORT = 33000;
+global.JINN_PORT = 30000;
 global.IP_VERSION = 4;
 global.CLIENT_MODE = 0;
 

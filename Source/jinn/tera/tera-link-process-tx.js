@@ -108,6 +108,7 @@ function Init(Engine)
                     if(item)
                         global.CurTrItem = item.TX;
                 }
+                
                 var Result = App.OnWriteTransaction(Block, arr[i], BlockNum, i);
                 var SetResult = Result;
                 if(Result === true)
@@ -158,14 +159,7 @@ function Init(Engine)
         }
         if(arrContentResult.length)
         {
-            if(global.JINN_MODE)
-            {
-                JINN.DBResult.WriteBodyResult(BlockNum, arrContentResult);
-            }
-            else
-            {
-                process.send({cmd:"WriteBodyResult", BlockNum:BlockNum, arrContentResult:arrContentResult});
-            }
+            JINN.DBResult.WriteBodyResult(BlockNum, arrContentResult);
         }
         
         for(var key in DApps)

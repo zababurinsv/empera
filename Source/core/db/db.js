@@ -64,7 +64,7 @@ module.exports = class
     {
         if(bWrite && global.READ_ONLY_DB)
         {
-            ToLogTrace("CANNOT WRITE - DB IN READ_ONLY MODE!!!")
+            ToLog("CANNOT WRITE - DB IN READ_ONLY MODE!!!")
             process.exit()
         }
         if(bWrite)
@@ -131,7 +131,7 @@ function CheckStartOneProcess(Name)
     }
     catch(e)
     {
-        ToLogTrace("****** DETECT START ANOTHER PROCESS for: " + Name + " - EXIT!");
+        ToLog("****** DETECT START ANOTHER PROCESS for: " + Name + " - EXIT!");
         process.exit();
     }
 }

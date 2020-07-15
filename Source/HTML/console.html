@@ -69,14 +69,12 @@
             $("idConsoleSend").value=Data.Type;
             $("idProcessTX").checked=Data.ProcessTX;
             $("idProcessWEB").checked=Data.ProcessWEB;
-            $("idProcessST").checked=Data.ProcessST;
         }
         else
         {
             $("idConsoleText").value=Data;
             $("idProcessTX").checked=0;
             $("idProcessWEB").checked=0;
-            $("idProcessST").checked=0;
             $("idConsoleSend").value="ServerCode";
         }
         if(bRun)
@@ -103,7 +101,7 @@
 
         if(Name)
         {
-            var Data={Code:$("idConsoleText").value,Type:$("idConsoleSend").value,ProcessTX:$("idProcessTX").checked,ProcessWEB:$("idProcessWEB").checked,ProcessST:$("idProcessST").checked};
+            var Data={Code:$("idConsoleText").value,Type:$("idConsoleSend").value,ProcessTX:$("idProcessTX").checked,ProcessWEB:$("idProcessWEB").checked};
             CodeList[Name]=Data;
         }
 
@@ -211,11 +209,10 @@
     {
         var bProcessTX = $("idProcessTX").checked;
         var bProcessWEB = $("idProcessWEB").checked;
-        var bProcessST = $("idProcessST").checked;
 
 
         SetStatus("");
-        GetData("SendDirectCode",{Code:Value,TX:bProcessTX,WEB:bProcessWEB,ST:bProcessST }, function (Data)
+        GetData("SendDirectCode",{Code:Value,TX:bProcessTX,WEB:bProcessWEB }, function (Data)
         {
             if(Data)
             {
@@ -431,7 +428,6 @@
 
         $("idProcessTX").checked=(localStorage["idConsoleProcessTX"]==="true");
         $("idProcessWEB").checked=(localStorage["idConsoleProcessWEB"]==="true");
-        $("idProcessST").checked=(localStorage["idConsoleProcessST"]==="true");
         if(localStorage["idConsolePeriodRun"])
             $("idPeriodRun").value=localStorage["idConsolePeriodRun"];
     }
@@ -448,7 +444,6 @@
 
         localStorage["idConsoleProcessTX"]=$("idProcessTX").checked;
         localStorage["idConsoleProcessWEB"]=$("idProcessWEB").checked;
-        localStorage["idConsoleProcessST"]=$("idProcessST").checked;
 
 
         localStorage["idConsolePeriodRun"]=$("idPeriodRun").value;
@@ -511,9 +506,8 @@
             <!--All<input type="checkbox" id="idSendAll" onchange = "SaveValues()"/>-->
             <INPUT type="button" onclick="StartSendServerPeriod()" class="bt btdoit" id="idBtRun2" value="Run every">
             <INPUT type="number" id="idPeriodRun" style="width: 50px;" onchange="SaveValues();" value="1">sec
-            TX process:<INPUT type="checkbox" id="idProcessTX">
-            WEB process:<INPUT type="checkbox" id="idProcessWEB">
-            Static process:<INPUT type="checkbox" id="idProcessST">
+            <INPUT type="checkbox" id="idProcessTX">TX-process
+            <INPUT type="checkbox" id="idProcessWEB">Web-process
 
 
             <BR>

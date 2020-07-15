@@ -34,13 +34,16 @@ function RunOnUpdate()
         {
             if(CurNum < 2254)
             {
-                if(!IsValidAccHash(60000000, "606875E0C29CD23BDB1CD57F3A7CDAE2D0560E40009AD36967CCE2635305F737"))
+                if(!IsValidAccHash(60000000, "606875E0C29CD23BDB1CD57F3A7CDAE2D0560E40009AD36967CCE2635305F737", 1))
                 {
-                    setTimeout(function ()
-                    {
-                        ToLog("---------- UPD: START RewriteAllTransactions");
-                        SERVER.RewriteAllTransactions();
-                    }, 4000);
+                    SendRewrteTx();
+                }
+            }
+            if(CurNum < 2256)
+            {
+                if(!IsValidAccHash(63768000, "DC94462951421910D727E9B47D23D4A8E55A30A2C740782130D92C4561B1084D", 0))
+                {
+                    SendRewrteTx();
                 }
             }
         }
@@ -48,12 +51,26 @@ function RunOnUpdate()
     }
 }
 
+function SendRewrteTx()
+{
+    setTimeout(function ()
+    {
+        ToLog("---------- UPD: START RewriteAllTransactions");
+        SERVER.RewriteAllTransactions();
+    }, 4000);
+}
 
-function IsValidAccHash(BlockNum,StrHash)
+
+function IsValidAccHash(BlockNum,StrHash,bMust)
 {
     var AccountsHash = DApps.Accounts.GetHashOrUndefined(BlockNum);
     if(!AccountsHash)
-        return 0;
+    {
+        if(bMust)
+            return 0;
+        else
+            return 1;
+    }
     
     if(GetHexFromArr(AccountsHash) === StrHash)
         return 1;

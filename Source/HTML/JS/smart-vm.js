@@ -912,6 +912,7 @@ global.SetRunContext = SetRunContext;
 global.RunSmartMethod = RunSmartMethod;
 function RunSmartMethod(Block,SmartOrSmartID,Account,BlockNum,TrNum,PayContext,MethodName,Params,bPublic,SmartCode)
 {
+    
     var Smart = SmartOrSmartID;
     if(typeof SmartOrSmartID === "number")
     {

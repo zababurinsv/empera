@@ -464,6 +464,7 @@ class AccountApp extends require("./dapp")
     {
         try
         {
+            
             this.BeginTransaction()
             this.DoCoinBaseTR(Block)
             this.CommitTransaction(Block.BlockNum, 0xFFFF)
@@ -560,7 +561,7 @@ class AccountApp extends require("./dapp")
         
         var SysData = this.ReadStateTR(0);
         var SysBalance = SysData.Value.SumCOIN;
-        const REF_PERIOD_START = global.START_MINING;
+        var REF_PERIOD_START = global.START_MINING;
         
         var AccountID = ReadUintFromArr(Block.AddrHash, 0);
         
@@ -635,6 +636,7 @@ class AccountApp extends require("./dapp")
                 
                 var CoinDevelop = CopyObjValue(CoinTotal);
                 DIV(CoinDevelop, 100)
+                
                 if(!ISZERO(CoinDevelop))
                 {
                     OperationNum++
@@ -1575,6 +1577,7 @@ class AccountApp extends require("./dapp")
         {
             this.ErrSumHashCount = 0
         }
+        
         for(var i = 0; i < DBChanges.BlockHistory.length; i++)
         {
             var Data = DBChanges.BlockHistory[i];

@@ -14,7 +14,7 @@ global.NO_HISTORY_MODE=1;
 global.START_PORT_NUMBER = 33000;
 
 //new
-global.JINN_PORT=33000;
+global.JINN_PORT=30000;
 
 require('./process/main-process');
 

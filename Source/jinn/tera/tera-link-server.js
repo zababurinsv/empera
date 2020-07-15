@@ -718,4 +718,15 @@ function Init(Engine)
     SERVER.ResetNextPingAllNode = function ()
     {
     };
+    
+    SERVER.StopServer = function ()
+    {
+        if(Engine.Server)
+            Engine.Server.close();
+    };
+    
+    SERVER.StopNode = function ()
+    {
+        global.StopNetwork = true;
+    };
 }

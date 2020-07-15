@@ -88,7 +88,10 @@ global.ZIP = require("zip");
 
 var strOS = os.platform() + "_" + os.arch();
 if(global.NWMODE)
-    strOS = strOS + "-nw" + global.NWVERSION;
+{
+    strOS = strOS + "_nw";
+}
+
 
 if(fs.existsSync("./lib/secp256k1/" + strOS + "/secp256k1.node"))
 {
@@ -125,8 +128,6 @@ global.GetCurrentBlockNumByTime = function GetCurrentBlockNumByTime(Delta_Time)
     var StartBlockNum = Math.trunc((CurTimeNum + CONSENSUS_PERIOD_TIME + Delta_Time) / CONSENSUS_PERIOD_TIME);
     return StartBlockNum;
 }
-
-
 
 global.DelDir = function (Path)
 {

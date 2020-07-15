@@ -512,10 +512,6 @@ function ClearDataBase()
 {
     DoBlockChainProcess("ClearDataBase", "Clear DataBase", 0);
 }
-function CleanChain()
-{
-    DoBlockChainProcess("CleanChain", "Clean chain on last %1 blocks", 1);
-}
 
 function StartLoadNewCode()
 {
