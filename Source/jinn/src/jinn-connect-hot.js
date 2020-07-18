@@ -184,6 +184,9 @@ function InitClass(Engine)
     
     Engine.CanSetHot = function (Child)
     {
+        if(global.CLUSTER_HOT_ONLY && !Child.Name)
+            return 0;
+        
         if(!Child.TestExchangeTime)
             return 0;
         

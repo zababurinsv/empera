@@ -83,17 +83,47 @@ function Init(Engine)
         
         if(global.WEB_PROCESS)
             global.WEB_PROCESS.UpdateConst = 1;
+        
+        if(global.COMMON_KEY && Engine.OnSeNodeName)
+            Engine.OnSeNodeName();
+        else
+        {
+            Engine.ArrCommonSecret = [];
+            Engine.ArrNodeName = [];
+        }
     };
     SERVER.DO_CONSTANT = function ()
     {
         ON_USE_CONST();
     };
-    
     Engine.ChildIDCounter = 10000;
     Engine.SetChildID = function (Child)
     {
         Engine.ChildIDCounter++;
         Child.ID = Engine.ChildIDCounter;
+    };
+    Engine.SetChildRndHash = function (Child,RndHash)
+    {
+        Child.RndHash = RndHash;
+        Child.ArrCommonSecret = sha3(global.COMMON_KEY + ":" + GetHexFromArr(RndHash));
+    };
+    Engine.SetChildName = function (Child,NameArr)
+    {
+        var Str = Engine.ValueFromEncrypt(Child, NameArr);
+        if(Str.substr(0, 8) === "CLUSTER:")
+        {
+            Child.Name = Str.substr(8);
+            if(Child.AddrItem && Child.AddrItem.Score < 5 * 1e6)
+                Child.AddrItem.Score = 10 * 1e6;
+        }
+        else
+            Child.Name = "";
+    };
+    
+    Engine.OnSeNodeName = function ()
+    {
+        Engine.ArrCommonSecret = sha3(global.COMMON_KEY + ":" + Engine.RndHashStr);
+        Engine.ArrNodeName = Engine.ValueToEncrypt("CLUSTER:" + global.NODES_NAME, 40);
     };
     
     SERVER.GetNodesArrWithAlive = function ()
@@ -168,6 +198,4 @@ function Init(Engine)
         global.JINN_IP = ip;
         SAVE_CONST(1);
     };
-    
-    ON_USE_CONST();
 }

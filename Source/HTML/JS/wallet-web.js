@@ -267,7 +267,7 @@ function DoWalletInfo(Item)
         
         if(Data && Data.result && Data.BlockChain && Data.NETWORK === NETWORK_NAME)
         {
-            Item.Name = Data.NODES_NAME;
+            Item.Name = "";
             Item.GetWalletInfo = 1;
             Item.DeltaTime2 = Date.now() - Item.StartTime;
             Item.BlockChain = Data.BlockChain;

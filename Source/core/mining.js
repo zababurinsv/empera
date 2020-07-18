@@ -116,12 +116,6 @@ function RunStopPOWProcess(Mode)
     if(ArrMiningWrk.length >= GetCountMiningCPU())
         return;
     
-    if(GrayConnect())
-    {
-        ToLog("CANNOT START MINER IN NOT DIRECT IP MODE");
-        return;
-    }
-    
     var Memory;
     if(global.TEST_JINN)
     {

@@ -24,6 +24,7 @@ function InitClass(Engine)
 {
     Engine.RndHash = GetRandomBytes(32);
     Engine.RndHashStr = GetHexFromArr(Engine.RndHash);
+    Engine.ArrNodeName = [];
     Engine.StartHandShake = function (Child)
     {
         
@@ -31,7 +32,7 @@ function InitClass(Engine)
         
         var Data = {Network:JINN_CONST.NETWORK_NAME, Shard:JINN_CONST.SHARD_NAME, ip:Engine.ip, port:Engine.port, DirectIP:Engine.DirectIP,
             RndHash:Engine.RndHash, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum, FindSelfIP:Child.FindSelfIP,
-            RemoteIP:Child.ip, NameArr:[]};
+            RemoteIP:Child.ip, NameArr:Engine.ArrNodeName};
         Engine.Send("HANDSHAKE", Child, Data, Engine.OnHandShakeReturn);
     };
     Engine.HANDSHAKE_SEND = {Network:"str20", Shard:"str5", RemoteIP:"str30", port:"uint16", DirectIP:"byte", RndHash:"hash", RunVersionNum:"uint",
@@ -50,7 +51,7 @@ function InitClass(Engine)
         Engine.ProcessNewVersionNum(Child, Data.CodeVersionNum);
         
         var Ret = {result:0, RndHash:Engine.RndHash, RemoteIP:Child.ip, RunVersionNum:global.UPDATE_CODE_VERSION_NUM, CodeVersionNum:CODE_VERSION.VersionNum,
-            NetConstVer:JINN_NET_CONSTANT.NetConstVer};
+            NetConstVer:JINN_NET_CONSTANT.NetConstVer, NameArr:Engine.ArrNodeName, };
         var AddrChild = {ip:Child.ip, port:Data.port, BlockNum:0, Nonce:0, RndHash:Data.RndHash};
         
         var StrError;
@@ -89,12 +90,12 @@ function InitClass(Engine)
         }
         
         Engine.SetAddrItemForChild(AddrChild, Child, Data.DirectIP);
-        
-        Child.RndHash = Data.RndHash;
+        Engine.SetChildRndHash(Child, Data.RndHash);
+        Engine.SetChildName(Child, Data.NameArr);
         
         Engine.DoMyAddres(Child, Data.RemoteIP);
-        
         Engine.SetItemRndHash(Child.AddrItem, Data.RndHash);
+        
         Engine.SetIPPort(Child, AddrChild.ip, AddrChild.port);
         
         Engine.OnAddConnect(Child);
@@ -105,11 +106,20 @@ function InitClass(Engine)
         return Ret;
     };
     
+    Engine.SetChildRndHash = function (Child,RndHash)
+    {
+        Child.RndHash = RndHash;
+    };
+    Engine.SetChildName = function (Child,NameArr)
+    {
+    };
+    
     Engine.OnHandShakeReturn = function (Child,Data)
     {
         if(!Data)
             return;
-        Child.RndHash = Data.RndHash;
+        Engine.SetChildRndHash(Child, Data.RndHash);
+        Engine.SetChildName(Child, Data.NameArr);
         Engine.DoMyAddres(Child, Data.RemoteIP);
         Engine.SetItemRndHash(Child, Data.RndHash);
         

@@ -594,7 +594,7 @@
         }
 
 
-        if(Data.NET_WORK_MODE && Data.NET_WORK_MODE.NOT_RUN)
+        if(CONFIG_DATA.CONSTANTS.NOT_RUN)
         {
             CanSendTransaction=0;
             WalletStatus="OK";
@@ -774,7 +774,7 @@
     //LIB
     function ConfirmationFromBlock(BlockNum)
     {
-        var Length=MaxBlockNum-8-BlockNum;
+        var Length=MaxBlockNum-BlockNum;
         if(Length>0)
         {
             if(Length<=100)

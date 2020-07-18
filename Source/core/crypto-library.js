@@ -901,54 +901,81 @@ function CalcClientHash(Str,nonce)
 
 global.CalcClientHash = CalcClientHash;
 
-var GlobalCryptID = 0;
-var DeltaTimeCryptID = new Date(2018, 1, 1) - 0;
-function Encrypt(Arr,Arr2,ArrSecret)
+var EncryptSaltNum;
+
+function GetEncrypt(ArrIn,ArrSecret)
 {
-    const StartLen = 9;
-    var arrRnd = Buffer.alloc(StartLen);
-    GlobalCryptID++;
-    arrRnd.writeUInt32LE(GlobalCryptID, 1, 4);
-    var Time = Math.floor((Date.now() - DeltaTimeCryptID) / 1000);
-    arrRnd.writeUInt32LE(Time, 5, 4);
     
-    Arr2[0] = Arr[0];
-    for(var i = 1; i < StartLen; i++)
-        Arr2[i] = arrRnd[i];
+    if(!EncryptSaltNum)
+        EncryptSaltNum = (Date.now() - new Date(2020, 0, 1)) * 10000 + random(10000);
+    EncryptSaltNum++;
     
-    var SecretBuf = Buffer.concat([Arr2.slice(0, StartLen), ArrSecret]);
-    DoSecret(Arr, Arr2, SecretBuf, 9);
+    var SecretBuf = ArrSecret.slice(0);
+    WriteUintToArr(SecretBuf, EncryptSaltNum);
+    
+    var ArrOut = [];
+    DoSecret(ArrOut, ArrIn, SecretBuf);
+    WriteUintToArr(ArrOut, EncryptSaltNum);
+    
+    return ArrOut;
 }
 
-function Decrypt(Arr,Arr2,ArrSecret)
+function GetDecrypt(ArrIn,ArrSecret)
 {
-    const StartLen = 9;
-    var SecretBuf = Buffer.concat([Arr.slice(0, StartLen), ArrSecret]);
-    DoSecret(Arr, Arr2, SecretBuf, StartLen);
+    var SaltNum = ReadUintFromArr(ArrIn, ArrIn.length - 6);
+    var ArrIn2 = ArrIn.slice(0, ArrIn.length - 6);
+    
+    var SecretBuf = ArrSecret.slice(0);
+    WriteUintToArr(SecretBuf, SaltNum);
+    
+    var ArrOut = [];
+    DoSecret(ArrOut, ArrIn2, SecretBuf);
+    return ArrOut;
 }
 
-function DoSecret(Arr,Arr2,SecretBuf,StartLen)
+function DoSecret(ArrOut,ArrIn,SecretBuf)
 {
-    var CryptID = SecretBuf.readUInt32LE(1, 4);
-    var Pos = StartLen;
-    while(Pos < Arr.length)
+    var CryptID = 0;
+    var PosCryptID = SecretBuf.length;
+    var Pos = 0;
+    while(Pos < ArrIn.length)
     {
-        var CurBuf = shaarr(SecretBuf);
-        
-        for(var i = 0; i < 32 && Pos < Arr.length; i++, Pos++)
+        WriteUintToArrOnPos(SecretBuf, CryptID, PosCryptID);
+        var CurBuf = sha3(SecretBuf);
+        for(var i = 0; i < 32 && Pos < ArrIn.length; i++, Pos++)
         {
-            Arr2[Pos] = Arr[Pos] ^ CurBuf[i];
+            ArrOut[Pos] = ArrIn[Pos] ^ CurBuf[i];
         }
         
         CryptID++;
-        SecretBuf.writeUInt32LE(CryptID, 5, 4);
     }
 }
 
 function TestEncryptDecrypt()
 {
+    var ArrSecret = sha3("SecretPassowd!");
+    var ArrMessage1 = toUTF8Array("Secret message!!!");
+    var ArrEncrypt = GetEncrypt(ArrMessage1, ArrSecret);
+    console.log("ArrMessage1 length=" + ArrMessage1.length);
+    console.log("ArrMessage1=" + ArrMessage1);
+    console.log("ArrEncrypt length=" + ArrEncrypt.length);
+    console.log("ArrEncrypt=" + ArrEncrypt);
+    
+    var ArrMessage2 = GetDecrypt(ArrEncrypt, ArrSecret);
+    console.log("ArrMessage2 length=" + ArrMessage2.length);
+    console.log("ArrMessage2=" + ArrMessage2);
+    
+    var Str2 = Utf8ArrayToStr(ArrMessage2);
+    console.log("Message=" + Str2);
+    
+    process.exit();
+}
+
+function TestEncryptDecrypt0()
+{
+    
     var ArrSecret = Buffer.from([1, 1, 1, 1, 1, 1]);
-    var Arr = GetArrFromStr("  Secret message", 64);
+    var Arr = GetArrFromStr("  Secret message!", 64);
     var Arr2 = Buffer.from(new Uint8Array(Arr.length));
     var Arr3 = Buffer.from(new Uint8Array(Arr.length));
     
@@ -963,6 +990,8 @@ function TestEncryptDecrypt()
     Decrypt(Arr2, Arr3, ArrSecret);
     console.log("Decrypt:");
     console.log(Utf8ArrayToStr(Arr3.slice(9)));
+    
+    process.exit();
 }
 
 function toUTF8Array(str)
@@ -1074,8 +1103,8 @@ global.GetPowPower = GetPowPower;
 global.GetPowValue = GetPowValue;
 global.Mesh = Mesh;
 
-global.Encrypt = Encrypt;
-global.Decrypt = Decrypt;
+global.GetEncrypt = GetEncrypt;
+global.GetDecrypt = GetDecrypt;
 global.toUTF8Array = toUTF8Array;
 global.Utf8ArrayToStr = Utf8ArrayToStr;
 global.GetArrFromStr = GetArrFromStr;

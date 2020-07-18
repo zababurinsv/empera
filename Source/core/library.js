@@ -603,15 +603,6 @@ if(global.TEST_JINN)
     };
 }
 
-function GrayConnect()
-{
-    if(global.NET_WORK_MODE && !NET_WORK_MODE.UseDirectIP)
-        return 1;
-    else
-        return 0;
-}
-global.GrayConnect = GrayConnect;
-
 var ResConst = LOAD_CONST();
 if(global.START_SERVER)
 {
@@ -657,3 +648,4 @@ function GetBit(Sum,BitNum)
 global.SetBit = SetBit;
 global.GetBit = GetBit;
 global.ResetBit = ResetBit;
+

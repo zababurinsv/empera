@@ -376,23 +376,8 @@ function ViewNetworkMode()
     else
     {
         SetVisibleBlock('idNetworkView', true);
-        
-        var Mode = CONFIG_DATA.CONSTANTS.NET_WORK_MODE;
-        if(!Mode)
-        {
-            Mode = {};
-            Mode.UseDirectIP = true;
-            
-            if(INTERNET_IP_FROM_STUN)
-                Mode.ip = INTERNET_IP_FROM_STUN;
-            else
-                Mode.ip = SERVER_IP;
-            Mode.port = SERVER_PORT;
-        }
-        
-        $("idUseDirectIP").checked = Mode.UseDirectIP;
-        $("idIP").value = Mode.ip;
-        $("idPort").value = Mode.port;
+        $("idIP").value = CONFIG_DATA.CONSTANTS.JINN_IP;
+        $("idPort").value = CONFIG_DATA.CONSTANTS.JINN_PORT;
     }
 }
 
@@ -400,7 +385,6 @@ function SetNetworkParams(bRestart)
 {
     
     var Mode = {};
-    Mode.UseDirectIP = $("idUseDirectIP").checked;
     Mode.ip = $("idIP").value;
     Mode.port = ParseNum($("idPort").value);
     

@@ -98,21 +98,19 @@ RunServer();
 require("./childs-run");
 
 
-
-
-
-
-
 var idRunOnce;
 function RunServer()
 {
+    if(global.NOT_RUN)
+    {
+        global.StopNetwork = true;
+    }
     
     idRunOnce = setInterval(RunOnce, 1000);
     ToLog("NETWORK: " + GetNetworkName());
     ToLog("VERSION: " + DEF_VERSION);
     StartJinn();
 }
-
 
 function StartJinn()
 {
@@ -122,8 +120,6 @@ function StartJinn()
     var JinnLib = require("../jinn/tera");
     if(!global.JINN_IP)
         global.JINN_IP = "0.0.0.0";
-    
-    global.NET_WORK_MODE = undefined;
     StartPortMapping(global.JINN_IP, global.JINN_PORT, function (ip)
     {
         JinnLib.Create();
@@ -132,7 +128,6 @@ function StartJinn()
         setTimeout(SERVER.CheckStartedBlocks, 800);
     });
 }
-
 
 function RunOnce()
 {

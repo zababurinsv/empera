@@ -92,6 +92,8 @@ function GetEngine(MapName)
         Engine.SetOwnIP(Engine.ip);
     }
     
+    require("./tera-encrypt").Init(Engine);
+    
     require("./tera-hash").Init(Engine);
     
     require("./tera-link-server").Init(Engine);
@@ -108,8 +110,6 @@ function GetEngine(MapName)
     require("./tera-tests").Init(Engine);
     
     require("./tera-addr").Init(Engine);
-    
-    require("./tera-encrypt").Init(Engine);
     
     return Engine;
 }
@@ -132,6 +132,8 @@ function Create(MapName)
     }
     
     var Engine = GetEngine(MapName);
+    
+    ON_USE_CONST();
     
     if(Engine.AddNodeAddr)
     {

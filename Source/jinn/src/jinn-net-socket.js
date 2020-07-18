@@ -18,7 +18,6 @@ const net = require("net");
 
 global.JINN_MODULES.push({InitClass:InitClass, InitAfter:InitAfter, Name:"NetSocket"});
 
-global.StopNetwork = 0;
 
 //Engine context
 
@@ -273,7 +272,6 @@ function InitAfter(Engine)
         }
         else
         {
-            Child.ToLog("ERROR SEND - NOT WAS CONNECT: State=" + State, 4);
         }
     };
     

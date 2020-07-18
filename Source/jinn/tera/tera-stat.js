@@ -110,7 +110,7 @@ function Init(Engine)
             AddrItem = {Score:Node.Score};
         
         var Item = {ID:Node.ID, id:Node.ID, ip:Node.ip, port:Node.port, Active:IsOpen, Hot:IsHot, Level:Node.Level, BlockProcessCount:AddrItem.Score,
-            TransferCount:Node.TransferCount, DeltaTime:Node.RetDeltaTime, Debug:Node.Debug, };
+            TransferCount:Node.TransferCount, DeltaTime:Node.RetDeltaTime, Debug:Node.Debug, Name:Node.Name, };
         
         if(bSimple)
         {
@@ -119,7 +119,7 @@ function Init(Engine)
         
         var Item2 = {VersionNum:Node.CodeVersionNum, NetConstVer:Node.NetConstVer, addrStr:Node.IDStr, LastTimeTransfer:(Node.LastTransferTime ? Node.LastTransferTime : 0),
             DeltaTime:Node.RetDeltaTime, LogInfo:Engine.GetLogNetInfo(Node), ErrCountAll:Node.ErrCount, WasBan:Node.WasBan, SocketStatus:Engine.GetSocketStatus(Node),
-        };
+            Name:Node.Name, };
         
         CopyPrimitiveValues(Item, Item2);
         CopyPrimitiveValues(Item, Node);

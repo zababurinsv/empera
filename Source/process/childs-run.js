@@ -158,7 +158,7 @@ var GlobalRunMap = {};
 
 function StartChildProcess(Item)
 {
-    if(Item.NodeOnly && global.NET_WORK_MODE && NET_WORK_MODE.NOT_RUN)
+    if(Item.NodeOnly && global.NOT_RUN)
     {
         return;
     }

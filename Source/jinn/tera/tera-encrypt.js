@@ -12,18 +12,38 @@ module.exports.Init = Init;
 
 function Init(Engine)
 {
-    Engine.ValueToXOR = function (Str,Rnd)
+    
+    Engine.ValueToEncrypt = function (Str,Size)
     {
-        var Arr1 = toUTF8Array(Str);
-        var Arr2 = sha3(global.COMMON_KEY + ":" + Rnd);
-        return XORHash(Arr1, Arr2, 32);
+        if(!Size || Size <= 6)
+            ToLogTrace("ValueToEncrypt: Error size = " + Size);
+        var ArrValue = GetArrFromStr(Str, Size - 6);
+        
+        var ArrEncrypt = GetEncrypt(ArrValue, Engine.ArrCommonSecret);
+        return ArrEncrypt;
     };
-    Engine.ValueFromXOR = function (Node,Rnd,Arr1)
+    
+    Engine.ValueFromEncrypt = function (Child,ArrEncrypt)
     {
-        var Arr2 = sha3(global.COMMON_KEY + ":" + Rnd);
-        var Arr = XORHash(Arr1, Arr2, 32);
+        if(IsZeroArr(ArrEncrypt))
+            return "";
+        
+        var Arr = GetDecrypt(ArrEncrypt, Child.ArrCommonSecret);
         var Str = Utf8ArrayToStr(Arr);
         return Str;
+    };
+    
+    function TestEncryptDecrypt()
+    {
+        Engine.ArrCommonSecret = sha3("SecretPassword");
+        var ArrEncrypt = Engine.ValueToEncrypt("Secret message!!!", 40);
+        console.log("ArrEncrypt length=" + ArrEncrypt.length);
+        console.log("ArrEncrypt=" + ArrEncrypt);
+        
+        var Str2 = Engine.ValueFromEncrypt({ArrCommonSecret:Engine.ArrCommonSecret}, ArrEncrypt);
+        console.log("Message=" + Str2);
+        
+        process.exit();
     };
 }
 

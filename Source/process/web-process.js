@@ -611,7 +611,7 @@ HostingCaller.GetCurrentInfo = function (Params)
         MaxNumBlockDB:MaxNumBlockDB, BlockNumDBMin:SERVER.BlockNumDBMin, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:DApps.Accounts.GetMaxAccount(),
         MaxDappsID:DApps.Smart.GetMaxNum(), CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:MIN_POWER_POW_TR,
         FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, UPDATE_CODE_JINN:UPDATE_CODE_JINN, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME,
-        PRICE_DAO:PRICE_DAO(MaxNumBlockDB), GrayConnect:GrayConnect(), JINN_MODE:global.JINN_MODE, sessionid:sessionid, };
+        PRICE_DAO:PRICE_DAO(MaxNumBlockDB), GrayConnect:global.CLIENT_MODE, JINN_MODE:global.JINN_MODE, sessionid:sessionid, };
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {
@@ -1112,7 +1112,7 @@ HostingCaller.GetSupplyCalc = function (Params)
 
 HostingCaller.GetSupply = function (Params)
 {
-    if(HTTPS_HOSTING_DOMAIN === "terafoundation.org")
+    if(global.NOT_RUN)
     {
         return HostingCaller.GetSupplyCalc(Params);
     }
