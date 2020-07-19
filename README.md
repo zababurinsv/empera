@@ -254,6 +254,6 @@ A public ip address is recommended for starting a node:
 * [Decentralized applications on TERA platform - Chinese](https://medium.com/@Blockchainize1/tera%E5%B9%B3%E5%8F%B0%E4%B8%8A%E7%9A%84%E5%8E%BB%E4%B8%AD%E5%BF%83%E5%8C%96%E5%BA%94%E7%94%A8-590f7663ecaf)
 
 
-## =RUS=
+## RUS
  [Эта же страница на русском](https://gitlab.com/terafoundation/tera2/-/tree/master/Doc/Rus)
 
