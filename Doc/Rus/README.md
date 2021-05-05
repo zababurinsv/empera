@@ -78,7 +78,7 @@ netsh advfirewall firewall add rule name="Open 30000 port" protocol=TCP localpor
 
 Просто введите подряд в ssh-терминал команды указанные ниже (в зависимости от версии дистрибутива)
 
-### Дистрибутив UBUNTU 18.4/20.04:
+### Дистрибутив UBUNTU 18.04/20.04:
 
 ```
 sudo apt-get update

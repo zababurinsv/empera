@@ -83,7 +83,7 @@ netsh advfirewall firewall add rule name="Open 30000 port" protocol=TCP localpor
 ## Installation on Linux 
 
 
-### UBUNTU 18.4/20.04:
+### UBUNTU 18.04/20.04:
 
 ```
 sudo apt-get update
