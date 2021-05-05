@@ -630,17 +630,16 @@ ListF.$Move = function (FromID,ToID,CoinSum,Description)
     1, 1);
 }
 
-ListF.$Event = function (Description)
+ListF.$Event = function (Description,Mode)
 {
     DO(50);
     
-    SMARTS.SendSmartEvent({Description:Description, Smart:RunContext.Smart.Num, Account:RunContext.Account.Num, BlockNum:RunContext.BlockNum,
-        TrNum:RunContext.TrNum});
+    SMARTS.SendSmartEvent({Description:Description, Smart:RunContext.Smart.Num, Account:RunContext.Account.Num, BlockNum:RunContext.BlockNum, TrNum:RunContext.TrNum});
     
     ToLogTx("Block: " + RunContext.BlockNum + " TxNum:" + RunContext.TrNum + " Event: " + JSON.stringify(Description), 4);
     //console.log(Description);
     
-    SendUserEvent(Description);
+    SendUserEvent(Description,Mode, RunContext.Smart.Num, RunContext.BlockNum, RunContext.TrNum);
 };
 
 ListF.$ReadAccount = function (ID)

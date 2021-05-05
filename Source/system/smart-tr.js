@@ -244,6 +244,6 @@ class SmartTR extends require("./smart-scroll")
             process.send({cmd:"DappEvent", Data:Data})
         }
     }
-};
+}
 
 module.exports = SmartTR;

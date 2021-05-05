@@ -76,6 +76,7 @@ switch(global.MODE_RUN)
         global.TEST_MINING = 1;
 
         global.COIN_STORE_NUM=975;
+        global.COIN_SMART_NUM=298;
 
         break;
         
@@ -125,6 +126,7 @@ switch(global.MODE_RUN)
         global.UPDATE_CODE_SHARDING = 68600000;
 
         global.COIN_STORE_NUM=231941;
+        global.COIN_SMART_NUM=136;
         
         break;
         

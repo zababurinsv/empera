@@ -1931,6 +1931,20 @@ function CurrencyName(Num)
     return Name;
 }
 
+function CurrencyNameFromItem(Item)
+{
+    if(Item.Token)
+    {
+        return Item.Token;//+Item.ID
+    }
+    else
+    {
+        //native Tera token
+        return CurrencyName(Item.Currency);
+    }
+}
+
+
 function FillCurrencyAsync(IdName,StartNum)
 {
     

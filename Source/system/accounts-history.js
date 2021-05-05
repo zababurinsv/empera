@@ -24,10 +24,14 @@ class AccountHistory extends require("./accounts-rest-no")
         
         this.DBStateHistory = new CDBRow("history-state", this.FORMAT_STATE_HISTORY, bReadOnly);
         this.DBBodyHistory = new CDBBase(this.FILE_NAME_HISTORY, bReadOnly);
-        this.HistoryFormatArr = [{Type:"byte", BlockNum:"uint32", TrNum:"uint16", NextPos:"uint"}, {Type:"byte", BlockNum:"uint32",
-            TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32"}, {Type:"byte", BlockNum:"uint32",
-            TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32", Description:"str"}, ]
-        this.WorkStructArr = [{}, {}, {}];
+        this.HistoryFormatArr =
+            [
+                {Type:"byte", BlockNum:"uint32", TrNum:"uint16", NextPos:"uint"},
+                {Type:"byte", BlockNum:"uint32",TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32"},
+                {Type:"byte", BlockNum:"uint32",TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32", Description:"str"},
+                {Type:"byte", BlockNum:"uint32",TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32", Description:"str", Token:"str", ID:"str"},
+            ];
+        this.WorkStructArr = [{}, {}, {}, {}];
         REGISTER_TR_DB(this.DBStateHistory, 14);
         REGISTER_TR_DB(this.DBBodyHistory, 16);
     }
@@ -47,6 +51,9 @@ class AccountHistory extends require("./accounts-rest-no")
     
     WriteHistory(Num, Body)
     {
+        if(Body.SmartMode===3)
+            Body.Type = 3;
+        else
         if(Body.SmartMode)
             Body.Type = 2;
         else

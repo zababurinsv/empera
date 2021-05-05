@@ -27,12 +27,54 @@ function SetCurTrackItem(HASH)
     }
 }
 
-function SendUserEvent(Obj)
+function SendUserEvent(Obj,Mode,Smart,BlockNum,TrNum)
 {
+    if(Mode==="History" && typeof Obj === "object" && Smart===global.COIN_SMART_NUM)
+    {
+        if(typeof Obj === "object")
+        {
+            var Data = Obj;
+            var Amount=Data.Amount;
+            if(typeof Amount==="number")
+                Amount=COIN_FROM_FLOAT2(Amount);
+            //console.log(Amount);
+
+            var HistoryObj = {
+                BlockNum: BlockNum,
+                TrNum: TrNum,
+
+                Token: Data.Token,
+                ID: Data.ID,
+
+                SumCOIN: Amount.SumCOIN,
+                SumCENT: Amount.SumCENT,
+                Description: Data.Description,
+
+                SmartMode: 3
+            };
+
+            HistoryObj.Direct = "-";
+            HistoryObj.CorrID = Data.To;
+            if(Data.From)
+                ACCOUNTS.WriteHistoryTR(Data.From, HistoryObj);
+
+            HistoryObj.Direct = "+";
+            HistoryObj.CorrID = Data.From;
+            if(Data.To)
+                ACCOUNTS.WriteHistoryTR(Data.To, HistoryObj);
+
+            return;
+        }
+        ToLog("Error type history obj in Block="+Obj.BlockNum,3);
+    }
+
+
     if(CurTrackItem && typeof Obj === "string")
         SendTrack(1, Obj, 2, 1);
     if(global.DebugEvent)
         DebugEvent(Obj);
+
+
 }
 
 function SendTrackResult(Block,TxNum,Body,SetResult,Result)
@@ -72,7 +114,7 @@ function SendTrack(Result,Str,bFinal,bEvent)
 global.GetCurTxKey = function ()
 {
     return CurTxKey;
-}
+};
 
 global.SendUserEvent = SendUserEvent;
 global.SetCurTrackItem = SetCurTrackItem;
