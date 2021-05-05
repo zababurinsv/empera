@@ -90,6 +90,7 @@ function SetAccountsData(Data,AccountsDataStr)
     }
     
     SetCurCurrencyName();
+    UpdateTokenList();
 }
 
 function CurTransactionToForm(bForce)
@@ -176,6 +177,28 @@ function GetAccountText(Item,Num,bGetSum)
     }
 }
 
+function OnSelectAccountFrom()
+{
+    OnEditTransactionFields();
+    UpdateTokenList();
+}
+
+//NFT
+function IsERCMode()
+{
+    if(+idERCMode.value)
+        return 1;
+    else
+        return 0;
+}
+
+
+function UpdateTokenList()
+{
+    var Account=+idAccount.value;
+    FillListNFT(idListNFT,Account,Account*10000, "", IsERCMode());
+}
+
 function OnEditIdTo()
 {
     CheckNameAccTo();
@@ -193,13 +216,21 @@ function SetCurCurrencyName()
     var idCoin = $("idCoinName");
     if(!idCoin)
         return;
-    
-    var Num = ParseNum($("idAccount").value);
-    var Item = MapAccounts[Num];
-    if(Item)
+
+    if(IsERCMode())
     {
-        idCoin.innerText = CurrencyName(Item.Currency);
+        idCoin.innerText="";
     }
+    else
+    {
+        var Num = ParseNum($("idAccount").value);
+        var Item = MapAccounts[Num];
+        if(Item)
+        {
+            idCoin.innerText = CurrencyName(Item.Currency);
+        }
+    }
+    
 }
 
 function IsPublicAddr(StrTo)
@@ -379,37 +410,6 @@ function SendMoneyTest()
     $("idAccount").value =  + $("idAccount").value + 1;
 }
 
-function SendMoneyBefore()
-{
-    if($("idSendButton").disabled)
-    {
-        return;
-    }
-    
-    var StrToID = GetSendAccTo();
-    var StrWhite = GetSendAccTo(1);
-    var Item = MapAccounts[StrToID];
-    if(Storage.getItem("White:" + NETWORK_ID + ":" + StrWhite) || !$("idSumSend").value || Item && Item.MyAccount)
-    {
-        SendMoney();
-    }
-    else
-    {
-        var CoinAmount = COIN_FROM_FLOAT($("idSumSend").value);
-        var StrTo = " to " + GetAccountText(Item, StrWhite);
-        $("idWhiteOnSend").checked = 0;
-        
-        $("idOnSendSum").innerText = STRING_FROM_COIN(CoinAmount);
-        $("idOnSendCoinName").innerText = $("idCoinName").innerText;
-        $("idOnSendToName").innerText = StrTo;
-        
-        SetVisibleBlock("idOnSendWarning", ($("idSumSend").value >= 100000));
-        SetVisibleBlock("idBtOnSend", Item ? "inline-block" : "none");
-        
-        SetVisibleBlock("idBlockOnSend", 1);
-        SetImg(this, 'idBlockOnSend');
-    }
-}
 
 function SendMoney2()
 {
@@ -429,11 +429,52 @@ function SendMoney(F)
         return;
     
     SetVisibleBlock("idBlockOnSend", 0);
+
+
+    if(IsERCMode())
+    {
+        return SendToken();
+    }
+
+
     
     if(!F)
         F = ClearAttach;
     CreateTransaction(SendMoneyTR, true, F);
 }
+
+function SendToken()
+{
+    var Element=$(idListNFT.CurSelect);
+    if(!Element)
+        return SetError("Pls, select token");
+    var Token=Element.dataset.token;
+    if(!Token)
+        return SetError("Pls, select token");
+    var TokenID=Element.dataset.id;
+    if(!TokenID)
+        return SetError("Pls, select token");
+
+    var Params=
+        {
+            Token:Token,
+            ID:TokenID,
+            To:idTo.value,
+            Amount:+idSumSend.value,
+            Description:idDescription.value,
+        };
+
+    var arr = ["Token","To", "Amount"];
+    for(var i = 0; i < arr.length; i++)
+    {
+        if(!Params[arr[i]])
+            return SetError("Pls, type "+arr[i]);
+    }
+
+    if(CONFIG_DATA.COIN_STORE_NUM)
+        MSendCall(CONFIG_DATA.COIN_STORE_NUM,"Transfer",Params,[],+idAccount.value);
+}
+
 
 function GetJSONFromTransaction(TR)
 {
@@ -577,6 +618,8 @@ function ClearTransaction()
     {
         $(arr[i]).value = "";
     }
+    idERCMode.value=0;
+
     SaveValues();
     CreateTransaction();
 }

@@ -443,12 +443,12 @@ textarea {
 	justify-content: space-between;
 	font-size: 16px;
 	line-height: 18px;
-	padding-bottom: 16px;
+	padding-bottom: 4px;
 	color: #445368;
 }
 
 .key-field:first-of-type {
-	padding-top: 15px;
+	padding-top: 6px;
 }
 
 .key-field__title {
@@ -463,31 +463,34 @@ textarea {
 @media (max-width: 445px)
 {
 	.key-field__title--pay {
-		margin-bottom: 5px;
+		margin-bottom: 2px;
 	}
 }
 
 .key-field__input {
 	width: 100%;
-	/*padding: 15px 15px 13px 14px;*/
-    padding: 8px 15px 8px 14px;
-	margin: 10px 0 0;
+    padding: 4px 15px 4px 14px;
+	margin: 1px 0 0;
 	border: 1px solid rgba(0, 0, 0, 0.1);
 	font-family: inherit;
 	font-size: 16px;
 	line-height: 18px;
 	color: #445368;
+
+	max-height: 42px;
+	height: 42px;
+
 }
 .key-field__input--select {
-	padding: 11px 15px 11px 10px;
+	padding: 4px 15px 4px 10px;
 	font-size: 18px;
 	line-height: 21px;
 }
 .key-field__input--enter {
 	/*padding-top: 20px;*/
 	/*padding-bottom: 18px;*/
-    padding-top: 10px;
-    padding-bottom: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .key-field__btn {
@@ -507,8 +510,8 @@ textarea {
 	background: #FFFFFF;
 	border: 1px solid rgba(0, 0, 0, 0.1);
 	min-height: 50px;
-	padding: 21px 15px 14px 15px;
-	margin-top: 8px;
+	padding: 10px 15px 6px 15px;
+	margin-top: 1px;
 	font-family: "Roboto", "Arial", sans-serif;
 	font-size: 16px;
 	line-height: 18px;
@@ -516,7 +519,7 @@ textarea {
 }
 .key-field__textarea--mobile {
 	max-height: 50px;
-	padding-top: 15px;
+	padding-top: 10px;
 }
 
 .key-field__select::placeholder,
@@ -534,7 +537,7 @@ textarea {
 	border: 1px solid rgba(0, 0, 0, 0.1);
 	/*padding: 12px 15px;*/
     padding: 8px 8px;
-	margin-top: 5px;
+	margin-top: 1px;
 	background: #fff;
 	font-family: inherit;
 	font-size: 16px;
@@ -564,7 +567,7 @@ textarea {
 	height: 18px;
 	width: 18px;
 	position: absolute;
-	left: 15px;
+	left: -15px;
 	top: 50%;
 }
 .back-link:hover::before,
@@ -1013,7 +1016,7 @@ textarea {
 .confirm-info__line {
 	display: flex;
 	align-items: flex-start;
-	padding: 15px;
+	padding: 5px;
 }
 .confirm-info__line .btn-no-bg {
 	margin-left: auto;
@@ -1037,7 +1040,7 @@ textarea {
 .send-page__btns-wrap {
 	display: flex;
 	justify-content: space-between;
-	padding: 20px 15px 80px;
+	padding: 15px 5px 5px;
 }
 .send-page__btns-wrap .btn {
 	width: 48%;
@@ -1677,14 +1680,14 @@ td.hash {
 		margin-top: 10px;
 	}
 	.key-field__input {
-		padding-top: 20px;
-    padding-bottom: 18px;
+		padding-top: 4px;
+    	padding-bottom: 4px;
 	}
 	.key-field {
-		padding-bottom: 30px;
+		padding-bottom: 6px;
 	}
 	.key-field:first-of-type {
-		padding-bottom: 16px;
+		padding-bottom: 5px;
 	}
 	.send-page__send-btn-wrp {
 		max-width: 330px;
@@ -1734,7 +1737,7 @@ td.hash {
 		height: 40px;
 	}
 	.dapps-page .key-field:first-of-type {
-		padding-bottom: 30px;
+		padding-bottom: 6px;
 	}
 	.dapps-page {
 		padding-bottom: 75px;
@@ -1771,18 +1774,18 @@ td.hash {
 		left: 0;
 	}
 	.accounts-info__add .key-field {
-		padding-bottom: 15px;
+		padding-bottom: 6px;
 	}
 
 	.accounts-info__add .key-field__input {
 		max-height: 48px;
 		height: 48px;
-		padding-top: 15px;
-    padding-bottom: 14px;
+		padding-top: 4px;
+    padding-bottom: 4px;
 	}
 	.accounts-info__add .key-field__input--select {
-		padding-top: 10px;
-		padding-bottom: 10px;
+		padding-top: 4px;
+		padding-bottom: 4px;
 	}
 	.accounts-info__add-btn {
 		margin-top: 15px;
@@ -1791,7 +1794,7 @@ td.hash {
 		padding: 0;
 	}
 	.dapps-page__field.key-field {
-		margin-top: 10px;
+		margin-top: 2px;
 	}
 	.accounts-info__to-send-link {
 		padding-left: 0;
@@ -2030,7 +2033,7 @@ td.hash {
 		padding-left: 0;
 		padding-right: 0;
 		justify-content: space-between;
-		padding-top: 75px;
+		padding-top: 15px;
 	}
 	.page-pagination {
 		justify-content: space-between;
@@ -2182,47 +2185,9 @@ td.hash {
 
 
 @media (max-width: 960px) {
-	/* .prod-card--line:hover {
-		transform: scale(1.05, 1.2);
-		box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-		padding:5px 15px;
-		background: #fff;
-		display: block;
-		transition: all ease .5s;
-	}
-	.prod-card--line:hover .mob-hidden {
-		display: inline-block;
-	}
-	.prod-card--line:hover .prod-card__footer {
-		padding: 5px;
-		padding-left: 0;
-		border: 0;
-	}
-	.prod-card--line:hover .prod-card__footer-empty {
-		padding: 10px 0 10px 40px;
-	}
-	.prod-card--line:hover .prod-card__coins-count {
-		padding-top: 5px;
-	}
-	.prod-card--line:hover .prod-card__coins-count,
-	.prod-card--line:hover .prod-card__id {
-		font-weight: 500;
-	}
-	.prod-card--line:hover .small-text {
-		font-weight: normal;
-	}
-	.prod-card--line:hover .id-sign {
-		display: inline-block;
-		font-weight: 500;
-	}
-	.prod-card--line:hover .prod-card__first-line {
-		padding-right: 0;
-	} */
+
 
 	.prod-card--active {
-		/* transform: scale(1.05, 1.2);
-		box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-		padding:5px 15px; */
 		background: #fff;
 		display: block;
 		transition: all ease .5s;
@@ -2481,8 +2446,8 @@ td.hash {
 	}
 	.key-field__textarea {
 		max-height: 58px;
-		padding-top: 21px;
-    padding-bottom: 16px;
+		padding-top: 10px;
+    padding-bottom: 6px;
 	}
 	.wallet-settings__hiding {
 		margin-bottom: 8px;
@@ -2944,3 +2909,11 @@ td.num
     cursor: pointer;
     border: 1px solid #bfc1c0;
 }
+
+.myrow
+{
+	width: 100%;
+	display: flex;
+}
+
+

@@ -39,6 +39,10 @@ function InitAce()
     
     AddAceOptions(editCode);
     AddAceOptions(editHTML);
+
+    editHTML.$search=editCode.$search;//common finding word
+
+
     
     SetAutocomplete();
     
@@ -197,13 +201,21 @@ function AddAceOptions(editor)
     editor.commands.addCommand({name:"selectOrFindNext", bindKey:{win:"Ctrl-F3", mac:"Ctrl-G"}, exec:function (editor)
         {
             if(editor.selection.isEmpty())
-                editor.selection.selectWord();
+            {
+                // editor.selection.selectWord();
+            }
             else
+            {
                 editor.findNext();
+            }
         }, readOnly:true});
     
     editor.commands.addCommand({name:"findnext", bindKey:{win:"F3", mac:"Command-G"}, exec:function (editor)
         {
+            if(!editor.selection.isEmpty())
+                editor.selection.clearSelection();
+
+
             editor.findNext();
         }, readOnly:true});
     editor.commands.addCommand({name:"Set bookmark", bindKey:{win:"Ctrl-F2", mac:"Command-F2"}, exec:function (editor)

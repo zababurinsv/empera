@@ -38,6 +38,7 @@
 <script src="./JS/dapp-edit-project.js"></script>
 <script src="./JS/dapp-edit-ace.js"></script>
 <script src="./JS/dapp-edit-template.js"></script>
+<script src="./JS/dapp-edit-db.js"></script>
 
 
 
@@ -149,6 +150,9 @@ Uncomment script in real project <!--<script type="text/javascript" src="https:/
                 <DIV style="width: 15%;min-width:140px; float:left;" class="resizable">
                     <INPUT type="button" onclick="NewProject()" class="bt btool" value="New">
                     <INPUT type="button" onclick="DelProject()" class="bt btool" value="Del">
+                    <INPUT type="button" onclick="SaveValues(1)" class="bt btool" value="Save">
+
+
 <!--                    <INPUT type="button" onclick="LoadSmart()" class="bt btool" value="Load">-->
                     <div style="padding-left: 2px; ">PROJECTS:</div>
                     <select size="2" id="idProjectList" style="width:100%;height:calc(50vh - 67px - 10px)"  onchange="SetCurrentProject(1)" onclick="SetCurrentProject(2)">
@@ -295,6 +299,7 @@ Uncomment script in real project <!--<script type="text/javascript" src="https:/
                                 <option value="size360x640">360 * 640</option>
                                 <option value="size375x812">375 * 812</option>
                                 <option value="size768x1024">768 * 1024</option>
+                                <option value="size1024x800">1024 * 800</option>
                             </select>
 
                             <BR><INPUT type="button" onclick="DoPlay(1)" class="bt radius t-holder" style="height: 40px;" value="RECREATE">
@@ -342,6 +347,9 @@ Uncomment script in real project <!--<script type="text/javascript" src="https:/
                         <HR>
                         <BR>
                         <INPUT type="button" onclick="SendHTMLToBlockchain()" class="bt radius t-holder" style="height: 40px;" id="idBtSendHTML" value="SEND HTML FILE">
+                        <BR>
+                        <INPUT type="button" onclick="SendJSToBlockchain()" class="bt radius t-holder" style="height: 40px;" id="idBtSendJS" value="SEND JS FILE">
+
 
 
                         <BR>
@@ -416,8 +424,8 @@ Uncomment script in real project <!--<script type="text/javascript" src="https:/
                 <option value="styleDark">Dark</option>
             </select>
             <BR><BR>
-            <button onclick="SaveValues(1);SaveWebDataToFile(localStorage['SMART-ProjectArray'],'dapp-ide.txt')" class="bt" id="idSave"> Save to file</button>
-            <label for="load-key" class="bt" onchange="LoadWebDataFromFile('load-key',DoLoadingConfig)" id="idLoad">
+            <button onclick="SaveAllProjects();" class="bt btfile" id="idSave"> Save to file</button>
+            <label for="load-key" class="bt btfile" onchange="LoadWebDataFromFile('load-key',DoLoadingConfig)" id="idLoad">
                 <input class="hidden" id="load-key" type="file">
                 <span>Load from file</span>
             </label>

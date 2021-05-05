@@ -638,9 +638,10 @@ ListF.$Event = function (Description)
         TrNum:RunContext.TrNum});
     
     ToLogTx("Block: " + RunContext.BlockNum + " TxNum:" + RunContext.TrNum + " Event: " + JSON.stringify(Description), 4);
+    //console.log(Description);
     
     SendUserEvent(Description);
-}
+};
 
 ListF.$ReadAccount = function (ID)
 {
@@ -650,7 +651,7 @@ ListF.$ReadAccount = function (ID)
     if(!Account)
         throw "Error read account Num: " + ID;
     return GET_ACCOUNT(Account);
-}
+};
 
 
 ListF.$ReadSmart = function (ID)
@@ -769,6 +770,7 @@ ListF.$COIN_FROM_STRING = function (Sum)
 
 ListF.$require = function (SmartNum)
 {
+
     DO(2000);
     SmartNum = ParseNum(SmartNum);
     
@@ -781,9 +783,9 @@ ListF.$require = function (SmartNum)
     var EvalContext = GetSmartEvalContext(Smart);
     
     EvalContext.funclist.SetContext(RunContext.context);
-    
+
     return EvalContext.publist;
-}
+};
 
 ListF.$GetHexFromArr = function (Arr)
 {

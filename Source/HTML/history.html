@@ -73,6 +73,8 @@
                 window.attachEvent("onmessage", OnMessage);
             }
 
+            if(isMobile())
+                $("MTabWelcome").className+=" back-link";
         }
         function OnChangeAccount()
         {
@@ -213,23 +215,26 @@
         {
             //console.log(event.data);
             var Data=event.data;
-            if(!Data || typeof Data!=="object")
+            if(!Data || typeof Data!=="object" || !Data.IsTeraWallet)
                 return;
 
-            FrameData=Data;
             if(Data.Account)
             {
+                FrameData=Data;
                 AccountID=Data.Account;
                 document.getElementById("idViewAccountID").value=AccountID;
-                ViewHistory(1)
+                ViewHistory(1);
 
                 $("MTabWelcome").className+=" back-link";
             }
         }
         function DoBackPage()
         {
-            if(FrameData)
-                ClosePage()
+            //console.log("Back page",FrameData);
+            if(FrameData && window.parent)
+                ClosePage();
+            else
+                window.history.back();
 
         }
 
@@ -238,6 +243,7 @@
             if(FrameData && window.parent)
             {
                 FrameData.cmd="OpenBlockViewerPage";
+                FrameData.IsTeraWallet=1;
                 FrameData.BlockNum=Num;
                 window.parent.postMessage(FrameData, "*");
             }

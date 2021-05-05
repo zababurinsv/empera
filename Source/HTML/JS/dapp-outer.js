@@ -29,9 +29,12 @@ else
     window.attachEvent("onmessage", DappListener);
 }
 
+
+
+
 function CreateFrame(Code,Parent)
 {
-    
+
     if(!Parent)
         Parent = document.getElementsByTagName('body')[0];
     
@@ -44,7 +47,7 @@ function CreateFrame(Code,Parent)
     iframe.name = 'dapp';
     iframe.sandbox = "allow-scripts";
     
-    var SriptLW = "";
+    var ScriptLW = "";
     var StrPath = ".";
     if(MainServer)
     {
@@ -52,7 +55,7 @@ function CreateFrame(Code,Parent)
         Code = Code.replace(/.\/CSS\/[0-9a-z_-]+.css\">/g, StrPath + "$&");
         Code = Code.replace(/.\/JS\/[0-9a-z_-]+.js\">/g, StrPath + "$&");
         Code = Code.replace(/\/file\/[0-9]+\/[0-9]+\"/g, StrPath + "$&");
-        SriptLW = '<script>window.PROTOCOL_SERVER_PATH="' + StrPath + '";<\/script>';
+        ScriptLW = '<script>window.PROTOCOL_SERVER_PATH="' + StrPath + '";<\/script>';
         
         if(isMobile())
             StrPath = ".";
@@ -62,7 +65,7 @@ function CreateFrame(Code,Parent)
         StrPath = GetProtocolServerPath(MainServer);
     }
     
-    Code = SriptLW + '\
+    Code = ScriptLW + '\
     <meta charset="UTF-8">\
     <meta http-equiv="X-Frame-Options" value="sameorigin">\
     <script type="text/javascript" src="' + StrPath + '/JS/sha3.js"><\/script>\
@@ -71,23 +74,26 @@ function CreateFrame(Code,Parent)
     <script type="text/javascript" src="' + StrPath + '/JS/coinlib.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/dapp-inner.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/terahashlib.js"><\/script>\
+    <script type="text/javascript" src="' + StrPath + '/JS/terabuf.js"><\/script>\
     ' + Code;
-    
+
+
     if($("idModalCSS"))
     {
         Code += $("idModalCSS").outerHTML;
         Code += $("idOverlay").outerHTML;
         Code += $("idConfirm").outerHTML;
     }
-    
+
     iframe.srcdoc = Code;
     Parent.appendChild(iframe);
     
-    setTimeout(function ()
-    {
-        SetVisibleBlock("idFrame", 1);
-    }, 2000);
+    // setTimeout(function ()
+    // {
+    //     SetVisibleBlock("idFrame", 1);
+    // }, 2000);
 }
+
 
 function SendMessage(Data)
 {
@@ -313,16 +319,27 @@ function DappListener(event)
             
         case "ethereum-request":
             {
-                ethereum.request(Data.Params).then(function (Result)
+                if(!window.ethereum)
+                {
+                    Data.cmd = "Result";
+                    Data.Result = "Metamask not installed";
+                    Data.Err = 1;
+                    SendMessage(Data);
+                    return;
+                }
+
+                window.ethereum.request(Data.Params).then(function (Result)
                 {
                     Data.cmd = "Result";
                     Data.Result = Result;
+                    //console.log("Result",Result);
                     SendMessage(Data);
                 }).catch(function (Result)
                 {
                     Data.cmd = "Result";
                     Data.Result = Result;
                     Data.Err = 1;
+                    //console.error(Result);
                     SendMessage(Data);
                 });
                 break;
@@ -330,7 +347,8 @@ function DappListener(event)
             
         case "ethereum-on":
             {
-                ethereum.on(Data.Name, function (Result)
+                if(window.ethereum)
+                window.ethereum.on(Data.Name, function (Result)
                 {
                     Data.cmd = "ResultOn";
                     Data.Result = Result;
@@ -340,7 +358,8 @@ function DappListener(event)
             }
         case "ethereum-off":
             {
-                ethereum.removeListener(Data.Name, function (Result)
+                if(window.ethereum)
+                window.ethereum.removeListener(Data.Name, function (Result)
                 {
                     Data.cmd = "Result";
                     Data.Result = Result;
@@ -356,6 +375,10 @@ function DappListener(event)
                 SendMessage(Data);
                 break;
             }
+        case "Show":
+            SetVisibleBlock("idFrame", 1);
+            break;
+
     }
 }
 
@@ -434,7 +457,7 @@ function SetArrLog(arr)
         var Item = arr[i];
         if(!Item.final)
             continue;
-        if(Item.text.indexOf("Add to blockchain") >= 0)
+        if(typeof Item.text==="string" && Item.text.indexOf("Add to blockchain") >= 0)
             continue;
         
         var TR = MapSendTransaction[Item.key];
@@ -467,3 +490,5 @@ function DoComputeSecret(Account,PubKey,F)
         F(Result);
     });
 }
+
+

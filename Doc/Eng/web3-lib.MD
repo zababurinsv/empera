@@ -141,14 +141,14 @@ web3.tera.OnLogin(function (Result)
 #### OnInfo
  **web3.tera.OnInfo(F)** - getting up-to-date information on the DApp and status of the user's wallet
  ###### Options:     
- F - Callback function (automatic periodic call), returns a structure with data:
- ArrWallet - an array with a list of wallet accounts, each account is a structure: {Num, Name, Currency, PubKey, PubKeyStr, SmartObj, SmartState, Value:{SumCOIN, SumCENT,Smart}}
- Account - basic (main) smart contract account, structure: {Num, Name, Currency, PubKey, SmartObj, SmartState, Value:{SumCOIN, SumCENT,Smart}}
- Smart - properties of the smart contract structure: {Num, Name, ShortName, Account, AccountLength, Owner, TokenGenerate}
- NETWORK - network name
- SHARD_NAME - shard name
- CurBlockNum - current (last) block number
- PRICE_DAO - prices of paid transactions, structure: {NewAccount, NewShard, NewSmart, NewTokenSmart, Storage}
+* F - Callback function (automatic periodic call), returns a structure with data:
+* ArrWallet - an array with a list of wallet accounts, each account is a structure: {Num, Name, Currency, PubKey, PubKeyStr, SmartObj, SmartState, Value:{SumCOIN, SumCENT,Smart}}
+* Account - basic (main) smart contract account, structure: {Num, Name, Currency, PubKey, SmartObj, SmartState, Value:{SumCOIN, SumCENT,Smart}}
+* Smart - properties of the smart contract structure: {Num, Name, ShortName, Account, AccountLength, Owner, TokenGenerate}
+* NETWORK - network name
+* SHARD_NAME - shard name
+* CurBlockNum - current (last) block number
+* PRICE_DAO - prices of paid transactions, structure: {NewAccount, NewShard, NewSmart, NewTokenSmart, Storage}
   
   
  ###### Example:

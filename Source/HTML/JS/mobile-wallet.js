@@ -11,8 +11,7 @@
 
 var WEB_WALLET_VERSION = "" + window.CLIENT_VERSION;
 
-var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idCurTabName", "idViewBlockNum", "idViewAccountNum", "idViewDappNum",
-"idLang"];
+var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idCurTabName", "idViewBlockNum", "idViewAccountNum", "idViewDappNum", "idLang","idERCMode"];
 
 var CONFIG_DATA = {PRICE_DAO:{NewAccount:10}, MaxNumBlockDB:0, MaxAccID:0, MaxDappsID:0};
 var CountViewRows = 20;
@@ -60,8 +59,8 @@ window.addEventListener('keydown', function (e)
 
 window.addEventListener('beforeunload', function (e)
 {
-    if(ClosePasswordOnExit)
-        DoExitWallet();
+    // if(ClosePasswordOnExit)
+    //     DoExitWallet(); - не нужно - иначе перестают работать даппы на других вкладках
 }
 );
 
@@ -233,7 +232,11 @@ function OnFindServer()
     }
     
     CONNECT_STATUS = 2;
-    Storage.setItem("MainServer", JSON.stringify({ip:MainServer.ip, port:MainServer.port}));
+    if(IsLocalClient())
+    {
+        Storage.setItem("MainServer", JSON.stringify({ip: MainServer.ip, port: MainServer.port}));
+    }
+
     FillCurrencyAsync("idCurrencyList");
     
     SetDataUpdateTime(10);
@@ -440,7 +443,7 @@ function UpdatesAccountsData(bGetData)
     if(!bGetData)
         return;
     
-    GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData}, function (Data,responseText)
+    GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData, CoinStore:1}, function (Data,responseText)
     {
         if(!Data || !Data.result || !Data.arr)
             return;
@@ -561,7 +564,7 @@ function SetAccountsCard(Data,AccountsDataStr)
     var dataList = $("idToList");
     if(dataList)
         dataList.innerHTML = "";
-    
+
     for(var i = 0; arr && i < arr.length; i++)
     {
         var Item = arr[i];
@@ -630,7 +633,9 @@ function SetAccountsCard(Data,AccountsDataStr)
             Str = Str.replace("prod-card__link--dapp", "myhidden");
             Str = Str.replace("prod-card__dropdown", "prod-card__dropdown nodapp");
         }
-        
+
+        Str = Str.replace("$Item.CoinStore", RetMultiCoins(Item,"NFT: "));
+
         StrList += Str;
         Str = "";
         
@@ -668,7 +673,21 @@ function SetAccountsCard(Data,AccountsDataStr)
         Select.value = CurrentValue;
         delete LoadMapAfter["idAccount"];
     }
+
+    UpdateTokenList();
 }
+
+function ChooseToken(name)
+{
+    //todo - вызов (двойной клик) не работает в mobile
+
+    if(name==="idListNFT")
+    {
+        SendMobileBefore();
+    }
+}
+
+
 
 var glWasSmart;
 var glWasNumAccount;
@@ -835,7 +854,7 @@ function SetArrLog(arr)
             if(Item.final > 0 && !TR.WasError)
                 SetStatus(Item.text);
             
-            if(Item.text.indexOf("Add to blockchain") >= 0)
+            if(typeof Item.text==="string" && Item.text.indexOf("Add to blockchain") >= 0)
             {
                 if(TR.Run)
                 {
@@ -916,6 +935,7 @@ function ClearSend()
     $("idSumSend").value = "";
     $("idDescription").value = "";
     $("idNameTo2").innerText = "";
+    $("idERCMode").value=0;
 }
 
 
@@ -1038,11 +1058,32 @@ function SendMobileBefore()
     {
         $("idConfirmToName").innerText = "";
     }
-    
+
+    var CurName=CurrencyNameItem(Item);
+    if(IsERCMode())
+    {
+        if(!(+idSumSend.value))
+            idSumSend.value=1;
+        if(!idListNFT.CurSelect)
+            return SetError("Need select NFT");
+
+        var Element=$(idListNFT.CurSelect);
+        if(!Element)
+            return SetError("Need select NFT");
+        CurName=Element.dataset.token;
+        //$("idTokenHolder").innerHTML = Element.innerHTML;
+        $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,Element.dataset.id,idSumSend.value);
+        SetVisibleBlock("idTokenHolder",1);
+    }
+    else
+    {
+        SetVisibleBlock("idTokenHolder",0);
+    }
+
     var CoinAmount = COIN_FROM_FLOAT($("idSumSend").value);
     $("idConfirmAmount").innerText = STRING_FROM_COIN(CoinAmount);
-    $("idConfirmCurrency").innerText = CurrencyNameItem(Item);
-    
+    $("idConfirmCurrency").innerText = CurName;
+
     $("idConfirmDescription").innerText = $("idDescription").value;
     
     SetVisibleClass(".send-page__setting", 0);
@@ -1055,7 +1096,12 @@ function SendMobileBefore()
 
 function OKSend()
 {
-    
+    if(IsERCMode())
+    {
+        SendToken();
+        closeModal();
+    }
+    else
     SendMoney(function ()
     {
         if(glWasModal)
@@ -1366,7 +1412,7 @@ function OpenHistoryPage(Num)
     }
     
     SetVisibleFrame("idHistoryPage", 1);
-    SendMessage("HistoryPage", {Account:Num, FrameName:"idHistoryPage"});
+    SendMessage("HistoryPage", {IsTeraWallet:1,Account:Num, FrameName:"idHistoryPage"});
 }
 
 function OpenBlockViewerPage(Num)
@@ -1378,7 +1424,7 @@ function OpenBlockViewerPage(Num)
     }
     
     SetVisibleFrame("idBlockViewerPage", 1);
-    SendMessage("BlockViewerPage", {BlockNum:Num, FrameName:"idBlockViewerPage"});
+    SendMessage("BlockViewerPage", {IsTeraWallet:1,BlockNum:Num, FrameName:"idBlockViewerPage"});
 }
 
 function AddFrame(name,filename)

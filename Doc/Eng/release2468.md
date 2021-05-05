@@ -15,7 +15,7 @@ To protect against DDOS in the form of large file sizes, the staking method is u
 
 #### Cryptography
 
-* sha256() - Standard SHA-256 hash algorithm (FIPS 180-3) - Bitcoin
+* sha256() - Standard SHA-256 hash algorithm (FIPS 180-3) - Bitcoin (warning: only the string type argument is supported)
 * sha3() - Standard SHA3-256 hash algorithm (FIPS 202) - Tera
 * keccak256() - keccak256 hash algorithm used in Ethereum
 * ecrecover(hash, v, r, s) is a standard feature of Ethereum

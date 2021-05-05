@@ -7,7 +7,6 @@ Official public gateways supporting this API:
 * https://t2.teraexplorer.com
 * https://t4.teraexplorer.com
 * https://t5.teraexplorer.com
-* http://terablockchain.org
 * http://dappsgate.com
 
 

@@ -78,6 +78,50 @@ netsh advfirewall firewall add rule name="Open 30000 port" protocol=TCP localpor
 
 Просто введите подряд в ssh-терминал команды указанные ниже (в зависимости от версии дистрибутива)
 
+### Дистрибутив UBUNTU 18.4/20.04:
+
+```
+sudo apt-get update
+apt-get install -y git
+apt-get install -y nodejs
+apt-get install -y npm
+npm install pm2 -g
+apt-get install unzip
+git clone https://gitlab.com/terafoundation/tera.git wallet
+apt -y install build-essential
+apt group install "Development Tools"
+cd ~/wallet/Source
+npm install
+node set httpport:8080 password:пароль_без_пробела
+```
+
+### открытие портов:
+```
+sudo ufw allow 30000/tcp
+sudo ufw allow 8080/tcp
+```
+
+### Дистрибутив UBUNTU 16 перед загрузкой ноды выполнить:
+```
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+```
+
+
+### запуск ноды:
+Перед запуском ноды мы рекомендуем скачать и установить бэкап блокчейна (zip size 8 Gb), запустите команды:
+```
+cd ~/wallet/DATA
+wget https://terawallet.org/files/jinn-db.zip
+unzip -o jinn-db.zip
+
+```
+
+После этого запустите ноду командой:
+```
+cd ~/wallet/Source
+pm2 start run-node.js
+```
+
 
 
 ### Дистрибутив CentOS 7:
@@ -118,48 +162,13 @@ pm2 start run-node.js
 ```
 
 
-### Дистрибутив UBUNTU 18.4:
+## Обновления
 
-```
-apt-get install unzip
-apt-get install -y git
-apt-get install -y nodejs
-apt-get install -y npm
-npm install pm2 -g
-git clone https://gitlab.com/terafoundation/tera.git wallet
-apt install build-essential
-apt group install "Development Tools"
-cd ~/wallet/Source
-npm install
-node set httpport:8080 password:пароль_без_пробела
-```
-
-### открытие портов:
-```
-sudo ufw allow 30000/tcp
-sudo ufw allow 8080/tcp
-```
-
-### Дистрибутив UBUNTU 16 перед загрузкой ноды выполнить:
-```
-curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-```
-
-
-### запуск ноды:
-Перед запуском ноды мы рекомендуем скачать и установить бэкап блокчейна (zip size 8 Gb), запустите команды:
-```
-cd ~/wallet/DATA
-wget https://terawallet.org/files/jinn-db.zip
-unzip -o jinn-db.zip
-
-```
-
-После этого запустите ноду командой:
 ```
 cd ~/wallet/Source
-pm2 start run-node.js
+node update.js
 ```
+`
 
 
 ## MAIN NETWORK
@@ -186,11 +195,11 @@ pm2 start run-jinn.js
 ```
 
 
-## Обновления
-
+## Команды PM2
 ```
-cd ~/wallet/Source
-node update.js
+ pm2 start run-node.js
+ pm2 save
+ pm2 startup
 ```
 
 

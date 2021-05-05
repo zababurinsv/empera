@@ -126,7 +126,7 @@ window.DELTA_POWER_POW_TR = 0;
 window.DELTA_FOR_TIME_TX = 0;
 
 window.CONSENSUS_PERIOD_TIME = 3000;
-window.FIRST_TIME_BLOCK = 1530446400000;
+window.FIRST_TIME_BLOCK = 1403426400000;
 window.NEW_SIGN_TIME = 25500000;
 
 window.SetBlockChainConstant = function (Data)

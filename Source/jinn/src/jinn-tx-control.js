@@ -88,7 +88,7 @@ function InitClass(Engine)
     };
     Engine.IsValidateTx = function (Tx,StrCheckName,BlockNum,IsBlockTx)
     {
-        if(!Tx || !Tx.IsTx || !Tx.body || Tx.body.length < 8 || Tx.body.length > 32000)
+        if(!Tx || !Tx.IsTx || !Tx.body || Tx.body.length < 8 || Tx.body.length > 64000)
             return 0;
         
         var Result = CheckTx(StrCheckName, Tx, BlockNum, 1);

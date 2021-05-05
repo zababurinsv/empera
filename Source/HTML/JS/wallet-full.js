@@ -28,7 +28,7 @@ var SERVER_PORT;
 var CurTabName;
 
 var TabArr = [{name:"TabAccounts", log:1}, {name:"TabSend", log:1}, {name:"TabDapps"}, {name:"TabSharding"}, {name:"TabExplorer"}];
-var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idSelStyle", "idViewAccountNum", "idViewBlockNum", "idViewJournNum",
+var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idERCMode","idSelStyle", "idViewAccountNum", "idViewBlockNum", "idViewJournNum",
 "idViewCrossOutNum", "idViewCrossInNum", "idViewHashNum", "idViewDappNum", "idViewShardNum", "idRunText", "idViewAccountFilter",
 "idBlockCount", "idBlockCount2", "idWN", "idCurTabName"];
 
@@ -986,20 +986,6 @@ function OnClickOpenCloseWallet()
         }
 }
 
-function ViewOpenWallet()
-{
-    
-    if(WalletOpen !== false)
-    {
-        SetStatus("Wallet not close");
-        return;
-    }
-    
-    itemPasswordGet.onkeydown = OnEnterPas1;
-    itemPasswordGet.value = "";
-    SetVisibleBlock("idBlockPasswordGet", true);
-    itemPasswordGet.focus();
-}
 function OpenWallet()
 {
     var Passwd1 = itemPasswordGet.value;
@@ -1032,8 +1018,8 @@ function ViewSetPassword()
         return;
     }
     
-    itemPassword1.onkeydown = OnEnterPas1;
-    itemPassword2.onkeydown = OnEnterPas2;
+    // itemPassword1.onkeydown = OnEnterPas1;
+    // itemPassword2.onkeydown = OnEnterPas2;
     
     itemPassword1.value = "";
     itemPassword2.value = "";
@@ -1123,11 +1109,10 @@ function OpenOwnWebWallet()
 function OnInitWallet()
 {
     UpdatesData();
-    setInterval(UpdatesData, 1000);
+    setInterval(UpdatesData, 2000);
     
-    setInterval(CheckNewMoney, 2000);
     setInterval(SaveValues, 2000);
-    setTimeout(CheckNameAccTo, 100);
+    setTimeout(CheckNameAccTo, 200);
     
     if(window.location.hash)
     {

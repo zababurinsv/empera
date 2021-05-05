@@ -84,7 +84,7 @@ process.on('message', function (msg)
             }
             
         case "MiningBlock":
-            GlMiningBlock = msg.Value;
+            global.GlMiningBlock = msg.Value;
             break;
     }
 }
@@ -193,7 +193,12 @@ function MainHTTPFunction(request,response)
     var DataURL = url.parse(request.url);
     var Params = querystring.parse(DataURL.query);
     var Path = querystring.unescape(DataURL.pathname);
-    
+
+    if(global.HTTP_START_PAGE && !Path || Path==="/")
+    {
+        Path = global.HTTP_START_PAGE;
+    }
+
     var ip = request.socket.remoteAddress;
     global.WEB_LOG && ToLogWeb("" + ip + " Get Path:" + Path);
     
@@ -281,17 +286,20 @@ function RunListenServer()
     });
 }
 
-var IndexName = "index.html";
+var glIndexName;
 if(global.HTTP_START_PAGE)
-    IndexName = global.HTTP_START_PAGE;
+    glIndexName = global.HTTP_START_PAGE;
 else
-{
-    var SiteFolder = GetNormalPathString("./SITE");
-    if(!fs.existsSync(SiteFolder))
-    {
-        IndexName = "web-wallet.html";
-    }
-}
+    glIndexName = "web-wallet.html";
+
+// else
+// {
+//     var SiteFolder = GetNormalPathString("./SITE");
+//     if(!fs.existsSync(SiteFolder))
+//     {
+//         glIndexName = "web-wallet.html";
+//     }
+// }
 
 var WalletFileMap = {};
 WalletFileMap["mobile-wallet.html"] = "web-wallet.html";
@@ -307,15 +315,11 @@ function DoCommandNew(request,response,Type,Path,Params)
 {
     if(global.HTTP_START_PAGE === "WWW")
         return DoCommandWWW(request, response, Type, Path, Params);
-    
+
     if(Path.substring(0, 1) === "/")
         Path = Path.substring(1);
-    
-    if(global.HTTP_START_PAGE && !Path)
-    {
-        Path = global.HTTP_START_PAGE;
-    }
-    
+
+//
     var ArrPath = Path.split('/', 7);
     
     if(global.AddonCommand)
@@ -407,7 +411,9 @@ function DoCommandNew(request,response,Type,Path,Params)
         }
         return;
     }
-    
+    if(!Method)
+        return;
+
     Method = Method.toLowerCase();
     if(Method === "dapp" && ArrPath.length === 2)
         Method = "DappTemplateFile";
@@ -441,7 +447,7 @@ function DoCommandNew(request,response,Type,Path,Params)
                         Name = "ErrorFilePath";
                 
                 if(Name === "")
-                    Name = IndexName;
+                    Name = glIndexName;
                 
                 if(Name.indexOf(".") < 0)
                     Name += ".html";

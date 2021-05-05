@@ -8,6 +8,7 @@
  * Telegram:  https://t.me/terafoundation
 */
 
+var root = typeof global==="object"?global:window;
 
 var MAX_SUM_TER = 1e9;
 var MAX_SUM_CENT = 1e9;
@@ -125,15 +126,12 @@ function GetCurrencyFixed(Currency)
     return Fixed;
 }
 
-if(typeof global === "object")
-{
-    global.CHECKSUM = CHECKSUM;
-    global.ADD = ADD;
-    global.SUB = SUB;
-    global.DIV = DIV;
-    global.ISZERO = ISZERO;
-    global.FLOAT_FROM_COIN = FLOAT_FROM_COIN;
-    global.COIN_FROM_FLOAT = COIN_FROM_FLOAT;
-    global.COIN_FROM_FLOAT2 = COIN_FROM_FLOAT2;
-    global.COIN_FROM_STRING = COIN_FROM_STRING;
-}
+root.CHECKSUM = CHECKSUM;
+root.ADD = ADD;
+root.SUB = SUB;
+root.DIV = DIV;
+root.ISZERO = ISZERO;
+root.FLOAT_FROM_COIN = FLOAT_FROM_COIN;
+root.COIN_FROM_FLOAT = COIN_FROM_FLOAT;
+root.COIN_FROM_FLOAT2 = COIN_FROM_FLOAT2;
+root.COIN_FROM_STRING = COIN_FROM_STRING;

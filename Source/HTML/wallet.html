@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="./CSS/wallet-grid.css">
     <link rel="stylesheet" href="./CSS/wallet-new.css"> <!-- Подключаем CSS -->
     <link rel="stylesheet" href="./CSS/wallet-normalize.css"> <!-- Подключаем normalize -->
+    <link rel="stylesheet" href="./CSS/wallet-multicoin.css">
 
 
 
@@ -26,6 +27,8 @@
 
     <script type="text/javascript" src="/HTML/JS/wallet-full.js"></script>
     <script type="text/javascript" src="/HTML/JS/wallet-full-new.js"></script>
+    <script type="text/javascript" src="/HTML/JS/wallet-multicoin.js"></script>
+
 
 
     <script>
@@ -116,7 +119,7 @@
         <div class="config__desc">
             <div class="config__group">
                 <h4 class="h4">Block</h4>
-                <p id="idCurBlockNum" class="config__number">32416782</p>
+                <p id="idCurBlockNum" class="config__number">000000</p>
             </div>
             <div class="config__group">
                 <h4 class="h4">DB delta</h4>
@@ -207,6 +210,7 @@
                             <th id="(RetEditAccount(Item))" data-name="Account name" class="name ">Name</th>
                             <th id="SUM_TO_STRING(Item.Value)" class="sum bold">Amount</th>
                             <th id="CurrencyNameItem(Item)" data-name="Currency" class="cur">Cur</th>
+                            <th id="(RetMultiCoins(Item))" class="">NFT</th>
                             <th id="Item.Adviser" data-name="Adviser" class="">Adv</th>
 
                             <th id="(RetChangeSmart(Item))" data-name="Smart contract (DApp)" class="">Smart</th>
@@ -491,7 +495,7 @@
             <div class="division"></div>
             <h3 class="h3">Wallet view set</h3>
 
-            <div class="row" id="idRowViewSet">
+            <div class="row">
                 <div class="connection">
                     <p class="connection__text">Window name:</p>
                     <input type="text" class="input  input_middle node-const" id="WALLET_NAME" maxlength="40" value="" onchange="SaveNetParams()">
@@ -500,7 +504,10 @@
                     <p class="connection__text">Description:</p>
                     <input type="text" class="input  input_middle node-const" id="WALLET_DESCRIPTION" maxlength="40" value="" onchange="SaveNetParams()">
                 </div>
-
+                <a  onclick="FindMyAccounts();" class="btn btn_margin btn__transparent" style="width: 150px">
+                    <img src="./img/reload.svg" class="btn__img">
+                    refresh
+                </a>
             </div>
             <BR>
             <div class="myrowl">
@@ -538,6 +545,17 @@
                     </label>
                 </div>
             </div>
+
+            <div class="connection__switch ">
+                <div class="switch" style="width: 400px">
+                    <p class="switch-text">Edit accounts (beta version)</p>
+                    <label for="USE_EDIT_ACCOUNT">
+                        <input type="checkbox" class="checkbox node-const" id="USE_EDIT_ACCOUNT" onchange="SaveNetParams()">
+                        <label for="USE_EDIT_ACCOUNT"></label>
+                    </label>
+                </div>
+            </div>
+
 
 
         </div>
@@ -748,11 +766,17 @@
             <p class="input-group__text">From:</p>
             <p class="input-group__text bt-paste" onclick="PasteRow()">Paste</p>
             </div>
-            <div class="select">
-                <select class="select__item input_send" size="1" id="idAccount" onkeyup="OnEditTransactionFields()" onchange="OnEditTransactionFields()">
+            <div class="select row">
+                <select class="select__item input_send" size="1" id="idAccount" oninput="OnSelectAccountFrom()">
+                </select>
+                <select class="select__item" size="1" id="idERCMode" oninput="OnSelectAccountFrom()">
+                    <option value="0">Coin</option>
+                    <option value="1">NFT</option>
                 </select>
             </div>
         </div>
+
+
         <div class="input-group">
             <div class="input-group__row">
                 <p class="input-group__text">Pay to:</p>
@@ -784,6 +808,18 @@
             <textarea id="idDescription" rows="4" class="input input_send" onkeyup="CheckLengthAccDesription('idDescription',200);OnEditTransactionFields()" onchange="OnEditTransactionFields()"></textarea>
         </div>
         <DIV id="idAttach"> </DIV>
+
+        <div class="row" id="idTokenNFT" style="display:none">
+            <div>
+                <div class="input-group__row">
+                    <p class="input-group__text">Tokens:</p>
+                </div>
+                <grid_nft id="idListNFT">
+                    <item_nft>Loading...</item_nft>
+                </grid_nft>
+            </div>
+        </div>
+
         <div class="wallet__buttons">
             <a onclick="EditJSONTransaction()" class="btn btn__transparent btn_wide" id="json">
                 <img src="./img/edit.svg" class="btn__img">
@@ -1173,19 +1209,19 @@
                             <th id="GetHexFromArr(Item.PowHash)" class="hash">PowHash</th>
                             <th id="GetHexFromArr(Item.Hash)" class="hash">Hash</th>
 
-                            <!--                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
-                            <!--                            <th id="GetHexFromArr(Item.SeqHash)" class="hash">SeqHash</th>-->
-                            <!--                            <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>-->
-                            <!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->
-                            <!--                            <th id="Item.SumPow" class="num">SumPow</th>-->
+<!--                            <th id="GetHexFromArr(Item.PrevHash)" class="hash">PrevHash</th>-->
+<!--                            <th id="GetHexFromArr(Item.Hash1)" class="hash">Hash1</th>-->
+<!--                            <th id="GetHexFromArr(Item.Hash2)" class="hash">Hash2</th>-->
+<!--                            <th id="GetHexFromArr(Item.SeqHash)" class="hash">SeqHash</th>-->
+<!--                            <th id="GetHexFromArr(Item.SumHash)" class="hash">SumHash</th>-->
+<!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">AddrHash</th>-->
+<!--                            <th id="Item.SumPow" class="num">SumPow</th>-->
 
                             <th id="Item.TrDataLen" class="num">Count</th>
                             <th id="Item.Power" class="num">Pow</th>
                             <th id="(RetHistoryAccount(Item,'Miner')+'<BR><b>'+(Item.MinerName?Item.MinerName:''))+'</b>'" class="num">Miner</th>
 
 
-                            <!--<th id="GetHexFromArr(Item.Hash1)" class="hash">Hash1</th>-->
-                            <!--<th id="GetHexFromArr(Item.Hash2)" class="hash">Hash2</th>-->
 
                             <!--                            <th id="GetHexFromArr(Item.AddrHash)" class="hash">MinerHash</th>-->
 
@@ -1395,6 +1431,10 @@
                 Send
                 <B id="idOnSendText"></B>
                 <B id="idOnSendSum" class="coral"></B> <span id="idOnSendCoinName"></span> <span id="idOnSendToName"></span>
+                <grid_nft>
+                    <item_nft id="idTokenHolder"></item_nft>
+                </grid_nft>
+
 
                 <BR><DIV id="idOnSendWarning" style='color: yellow;'>WARNING: You are about to send a very large amount!</DIV>
 
@@ -1488,6 +1528,18 @@
     </div>
 </div>
 
+<div class="ModalDlg" id="idShowPage" style="display: none;">
+    <div class="modal__container confirm__container"  style="display: block">
+        <div class="btn-close doclose">
+            <img src="./img/Close.svg">
+        </div>
+        <DIV align='center'>
+            <div id="idShowContent"></div>
+            <BR>
+            <button id="idCloseShow" class="btn btn_middle btn__transparent cancel doclose">Close</button>
+        </DIV>
+    </div>
+</div>
 
 
 <DIV id="_idStableScroll" align='center'>

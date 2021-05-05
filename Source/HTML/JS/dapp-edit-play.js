@@ -203,6 +203,7 @@ function GetNewAccount(Num,Name,Sum,Smart,Currency,bWalletPubKey)
     Item.Value = {SumCOIN:Sum, SumCENT:0, Smart:Smart};
     Item.SmartState = InitSmartState(Num, Smart);
     Item.Currency = Currency;
+    Item.BlockNumCreate=VM_VALUE.CurBlockNum;
     
     if(Smart)
         Item.SmartObj = VM_SMARTS[Smart];
@@ -343,7 +344,7 @@ function ReloadDapp()
 }
 function SetLocationHash(Str)
 {
-    ToLog("Run:SetLocationHash: " + Str);
+    ToLogDebug("Run:SetLocationHash: " + Str);
 }
 
 function DoTranslate(Data)
@@ -383,6 +384,7 @@ function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,b
         Data.MethodName = undefined;
         
         SendMessageError("" + e);
+        console.error(e);
     }
     finally
     {
@@ -463,10 +465,15 @@ function DoGetData(Name,Params,Func)
         case "DappTransactionList":
             break;
         case "DappStaticCall":
-            if(Params.Account >= VM_ACCOUNTS.length)
+            //if(Params.Account >= VM_ACCOUNTS.length)
+            if(Params.Account >= 200)
             {
-                GetData(Name, Params, Func);
+                if(!Params.Account)
+                    Params.Account = BASE_ACCOUNT.Num;
+
+                GetData("DappStaticCall", Params,Func);
                 return;
+
             }
             else
             {
@@ -755,12 +762,12 @@ window.$require = function (SmartNum)
     
     EvalContext.funclist.SetContext(RunContext.context);
     return EvalContext.publist;
-}
+};
 
 ListF.$SendMessage = function ()
 {
     DO(20000);
-}
+};
 
 const $ReadValue = function (Key,Format)
 {
@@ -782,7 +789,7 @@ const $ReadValue = function (Key,Format)
     }
     
     return Value;
-}
+};
 
 const $WriteValue = function (Key,Value,Format)
 {
@@ -824,6 +831,7 @@ function PlaySend(From,To,fSum,Desc)
     {
         ROLLBACKRANSACTION();
         SendMessageError("" + e);
+        console.error(e);
     }
     finally
     {

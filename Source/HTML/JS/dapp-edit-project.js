@@ -1,12 +1,22 @@
 /*
  * @project: TERA
- * @version: Development (beta)
+ * @version: 2
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2021 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
 */
+
+function SaveAllProjects()
+{
+    SaveValues(1);
+    var Value=localStorage['SMART-ProjectArray'];
+    SaveWebDataToFile(Value,'dapp-ide.txt');
+
+    SaveProjectsToDB(Value);
+}
+
 
 function SetDialogToSmart(Smart)
 {
@@ -167,7 +177,7 @@ function SetDialogEnabled()
 }
 
 var LastBaseState = undefined;
-function LoadSmart(Path)
+function LoadSmart(Path,LoadLastHTML)
 {
     LastBaseState = undefined;
     SetStatus("");
@@ -189,17 +199,20 @@ function LoadSmart(Path)
                     else
                         $("idSmartHTMLMode").value = 0;
                     
-                    LoadSmart("/file/" + Smart.BlockNum + "/" + Smart.TrNum);
                     var Str = "";
                     var Url = "";
                     if(Smart.BaseState && Smart.BaseState.HTMLBlock)
                     {
                         LastBaseState = Smart.BaseState;
-                        var Url = "/file/" + Smart.BaseState.HTMLBlock + "/" + Smart.BaseState.HTMLTr;
+                        Url = "/file/" + Smart.BaseState.HTMLBlock + "/" + Smart.BaseState.HTMLTr;
                         Str = "<a target='_blank' class='link' onclick='OpenExtLink(\"" + Url + "\"); return 0;'>" + Url + "</a>";
                     }
                     $("idRefHTML").innerHTML = Str;
                     $("idNewStateFile").value = Url;
+                    var StateHTML=undefined;
+                    if(LoadLastHTML)
+                        StateHTML=LastBaseState;
+                    LoadSmart("/file/" + Smart.BlockNum + "/" + Smart.TrNum,StateHTML);
                 }
                 else
                 {
@@ -223,8 +236,23 @@ function LoadSmart(Path)
                 {
                     if(SetData.Type === 111 && SetData.Body.Body.Type === 130)
                     {
-                        var Smart = SetData.Body.Body;
-                        SetSmartToDialog(Smart, 1);
+                        let Smart = SetData.Body.Body;
+
+                        if(LoadLastHTML && typeof LoadLastHTML === "object")
+                        {
+                            GetData("DappBlockFile", {BlockNum:LoadLastHTML.HTMLBlock, TrNum:LoadLastHTML.HTMLTr}, function (SetData)
+                            {
+                                if(SetData && SetData.result)
+                                {
+                                    Smart.HTML=SetData.Body;
+                                    SetSmartToDialog(Smart, 1);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            SetSmartToDialog(Smart, 1);
+                        }
                     }
                     else
                     {
@@ -529,7 +557,7 @@ function LoadFromDapp()
     if(Num)
     {
         NewDappNext("Blank");
-        LoadSmart(Num);
+        LoadSmart(Num,1);
     }
 }
 

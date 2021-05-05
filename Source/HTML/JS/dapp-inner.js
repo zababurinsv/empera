@@ -746,6 +746,8 @@ function OnMessage(event)
 
                 var eventEvent = new CustomEvent("Event",{detail: Data});
                 window.dispatchEvent(eventEvent);
+            // case "Alive":
+            //     console.log("Alive");
         }
 
     }
@@ -890,7 +892,7 @@ var WasStartInit=0,WasStartInit2=0;
 var eventInfo = new Event("UpdateInfo");
 
 
-function UpdateDappInfo()//run every 1 sec
+function UpdateDappInfo()//run every 3 sec
 {
     GetInfo(function (Err,Data)
     {
@@ -971,8 +973,9 @@ window.addEventListener('load',function ()
     //     LoadLib("./JS/sha3.js");
 
     UpdateDappInfo();
-    setInterval(UpdateDappInfo,1000);
+    setInterval(UpdateDappInfo,3*1000);
     InitTranslater();
+    SendData({cmd:"Show"});
 });
 
 window.onkeydown = function (e)

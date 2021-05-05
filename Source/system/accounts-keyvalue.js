@@ -135,6 +135,6 @@ class AccountKeyValue extends require("./accounts-tr")
             this.DBKeyValue.Remove(Data)
         }
     }
-};
+}
 
 module.exports = AccountKeyValue;

@@ -56,6 +56,10 @@
                 // IE8
                 window.attachEvent("onmessage", OnMessage);
             }
+
+            if(isMobile())
+                $("MTabWelcome").className+=" back-link";
+
         };
 
         function ViewBlockOrTx(Str)
@@ -207,12 +211,12 @@
         function OnMessage(event)
         {
             var Data=event.data;
-            if(!Data || typeof Data!=="object")
+            if(!Data || typeof Data!=="object" || !Data.IsTeraWallet)
                 return;
 
-            FrameData=Data;
             if(Data.BlockNum)
             {
+                FrameData=Data;
                 $("idViewBlockNum").value=Data.BlockNum;
                 ViewBlock();
 
@@ -223,6 +227,8 @@
         {
             if(FrameData)
                 ClosePage()
+            else
+                window.history.back();
 
         }
 

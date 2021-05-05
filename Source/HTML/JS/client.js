@@ -1,15 +1,16 @@
 /*
  * @project: TERA
- * @version: Development (beta)
+ * @version: 2
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2021 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
 */
 
 
-window.CLIENT_VERSION = 31;
+
+window.CLIENT_VERSION = 41;
 window.SERVER_VERSION = 0;
 window.SHARD_NAME = "TERA";
 
@@ -17,10 +18,13 @@ window.SUM_PRECISION = 9;
 
 window.RUN_CLIENT = 1;
 window.RUN_SERVER = 0;
+
+var root = typeof global==="object"?global:window;
+
 if(typeof global === 'object')
 {
-    global.RUN_CLIENT = 1;
-    global.RUN_SERVER = 0;
+    root.RUN_CLIENT = 1;
+    root.RUN_SERVER = 0;
 }
 
 var MaxBlockNum = 0;
@@ -127,10 +131,6 @@ if(!String.prototype.padStart)
     };
 }
 
-window.IsLocalClient = function ()
-{
-    return (window.location.protocol.substr(0, 4) !== "http");
-}
 
 var glSession;
 var ServerHTTP;
@@ -153,10 +153,10 @@ if(window.nw)
     
     window.GetData = function (Method,ObjPost,Func)
     {
-        window.nw.global.RunRPC({path:Method, obj:ObjPost}, Func);
+        window.nw.root.RunRPC({path:Method, obj:ObjPost}, Func);
     };
-    
-    global.RunRPC = function (message,Func)
+
+    root.RunRPC = function (message,Func)
     {
         if(!ServerHTTP)
             ServerHTTP = require('../core/html-server');
@@ -170,7 +170,7 @@ if(window.nw)
 }
 else
 {
-    global = window;
+    //global = window;
     
     window.Open = function (path,iconname,width,height)
     {
@@ -259,7 +259,7 @@ else
                     }
                 }
                 else
-                    if(serv.status == 203)
+                    if(serv.status == 203 && IsFullNode())
                     {
                         window.location = "/password.html";
                     }
@@ -991,50 +991,189 @@ function CreateEval(formula,StrParams)
 
 var glWorkNum = 0;
 var CUR_ROW;
-function SetGridData(arr,id_name,TotalSum,bclear,revert)
+
+function SetGridDataNew(arr,id_name,bClear)
 {
-    
+
     var htmlTable = $(id_name);
     if(!htmlTable)
     {
         console.log("Error id_name: " + id_name);
         return;
     }
-    
-    if(bclear)
+
+    if(bClear)
+    {
         ClearTable(htmlTable);
-    
+    }
+
     if(!htmlTable.ItemsMap)
     {
         htmlTable.ItemsMap = {};
         htmlTable.RowCount = 0;
     }
-    
+
     var map = htmlTable.ItemsMap;
-    htmlTable.Arr = arr;
-    
+
+    if(!glWorkNum)
+        glWorkNum=0;
     glWorkNum++;
     var ValueTotal = {SumCOIN:0, SumCENT:0};
-    
+
     var row0 = htmlTable.rows[0];
     var row0cells = row0.cells;
     var colcount = row0cells.length;
-    
+
     if(!htmlTable.ColumnArr)
         htmlTable.ColumnArr = CompileColumnArr(row0.cells);
     var ColumnArr = htmlTable.ColumnArr;
-    
+
+    var PrevItem;
     for(var i = 0; arr && i < arr.length; i++)
     {
         var Item = arr[i];
         var ID = Item.Num;
         htmlTable.MaxNum = Item.Num;
-        
+
         var row = map[ID];
         if(!row)
         {
             htmlTable.RowCount++;
-            if(revert)
+
+            var NewRowIndex;
+
+            var CurRowIndex=1;
+            if(CUR_ROW)
+                CurRowIndex=CUR_ROW.rowIndex;
+
+            if(!PrevItem && htmlTable.Arr.length>0)
+            {
+                CurRowIndex=1;
+                PrevItem=htmlTable.Arr[0];
+            }
+
+            if(CUR_ROW && PrevItem)
+            {
+                if(PrevItem.ID<Item.ID)
+                    NewRowIndex=CurRowIndex;
+                else
+                    NewRowIndex=CurRowIndex+1;
+            }
+            else
+            {
+                NewRowIndex=-1;
+            }
+            row = htmlTable.insertRow(NewRowIndex);
+
+            map[ID] = row;
+            for(var n = 0; n < colcount; n++)
+            {
+                var ColItem = ColumnArr[n];
+                if(!ColItem)
+                    continue;
+                var cell = row.insertCell();
+                cell.className = ColItem.C;
+            }
+        }
+
+        row.Work = glWorkNum;
+        CUR_ROW = row;
+        PrevItem=Item;
+        //console.log("row",row.rowIndex);
+
+        var n2 =  - 1;
+        for(var n = 0; n < colcount; n++)
+        {
+            var ColItem = ColumnArr[n];
+            if(!ColItem)
+                continue;
+            n2++;
+            var cell = row.cells[n2];
+
+            if(ColItem.H)
+            {
+                var text = "" + ColItem.F(Item);
+                text = toStaticHTML(text.trim());
+                if(cell.innerHTML !== text)
+                    cell.innerHTML = text;
+            }
+            else
+            if(ColItem.F)
+            {
+                var text = "" + ColItem.F(Item);
+                text.trim();
+                if(cell.innerText !== text)
+                    cell.innerText = text;
+            }
+        }
+    }
+
+    htmlTable.Arr = arr;
+
+    for(var key in map)
+    {
+        var row = map[key];
+        if(row.Work != glWorkNum)
+        {
+            htmlTable.deleteRow(row.rowIndex);
+            delete map[key];
+        }
+    }
+}
+
+
+function SetGridData(arr,id_name,TotalSum,bclear,revert)
+{
+
+    var htmlTable = $(id_name);
+    if(!htmlTable)
+    {
+        console.log("Error id_name: " + id_name);
+        return;
+    }
+
+    if(bclear)
+    {
+        ClearTable(htmlTable);
+    }
+
+    if(!htmlTable.ItemsMap)
+    {
+        htmlTable.ItemsMap = {};
+        htmlTable.RowCount = 0;
+    }
+
+    var WasLength=0;
+    if(htmlTable.Arr)
+        WasLength=htmlTable.Arr.length;
+
+    var map = htmlTable.ItemsMap;
+    htmlTable.Arr = arr;
+
+    if(!glWorkNum)
+        glWorkNum=0;
+    glWorkNum++;
+    var ValueTotal = {SumCOIN:0, SumCENT:0};
+
+    var row0 = htmlTable.rows[0];
+    var row0cells = row0.cells;
+    var colcount = row0cells.length;
+
+    if(!htmlTable.ColumnArr)
+        htmlTable.ColumnArr = CompileColumnArr(row0.cells);
+    var ColumnArr = htmlTable.ColumnArr;
+
+    for(var i = 0; arr && i < arr.length; i++)
+    {
+        var Item = arr[i];
+        var ID = Item.Num;
+        htmlTable.MaxNum = Item.Num;
+
+        var row = map[ID];
+        if(!row)
+        {
+            htmlTable.RowCount++;
+            if(revert==1 || revert==2 && WasLength>0)
                 row = htmlTable.insertRow(1);
             else
                 row = htmlTable.insertRow( - 1);
@@ -1050,7 +1189,7 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
         }
         row.Work = glWorkNum;
         CUR_ROW = row;
-        
+
         var n2 =  - 1;
         for(var n = 0; n < colcount; n++)
         {
@@ -1059,7 +1198,7 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
                 continue;
             n2++;
             var cell = row.cells[n2];
-            
+
             if(ColItem.H)
             {
                 var text = "" + ColItem.F(Item);
@@ -1068,22 +1207,22 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
                     cell.innerHTML = text;
             }
             else
-                if(ColItem.F)
-                {
-                    var text = "" + ColItem.F(Item);
-                    text.trim();
-                    if(cell.innerText !== text)
-                        cell.innerText = text;
-                }
+            if(ColItem.F)
+            {
+                var text = "" + ColItem.F(Item);
+                text.trim();
+                if(cell.innerText !== text)
+                    cell.innerText = text;
+            }
         }
-        
+
         if(TotalSum && Item.Currency === 0)
             ADD(ValueTotal, Item.Value);
     }
     for(var key in map)
     {
         var row = map[key];
-        if(row.Work !== glWorkNum)
+        if(row.Work != glWorkNum)
         {
             htmlTable.deleteRow(row.rowIndex);
             delete map[key];
@@ -1100,9 +1239,11 @@ function SetGridData(arr,id_name,TotalSum,bclear,revert)
                 id.innerText = "";
         }
     }
-    
+
     DoStableScroll();
 }
+
+
 function CompileColumnArr(row0cells)
 {
     var Arr = [];
@@ -1131,6 +1272,7 @@ function ClearTable(htmlTable)
         htmlTable.deleteRow(i);
     htmlTable.ItemsMap = {};
     htmlTable.RowCount = 0;
+    htmlTable.Arr=[];
 }
 
 function RetRepeatTx(BlockNum,TrNum)
@@ -1347,16 +1489,18 @@ function RetHistoryAccount(Item,Name)
     if(Num < 1)
         return "" + Num;
     
-    var Str;
-    Str = "<a class='olink' target='_blank' onclick='OpenHistoryPage(" + Num + ")'>" + Num + "</a>";
-    
-    return Str;
+    return "<a class='olink' target='_blank' onclick='OpenHistoryPage(" + Num + ")'>" + Num + "</a>";
 }
+
 
 function RetEditAccount(Item)
 {
-    return Item.Name;
+    if(CONFIG_DATA && CONFIG_DATA.CONSTANTS.USE_EDIT_ACCOUNT)
+        return  "<a class='olink' target='_blank' onclick='DoEditAccount(" + Item.Num + ")'>" + (Item.Name?Item.Name:"---------") + "</a>";
+    else
+        return Item.Name;
 }
+
 
 function DoEditAccount(Num)
 {
@@ -1602,26 +1746,26 @@ function InitMapCurrency()
         AccCoinList = 226857;
     }
     else
-        if(window.NETWORK_ID === "TEST-JINN.TEST")
-        {
-            AddCurrency(9, "BTC", "./PIC/B.svg", 1);
-            AddCurrency(10, "USD", undefined, 1);
-            
-            AccCoinList = 571;
-        }
-        else
-            if(window.NETWORK_NAME === "LOCAL-JINN")
-            {
-                AddCurrency(9, "BTC", "./PIC/B.svg", 1);
-                AddCurrency(10, "USD", undefined, 1);
-                
-                AccCoinList = 234;
-            }
-            else
-            {
-                return;
-            }
-    
+    if(window.NETWORK_ID === "TEST-JINN.TEST")
+    {
+        AddCurrency(9, "BTC", "./PIC/B.svg", 1);
+        AddCurrency(10, "USD", undefined, 1);
+
+        AccCoinList = 571;
+    }
+    else
+    if(window.NETWORK_NAME === "LOCAL-JINN")
+    {
+        AddCurrency(9, "BTC", "./PIC/B.svg", 1);
+        AddCurrency(10, "USD", undefined, 1);
+
+        AccCoinList = 234;
+    }
+    else
+    {
+        return;
+    }
+
     WasAccountsDataStr = "";
     if(!bWasCodeSys)
     {
@@ -2116,7 +2260,7 @@ function GetOperationIDFromItem(Item,CheckErr)
 
 function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F)
 {
-    
+
     var TR = {Type:135};
     var Body = [TR.Type];
     
@@ -2126,17 +2270,22 @@ function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum
     WriteUint(Body, FromNum);
     if(FromNum)
     {
+
         GetData("GetAccount", Account, function (Data)
         {
+
+
             if(!Data || Data.result !== 1 || !Data.Item)
             {
                 return RetError(F, TR, Body, "Error account number: " + Account);
             }
-            if(Data.Item.Value.Smart !== FromSmartNum)
+            if(FromSmartNum!==-1 && Data.Item.Value.Smart !== FromSmartNum)
             {
                 return RetError(F, TR, Body, "Error - The account:" + Account + " does not belong to a smart contract:" + FromSmartNum + " (have: " + Data.Item.Value.Smart + ")");
             }
-            
+
+
+
             GetData("GetAccount", FromNum, function (Data)
             {
                 if(!Data || Data.result !== 1 || !Data.Item)
@@ -2157,6 +2306,9 @@ function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum
                     Body.push(0);
                 
                 SendTrArrayWithSign(Body, FromNum, TR, F);
+
+
+
             });
         });
     }
@@ -2374,7 +2526,7 @@ function ToLog(Str)
 function InitMainServer()
 {
     var Str = Storage.getItem("MainServer");
-    if(Str && !Storage.getItem("BIGWALLET") && Str.substr(0, 1) === "{")
+    if(Str && !Storage.getItem("BIGWALLET") && Str.substr(0, 1) === "{" && IsLocalClient())
     {
         MainServer = JSON.parse(Str);
     }
@@ -2574,6 +2726,13 @@ function UseInnerPage()
     else
         return 0;
 }
+
+function IsLocalClient()
+{
+    return (window.location.protocol.substr(0, 4) !== "http");
+}
+
+
 function isOS()
 {
     if(/iPhone|iPad|iPod/i.test(navigator.userAgent))

@@ -24,11 +24,30 @@ HostingCaller.GetCurrentInfo = function (Params)
     var MaxNumBlockDB = SERVER.GetMaxNumBlockDB();
     var TXBlockNum = COMMON_ACTS.GetLastBlockNumActWithReopen();
     
-    var Ret = {result:1, VersionNum:global.START_CODE_VERSION_NUM, VersionUpd:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK,
-        SHARD_NAME:global.SHARD_NAME, MaxNumBlockDB:MaxNumBlockDB, CurBlockNum:GetCurrentBlockNumByTime(), MaxAccID:ACCOUNTS.GetMaxAccount(),
-        MaxDappsID:SMARTS.GetMaxNum(), TXBlockNum:TXBlockNum, CurTime:Date.now(), DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, MIN_POWER_POW_TR:0,
-        FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, UPDATE_CODE_JINN:UPDATE_CODE_JINN, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME, NEW_SIGN_TIME:NEW_SIGN_TIME,
-        PRICE_DAO:PRICE_DAO(MaxNumBlockDB), GrayConnect:global.CLIENT_MODE, JINN_MODE:1, sessionid:sessionid, };
+    var Ret = {
+        result:1,
+        VersionNum:global.START_CODE_VERSION_NUM,
+        VersionUpd:global.UPDATE_CODE_VERSION_NUM,
+        NETWORK:global.NETWORK,
+        SHARD_NAME:global.SHARD_NAME,
+        MaxNumBlockDB:MaxNumBlockDB,
+        CurBlockNum:GetCurrentBlockNumByTime(),
+        MaxAccID:ACCOUNTS.GetMaxAccount(),
+        MaxDappsID:SMARTS.GetMaxNum(),
+        TXBlockNum:TXBlockNum,
+        CurTime:Date.now(),
+        DELTA_CURRENT_TIME:DELTA_CURRENT_TIME,
+        MIN_POWER_POW_TR:0,
+        FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
+        UPDATE_CODE_JINN:UPDATE_CODE_JINN,
+        CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME,
+        NEW_SIGN_TIME:NEW_SIGN_TIME,
+        PRICE_DAO:PRICE_DAO(MaxNumBlockDB),
+        GrayConnect:global.CLIENT_MODE,
+        JINN_MODE:1,
+        sessionid:sessionid,
+        COIN_STORE_NUM:global.COIN_STORE_NUM,
+    };
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {
@@ -256,6 +275,13 @@ HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,bRet)
                 Data.SmartState = {};
             }
         }
+
+        //ERC
+        if(Params.CoinStore && !Data.Currency)//игнорируем другие валюты
+        {
+            Data.CoinStore=Accounts.ReadCoinStore(Data.Num);
+        }
+
         arr.unshift(Data);
         Item = Item.Next;
         if(arr.length >= global.HTTP_MAX_COUNT_ROWS)

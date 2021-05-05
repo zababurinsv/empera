@@ -221,36 +221,7 @@ function CancalMiningSet()
 
 var WasHistoryMaxNum;
 var WasLastNumSound = 0;
-function CheckNewMoney()
-{
-    return;
-    
-    if(!$("idUseSoundHistory").checked)
-        return;
-    
-    if(WasHistoryMaxNum === HistoryMaxNum || !ServerBlockNumDB)
-        return;
-    
-    WasHistoryMaxNum = HistoryMaxNum;
-    
-    GetData("GetHistoryAct", {StartNum:HistoryMaxNum - 40, CountNum:40}, function (Data)
-    {
-        if(Data && Data.result)
-        {
-            var arr = Data.arr;
-            for(var i = 0; i < arr.length; i++)
-            {
-                var Item = arr[i];
-                
-                if(Item.Direct === "+" && Item.BlockNum > ServerBlockNumDB - 60 && Item.BlockNum < ServerBlockNumDB - 20 && Item.BlockNum > WasLastNumSound)
-                {
-                    WasLastNumSound = Item.BlockNum;
-                    $("sound_coin").play();
-                }
-            }
-        }
-    });
-}
+
 function DoRestartWallet()
 {
     SetStatus("<H1 align='center' style='color:blue'>Restarting program...</H1>", 0, 1);
@@ -295,7 +266,7 @@ function SetArrLog(arr)
                     SetStatus(Item.text);
                 }
                 
-                if(Item.text.indexOf("Add to blockchain") >= 0)
+                if(typeof Item.text==="string" && Item.text.indexOf("Add to blockchain") >= 0)
                 {
                     if(TR.bFindAcc)
                     {

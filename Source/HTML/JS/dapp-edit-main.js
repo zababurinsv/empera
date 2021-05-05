@@ -260,6 +260,59 @@ function SendHTMLToBlockchain()
     
     SendText({}, "text/html", HTML);
 }
+function SendJSToBlockchain()
+{
+    var Str = GetHTMLCode();
+    var bTrim=$("idTrimCode").checked;
+
+    //find js code
+    var Arr = Str.split("\n");
+    var StrAll = "";
+    var bAdd=0;
+    for(var i = 0; i < Arr.length; i++)
+    {
+        var Str1 =Arr[i];
+        var Str2 = Str1.trim();
+        if(!bAdd && Str2==="<script>")
+        {
+            bAdd=1;
+            continue;
+        }
+        else
+        if(bAdd && Str2==="</script>")
+        {
+            bAdd=0;
+            continue;
+        }
+
+        if(!bAdd)
+            continue;
+        if(bTrim)
+        {
+            Str1 = Str2;
+            if(Str1.substring(0, 2) === "//")
+            {
+                Str1 = null;
+            }
+            if(!Str1)
+                continue;
+        }
+
+
+        StrAll += Str1 + "\n";
+    }
+
+    if(!StrAll)
+        return SetError("Not find js-part");
+    if(bAdd)
+        return SetError("Error finding js-part");
+
+    //console.log(StrAll);
+    console.log("Js length="+StrAll.length);
+
+
+    SendText({}, "application/javascript", StrAll);
+}
 function SendToBlockchain()
 {
     SetStatus("");
@@ -465,6 +518,7 @@ function LoadValues()
     }
     FillProject();
 }
+
 function SaveValues(All)
 {
     SaveValuesByArr(SaveIdArr, "SMART2");
@@ -481,6 +535,10 @@ function SaveValues(All)
         localStorage["SMART-ProjectArray"] = JSON.stringify(ProjectArray);
     }
 }
+
+
+
+
 setInterval(function ()
 {
     SaveValues(1);
@@ -591,8 +649,8 @@ function SetArrLog(arr)
         if(!CanAdItemToLog(Item))
             continue;
         
-        var info = Item.text;
-        
+        var info = String(Item.text);
+
         var index1 = info.indexOf("Add to blockchain");
         var index2 = info.indexOf("file");
         if(index1 >= 0 && index2 > 0)

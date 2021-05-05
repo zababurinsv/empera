@@ -1,8 +1,8 @@
 /*
  * @project: TERA
- * @version: Development (beta)
+ * @version: 2
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2021 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -10,6 +10,8 @@
 
 
 "use strict";
+
+const MULTI_COIN_FORMAT={MaxCount:"uint32", Arr:[{Token:"str", Arr:[{ID:"str", SumCOIN:"uint", SumCENT:"uint32", Flag:"uint"}], Flag:"uint"}], Flag:"uint"};
 
 //Accounts  and states engine
 
@@ -105,13 +107,17 @@ class AccountApp extends require("./accounts-hash")
             Adviser:uint,\
             KeyValueSize:uint,\
             Reserve:arr3,\
-            }"
-        
+            }";
+
+
         this.SIZE_ACCOUNT_ROW = 6 + 33 + 40 + (6 + 4 + 6 + 84) + 6 + 6 + 9
         
         this.DBState = new MerkleDBRow("accounts-state", this.FORMAT_ACCOUNT_ROW, bReadOnly, "Num", 0, this.SIZE_ACCOUNT_ROW)
         REGISTER_TR_DB(this.DBState, 10)
-        
+
+
+
+
         if(global.READ_ONLY_DB || global.START_SERVER)
             return;
         
@@ -406,31 +412,40 @@ class AccountApp extends require("./accounts-hash")
             if(Data)
             {
                 if(!Data.PubKeyStr)
-                    Data.PubKeyStr = GetHexFromArr(Data.PubKey)
-                arr.push(Data)
-                Data.WN = map[key]
-                Data.Name = NormalizeName(Data.Name)
+                    Data.PubKeyStr = GetHexFromArr(Data.PubKey);
+                arr.push(Data);
+                Data.WN = map[key];
+                Data.Name = NormalizeName(Data.Name);
                 
                 if(Data.Currency)
                 {
-                    Data.CurrencyObj = SMARTS.ReadSimple(Data.Currency, 1)
+                    Data.CurrencyObj = SMARTS.ReadSimple(Data.Currency, 1);
                 }
                 
                 if(Data.Value.Smart)
                 {
-                    Data.SmartObj = SMARTS.ReadSimple(Data.Value.Smart)
+                    Data.SmartObj = SMARTS.ReadSimple(Data.Value.Smart);
                     if(Data.SmartObj)
                     {
-                        Data.SmartState = this.GetSmartState(Data, Data.SmartObj.StateFormat)
+                        Data.SmartState = this.GetSmartState(Data, Data.SmartObj.StateFormat);
                     }
                     else
                     {
                         Data.SmartState = {}
                     }
                 }
+                //ERC
+                if(Data.Currency===0)//игнорируем другие валюты
+                {
+                    Data.CoinStore=this.ReadCoinStore(key);
+                }
             }
         }
         return arr;
+    }
+    ReadCoinStore(Account)
+    {
+        return this.ReadValue(COIN_STORE_NUM, "ACCOUNT:"+Account, MULTI_COIN_FORMAT);
     }
     GetMaxAccount()
     {

@@ -268,9 +268,18 @@
         {
             CloseMenu();
             LoadDappFromFile();
-
         }
-        var WasLoadFromFile=0;
+        function RunDappFromStorage()
+        {
+            CloseMenu();
+            ResetDapp();
+            LoadDappFromStorage();
+        }
+
+
+
+        var TestLoadMode=0;
+        var TestLoadName="";
         function LoadDappFromFile()
         {
             $('idFile').onchange=function ()
@@ -284,8 +293,11 @@
         {
             ResetDapp();
 
-            if(WasLoadFromFile)
+            if(TestLoadMode==="FILE")
                 CreateFromFile();
+            else
+            if(TestLoadMode==="STORAGE")
+                CreateFromStorage();
             else
                 window.location.reload();
         }
@@ -295,16 +307,55 @@
             var reader = new FileReader();
             reader.onload = function()
             {
-                WasLoadFromFile=1;
+                TestLoadMode="FILE";
+                SetVisibleBlock("idRestart",1);
                 var view = new Uint8Array(reader.result);
                 var Str=Utf8ArrayToStr(view);
                 if($("idFrame"))
                     $("idFrame").outerHTML="";
                 CreateFrame(Str);
                 $("idRunItem").innerText="Runing DApp from: "+file.name;
-            }
+            };
             if(file)
                 reader.readAsArrayBuffer(file);
+        }
+
+        function CreateFromStorage()
+        {
+            var ArrStr = localStorage["SMART-ProjectArray"];
+            if(ArrStr)
+            {
+                var FindDapp=undefined;
+                var ProjectArray = JSON.parse(ArrStr);
+                for(var i=0;i<ProjectArray.length;i++)
+                {
+                    var Dapp=ProjectArray[i];
+                    if(Dapp.Name===TestLoadName)
+                    {
+                        FindDapp = Dapp;
+                        break;
+                    }
+                }
+                if(!FindDapp)
+                    return SetError("Error dapp name: "+TestLoadName);
+                //console.log("HTML:",Dapp.HTML.substr(0,100));
+                if($("idFrame"))
+                    $("idFrame").outerHTML="";
+                CreateFrame(FindDapp.HTML);
+            }
+        }
+
+        function LoadDappFromStorage()
+        {
+            DoConfirm("Storage","Load dapp name: <BR><BR> <INPUT type='string' id='idSmartName'>",function ()
+            {
+                TestLoadMode="STORAGE";
+                SetVisibleBlock("idRestart",1);
+
+                TestLoadName=idSmartName.value.trim();
+                CreateFromStorage();
+            });
+
         }
 
         function InitMenu()
@@ -475,6 +526,23 @@
             height:25px;
             padding: 5px 0 0 0;
         }
+
+        #idRestart
+        {
+            z-index:30;
+            right: 152px;
+            height:30px;
+            color: var(--colorMenu0);
+            background-color: var(--colorMenu01);
+            cursor: pointer;
+            padding: 5px 0 0 0;
+        }
+        #idRestart:hover
+        {
+            color: #ecb84e;
+            background-color: var(--colorMenu2);
+        }
+
         #idMenu
         {
             z-index:30;
@@ -604,12 +672,14 @@
 </div>
 
 <DIV id="idStatus" class="top"></DIV>
+<button id="idRestart" class="top" onclick="ReloadDapp();" style="display: none">RELOAD</button>
 <DIV id="idMenu" class="top close" onclick="OnClickMenu()">Options
     <div id="idMenuList" class="top open">
         <div class="item" onclick="OpenWalletPage();">Open wallet page</div>
         <div class="item" onclick="OpenSmartSrc();">Smart src code</div>
         <div class="item" onclick="RunDappFromFile();" id="idRunItem">Dapp from file...</div>
-        <div class="item" onclick="ReloadDapp();">F5: ReRun dapp</div>
+        <div class="item" onclick="RunDappFromStorage();" id="idRunItem2">Dapp from storage...</div>
+<!--        <div class="item" onclick="ReloadDapp();">F5: ReRun dapp</div>-->
         <div class="item" onclick="window.location.reload();">Reset dapp</div>
         <div class="item" onclick="InstallApp();" id="idCreateItem">Create account with Dapp NNN</div>
         <div id="idMobile" class="item" onclick="DoMobile(1);">View logs</div>
@@ -680,7 +750,4 @@
 
 </body>
 </html>
-<script>
-    var glDebugPath="";
-</script>
 

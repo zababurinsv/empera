@@ -100,7 +100,9 @@ body
 
 .current2
 {
-    background-color:  var(--color22);
+    background-color2:  var(--color22);
+    background:  var(--color1);
+
     border-bottom:0;
 }
 
@@ -160,6 +162,11 @@ body
 {
     width: 768px;
     height: 1024px;
+}
+#idPreview.size1024x800
+{
+    width: 1024px;
+    height: 800px;
 }
 
 
@@ -270,6 +277,10 @@ input,select
     color:var(--color3);
 }
 
+.btfile
+{
+    padding: 5px;
+}
 body.univers .bt[disabled]
 {
     background: var(--color22);
