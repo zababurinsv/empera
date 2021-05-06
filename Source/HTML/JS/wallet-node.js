@@ -255,6 +255,7 @@ function SetArrLog(arr)
         {
             if(TR)
             {
+                //console.log(Item);
                 if(Item.final < 0 && !TR.WasError)
                 {
                     TR.WasError = 1;

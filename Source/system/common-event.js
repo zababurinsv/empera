@@ -91,7 +91,16 @@ function SendTrackResult(Block,TxNum,Body,SetResult,Result)
     }
     else
     {
-        ResultStr = Result;
+        if(typeof Result==="object")
+        {
+            if(Result.message)
+                ResultStr=Result.message;
+            else
+                ResultStr=JSON.stringify(Result);
+
+        }
+        else
+            ResultStr = Result;
     }
     
     SendTrack(SetResult, ResultStr, SetResult ? 1 :  - 1);

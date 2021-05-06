@@ -77,18 +77,21 @@ function DoImgWork(Addr)
 
 function SetNftAttrMap(Addr)
 {
+    var Addr2=Addr;
+    if(MainServer && isMobile() && Addr2.substr(0,6)==="/file/")
+        Addr2=GetProtocolServerPath(MainServer)+Addr2;
 
-    fetch(Addr, {method:'get', cache:'default', mode:'cors', credentials2:'include', headers:this.Headers}).then(function (response)
+    fetch(Addr2, {method:'get', cache:'default', mode:'cors', credentials2:'include', headers:this.Headers}).then(function (response)
     {
         response.text().then(function (text)
         {
             var Attr=JSON.parse(text);
             MAP_NFT_ATTR[Addr]=Attr;
             DoImgWork(Addr);
-            //console.log(Attr.image);
         });
     }).catch(function (err)
     {
+        console.error(err);
     });
 }
 
@@ -118,8 +121,7 @@ async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
     var Str="";
 
     var CallNum=GetCoinStoreNum();
-    if(!CallNum)
-        return;
+    if(CallNum)
     if(bView)
     {
         var Tokens=await CallTeraProxy(CallNum,"GetTokens",{Account:Account,GetURI:1});
@@ -143,7 +145,6 @@ async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
 
                     if(Addr)
                     {
-                        //console.log(Addr);
                         AddWorkNftImg(Addr,Num);
 
                         Str+=GetNFTCard(IDList.id,Item,Value,Num);
@@ -175,15 +176,38 @@ async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
 
 function GetNFTCard(ListId,Token,Value,Num)
 {
-    return `<item_nft id="idNFT${Num}" data-token="${Token.Token}" data-id="${Value.ID}" ondblclick="ChooseToken('${ListId}')" onclick="SelectNFTItem('${ListId}',this)">${Value.ID}<img class="img_nft" id="idImg${Num}">Items:<b>${FLOAT_FROM_COIN(Value)}</b></item_nft>`;
+    var ID=GetShortTokenID(Value.ID);
+    return `
+    <item_nft id="idNFT${Num}" data-token="${Token.Token}" data-id="${Value.ID}" ondblclick="ChooseToken('${ListId}')" onclick="SelectNFTItem('${ListId}',this)">
+    ${Token.Token}<BR>${ID}
+    <img class="img_nft" id="idImg${Num}">
+    Items:<b>${FLOAT_FROM_COIN(Value)}</b>
+    </item_nft>`;
 }
 
-function GetCopyNFTCard(IdSrc,ID,Count)
+function GetCopyNFTCard(IdSrc,Token,ID,Count)
 {
     var Img=$(IdSrc.replace("idNFT","idImg"));
-    return `<div>${ID}<img class="img_nft" src="${Img.src}">Items:<b>${Count}</b></div>`;
+    ID=GetShortTokenID(ID);
+    return `
+    <div>${Token}<BR>${ID}
+    <img class="img_nft" src="${Img.src}">
+    Items:<b>${Count}</b>
+    </div>`;
 }
 
+
+
+
+function GetShortTokenID(ID)
+{
+    ID=String(ID);
+    if(ID.length>11)
+    {
+        ID=ID.substr(0,5)+".."+ID.substr(ID.length-5);
+    }
+    return ID;
+}
 function SelectNFTItem(List,element)
 {
     var IDList=$(List);
@@ -229,7 +253,7 @@ function OpenTokensPage(Account)
 {
     var Str=`
     <div>
-        <div class="row-head">NFT Tokens:</div>
+        <div class="row-head">List of tokens:</div>
         <BR>
         <grid_nft id="idListShow">
             <item_nft>Loading...</item_nft>

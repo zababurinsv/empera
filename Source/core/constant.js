@@ -2,7 +2,7 @@
 const fs = require('fs');
 
 
-global.UPDATE_CODE_VERSION_NUM = 2518;
+global.UPDATE_CODE_VERSION_NUM = 2520;
 global.MIN_JINN_VERSION_NUM = 0;
 
 global.DEBUG_TRAFFIC = 0;
@@ -104,7 +104,7 @@ global.WATCHDOG_DEV = 0;
 global.DEBUG_WALLET = 0;
 global.USE_EDIT_ACCOUNT = 0;
 global.COIN_STORE_NUM=0;//multi-coin support, Account for coin store
-global.COIN_SMART_NUM=0;//multi-coin smart num
+global.COIN_SMART_NUM=0;//multi-coin smart num - (это разрешение смарту на запись истории транзакций в БД)
 
 
 

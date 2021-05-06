@@ -322,25 +322,43 @@ function SendToResponceFile(request,response,Block,TrNum)
     var Body = Block.arrContent[TrNum];
     if(Body && Body.data)
         Body = Body.data;
-    if(Body && Body[0] === global.TYPE_TRANSACTION_FILE)
+    if(Body)
     {
-        var TR = DApps.File.GetObjectTransaction(Body);
-        var StrType = TR.ContentType.toLowerCase();
+        var Type=Body[0];
 
-        var Headers = {"X-Content-Type-Options":"nosniff"};
-        Headers["Access-Control-Allow-Origin"]="*";
+        if(Type === global.TYPE_TRANSACTION_FILE
+            || Type === global.TYPE_TRANSACTION_SMART_RUN)
+        {
+            var Headers = {"X-Content-Type-Options":"nosniff"};
+            Headers["Access-Control-Allow-Origin"]="*";
 
-        if(AllowMap[StrType] || (Block.BlockNum < global.UPDATE_CODE_2 && StrType === "image/svg+xml"))
-            Headers['Content-Type'] = TR.ContentType;
-        else
-            Headers['Content-Type'] = "text/plain";
+            var ContentType,Data;
+            var TR = DApps.File.GetObjectTransaction(Body);
+            if(Type === global.TYPE_TRANSACTION_FILE)
+            {
+                ContentType = TR.ContentType;
+                Data=TR.Data;
+            }
+            else
+            {
+                ContentType = "text/plain";
+                Data=TR.Params;
+            }
 
-        SendGZipData(request, response, Headers, TR.Data);
+
+            var StrType = ContentType.toLowerCase();
+
+            if(AllowMap[StrType] || (Block.BlockNum < global.UPDATE_CODE_2 && StrType === "image/svg+xml"))
+                Headers['Content-Type'] = ContentType;
+            else
+                Headers['Content-Type'] = "text/plain";
+
+            SendGZipData(request, response, Headers, Data);
+            return;
+        }
     }
-    else
-    {
-        SendToResponce404(response);
-    }
+
+    SendToResponce404(response);
 }
 
 function SendToResponce404(response)

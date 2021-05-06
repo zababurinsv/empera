@@ -20,7 +20,7 @@
     <script type="text/javascript" src="./JS/wallet-web.js"></script>
     <script type="text/javascript" src="./JS/wallet-lib.js"></script>
     <script type="text/javascript" src="./JS/diagram.js"></script>
-    <script type="text/javascript" src="/HTML/JS/wallet-multicoin.js"></script>
+    <script type="text/javascript" src="./JS/wallet-multicoin.js"></script>
     <script type="text/javascript" src="./JS/mobile-wallet.js"></script>
 
 </head>
@@ -305,6 +305,14 @@
 
             </div>
 
+            <div class="send-page__field key-field" id="idTokenNFT" style="display:none">
+                <div>
+                    <div style="padding-left: 10px">Tokens:</div>
+                    <grid_nft id="idListNFT">
+                        <item_nft>Loading...</item_nft>
+                    </grid_nft>
+                </div>
+            </div>
 
 
             <div class="send-page__field key-field">
@@ -339,14 +347,6 @@
                 <textarea name="description" id="idDescription" rows="2" placeholder="Optional..." class="key-field__textarea key-field__textarea--mobile" oninput="CheckLengthAccDesription('idDescription',200); OnEditTransactionFields()"></textarea>
             </div>
 
-            <div class="send-page__field key-field" id="idTokenNFT" style="display:none">
-                <div>
-                    <div style="padding-left: 10px">Tokens:</div>
-                    <grid_nft id="idListNFT">
-                        <item_nft>Loading...</item_nft>
-                    </grid_nft>
-                </div>
-            </div>
             <div class="send-page__btns-wrap">
                 <button class="btn" onclick="SendMobileBefore()" id="idSendButton">Send</button>
                 <button class="btn btn--white" onclick="ClearSend()" id="idClearButton">Clear</button>

@@ -1123,61 +1123,72 @@ function InitTranslater()
 //----------------------------------------------------------------------------------------------------------------------
 //web3 ethereum
 //----------------------------------------------------------------------------------------------------------------------
-window.ethereum=
+if(!isMobile())
 {
-    isMetaMaskInstalled: async function()
-    {
-        return new Promise(function(resolve, reject)
+    window.ethereum =
         {
-            var Data={cmd:"ethereum-installed"}
-            SendData(Data,function (Res)
+            isMetaMaskInstalled: async function ()
             {
-                resolve(Res);
-            })
-        });
-    },
-    request: async function (Params)
-    {
-        return new Promise(function(resolve, reject)
+                return new Promise(function (resolve, reject)
+                {
+                    var Data = {cmd: "ethereum-installed"}
+                    SendData(Data, function (Res)
+                    {
+                        resolve(Res);
+                    })
+                });
+            },
+            request: async function (Params)
+            {
+                return new Promise(function (resolve, reject)
+                {
+                    var Data = {cmd: "ethereum-request", Params: Params}
+                    SendData(Data, function (Res, IsErr)
+                    {
+                        if(IsErr)
+                            reject(Res);
+                        else
+                            resolve(Res);
+                    })
+                });
+            },
+            on: function (Name, F)
+            {
+                SendData({cmd: "ethereum-on", Name: Name}, F);
+            },
+            removeListener: function (Name, F)
+            {
+                SendData({cmd: "ethereum-off", Name: Name}, F);
+            },
+            GetSelectedAddress: async function ()
+            {
+                return new Promise(function (resolve, reject)
+                {
+                    var Data = {cmd: "ethereum-selected"}
+                    SendData(Data, function (Res)
+                    {
+                        resolve(Res);
+                    })
+                });
+            },
+        }
+
+    Object.defineProperty(ethereum, "selectedAddress", {
+        get: async function ()
         {
-            var Data={cmd:"ethereum-request",Params:Params}
-            SendData(Data,function (Res,IsErr)
-            {
-                if(IsErr)
-                    reject(Res);
-                else
-                    resolve(Res);
-            })
-        });
-    },
-    on: function (Name,F)
-    {
-        SendData({cmd:"ethereum-on",Name:Name},F);
-    },
-    removeListener: function (Name,F)
-    {
-        SendData({cmd:"ethereum-off",Name:Name},F);
-    },
-    GetSelectedAddress: async function()
-    {
-        return new Promise(function(resolve, reject)
-        {
-            var Data={cmd:"ethereum-selected"}
-            SendData(Data,function (Res)
-            {
-                resolve(Res);
-            })
-        });
-    },
+            var result = ethereum.GetSelectedAddress();
+            return result;
+        }
+    });
 }
-
-Object.defineProperty(ethereum, "selectedAddress",{
-    get: async function()
+else
+{
+    function RetZero()
     {
-        var result=ethereum.GetSelectedAddress();
-        return result;
-    }});
-
+        return 0;
+    }
+    window.ethereum={isMetaMaskInstalled:RetZero,on:RetZero};
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 

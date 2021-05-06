@@ -18,7 +18,7 @@ require("../HTML/JS/lexer.js");
 require("../HTML/JS/smart-vm.js");
 
 const TYPE_TRANSACTION_SMART_CREATE = 130;
-const TYPE_TRANSACTION_SMART_RUN = 135;
+global.TYPE_TRANSACTION_SMART_RUN = 135;
 const TYPE_TRANSACTION_SMART_CHANGE = 140;
 
 global.FORMAT_SMART_CREATE = "{\

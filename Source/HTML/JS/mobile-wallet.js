@@ -1072,7 +1072,7 @@ function SendMobileBefore()
             return SetError("Need select NFT");
         CurName=Element.dataset.token;
         //$("idTokenHolder").innerHTML = Element.innerHTML;
-        $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,Element.dataset.id,idSumSend.value);
+        $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,CurName,Element.dataset.id,idSumSend.value);
         SetVisibleBlock("idTokenHolder",1);
     }
     else

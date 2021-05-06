@@ -288,7 +288,7 @@ function ViewStatus()
 function ChooseToken(name)
 {
     //todo
-    console.log(name);
+
     if(name==="idListNFT")
     {
         SendMoneyBefore();
@@ -326,7 +326,7 @@ function SendMoneyBefore()
                 return SetError("Need select NFT");
             CurName = Element.dataset.token;
             //$("idTokenHolder").innerHTML = Element.innerHTML;
-            $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,Element.dataset.id,idSumSend.value);
+            $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,CurName,Element.dataset.id,idSumSend.value);
             SetVisibleBlock("idTokenHolder",1);
         }
         else
