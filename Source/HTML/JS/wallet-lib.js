@@ -443,23 +443,19 @@ function SendMoney(F)
     CreateTransaction(SendMoneyTR, true, F);
 }
 
-function SendToken()
+async function SendToken()
 {
     var Element=$(idListNFT.CurSelect);
-    if(!Element)
+    if(!Element || !Element.dataset || !Element.dataset.token)
         return SetError("Pls, select token");
     var Token=Element.dataset.token;
-    if(!Token)
-        return SetError("Pls, select token");
     var TokenID=Element.dataset.id;
-    if(!TokenID)
-        return SetError("Pls, select token");
 
     var Params=
         {
             Token:Token,
             ID:TokenID,
-            To:idTo.value,
+            To:+idTo.value,
             Amount:+idSumSend.value,
             Description:idDescription.value,
         };
@@ -470,6 +466,11 @@ function SendToken()
         if(!Params[arr[i]])
             return SetError("Pls, type "+arr[i]);
     }
+
+    var Item=await AGetAccount(Params.To);
+    if(!Item || Item.Currency)
+        return SetError("Error: Invalid recipient account = "+Params.To);
+
 
     if(CONFIG_DATA.COIN_STORE_NUM)
         MSendCall(CONFIG_DATA.COIN_STORE_NUM,"Transfer",Params,[],+idAccount.value);

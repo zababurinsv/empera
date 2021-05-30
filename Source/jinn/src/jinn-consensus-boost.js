@@ -1,8 +1,8 @@
 /*
  * @project: JINN
- * @version: 1.0
+ * @version: 1.1
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2021 [progr76@gmail.com]
  * Telegram:  https://t.me/progr76
 */
 
@@ -179,7 +179,7 @@ function InitClass(Engine)
         
         let SendTransferTime = Date.now();
         Engine.Send("MAXHASH", Child, {BlockNum:BlockNum, Receive:Engine.MaxHashReceiveCount, CodeVersionNum:CODE_VERSION.VersionNum,
-            NetConstVer:JINN_NET_CONSTANT.NetConstVer, DepricatedArr:Arr, ArrRepeat:ArrRepeat, Debug:global.TEST_CONNECTOR, Arr:Arr, CurTime:Engine.GetTransferTime(Child),
+            NetConstVer:JINN_NET_CONSTANT.NetConstVer, DepricatedArr:[], ArrRepeat:ArrRepeat, Debug:global.TEST_CONNECTOR, Arr:Arr, CurTime:Engine.GetTransferTime(Child),
         }, function (Child,Data)
         {
             Context.WaitIteration = 3;
@@ -200,10 +200,6 @@ function InitClass(Engine)
             var Store = Engine.GetLiderArrAtNum(BlockNum);
             if(!Store)
                 return;
-            if(!Data.HeaderArr.length && Data.DepricatedHeaderArr.length)
-            {
-                Data.HeaderArr = Data.DepricatedHeaderArr;
-            }
             
             var LiderID = 0;
             var bWas = 0;
@@ -372,15 +368,6 @@ function InitClass(Engine)
         
         if(Data.CodeVersionNum < global.MIN_JINN_VERSION_NUM)
             return {result:0, errnum:3};
-        if(!Data.Arr.length && Data.DepricatedArr.length)
-        {
-            Data.Arr = Data.DepricatedArr;
-            for(var i = 0; i < Data.Arr.length; i++)
-            {
-                var Item = Data.Arr[i];
-                Item.LinkSumHash = Item.MinerHash;
-            }
-        }
         
         if(Data.Arr.length)
             Engine.AddMaxHashToTimeStat(Data.Arr[0], BlockNum);
@@ -484,7 +471,7 @@ function InitClass(Engine)
         
         var CurTime = Engine.GetTransferTime(Child);
         
-        return {result:1, Mode:RetMode, DepricatedHeaderArr:HeaderArr, BodyArr:BodyArr, BodyTreeNum:BodyTreeNum, BodyTreeHash:BodyTreeHash,
+        return {result:1, Mode:RetMode, DepricatedHeaderArr:[], BodyArr:BodyArr, BodyTreeNum:BodyTreeNum, BodyTreeHash:BodyTreeHash,
             CurTime:CurTime, HeaderArr:HeaderArr};
     };
     

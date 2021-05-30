@@ -63,7 +63,7 @@ Number.prototype.toStringZ = function (count)
     else
         strnum = "0000000000" + strnum;
     return strnum.substring(strnum.length - count, strnum.length);
-}
+};
 
 String.prototype.right = function (count)
 {
@@ -71,7 +71,7 @@ String.prototype.right = function (count)
         return this.substr(this.length - count, count);
     else
         return this.substr(0, this.length);
-}
+};
 
 require("../jinn/tera/db/BinTreeExt");
 
@@ -647,6 +647,8 @@ function GetTxSize(Tx)
         Size += Tx.Description.length * 2;
     if(Tx.Body)
         Size += Tx.Body.length;
+    if(Tx.Params)
+        Size += Tx.Params.length;
     return Size;
 }
 global.GetTxSize = GetTxSize;

@@ -2,7 +2,7 @@
 
 
 //---------------------------------------------------------------------------
-//Promise semaphor support
+//Promise semaphore support
 //---------------------------------------------------------------------------
 var PROMISE_MAP={};
 function InitPromiseMap()
@@ -78,8 +78,11 @@ function DoImgWork(Addr)
 function SetNftAttrMap(Addr)
 {
     var Addr2=Addr;
-    if(MainServer && isMobile() && Addr2.substr(0,6)==="/file/")
-        Addr2=GetProtocolServerPath(MainServer)+Addr2;
+    if(MainServer && isMobile())
+    {
+        if(Addr2.substr(0,6)==="/file/" || Addr2.substr(0,5)==="/nft/")
+            Addr2 = GetProtocolServerPath(MainServer) + Addr2;
+    }
 
     fetch(Addr2, {method:'get', cache:'default', mode:'cors', credentials2:'include', headers:this.Headers}).then(function (response)
     {
@@ -124,7 +127,12 @@ async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
     if(CallNum)
     if(bView)
     {
-        var Tokens=await CallTeraProxy(CallNum,"GetTokens",{Account:Account,GetURI:1});
+        var Tokens;
+        if(typeof Account==="number")
+            Tokens=await CallTeraProxy(CallNum,"GetTokens",{Account:Account,GetURI:1});
+        else
+            Tokens=Account;
+
         if(Tokens)
         {
             var Num=PrefixNum+1;
@@ -161,6 +169,7 @@ async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
     {
         IDList.strJSON = Str;
         IDList.innerHTML=Str;
+        IDList.CurSelect="";
     }
 
     SelectNFTItem(IDList.id);
@@ -170,7 +179,7 @@ async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
     if(idListNFT===IDList)
         SetVisibleBlock("idTokenNFT",bNFT);
     if(!bNFT)
-        IDList.CurSelect="";
+         IDList.CurSelect="";
 
 }
 
@@ -211,6 +220,11 @@ function GetShortTokenID(ID)
 function SelectNFTItem(List,element)
 {
     var IDList=$(List);
+
+    if(element && window.OnSelectNFTItem)
+        if(window.OnSelectNFTItem(IDList,element)===0)
+            return;
+
     if(element)
         IDList.CurSelect=element.id;
 

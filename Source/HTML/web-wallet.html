@@ -8,11 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="./tera.ico" type="image/vnd.microsoft.icon">
 
-    <link rel="stylesheet" type="text/css" href="./CSS/mobile-wallet.css">
+    <link rel="stylesheet" href="./CSS/mobile-wallet.css">
     <link rel="stylesheet" href="./CSS/wallet-multicoin.css">
 
     <script type="text/javascript" src="./JS/coinlib.js"></script>
     <script type="text/javascript" src="./JS/client.js"></script>
+    <script type="text/javascript" src="./JS/client-promise.js"></script>
     <script type="text/javascript" src="./JS/sha3.js"></script>
     <script type="text/javascript" src="./JS/terabuf.js"></script>
     <script type="text/javascript" src="./JS/crypto-client.js"></script>
@@ -375,7 +376,7 @@
                 </div>
 
                 <div class="confirm-info__line" align="center">
-                    <grid_nft style="width: 100%">
+                    <grid_nft class="grid_nft_send">
                         <item_nft id="idTokenHolder"></item_nft>
                     </grid_nft>
                 </div>
@@ -654,9 +655,10 @@
     </div>
 </section>
 
-<section class="modal dapp-modal" id="idSending" onclick="closeModal()" style="display: none; margin-top: 100px">
+<section class="modal dapp-modal" id="idSending" style="display: none; margin-top: 10px;">
     <h2 class="password-modal__title">Sending Tx</h2><BR>
-    <p class="password-modal__subtitle">Wait 5-8 sec, pls</p>
+    <p class="password-modal__subtitle">Wait a few seconds, pls...</p>
+    <p class="password-modal__subtitle" id="idSendingContent"></p>
  </section>
 
 
@@ -682,6 +684,8 @@
         </DIV>
     </div>
 </div>
+
+
 
 
 <div class="fixed-status">

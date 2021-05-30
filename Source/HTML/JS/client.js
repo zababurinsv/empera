@@ -10,7 +10,7 @@
 
 
 
-window.CLIENT_VERSION = 42;
+window.CLIENT_VERSION = 43;
 window.SERVER_VERSION = 0;
 window.SHARD_NAME = "TERA";
 
@@ -885,9 +885,20 @@ function ViewCurrentInner(Def,flag,This)
     }
     if(!Def.Param3)
         Def.Param3 = "";
+    var Params=Def.Params;
+
+    if(!Params)
+        Params={};
+    Params.StartNum=ParseNum(item.value);
+    Params.CountNum=GetCountViewRows(Def);
+    Params.Param3=Def.Param3;
+    Params.Filter=Filter;
+    Params.Filter2=Filter2;
+    Params.ChainMode=Def.ChainMode;
+    Params.GetState=window.DEBUG_WALLET;
+
     
-    ViewGrid(Def.APIName, {StartNum:ParseNum(item.value), CountNum:GetCountViewRows(Def), Param3:Def.Param3, Filter:Filter, Filter2:Filter2,
-        ChainMode:Def.ChainMode, GetState:window.DEBUG_WALLET}, Def.TabName, 1, Def.TotalSum, Def.F);
+    ViewGrid(Def.APIName, Params, Def.TabName, 1, Def.TotalSum, Def.F);
     SaveValues();
     
     if(This)
@@ -2178,14 +2189,19 @@ function ParseFileName(Str)
 
 function RetError(F,TR,Body,Str)
 {
+
+
     if(window.SetError)
         SetError(Str);
     if(F)
         F(1, TR, Body, Str);
+
     return 0;
 }
 function RetResult(F,TR,Body,Str)
 {
+
+
     if(window.SetStatus)
         SetStatus(Str);
     if(F)
@@ -2209,14 +2225,35 @@ function SendTransactionNew(Body,TR,F)
     {
         return RetError(F, TR, Body, "Error length transaction = " + Body.length + ". Can max size=" + MaxLength);
     }
-    
+    let Type=Body[0];
     var StrHex = GetHexFromArr(Body);
-    GetData("SendHexTx", {Hex:StrHex}, function (Data)
+    var Params={Hex:StrHex};
+
+    if((Type===100 || Type===111 || Type===135) && $("idSending") && !IsVisibleBlock("idSending"))
     {
+        Params.Confirm=1;
+
+        if(window.CONFIG_DATA && window.CONFIG_DATA.CONSTANTS && !CONFIG_DATA.CONSTANTS.USE_BLOCK_SEND_TX)
+            Params.Confirm=undefined;
+
+        if(Params.Confirm)
+        {
+            openModalForce("idSending");
+            setTimeout(closeModalForce,60*1000);
+        }
+    }
+    //console.log(Type,Params.Confirm);
+
+    
+    GetData("SendHexTx", Params, function (Data)
+    {
+        if(Params.Confirm)
+            closeModalForce();
+
         if(Data)
         {
             var key = GetHexFromArr(sha3(Body));
-            if(Data.ResultSend <= 0)
+            if(!Data.result || Data.result < 0)
             {
                 return RetError(F, TR, Body, "Error: " + Data.text);
             }
@@ -2226,6 +2263,9 @@ function SendTransactionNew(Body,TR,F)
             TR.BlockNum = Data._BlockNum;
             TR.TxID = Data._TxID;
             MapSendTransaction[key] = TR;
+
+            if(Type===100 && window.FindMyAccounts)
+                FindMyAccounts();
             
             return RetResult(F, TR, Body, "Send '" + key.substr(0, 12) + "' result:" + Data.text);
         }
@@ -2669,6 +2709,19 @@ function GetPubKey()
     else
         return "";
 }
+function IsCorrectPrivKey(StrKey)
+{
+    if(StrKey.length!==64)
+        return 0;
+
+    if(GetHexFromArr(GetArrFromHex(StrKey))!==StrKey.toUpperCase())
+        return 0;
+    if(StrKey.substr(0,12)==="000000000000")
+        return 0;
+
+    return 1;
+
+}
 
 function SetPrivKey(StrPrivKey)
 {
@@ -2818,6 +2871,20 @@ function GetFilePath(Path)
 var glConfirmF;
 var glWasModal = 0;
 var TEMP_DISABLED_MAP = {};
+var NotModalClose=0;
+
+function openModalForce(id,idOK)
+{
+    //console.log("Open force!");
+    NotModalClose=1;
+    return openModal(id,idOK);
+}
+function closeModalForce()
+{
+    //console.log("Close force!");
+    NotModalClose=0;
+    return closeModal();
+}
 
 function openModal(id,idOK)
 {
@@ -2839,6 +2906,9 @@ function openModal(id,idOK)
 
 function closeModal()
 {
+    if(NotModalClose)
+        return;
+
     glWasModal = 0;
     var modals = document.querySelectorAll(".ModalDlg");
     var overlay = document.querySelector("#idOverlay");

@@ -1,8 +1,8 @@
 /*
  * @project: JINN
- * @version: 1.0
+ * @version: 1.1
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2021 [progr76@gmail.com]
  * Telegram:  https://t.me/progr76
 */
 
@@ -62,6 +62,7 @@ if(typeof window !== "object" || global.NWMODE)
     require("./jinn-tx-err.js");
     require("./jinn-tx-priority.js");
     require("./jinn-tx-control.js");
+    require("./jinn-tx-resend.js");
     
     require("./jinn-block.js");
     require("./jinn-block-mining.js");
@@ -121,6 +122,7 @@ JINN_CONST.CONSENSUS_PERIOD_TIME = 1000;
 
 
 JINN_CONST.MAX_BLOCK_SIZE = 230 * 1024;
+JINN_CONST.MAX_TX_SIZE = 64000;
 JINN_CONST.BLOCK_GENESIS_COUNT = 16;
 JINN_CONST.START_BLOCK_NUM = JINN_CONST.BLOCK_GENESIS_COUNT + 4;
 JINN_CONST.DELTA_BLOCKS_FOR_CREATE = 5;
@@ -193,6 +195,9 @@ JINN_CONST.STEP_NEW_BLOCK = 2;
 JINN_CONST.STEP_SAVE = 3;
 JINN_CONST.STEP_LAST = 4;
 JINN_CONST.STEP_CLEAR_MEM = 20;
+
+JINN_CONST.STEP_RESEND = 5;
+JINN_CONST.COUNT_RESEND = 5;
 
 JINN_CONST.STEP_CALC_POW_LAST = 1;
 JINN_CONST.STEP_CALC_POW_FIRST = 8;

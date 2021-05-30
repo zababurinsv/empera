@@ -397,11 +397,19 @@ function OnEditPrivKey()
 
 function OnPrivKeyOK()
 {
-    SetPrivKey($("idPrivKeyEdit").value.trim());
+    var StrKey=$("idPrivKeyEdit").value.trim();
+    if(!IsCorrectPrivKey(StrKey))
+    {
+        return SetError("Error private key hex string");
+    }
+
+    SetPrivKey(StrKey);
+
     InitPrivKey();
     SelectTab('TabKeySet');
     ClearSend();
 }
+
 
 function OnPrivKeyCancel()
 {

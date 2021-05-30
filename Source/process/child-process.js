@@ -70,7 +70,20 @@ process.on('message', function (msg)
             var Ret;
             try
             {
-                Ret = global[msg.Name](msg.Params);
+
+                if(typeof msg.Params === "object" && msg.Params.F)//возврат через обратный вызов
+                {
+                    global[msg.Name](msg.Params, function (Err,Ret)
+                    {
+                        process.send({cmd:"retcall", id:msg.id, Err:Err, Params:Ret});
+                    });
+                    break;
+                }
+                else
+                {
+                    Ret = global[msg.Name](msg.Params);
+                }
+
             }
             catch(e)
             {
@@ -146,12 +159,12 @@ process.RunRPC = function (Name,Params,F)
     {
         process.send({cmd:"call", id:0, Name:Name, Params:Params});
     }
-}
+};
 
 global.EvalCode = function (Code)
 {
     return eval(Code);
-}
+};
 
 
 global.WasEnterChildProcessErr = 0;

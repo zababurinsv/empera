@@ -6,9 +6,10 @@ grid_nft
     grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
     grid-gap: 5px;
 
-    max-height: 400px;
     overflow:auto;
 
+    resize: both;
+    padding: 5px;
 }
 
 
@@ -28,7 +29,6 @@ item_nft
     background-color: #f2f3f5;
     box-shadow: 0 0 5px rgb(0 0 0);
     border-radius: 5px;
-
 }
 
 @media (max-width: 445px)
@@ -37,6 +37,7 @@ item_nft
     {
         max-height: 260px;
         min-width: 0;
+        resize: none;
     }
 }
 
@@ -63,8 +64,9 @@ item_nft b
     font-size: 12px;
 }
 
-#idListNFT
-{
-    max-height: 145px;
-}
 
+.grid_nft_send
+{
+    resize: none;
+    width: 100%;
+}

@@ -435,7 +435,7 @@ class AccountApp extends require("./accounts-hash")
                     }
                 }
                 //ERC
-                if(Data.Currency===0)//игнорируем другие валюты
+                //if(Data.Currency===0)//игнорируем другие валюты
                 {
                     Data.CoinStore=this.ReadCoinStore(key);
                 }

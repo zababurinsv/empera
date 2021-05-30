@@ -637,8 +637,10 @@ ListF.$Event = function (Description,Mode)
     SMARTS.SendSmartEvent({Description:Description, Smart:RunContext.Smart.Num, Account:RunContext.Account.Num, BlockNum:RunContext.BlockNum, TrNum:RunContext.TrNum});
     
     ToLogTx("Block: " + RunContext.BlockNum + " TxNum:" + RunContext.TrNum + " Event: " + JSON.stringify(Description), 4);
-    //console.log(Description);
-    
+
+
+    global.LOG_LEVEL >= 9 && ToLog("Event, TickCounter: " + TickCounter);
+
     SendUserEvent(Description,Mode, RunContext.Smart.Num, RunContext.BlockNum, RunContext.TrNum);
 };
 

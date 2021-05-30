@@ -430,6 +430,7 @@ function DelProject()
             
             SetSmartToDialog(Smart);
             $("idProjectList").value = Index;
+            SaveValues(1);
         }
     });
 }
@@ -605,8 +606,22 @@ function CheckReplay()
 
 function DoPlay(bRecreate)
 {
+
     if(ArrTabs[1].Current != "TabPlay")
         return;
+
+
+
+
+    if(idAutoPlay.checked)//защита от бесконечных циклов
+    {
+        idAutoPlay.checked=false;
+        SaveValues(1);
+        setTimeout(function ()
+        {
+            idAutoPlay.checked=true;
+        },100);
+    }
     
     var bEnable = SetDialogEnabled();
     if(!bEnable && LastBaseState)

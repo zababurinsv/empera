@@ -105,7 +105,7 @@ class DApp
             if(OperationID > Item.Value.OperationID + MaxCountOperationID)
                 return {result:0, text:"Error too much OperationID (expected max: " + (Item.Value.OperationID + MaxCountOperationID) + " for ID: " + FromNum + ")"};
         }
-        
+
         var hash = Buffer.from(sha3(Body.slice(0, Body.length - 64)));
         var Sign = Buffer.from(Body.slice(Body.length - 64));
         var Result = CheckSign(hash, Sign, Item.PubKey);

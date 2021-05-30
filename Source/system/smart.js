@@ -275,7 +275,15 @@ class SmartApp extends require("./smart-tr")
         
         return 0;
     }
-    
+
+    GetSignTransferTx(TR, PrivKey)
+    {
+        var Arr = BufLib.GetBufferFromObject(TR, FORMAT_SMART_RUN, GetTxSize(TR), {})
+        var Hash = Buffer.from(sha3(Arr.slice(0, Arr.length - 64)));
+        var sigObj = secp256k1.sign(Hash, Buffer.from(PrivKey));
+        return sigObj.signature;
+    }
+
     CheckSignTransferTx(BlockNum, Body)
     {
         return this.CheckSignAccountTx(BlockNum, Body).result;

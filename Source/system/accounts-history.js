@@ -62,12 +62,17 @@ class AccountHistory extends require("./accounts-rest-no")
         var Head = this.DBStateHistory.Read(Num);
         if(!Head)
             Head = {Num:Num, NextPos:0};
+
+        if(typeof Body.Description==="object")
+        {
+            Body.Description=this.OjectToDesctription(Body.Description);
+        }
         
         Body.NextPos = Head.NextPos;
         Head.NextPos = this.WriteHistoryBody(Body);
         this.DBStateHistory.Write(Head);
     }
-    
+
     WriteHistoryBody(Body)
     {
         var BufWrite = SerializeLib.GetBufferFromObject(Body, this.HistoryFormatArr[Body.Type], this.WorkStructArr[Body.Type]);
@@ -140,6 +145,25 @@ class AccountHistory extends require("./accounts-rest-no")
         
         return Item;
     }
+
+    OjectToDesctription(Obj)
+    {
+        if(!Obj)
+            return "";
+        var Str="";
+        if(Obj.cmd)
+        {
+            Str="Call → "+Obj.cmd;
+        }
+        else
+        {
+            try{Str=JSON.stringify(Obj);}catch(e){};
+        }
+
+        //console.log(Str);
+        return Str;
+    }
+
 }
 
 module.exports = AccountHistory;

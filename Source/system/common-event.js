@@ -108,16 +108,44 @@ function SendTrackResult(Block,TxNum,Body,SetResult,Result)
 
 function SendTrack(Result,Str,bFinal,bEvent)
 {
+    //console.log("CurTrackItem:"+CurTrackItem,"Str="+Str)
+    //console.log(Result,Str);
     if(!CurTrackItem)
         return;
-    
-    CurTrackItem.cmd = "RetFindTX";
+
+
     CurTrackItem.ResultStr = Str;
     CurTrackItem.bFinal = bFinal;
     CurTrackItem.Result = Result;
     CurTrackItem.bEvent = bEvent;
-    
-    process.send(CurTrackItem);
+
+    var msg=CopyObjKeys({},CurTrackItem);
+    delete msg.F;
+
+    if(bEvent || !CurTrackItem.F)
+    {
+        //это чтобы ходили события в кошелек (не только дапп)
+        msg.cmd = "WalletEvent";
+        process.send(msg);
+    }
+    else
+    {
+        CurTrackItem.F(0,msg);
+    }
+
+
+    //msg.cmd = "retcall";
+    // var F=CurTrackItem.F;
+    // if(F)
+    // {
+    //     delete CurTrackItem.F;
+    //     F(0,CurTrackItem);
+    // }
+    // else
+    // {
+    //     // CurTrackItem.cmd = "RetFindTX";
+    //     // process.send(CurTrackItem);
+    // }
 }
 
 global.GetCurTxKey = function ()

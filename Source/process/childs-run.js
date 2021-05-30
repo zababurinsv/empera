@@ -17,7 +17,7 @@ global.GlobalRunID = 0;
 global.GlobalRunMap = {};
 
 var WebProcess = {Name:"WEB PROCESS", idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(), Worker:undefined, Path:"./process/web-process.js",
-    OnMessage:OnMessageWeb, PeriodAlive:10 * 1000, UpdateConst:0};
+    OnMessage:OnMessageWeb, PeriodAlive:10 * 1000*(global.DEV_MODE?100:1), UpdateConst:0};
 global.WEB_PROCESS = WebProcess;
 
 if(global.HTTP_HOSTING_PORT && !global.NWMODE)
@@ -71,30 +71,6 @@ function OnMessageWeb(msg)
     }
 }
 
-function AddTransactionFromWeb(Params)
-{
-    if(typeof Params.HexValue !== "string")
-        return {Result:0};
-    
-    var body;
-    body = GetArrFromHex(Params.HexValue.substr(0, Params.HexValue.length - 12 * 2));
-    
-    if(global.TX_PROCESS && global.TX_PROCESS.Worker)
-    {
-        var StrHex = GetHexFromArr(sha3(body));
-        global.TX_PROCESS.Worker.send({cmd:"FindTX", TX:StrHex, Web:1, WebID:Params.WebID});
-    }
-    
-    var Tx0 = {body:body};
-    var Res = SERVER.AddTransaction(Tx0, 1);
-    var text = TR_MAP_RESULT[Res];
-    var final = 0;
-    if(Res <= 0 && Res !==  - 3)
-        final =  - 1;
-    ToLogClient("Send: " + text, GetHexFromArr(sha3(body)), final);
-    
-    return {Result:Res, _BlockNum:Tx0._BlockNum, _TxID:Tx0._TxID};
-}
 
 
 function OnMessageStatic(msg)
@@ -138,6 +114,12 @@ function OnMessageTX(msg)
             }
     }
 }
+
+
+//////////////////////
+//START CHILD PROCESS
+//////////////////////
+
 
 function StartAllProcess(bClose)
 {
@@ -200,7 +182,7 @@ function StartChildProcess(Item)
                             var Ret;
                             try
                             {
-                                if(typeof msg.Params === "object" && msg.Params.F)
+                                if(typeof msg.Params === "object" && msg.Params.F)//возврат через обратный вызов
                                 {
                                     global[msg.Name](msg.Params, function (Err,Ret)
                                     {
@@ -244,28 +226,21 @@ function StartChildProcess(Item)
                             
                             ToLogClient(msg.Str, msg.StrKey, msg.bFinal);
                             break;
-                        case "RetFindTX":
-                            if(msg.WebID >= 1e9)
+                        case "WalletEvent":
+                            //console.log("WalletEvent="+JSON.stringify(msg,"",4));
+
+
+                            if(WebProcess && WebProcess.Worker && msg.Web)//перенаправляем в web-process
                             {
-                                var F = GlobalRunMap[msg.WebID];
-                                if(F)
-                                {
-                                    if(!msg.bEvent)
-                                        delete GlobalRunMap[msg.WebID];
-                                    F(msg.Result, msg.ResultStr, msg.bEvent);
-                                    break;
-                                }
+                                WebProcess.Worker.send(msg);
                             }
                             else
-                                if(WebProcess && WebProcess.Worker)
-                                {
-                                    WebProcess.Worker.send(msg);
-                                    if(msg.Web)
-                                        break;
-                                }
-                            ToLogClient(msg.ResultStr, msg.TX, msg.bFinal);
-                            
-                            break;
+                            if(msg.Main)
+                            {
+                                ToLogClient(msg.ResultStr, msg.TX, msg.bFinal);
+                            }
+
+                             break;
                         case "online":
                             if(ITEM.Worker)
                                 ToLog("RUNNING " + ITEM.Name + " : " + msg.message + " pid: " + ITEM.Worker.pid);
@@ -352,4 +327,4 @@ function StopChildProcess()
 
 global.StartAllProcess = StartAllProcess;
 global.StopChildProcess = StopChildProcess;
-global.AddTransactionFromWeb = AddTransactionFromWeb;
+

@@ -336,7 +336,7 @@ function SetVisibleItemByTypeKey()
 
 var CountViewRows = 20;
 var DefAccounts = {BlockName:"idPaginationAccount", NumName:"idViewAccountNum", TabName:"grid_accounts_all", APIName:"GetAccountList",
-    Param3:"", FilterName:"idViewAccountFilter", TotalSum:"idTotalSum"};
+    Param3:"", FilterName:"idViewAccountFilter", TotalSum:"idTotalSum", Params:{GetCoin:1}};
 var DefBlock = {BlockName:"idPaginationBlock", NumName:"idViewBlockNum", TabName:"grid_block_all", APIName:"GetBlockList",
     Param3:"", FilterName:""};
 

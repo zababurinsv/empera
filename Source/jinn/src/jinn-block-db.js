@@ -1,8 +1,8 @@
 /*
  * @project: JINN
- * @version: 1.0
+ * @version: 1.1
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2019-2020 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2019-2021 [progr76@gmail.com]
  * Telegram:  https://t.me/progr76
 */
 
@@ -138,6 +138,7 @@ function InitClass(Engine)
     Engine.WriteBlockDBInner = function (Block)
     {
         JINN_STAT.MainDelta = Math.max(JINN_STAT.MainDelta, Engine.CurrentBlockNum - Block.BlockNum);
+        Engine.ResendBlockNum = Math.min(Engine.ResendBlockNum, Block.BlockNum);
         
         return Engine.DB.WriteBlockMain(Block);
     };

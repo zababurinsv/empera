@@ -45,11 +45,11 @@ process.on('message', function (msg)
             ADD_TO_STAT(msg.Name, msg.Value);
             break;
         case "NodeList":
-            AllNodeList = msg.ValueAll;
-            HostNodeList = GetArrWithWebOnly(AllNodeList);
+            global.AllNodeList = msg.ValueAll;
+            global.HostNodeList = GetArrWithWebOnly(AllNodeList);
             break;
         case "NodeBlockChain":
-            NodeBlockChain = msg.Value;
+            global.NodeBlockChain = msg.Value;
             break;
             
         case "DappEvent":
@@ -64,22 +64,9 @@ process.on('message', function (msg)
                 break;
             }
             
-        case "RetFindTX":
+        case "WalletEvent":
             {
-                if(msg.WebID)
-                {
-                    var F = global.GlobalRunMap[msg.WebID];
-                    if(F)
-                    {
-                        if(!msg.bEvent)
-                            delete global.GlobalRunMap[msg.WebID];
-                        F(msg.Result, msg.ResultStr, msg.bEvent);
-                        break;
-                    }
-                }
-                
                 AddToArrClient(msg.ResultStr, msg.TX, msg.bFinal, Date.now());
-                
                 break;
             }
             
@@ -321,6 +308,7 @@ function DoCommandNew(request,response,Type,Path,Params)
 
 //
     var ArrPath = Path.split('/', 7);
+
     
     if(global.AddonCommand)
     {
@@ -423,7 +411,11 @@ function DoCommandNew(request,response,Type,Path,Params)
         case "file":
             SendBlockFile(request, response, ArrPath[1], ArrPath[2]);
             break;
-            
+
+        case "nft":
+            SendNFTFile(request, response, ArrPath[1]);
+            break;
+
         case "DappTemplateFile":
             DappTemplateFile(request, response, ArrPath[1]);
             break;

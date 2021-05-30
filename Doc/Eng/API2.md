@@ -86,7 +86,7 @@ result - returns the id (number) of the created account
 
 ## Send
 
-3)**/api/v2/Send**  - sending coins from one account to another (you need to specify the private key of the sender's account)
+3.1)**/api/v2/Send**  - sending coins from one account to another (you need to specify the private key of the sender's account)
 #### Parameters:
 * FromID - the account number of the sender
 * FromPrivKey - sender private key in hex format
@@ -144,6 +144,36 @@ return:
 ```
 
 result - returns the id (number) of the created account
+
+
+## SendToken
+
+3.1)**/api/v2/SendToken**  - sending coins from one account to another (you need to specify the private key of the sender's account)
+#### Parameters:
+* FromID - the account number of the sender
+* FromPrivKey - sender private key in hex format
+* ToID - the account number of the recipient, the number or public key in hex format (in this case, it will create a new account with the name specified in the first line of the description of the payment and the payment the account will be charged 10 Tera)
+* Token - tokens name (string)
+* TokenID - tokens ID (string)
+* Amount - count of tokens
+* Description - description of payment order (optional)
+* Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
+
+
+example:
+```js
+http://127.0.0.1/api/v2/Send
+{
+    "FromID": 1082,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ToID":1102,
+    "Amount":1,
+    "Token":"TERA-NFT",
+    "TokenID":"9041840001",
+    "Description":"test1",
+    "Confirm":1
+}
+```
 
 
 ## GetBalance

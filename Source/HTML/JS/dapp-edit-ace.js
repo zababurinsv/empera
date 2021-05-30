@@ -42,8 +42,6 @@ function InitAce()
 
     editHTML.$search=editCode.$search;//common finding word
 
-
-    
     SetAutocomplete();
     
     editHTML.getSession().on('change', function (e)
@@ -100,6 +98,8 @@ function SetAutocomplete()
     
     var MyCompleter = {getCompletions:function (editor,session,pos,prefix,callback)
         {
+            CheckGoodAutocompleter(editor);
+
             var WordScore = 0;
             var wordMeta;
             if(editor === editCode)
@@ -115,6 +115,7 @@ function SetAutocomplete()
             var curCmd = curTokens[0];
             if(!curCmd)
                 return;
+
             
             var lastToken = curTokens[curTokens.length - 1];
             var wordList = [];
@@ -171,6 +172,55 @@ function SetAutocomplete()
         }};
     
     langTools.addCompleter(MyCompleter);
+}
+
+
+function CheckGoodAutocompleter(editor)
+{
+    //корректировка исходников Ace - делаем так чтобы редактор не реагировал на редактирование цифр
+    //TODO - подобрать лучшую точку корректировки
+
+
+    if(!editor.completer || editor.completer.gatherCompletionsOld)
+        return;
+
+
+    function retrievePrecedingIdentifier(text, pos, regex)
+    {
+        var ID_REGEX = /[a-zA-Z_0-9\$\-\u00A2-\uFFFF]/;
+        regex = regex || ID_REGEX;
+        var buf = [];
+        for (var i = pos-1; i >= 0; i--) {
+            if (regex.test(text[i]))
+                buf.push(text[i]);
+            else
+                break;
+        }
+        return buf.reverse().join("");
+    };
+
+
+    editor.completer.gatherCompletionsOld=editor.completer.gatherCompletions;
+    editor.completer.gatherCompletions = function(editor, callback)
+    {
+        var session = editor.getSession();
+        var pos = editor.getCursorPosition();
+
+        var line = session.getLine(pos.row);
+        var prefix = retrievePrecedingIdentifier(line, pos.column);
+        this.base = session.doc.createAnchor(pos.row, pos.column - prefix.length);
+        this.base.$insertRight = true;
+
+
+        var lastchar=prefix.substr(prefix.length-1);
+        if(prefix.length<=1 || String(+lastchar)===lastchar)
+            return this.detach();
+
+
+        editor.completer.gatherCompletionsOld(editor, callback);
+    }
+
+
 }
 
 function AddAceOptions(editor)

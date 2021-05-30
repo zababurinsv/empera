@@ -355,13 +355,17 @@ HostingCaller.SendHexTx = function (Params,response,ArrPath,request)
     if(typeof Params === "object" && typeof Params.Hex === "string")
         Params.Hex += "000000000000000000000000";
     return HostingCaller.SendTransactionHex(Params, response, ArrPath, request);
-}
+};
 
 HostingCaller.SendTransactionHex = function (Params,response,ArrPath,request)
 {
     if(typeof Params !== "object" || !Params.Hex)
-        return {result:0, text:"object required"};
-    
+        return {result:0, text:"SendTransactionHex object required"};
+    if(typeof Params.Hex!=="string")
+        return {result:0, text:"Params.Hex - string required"};
+    if(Params.Hex.length>JINN_CONST.MAX_TX_SIZE*2)
+        return {result:0, text:"Params.Hex - error length (max="+(JINN_CONST.MAX_TX_SIZE*2)+")"};
+
     var ip = request.socket.remoteAddress;
     var Item = MapIPSend[ip];
     if(!Item)
@@ -387,17 +391,14 @@ HostingCaller.SendTransactionHex = function (Params,response,ArrPath,request)
         return null;
     }
     
-    process.RunRPC("AddTransactionFromWeb", {HexValue:Params.Hex}, function (Err,Data)
+    process.RunRPC("AddTransactionFromWeb", {HexValue:Params.Hex,Confirm:Params.Confirm,F:1,Web:1}, function (Err,Data)
     {
-        var Result = Data.Result;
-        var text = TR_MAP_RESULT[Result];
-        
-        var Result2 = {result:(Result > 0 ? 1 : 0), text:text, _BlockNum:Data._BlockNum, _TxID:Data._TxID};
-        var Str = JSON.stringify(Result2);
+        var Result = {result:Data.result, text:Data.text, _BlockNum:Data._BlockNum, _TxID:Data._TxID};
+        var Str = JSON.stringify(Result);
         response.end(Str);
     });
     return null;
-}
+};
 
 
 
@@ -407,14 +408,14 @@ HostingCaller.DappSmartHTMLFile = function (Params)
         return {result:0};
     
     return HTTPCaller.DappSmartHTMLFile(Params);
-}
+};
 HostingCaller.DappBlockFile = function (Params,responce)
 {
     if(typeof Params !== "object")
         return {result:0};
     
     return HTTPCaller.DappBlockFile(Params, responce);
-}
+};
 
 HostingCaller.DappInfo = function (Params)
 {
@@ -448,7 +449,7 @@ HostingCaller.DappInfo = function (Params)
     Ret.MaxDappsID = SMARTS.GetMaxNum();
     
     return Ret;
-}
+};
 
 HostingCaller.DappWalletList = function (Params)
 {
@@ -470,7 +471,7 @@ HostingCaller.DappWalletList = function (Params)
     Ret.arr = arr;
     
     return Ret;
-}
+};
 HTTPCaller.DappWalletList = HostingCaller.DappWalletList;
 
 
@@ -487,7 +488,7 @@ HostingCaller.DappAccountList = function (Params)
     
     var arr = ACCOUNTS.GetRowsAccounts(ParseNum(Params.StartNum), Params.CountNum, undefined, 1);
     return {arr:arr, result:1};
-}
+};
 
 function DappAccount(response,StrNum)
 {

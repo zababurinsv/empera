@@ -80,6 +80,8 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
         Path2 = Path2.substring(1);
     var ArrPath = Path2.split('/', 5);
 
+    //console.log(Path);
+
     var APIv2 = 0;
     if(ArrPath[0] === "api")
     {
@@ -137,6 +139,10 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
 
         case "file":
             SendBlockFile(request, response, params[1], params[2]);
+            break;
+
+        case "nft":
+            SendNFTFile(request, response, params[1]);
             break;
 
         case "DappTemplateFile":
@@ -300,7 +306,19 @@ HTTPCaller.DappSmartHTMLFile = function (Params)
     return {result:0};
 }
 
+
 global.SendBlockFile = SendBlockFile;
+global.SendNFTFile = SendNFTFile;
+function SendNFTFile(request,response,StrNum)
+{
+    var Num;
+    if(StrNum && StrNum.length>15)
+        Num = +StrNum.substr(StrNum.length-15);
+    else
+        Num = +StrNum;
+    return SendBlockFile(request, response, Math.floor(Num/1000), Num%1000);
+}
+
 function SendBlockFile(request,response,BlockNum,TrNum)
 {
     BlockNum = parseInt(BlockNum);
@@ -424,9 +442,9 @@ HTTPCaller.DappStaticCall = function (Params,response)
 {
     var Result = RunStaticSmartMethod(ParseNum(Params.Account), Params.MethodName, Params.Params, Params.ParamsArr);
     var Str = JSON.stringify(Result);
-    if(Str.length > 16000)
+    if(Str.length > 64000)
     {
-        return {result:0, RetValue:"Error result length (more 16000)"};
+        return {result:0, RetValue:"Error result length (more 64000)"};
     }
 
     response.end(Str);
@@ -562,7 +580,6 @@ HTTPCaller.DappTransactionList = function (Params,response)
 }
 
 
-var sessionid = GetHexFromAddres(crypto.randomBytes(20));
 
 HTTPCaller.RestartNode = function (Params)
 {
@@ -589,7 +606,7 @@ HTTPCaller.GetAccountList = function (Params)
     if(!( + Params.CountNum))
         Params.CountNum = 1;
 
-    var arr = ACCOUNTS.GetRowsAccounts(Params.StartNum,  + Params.CountNum, Params.Filter, Params.GetState);
+    var arr = ACCOUNTS.GetRowsAccounts(Params.StartNum,  + Params.CountNum, Params.Filter, Params.GetState, Params.GetCoin);
     return {arr:arr, result:1};
 }
 HTTPCaller.GetDappList = function (Params)
@@ -811,7 +828,7 @@ HTTPCaller.GetWalletInfo = function (Params)
         MaxLogLevel:global.MaxLogLevel,
         JINN_NET_CONSTANT:global.JINN_NET_CONSTANT,
         JINN_MODE:1,
-        sessionid:sessionid,
+        sessionid:GetSessionId(),
         COIN_STORE_NUM:global.COIN_STORE_NUM,
     };
 
@@ -891,36 +908,24 @@ HTTPCaller.GetSignFromHash = function (Params)
     return {Sign:Sign, result:1};
 }
 
-HTTPCaller.SendHexTx = function (Params)
+HTTPCaller.SendHexTx = function (Params,response)
 {
     if(typeof Params === "object" && typeof Params.Hex === "string")
         Params.Hex += "000000000000000000000000";
-    return HTTPCaller.SendTransactionHex(Params);
+    return HTTPCaller.SendTransactionHex(Params,response);
 }
 
-HTTPCaller.SendTransactionHex = function (Params)
+HTTPCaller.SendTransactionHex = function (Params,response)
 {
-    if(typeof Params.Hex !== "string")
-        return {result:0};
+    //console.log(JSON.stringify(Params));
+    Params.Main=1;
+    AddTransactionFromMain(Params,function (Err,Result)
+    {
+        //console.log(JSON.stringify(Result));
+        response.end(JSON.stringify(Result));
+    });
 
-    var body = GetArrFromHex(Params.Hex.substr(0, Params.Hex.length - 12 * 2));
-    var Result = {result:1};
-    var Tx = {body:body, ToAll:1};
-    var Res = SERVER.AddTransactionOwn(Tx);
-    Result.sessionid = sessionid;
-    Result._TxID = Tx._TxID;
-    Result._BlockNum = Tx._BlockNum;
-    Result.text = TR_MAP_RESULT[Res];
-    Result.ResultSend = Res;
-
-    if(Res === 1)
-        Result.text = TR_MAP_RESULT[Res] + " on Block " + Result._BlockNum;
-
-    var final = 0;
-    if(Res <= 0 && Res !==  - 3)
-        final =  - 1;
-    ToLogClient("Send: " + Result.text, GetHexFromArr(sha3(body, 29)), final);
-    return Result;
+    return null;
 }
 
 HTTPCaller.SendDirectCode = function (Params,response)
@@ -938,7 +943,7 @@ HTTPCaller.SendDirectCode = function (Params,response)
         {
             RunProcess.RunRPC("EvalCode", Params.Code, function (Err,Ret)
             {
-                Result = {result:!Err, sessionid:sessionid, text:Ret, };
+                Result = {result:!Err, sessionid:GetSessionId(), text:Ret, };
                 var Str = JSON.stringify(Result);
                 response.end(Str);
             });
@@ -961,7 +966,7 @@ HTTPCaller.SendDirectCode = function (Params,response)
         }
     }
 
-    var Struct = {result:1, sessionid:sessionid, text:Result};
+    var Struct = {result:1, sessionid:GetSessionId(), text:Result};
     return Struct;
 }
 
@@ -1354,7 +1359,7 @@ HTTPCaller.GetBlockchainStat = function (Param)
     var Result = global.Engine.GetBlockchainStatForMonitor(Param);
 
     Result.result = 1;
-    Result.sessionid = sessionid;
+    Result.sessionid = GetSessionId();
     return Result;
 }
 
@@ -1362,7 +1367,7 @@ HTTPCaller.GetAllCounters = function (Params,response)
 {
     let Result = GET_STATS();
     Result.result = 1;
-    Result.sessionid = sessionid;
+    Result.sessionid = GetSessionId();
     Result.STAT_MODE = global.STAT_MODE;
 
     if(!global.TX_PROCESS || !global.TX_PROCESS.RunRPC)
@@ -1418,7 +1423,7 @@ HTTPCaller.SetStatMode = function (flag)
     SAVE_CONST(true);
     global.TX_PROCESS.RunRPC("LOAD_CONST");
 
-    return {result:1, sessionid:sessionid, STAT_MODE:global.STAT_MODE};
+    return {result:1, sessionid:GetSessionId(), STAT_MODE:global.STAT_MODE};
 }
 HTTPCaller.ClearStat = function ()
 {
@@ -1437,20 +1442,20 @@ HTTPCaller.ClearStat = function ()
         });
     }
 
-    return {result:1, sessionid:sessionid, STAT_MODE:global.STAT_MODE};
+    return {result:1, sessionid:GetSessionId(), STAT_MODE:global.STAT_MODE};
 }
 
 HTTPCaller.RewriteAllTransactions = function (Param)
 {
     SERVER.RewriteAllTransactions();
 
-    return {result:1, sessionid:sessionid};
+    return {result:1, sessionid:GetSessionId()};
 }
 
 HTTPCaller.RewriteTransactions = function (Param)
 {
     var Ret = REWRITE_DAPP_TRANSACTIONS(Param.BlockCount);
-    return {result:Ret, sessionid:sessionid};
+    return {result:Ret, sessionid:GetSessionId()};
 }
 HTTPCaller.TruncateBlockChain = function (Param)
 {
@@ -1459,13 +1464,13 @@ HTTPCaller.TruncateBlockChain = function (Param)
         StartNum = 15;
 
     SERVER.TruncateBlockDB(StartNum);
-    return {result:1, sessionid:sessionid};
+    return {result:1, sessionid:GetSessionId()};
 }
 
 HTTPCaller.ClearDataBase = function (Param)
 {
     SERVER.ClearDataBase();
-    return {result:1, sessionid:sessionid};
+    return {result:1, sessionid:GetSessionId()};
 }
 
 HTTPCaller.CleanChain = function (Param)
@@ -1475,9 +1480,9 @@ HTTPCaller.CleanChain = function (Param)
 
         var StartNum = SERVER.BlockNumDB - Param.BlockCount;
         global.CleanChain(StartNum);
-        return {result:1, sessionid:sessionid};
+        return {result:1, sessionid:GetSessionId()};
     }
-    return {result:0, sessionid:sessionid};
+    return {result:0, sessionid:GetSessionId()};
 }
 
 HTTPCaller.StartLoadNewCode = function (Param)
@@ -1486,7 +1491,7 @@ HTTPCaller.StartLoadNewCode = function (Param)
     require("../update");
 
     global.StartLoadNewCode(1);
-    return {result:1, sessionid:sessionid};
+    return {result:1, sessionid:GetSessionId()};
 }
 
 HTTPCaller.AddSetNode = function (AddrItem)
@@ -1500,11 +1505,11 @@ HTTPCaller.AddSetNode = function (AddrItem)
         Find.Score = AddrItem.Score;
         Engine.SaveAddrNodes();
 
-        return {result:1, sessionid:sessionid};
+        return {result:1, sessionid:GetSessionId()};
     }
     else
     {
-        return {result:0, sessionid:sessionid};
+        return {result:0, sessionid:GetSessionId()};
     }
 }
 
@@ -1512,7 +1517,7 @@ HTTPCaller.AddSetNode = function (AddrItem)
 HTTPCaller.GetArrStats = function (Keys,response)
 {
     var arr = GET_STATDIAGRAMS(Keys);
-    let Result = {result:1, sessionid:sessionid, arr:arr, STAT_MODE:global.STAT_MODE};
+    let Result = {result:1, sessionid:GetSessionId(), arr:arr, STAT_MODE:global.STAT_MODE};
 
     if(!global.TX_PROCESS || !global.TX_PROCESS.RunRPC)
         return Result;
@@ -1593,7 +1598,7 @@ HTTPCaller.GetBlockChain = function (type)
     var obj = {LastCurrentBlockNum:SERVER.GetLastCorrectBlockNum(), CurrentBlockNum:SERVER.CurrentBlockNum, LoadedChainList:arrLoadedChainList,
         LoadedBlocks:arrLoadedBlocks, BlockChain:arrBlocks, port:SERVER.port, DELTA_CURRENT_TIME:DELTA_CURRENT_TIME, memoryUsage:process.memoryUsage(),
         IsDevelopAccount:IsDeveloperAccount(WALLET.PubKeyArr), LoadedChainCount:SERVER.LoadedChainList.length, StartLoadBlockTime:SERVER.StartLoadBlockTime,
-        sessionid:sessionid, result:1};
+        sessionid:GetSessionId(), result:1};
 
     arrBlocks = [];
     arrLoadedChainList = [];
@@ -2502,6 +2507,7 @@ if(global.ELECTRON)
 }
 exports.SendData = OnGetData;
 
+global.RunConsole=RunConsole;
 function RunConsole(StrRun)
 {
     var Str = fs.readFileSync("./EXPERIMENTAL/_run-console.js", {encoding:"utf8"});
@@ -2712,29 +2718,36 @@ HTTPCaller.GetTransaction = function (Params,response)
     }
     response.writeHead(200, {'Content-Type':'text/plain'});
     response.end(JSON.stringify(result));
+    return null;
 }
 
 global.GetTransactionByID = GetTransactionByID;
 function GetTransactionByID(Params)
 {
+    //SERVER.RefreshAllDB();
+
     var BlockNum;
     if(typeof Params.TxID === "string")
     {
         var Arr = GetArrFromHex(Params.TxID);
+        var Arr1 = Arr.slice(0, TX_ID_HASH_LENGTH);
         BlockNum = ReadUintFromArr(Arr, TX_ID_HASH_LENGTH);
-        var Block = SERVER.ReadBlockDB(BlockNum);
-        if(Block && Block.arrContent)
-        {
-            for(var i = 0; i < Block.arrContent.length; i++)
-            {
-                var Body = Block.arrContent[i];
-                var Arr2 = GetTxID(BlockNum, Body);
 
-                if(CompareArr(Arr2, Arr) === 0)
+        for(var n=0;n<100;n++)//max 100 blocks
+        {
+            var Block = SERVER.ReadBlockDB(BlockNum+n);
+            if(Block && Block.TxData)
+            {
+                for(var i = 0; i < Block.TxData.length; i++)
                 {
-                    return GetTransactionFromBody(Params, Block, i, Body);
+                    var Tx = Block.TxData[i];
+                    if(CompareArr(Tx.HASH.slice(0, TX_ID_HASH_LENGTH), Arr1) === 0)
+                    {
+                        return GetTransactionFromBody(Params, Block, i, Tx.body);
+                    }
                 }
             }
+
         }
     }
     return {result:0, Meta:Params ? Params.Meta : undefined, BlockNum:BlockNum};
@@ -2747,9 +2760,11 @@ function GetTransactionFromBody(Params,Block,TrNum,Body)
     if(TR)
     {
         ConvertBufferToStr(TR);
-        TR.result = 1;
         TR.Meta = Params.Meta;
         TR.result = GetVerifyTransaction(Block, TrNum);
+        if(TR.result===undefined)//не успела обновиться информация
+            TR.result = 1;
+
         TR.BlockNum = Block.BlockNum;
         TR.TrNum = TrNum;
         return TR;

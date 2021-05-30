@@ -532,6 +532,21 @@ function SaveValues(All)
             SetDialogToSmart(Smart);
             FillProject();
         }
+
+        if(!ProjectArray || ProjectArray.length==0)//защита  от записи пустого массива
+        {
+            var ArrStr = localStorage["SMART-ProjectArray"];
+            if(ArrStr)
+            {
+                var Arr0 = JSON.parse(ArrStr);
+                if(Arr0.length>1)
+                {
+                    console.log("Error? Prev length Arr=",Arr0.length);
+                    return;
+                }
+            }
+        }
+
         localStorage["SMART-ProjectArray"] = JSON.stringify(ProjectArray);
     }
 }

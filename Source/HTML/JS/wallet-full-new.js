@@ -296,14 +296,15 @@ function ChooseToken(name)
 }
 
 
-function SendMoneyBefore()
+async function SendMoneyBefore()
 {
     SetStatus("");
     if($("idSendButton").disabled)
     {
         return;
     }
-    
+
+
     var StrToID = GetSendAccTo();
     var StrWhite = GetSendAccTo(1);
     var Item = MapAccounts[StrToID];
@@ -325,7 +326,6 @@ function SendMoneyBefore()
             if(!Element)
                 return SetError("Need select NFT");
             CurName = Element.dataset.token;
-            //$("idTokenHolder").innerHTML = Element.innerHTML;
             $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,CurName,Element.dataset.id,idSumSend.value);
             SetVisibleBlock("idTokenHolder",1);
         }

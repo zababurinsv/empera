@@ -535,12 +535,12 @@ function GetArrFromValue(Num)
 
 function GetTxID(BlockNum,Body)
 {
-    var Nonce = ReadUintFromArr(Body, Body.length - 6);
-    var Arr = CreateTxID(Body, BlockNum, Nonce);
-    return Arr.slice(0, TX_ID_HASH_LENGTH + 6);
+    var Arr = CreateTxID(Body, BlockNum);
+    //return Arr.slice(0, TX_ID_HASH_LENGTH + 6);
+    return Arr;
 }
 
-function CreateTxID(body,BlockNum,Nonce)
+function CreateTxID(body,BlockNum)
 {
     var HASH = sha3(body, 31);
     WriteUintToArrOnPos(HASH, BlockNum, TX_ID_HASH_LENGTH);

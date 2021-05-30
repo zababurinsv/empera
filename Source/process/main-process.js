@@ -118,12 +118,15 @@ process.on('unhandledRejection', function (reason,p)
 
 
 require("../core/mining");
+require("../rpc/api-common");
 require("../core/html-server");
 
 var JinnLib = require("../jinn/tera");
 require("../system");
 
 require("./childs-run");
+
+
 
 require("../core/wallet");
 

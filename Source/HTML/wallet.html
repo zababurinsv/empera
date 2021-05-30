@@ -15,6 +15,7 @@
 
     <script type="text/javascript" src="/HTML/JS/coinlib.js"></script>
     <script type="text/javascript" src="/HTML/JS/client.js"></script>
+    <script type="text/javascript" src="/HTML/JS/client-promise.js"></script>
     <script type="text/javascript" src="/HTML/JS/sha3.js"></script>
     <script type="text/javascript" src="/HTML/JS/sign-lib-min.js"></script>
     <script type="text/javascript" src="/HTML/JS/crypto-client.js"></script>
@@ -525,36 +526,51 @@
                 <input type="number" class="input  input_small node-const" id="START_HISTORY" maxlength="40" value="" onchange="SaveNetParams()">
                 <p class="text input_middle">(Note:need rewrite tx)</p>
             </div>
-            <div class="connection__switch ">
-                <div class="switch" style="width: 400px">
-                    <p class="switch-text">View all table rows:</p>
-                    <label for="ALL_VIEW_ROWS">
-                        <input type="checkbox" class="checkbox node-const" id="ALL_VIEW_ROWS" onchange="SaveNetParams()">
-                        <label for="ALL_VIEW_ROWS"></label>
-                    </label>
+
+            <div class="row">
+                <div class="connection__switch ">
+                    <div class="switch" style="width: 400px">
+                        <p class="switch-text">View all table rows:</p>
+                        <label for="ALL_VIEW_ROWS">
+                            <input type="checkbox" class="checkbox node-const" id="ALL_VIEW_ROWS" onchange="SaveNetParams()">
+                            <label for="ALL_VIEW_ROWS"></label>
+                        </label>
+                    </div>
+                </div>
+
+
+                <div class="connection__switch ">
+                    <div class="switch" style="width: 400px">
+                        <p class="switch-text">Debug dapps state (need reload page)</p>
+                        <label for="DEBUG_WALLET">
+                            <input type="checkbox" class="checkbox node-const" id="DEBUG_WALLET" onchange="SaveNetParams()">
+                            <label for="DEBUG_WALLET"></label>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="connection__switch ">
+                    <div class="switch" style="width: 400px">
+                        <p class="switch-text">Edit accounts (beta version)</p>
+                        <label for="USE_EDIT_ACCOUNT">
+                            <input type="checkbox" class="checkbox node-const" id="USE_EDIT_ACCOUNT" onchange="SaveNetParams()">
+                            <label for="USE_EDIT_ACCOUNT"></label>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="connection__switch ">
+                    <div class="switch" style="width: 400px">
+                        <p class="switch-text">Block form when sending Tx</p>
+                        <label for="USE_BLOCK_SEND_TX">
+                            <input type="checkbox" class="checkbox node-const" id="USE_BLOCK_SEND_TX" onchange="SaveNetParams()">
+                            <label for="USE_BLOCK_SEND_TX"></label>
+                        </label>
+                    </div>
                 </div>
             </div>
 
-
-            <div class="connection__switch ">
-                <div class="switch" style="width: 400px">
-                    <p class="switch-text">Debug dapps state (need reload page)</p>
-                    <label for="DEBUG_WALLET">
-                        <input type="checkbox" class="checkbox node-const" id="DEBUG_WALLET" onchange="SaveNetParams()">
-                        <label for="DEBUG_WALLET"></label>
-                    </label>
-                </div>
-            </div>
-
-            <div class="connection__switch ">
-                <div class="switch" style="width: 400px">
-                    <p class="switch-text">Edit accounts (beta version)</p>
-                    <label for="USE_EDIT_ACCOUNT">
-                        <input type="checkbox" class="checkbox node-const" id="USE_EDIT_ACCOUNT" onchange="SaveNetParams()">
-                        <label for="USE_EDIT_ACCOUNT"></label>
-                    </label>
-                </div>
-            </div>
 
 
 
@@ -1174,6 +1190,7 @@
                             <th id="Item.Name" class="name">Name</th>
                             <th id="Item.PubKeyStr" class="pubkey">PubKey</th>
                             <th id="Item.Value.OperationID" class="num">Operation</th>
+                            <th id="(RetMultiCoins(Item))" class="">NFT</th>
                             <th id="Item.Adviser" class="num">Adv</th>
                             <th id="Item.Value.Smart" class="num">Smart</th>
                             <th id="(RetOpenBlock(Item.BlockNumCreate,1))" class="block">Block</th>
@@ -1432,12 +1449,12 @@
                 Send
                 <B id="idOnSendText"></B>
                 <B id="idOnSendSum" class="coral"></B> <span id="idOnSendCoinName"></span> <span id="idOnSendToName"></span>
-                <grid_nft>
+                <grid_nft class="grid_nft_send">
                     <item_nft id="idTokenHolder"></item_nft>
                 </grid_nft>
 
 
-                <BR><DIV id="idOnSendWarning" style='color: yellow;'>WARNING: You are about to send a very large amount!</DIV>
+                <DIV id="idOnSendWarning" style='color: yellow;'>WARNING: You are about to send a very large amount!</DIV>
 
                 <div class="switch" ID="idCheckOnSend" style="margin-top: 30px">
                     <p class="switch-text">Add to white list</p>
@@ -1541,6 +1558,17 @@
         </DIV>
     </div>
 </div>
+
+<section class="modal ModalDlg" id="idSending" style="display: none;">
+    <div class="modal__container confirm__container"  style="display: block">
+        <div align='center'>
+            <h2 style="margin-bottom: 50px">Sending Tx</h2>
+
+            <p class="">Wait a few seconds, pls...</p>
+            <p class="" id="idSendingContent"></p>
+        </div>
+    </div>
+</section>
 
 
 <DIV id="_idStableScroll" align='center'>

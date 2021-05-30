@@ -19,7 +19,7 @@ class AccountScroll extends require("./dapp")
     {
         super(bReadOnly)
     }
-    GetRowsAccounts(start, count, Filter, bGetState)
+    GetRowsAccounts(start, count, Filter, bGetState, bGetCoin)
     {
         if(Filter)
         {
@@ -112,6 +112,12 @@ class AccountScroll extends require("./dapp")
                         Data.SmartState = {}
                 }
             }
+            //ERC
+            if(bGetCoin && Data.Currency===0)//игнорируем другие валюты
+            {
+                Data.CoinStore=this.ReadCoinStore(num);
+            }
+
             
             arr.push(Data)
             count--

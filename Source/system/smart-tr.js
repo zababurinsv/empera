@@ -235,11 +235,11 @@ class SmartTR extends require("./smart-scroll")
     {
         if(!global.TreeFindTX)
             return;
-        
+        //console.log("SendSmartEvent: "+JSON.stringify(Data,"",4));
         var Has = global.TreeFindTX.LoadValue("Smart:" + Data.Smart, 1);
         if(Has)
         {
-            Data.key = global.GetCurTxKey()
+            Data.key = global.GetCurTxKey();
             
             process.send({cmd:"DappEvent", Data:Data})
         }

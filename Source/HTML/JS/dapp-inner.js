@@ -823,6 +823,7 @@ function LoadFromStorageById(Name,F)
                 Item.checked=parseInt(Value);
             else
                 Item.value=Value;
+            //console.log(Name,Item.value);
         }
         if(F)
             F(Key,Value);
