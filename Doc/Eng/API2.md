@@ -187,6 +187,8 @@ http://127.0.0.1/api/v2/SendToken
 * Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
 
 
+In order to become the owner of the gallery you need to use Dapp 143.Token Factory (https://terawallet.org/dapp/143)
+
 example1:
 ```js
 http://127.0.0.1/api/v2/SendTokenMint
