@@ -90,7 +90,7 @@ result - returns the id (number) of the created account
 #### Parameters:
 * FromID - the account number of the sender
 * FromPrivKey - sender private key in hex format
-* ToID - the account number of the recipient, the number or public key in hex format (in this case, it will create a new account with the name specified in the first line of the description of the payment and the payment the account will be charged 10 Tera)
+* ToID - the account number of the recipient
 * Amount - sum, floating-point number, or object format {SumCOIN,SumCENT}
 * Description - description of payment order (optional)
 * Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
@@ -148,11 +148,11 @@ result - returns the id (number) of the created account
 
 ## SendToken
 
-3.1)**/api/v2/SendToken**  - sending coins from one account to another (you need to specify the private key of the sender's account)
+3.2)**/api/v2/SendToken**  - sending coins from one account to another (you need to specify the private key of the sender's account)
 #### Parameters:
 * FromID - the account number of the sender
 * FromPrivKey - sender private key in hex format
-* ToID - the account number of the recipient, the number or public key in hex format (in this case, it will create a new account with the name specified in the first line of the description of the payment and the payment the account will be charged 10 Tera)
+* ToID - the account number of the recipient
 * Token - tokens name (string)
 * TokenID - tokens ID (string)
 * Amount - count of tokens
@@ -162,7 +162,7 @@ result - returns the id (number) of the created account
 
 example:
 ```js
-http://127.0.0.1/api/v2/Send
+http://127.0.0.1/api/v2/SendToken
 {
     "FromID": 1082,
     "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -176,13 +176,106 @@ http://127.0.0.1/api/v2/Send
 ```
 
 
+3.3)**/api/v2/SendTokenMint**  - issue of tokens on the sender's account
+#### Параметры:
+* FromID - account number of the sender (gallery owner/token holder)
+* FromPrivKey - sender private key in hex format
+* ToID - the account number of the recipient
+* Token - tokens name (string)
+* TokenID - string ID of an existing token or object description of a new ID
+* Amount - count of tokens
+* Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
+
+
+example1:
+```js
+http://127.0.0.1/api/v2/SendTokenMint
+{
+    "FromID": 314,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ToID":1082,
+    "Amount":5,
+    "Token":"TEST-2",
+    "TokenID":{"image":"https://terafoundation.org/files/TeraCoin.jpg","name":"test"},
+    "Confirm":1
+}
+```
+
+example2:
+```js
+http://127.0.0.1/api/v2/SendTokenMint
+{
+    "FromID": 314,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ToID":1082,
+    "Amount":5,
+    "Token":"TEST-2",
+    "TokenID":"9641183000",
+    "Confirm":1
+}
+```
+
+
+3.4)**/api/v2/SendTokenBurn**  - burning tokens on the sender's account
+#### Parameters:
+* FromID - the account number of the sender
+* FromPrivKey - sender private key in hex format
+* Token - tokens name (string)
+* TokenID - tokens ID (string)
+* Amount - count of tokens
+* Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
+
+example:
+```js
+http://127.0.0.1/api/v2/SendTokenBurn
+{
+    "FromID": 1082,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "Amount":1,
+    "Token":"TERA-NFT",
+    "TokenID":"9041840001",
+    "Confirm":1
+}
+```
+
+3.5)**/api/v2/SendCall**  - sending a transaction with a smart contract method call
+#### Parameters:
+* FromID - the account number of the sender
+* FromPrivKey - sender private key in hex format
+* ToID - the account number of the recipient
+* MethodName - name of method (string)
+* Params - passed parameters, usually a JSON object with parameters
+* Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
+
+
+example:
+```js
+http://127.0.0.1/api/v2/SendCall
+{
+    "FromID": 1082,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ToID":31,
+    "MethodName": "Click",
+    "Params": {"From":"1082"},
+    "Confirm":1
+}
+
+```
+
 ## GetBalance
 
 4)**/api/v2/GetBalance**  - get account balance
 #### Parameters:
 * AccountID - account number
 
-example:
+#### additional parameters for working with ERC / NFT tokens
+* GetTokens - if 1, then the Tokens response field returns an array of all tokens stored on the account
+* GetTokenAmount - if 1, the TokenAmount response field returns the number of tokens specified by the Token and TokenID parameters
+* Token - token name (string)
+* TokenID - token ID (string)
+ 
+ 
+example1:
 ```js
 http://127.0.0.1/api/v2/GetBalance
 {
@@ -197,6 +290,53 @@ return:
     "SumCENT": 555765670,
     "Currency": 0,
     "PubKey": "02769165A6F9950D023A415EE668B80BB96B5C9AE2035D97BDFB44F356175A44FF"
+}
+```
+
+example2:
+```js
+http://127.0.0.1/api/v2/GetBalance
+{
+    "AccountID": 1082,
+    "GetTokens": 1,
+    "GetTokenAmount": 1,
+    "Token": "TERA-NFT",
+    "TokenID": "8922109000"
+}
+```
+return:
+```js
+{
+    "result": 1,
+    "SumCOIN": 101878,
+    "SumCENT": 0,
+    "Currency": 0,
+    "PubKey": "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3",
+    "Tokens": {
+        "MaxCount": 10,
+        "Arr": [
+            {
+                "Token": "TERA-NFT",
+                "Arr": [
+                    {
+                        "ID": "9041840001",
+                        "SumCOIN": 7,
+                        "SumCENT": 0,
+                        "Flag": 0
+                    },
+                    {
+                        "ID": "8922109000",
+                        "SumCOIN": 1,
+                        "SumCENT": 0,
+                        "Flag": 0
+                    }
+                ],
+                "Flag": 0
+            }
+        ],
+        "Flag": 0
+    },
+    "TokenAmount": 1
 }
 ```
 

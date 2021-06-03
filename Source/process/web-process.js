@@ -15,6 +15,15 @@
 
 global.PROCESS_NAME = "WEB";
 
+function GetDefaultPage()
+{
+    if(global.HTTP_START_PAGE)
+        return global.HTTP_START_PAGE;
+    else
+        return "web-wallet.html";
+}
+
+
 const http = require('http'), net = require('net'), url = require('url'), fs = require('fs'), querystring = require('querystring');
 
 global.MAX_STAT_PERIOD = 600;
@@ -181,9 +190,9 @@ function MainHTTPFunction(request,response)
     var Params = querystring.parse(DataURL.query);
     var Path = querystring.unescape(DataURL.pathname);
 
-    if(global.HTTP_START_PAGE && !Path || Path==="/")
+    if(!Path || Path==="/")
     {
-        Path = global.HTTP_START_PAGE;
+        Path = GetDefaultPage();
     }
 
     var ip = request.socket.remoteAddress;
@@ -273,20 +282,6 @@ function RunListenServer()
     });
 }
 
-var glIndexName;
-if(global.HTTP_START_PAGE)
-    glIndexName = global.HTTP_START_PAGE;
-else
-    glIndexName = "web-wallet.html";
-
-// else
-// {
-//     var SiteFolder = GetNormalPathString("./SITE");
-//     if(!fs.existsSync(SiteFolder))
-//     {
-//         glIndexName = "web-wallet.html";
-//     }
-// }
 
 var WalletFileMap = {};
 WalletFileMap["mobile-wallet.html"] = "web-wallet.html";
@@ -439,7 +434,7 @@ function DoCommandNew(request,response,Type,Path,Params)
                         Name = "ErrorFilePath";
                 
                 if(Name === "")
-                    Name = glIndexName;
+                    Name = GetDefaultPage();
                 
                 if(Name.indexOf(".") < 0)
                     Name += ".html";
@@ -641,9 +636,13 @@ global.WebApi1.GetAccountListByKey = global.HostingCaller.GetAccountListByKey;
 
 global.WebApi1.GetTransaction = global.WebApi2.GetTransaction;
 global.WebApi1.GetHistoryTransactions = global.WebApi2.GetHistoryTransactions;
+global.WebApi1.GetBalance = global.WebApi2.GetBalance;
+
 
 global.WebApi1.SendTransactionHex = global.HostingCaller.SendTransactionHex;
 
 global.WebApi1.GetWork = global.HostingCaller.GetWork;
 global.WebApi1.SubmitWork = global.HostingCaller.SubmitWork;
 global.WebApi1.SubmitHashrate = global.HostingCaller.SubmitHashrate;
+
+

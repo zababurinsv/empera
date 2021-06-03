@@ -125,7 +125,107 @@ WebApi2.Send = function (Params,response,A,request,nJsonRet)
     return SendTransactionAndResponce(Params, Body, TR, response);
 };
 
+function TokenProcessing(Params,response,request)
+{
+    if(typeof Params !== "object")
+        return {result:0};
+    var Arr=["FromID","ToID","Token","TokenID","Amount","FromPrivKey"];
+    for(var i=0;i<Arr.length;i++)
+        if(!Params[Arr[i]])
+            return {result:0, Meta:Params.Meta, text:"Params."+Arr[i]+" required"};
+
+    Params.ToID = global.COIN_STORE_NUM;
+    Params.MethodName="Call";
+    return  WebApi2.SendCall(Params,response,undefined,request);
+}
+
 WebApi2.SendToken = function (Params,response,A,request)
+{
+    if(typeof Params !== "object")
+        return {result:0};
+    Params.Params=
+        {
+            cmd:"Transfer",
+            Token:Params.Token,
+            ID:Params.TokenID,
+            To:ParseNum(Params.ToID),
+            Amount:ParseNum(Params.Amount),
+            Description:Params.Description,
+        };
+
+    return TokenProcessing(Params,response,request);
+}
+
+WebApi2.SendTokenMint = function (Params,response,A,request)
+{
+    if(typeof Params !== "object")
+        return {result:0};
+    var MParams=
+        {
+            cmd:typeof Params.TokenID==="object"?"MintNFT":"Mint",
+            Account:ParseNum(Params.ToID),
+            Token:Params.Token,
+            Amount:ParseNum(Params.Amount),
+        };
+
+    if(MParams.cmd==="MintNFT")
+    {
+        CopyObjKeys(MParams,Params.TokenID);
+        Params.TokenID=1;//not required
+    }
+    else
+    {
+        MParams.ID=Params.TokenID;
+    }
+
+    Params.Params=MParams;
+
+    return TokenProcessing(Params,response,request);
+}
+WebApi2.SendTokenBurn = function (Params,response,A,request)
+{
+    if(typeof Params !== "object")
+        return {result:0};
+    Params.Params=
+        {
+            cmd:"Burn",
+            Token:Params.Token,
+            ID:Params.TokenID,
+            Amount:ParseNum(Params.Amount),
+        };
+    Params.ToID=1;//not required
+    return TokenProcessing(Params,response,request);
+}
+
+
+WebApi2.SendCall = function (Params,response,A,request)
+{
+    if(typeof Params !== "object")
+        return {result:0};
+    var Arr=["ToID","FromPrivKey","MethodName","Params"];
+    for(var i=0;i<Arr.length;i++)
+        if(!Params[Arr[i]])
+            return {result:0, Meta:Params.Meta, text:"Params."+Arr[i]+" required"};
+
+    var ToNum = ParseNum(Params.ToID);
+    var FromNum = ParseNum(Params.FromID);
+    var OperationID=PrepareOperationID(FromNum);
+    if(typeof OperationID==="object")//error
+        return  OperationID;
+
+    if(typeof Params.ParamsArr!=="object")
+        Params.ParamsArr=[];
+    var TR = {Type:135, Account: ToNum, MethodName:Params.MethodName, Params:JSON.stringify(Params.Params), FromNum:FromNum, OperationID:OperationID, Version:4, ParamsArr:Params.ParamsArr};
+    TR.Sign = SMARTS.GetSignTransferTx(TR, GetArrFromHex(Params.FromPrivKey));
+    var Body = BufLib.GetBufferFromObject(TR, FORMAT_SMART_RUN, GetTxSize(TR), {} ,1);
+    Body = Body.slice(0, Body.len + 12);
+
+    return SendTransactionAndResponce(Params, Body, TR, response);
+}
+
+
+
+WebApi2.SendTokenOld = function (Params,response,A,request)
 {
     if(typeof Params !== "object")
         return {result:0};
@@ -159,6 +259,7 @@ WebApi2.SendToken = function (Params,response,A,request)
 }
 
 
+
 WebApi2.GetBalance = function (Params,response)
 {
     if(typeof Params === "object")
@@ -168,8 +269,18 @@ WebApi2.GetBalance = function (Params,response)
         {
             var Account = arr[0];
             var Value = Account.Value;
-            var Result = {result:1, SumCOIN:Value.SumCOIN, SumCENT:Value.SumCENT, Currency:Account.Currency, PubKey:GetHexFromArr(Account.PubKey),
-                Meta:Params.Meta, };
+            var Result = {result:1, SumCOIN:Value.SumCOIN, SumCENT:Value.SumCENT, Currency:Account.Currency, PubKey:GetHexFromArr(Account.PubKey), Meta:Params.Meta};
+            if(Params.GetTokens)
+            {
+                var RetCall=RunStaticSmartMethod(global.COIN_STORE_NUM, "Call", {cmd:"GetTokens",Account:Account.Num,GetURI:Params.GetURI}, Params.ParamsArr);
+                Result.Tokens=RetCall.RetValue;
+            }
+            if(Params.GetTokenAmount)
+            {
+                var RetCall=RunStaticSmartMethod(global.COIN_STORE_NUM, "Call", {cmd:"BalanceOf",Account:Account.Num,Token:Params.Token,ID:Params.TokenID}, Params.ParamsArr);
+                Result.TokenAmount=RetCall.RetValue;
+            }
+
             return Result;
         }
     }

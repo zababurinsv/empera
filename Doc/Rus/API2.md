@@ -91,9 +91,9 @@ result - возвращает номер созданного аккаунта
 #### Параметры:
 * FromID - номер счета отправителя
 * FromPrivKey - приватный ключ отправителя в hex-формате
-* ToID - номер счета получателя, число или публичный ключ в hex-формате (в этом случае будет создан новый счет с именем заданным в первой строке описания платежа и в качестве оплаты создания счета спишется 10 Тера)
+* ToID - номер счета получателя (число)
 * Amount - сумма, число с плавающей точкой или объект в формате {SumCOIN,SumCENT}
-* Description - описание платежка (необязательный параметр)
+* Description - описание платежа (необязательный параметр)
 * Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
 
 
@@ -153,17 +153,17 @@ result - возвращает номер созданного аккаунта
 #### Параметры:
 * FromID - номер счета отправителя
 * FromPrivKey - приватный ключ отправителя в hex-формате
-* ToID - номер счета получателя, число или публичный ключ в hex-формате (в этом случае будет создан новый счет с именем заданным в первой строке описания платежа и в качестве оплаты создания счета спишется 10 Тера)
+* ToID - номер счета получателя (число)
 * Token - имя токена (строка)
 * TokenID - ID токена (строка)
 * Amount - количество токенов (число)
-* Description - описание платежка (необязательный параметр)
+* Description - описание платежа (необязательный параметр)
 * Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
 
 
 example:
 ```js
-http://127.0.0.1/api/v2/Send
+http://127.0.0.1/api/v2/SendToken
 {
     "FromID": 1082,
     "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -176,6 +176,93 @@ http://127.0.0.1/api/v2/Send
 }
 ```
 
+3.3)**/api/v2/SendTokenMint**  - выпуск токенов на счете отправителя
+#### Параметры:
+* FromID - номер счета отправителя (владельца галереи/токена)
+* FromPrivKey - приватный ключ отправителя в hex-формате
+* ToID - номер счета получателя токенов (число)
+* Token - имя токена (строка)
+* TokenID - строка ID существующего токена или объект описание нового ID
+* Amount - количество токенов (число)
+* Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
+
+
+example1:
+```js
+http://127.0.0.1/api/v2/SendTokenMint
+{
+    "FromID": 314,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ToID":1082,
+    "Amount":5,
+    "Token":"TEST-2",
+    "TokenID":{"image":"https://terafoundation.org/files/TeraCoin.jpg","name":"test"},
+    "Confirm":1
+}
+```
+
+example2:
+```js
+http://127.0.0.1/api/v2/SendTokenMint
+{
+    "FromID": 314,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ToID":1082,
+    "Amount":5,
+    "Token":"TEST-2",
+    "TokenID":"9641183000",
+    "Confirm":1
+}
+```
+
+3.4)**/api/v2/SendTokenBurn**  - сжигание токенов на счете отправителя
+#### Параметры:
+* FromID - номер счета отправителя
+* FromPrivKey - приватный ключ отправителя в hex-формате
+* Token - имя токена (строка)
+* TokenID - ID токена (строка)
+* Amount - количество токенов (число)
+* Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
+
+
+example:
+```js
+http://127.0.0.1/api/v2/SendTokenBurn
+{
+    "FromID": 1082,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "Amount":1,
+    "Token":"TERA-NFT",
+    "TokenID":"9041840001",
+    "Confirm":1
+}
+```
+
+## SendCall
+
+3.5)**/api/v2/SendCall**  - отправка транзакции с вызовом метода смарт-контракта
+#### Параметры:
+* FromID - номер счета отправителя
+* FromPrivKey - приватный ключ отправителя в hex-формате
+* ToID - номер счета получателя (число)
+* MethodName - имя метода (строка)
+* Params - передаваемые параметры, обычно JSON объект с параметрами
+* Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
+
+
+example:
+```js
+http://127.0.0.1/api/v2/SendCall
+{
+    "FromID": 1082,
+    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "ToID":31,
+    "MethodName": "Click",
+    "Params": {"From":"1082"},
+    "Confirm":1
+}
+
+```
 
 
 ## GetBalance
@@ -184,23 +271,81 @@ http://127.0.0.1/api/v2/Send
 #### Параметры:
 * AccountID - номер счета
 
+#### дополнительные параметры для работы с ERC/NFT токенами
+* GetTokens - если 1, то в поле ответа Tokens возвращается массив всех токенов хранящихся на счете
+* GetTokenAmount - если 1, то в поле ответа TokenAmount возвращается число токенов заданными параметрами Token и TokenID
+* Token - имя токена (строка)
+* TokenID - ид токена (строка)
+ 
+
+
+
+
 example:
+   ```js
+   http://127.0.0.1/api/v2/GetBalance
+   {
+       "AccountID": 0
+   }
+   ```
+   return:
+   ```js
+   {
+       "result": 1,
+       "SumCOIN": 5589146,
+       "SumCENT": 555765670,
+       "Currency": 0,
+       "PubKey": "02769165A6F9950D023A415EE668B80BB96B5C9AE2035D97BDFB44F356175A44FF"
+   }
+   ```
+
+example2:
 ```js
 http://127.0.0.1/api/v2/GetBalance
 {
-    "AccountID": 0
+    "AccountID": 1082,
+    "GetTokens": 1,
+    "GetTokenAmount": 1,
+    "Token": "TERA-NFT",
+    "TokenID": "8922109000"
 }
 ```
 return:
 ```js
 {
     "result": 1,
-    "SumCOIN": 5589146,
-    "SumCENT": 555765670,
+    "SumCOIN": 101878,
+    "SumCENT": 0,
     "Currency": 0,
-    "PubKey": "02769165A6F9950D023A415EE668B80BB96B5C9AE2035D97BDFB44F356175A44FF"
+    "PubKey": "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3",
+    "Tokens": {
+        "MaxCount": 10,
+        "Arr": [
+            {
+                "Token": "TERA-NFT",
+                "Arr": [
+                    {
+                        "ID": "9041840001",
+                        "SumCOIN": 7,
+                        "SumCENT": 0,
+                        "Flag": 0
+                    },
+                    {
+                        "ID": "8922109000",
+                        "SumCOIN": 1,
+                        "SumCENT": 0,
+                        "Flag": 0
+                    }
+                ],
+                "Flag": 0
+            }
+        ],
+        "Flag": 0
+    },
+    "TokenAmount": 1
 }
 ```
+
 
 ## GetTransaction
 
@@ -360,7 +505,7 @@ http://127.0.0.1/api/v2/GetHistoryTransactions
 * FromPrivKey - приватный ключ отправителя в hex-формате
 * ToID - номер счета получателя, число или публичный ключ в hex-формате (в этом случае будет создан новый счет с именем заданным в первой строке описания платежа и в качестве оплаты создания счета спишется 10 Тера)
 * Amount - сумма, число с плавающей точкой или объект в формате {SumCOIN,SumCENT}
-* Description - описание платежка (необязательный параметр)
+* Description - описание платежа (необязательный параметр)
 
 example:
 ```js
