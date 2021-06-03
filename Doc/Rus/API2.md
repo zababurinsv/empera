@@ -196,7 +196,7 @@ http://127.0.0.1/api/v2/SendTokenMint
     "ToID":1082,
     "Amount":5,
     "Token":"TEST-2",
-    "TokenID":{"image":"https://terafoundation.org/files/TeraCoin.jpg","name":"test"},
+    "TokenID":{"image":"https://terafoundation.org/files/TeraCoin.jpg","name":"Tera1","description":"First tera NFT"},
     "Confirm":1
 }
 ```
