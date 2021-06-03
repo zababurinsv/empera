@@ -178,7 +178,7 @@ http://127.0.0.1/api/v2/SendToken
 
 3.3)**/api/v2/SendTokenMint**  - issue of tokens on the sender's account
 #### Параметры:
-* FromID - account number of the sender (gallery owner/token holder)
+* FromID - account number of the sender (owner token/gallery)
 * FromPrivKey - sender private key in hex format
 * ToID - the account number of the recipient
 * Token - tokens name (string)
