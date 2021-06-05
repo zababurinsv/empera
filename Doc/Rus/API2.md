@@ -176,6 +176,8 @@ http://127.0.0.1/api/v2/SendToken
 }
 ```
 
+## TokenMint
+
 3.3)**/api/v2/SendTokenMint**  - выпуск токенов на счете отправителя
 #### Параметры:
 * FromID - номер счета отправителя (владельца галереи/токена)
@@ -224,6 +226,8 @@ http://127.0.0.1/api/v2/SendTokenMint
 }
 ```
 
+## TokenBurn
+
 3.4)**/api/v2/SendTokenBurn**  - сжигание токенов на счете отправителя
 #### Параметры:
 * FromID - номер счета отправителя
@@ -246,6 +250,8 @@ http://127.0.0.1/api/v2/SendTokenBurn
     "Confirm":1
 }
 ```
+
+## Call DApp method
 
 ## SendCall
 
