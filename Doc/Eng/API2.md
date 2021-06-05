@@ -175,6 +175,7 @@ http://127.0.0.1/api/v2/SendToken
 }
 ```
 
+## TokenMint
 
 3.3)**/api/v2/SendTokenMint**  - issue of tokens on the sender's account
 #### Параметры:
@@ -182,14 +183,17 @@ http://127.0.0.1/api/v2/SendToken
 * FromPrivKey - sender private key in hex format
 * ToID - the account number of the recipient
 * Token - tokens name (string)
-* TokenID - string ID of an existing token or object description of a new ID
+* TokenID - string ID of an existing token or struct of description new ID
 * Amount - count of tokens
 * Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
 
 
-In order to become the owner of the gallery you need to use Dapp 143.Token Factory (https://terawallet.org/dapp/143)
+#### Note:
+- The token parameters are stored in the blockchain in an immutable form, so you can use the following API call to read them:
+/nft/{id} Example: https://terawallet.org/nft/72496009000
+- In order to become the owner of the gallery you need to use Dapp 143.Token Factory (https://terawallet.org/dapp/143)
 
-example1:
+example 1 (creating a new token ID)
 ```js
 http://127.0.0.1/api/v2/SendTokenMint
 {
@@ -203,7 +207,7 @@ http://127.0.0.1/api/v2/SendTokenMint
 }
 ```
 
-example2:
+example 2 (additional issue of previously created ID tokens)
 ```js
 http://127.0.0.1/api/v2/SendTokenMint
 {
@@ -217,6 +221,7 @@ http://127.0.0.1/api/v2/SendTokenMint
 }
 ```
 
+## TokenBurn
 
 3.4)**/api/v2/SendTokenBurn**  - burning tokens on the sender's account
 #### Parameters:
@@ -239,6 +244,7 @@ http://127.0.0.1/api/v2/SendTokenBurn
     "Confirm":1
 }
 ```
+## Call DApp method
 
 3.5)**/api/v2/SendCall**  - sending a transaction with a smart contract method call
 #### Parameters:
