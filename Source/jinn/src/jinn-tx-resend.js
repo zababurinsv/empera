@@ -25,6 +25,8 @@ function InitClass(Engine)
         
         if(!JINN_CONST.COUNT_RESEND)
             return;
+        if(Engine.GetMaxNumBlockDB() < Engine.CurrentBlockNum - JINN_CONST.STEP_CLEAR_MEM * 2)
+            return;
         
         var StartNum = Engine.CurrentBlockNum - JINN_CONST.STEP_CLEAR_MEM;
         var FinishNum = Engine.CurrentBlockNum - JINN_CONST.STEP_RESEND;

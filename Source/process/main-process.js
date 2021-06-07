@@ -157,6 +157,7 @@ function StartJinn()
     
     if(!global.JINN_IP)
         global.JINN_IP = "0.0.0.0";
+
     StartPortMapping(global.JINN_IP, global.JINN_PORT, function (ip)
     {
         JinnLib.Create();
