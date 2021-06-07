@@ -37,7 +37,9 @@ TR_MAP_RESULT[2] = "Update OK";
 TR_MAP_RESULT[TX_RESULT_WAS_SEND] = "Was send";
 TR_MAP_RESULT[4] = "Added to timer";
 
-require("./constant.js");
+if(global.UPDATE_CODE_VERSION_NUM===undefined)//не было загрузки констант
+    require("./constant.js");
+
 if(global.USE_PARAM_JS)
 {
     var PathParams = GetCodePath("../extern-run.js");

@@ -282,6 +282,7 @@ function InitParamsArg()
                 value = Number(value);
 
             global[name] = value;
+            console.log("set "+name+"="+global[name]);
         }
         else
         if(STR.substr(0, 9) == "HTTPPORT:")
