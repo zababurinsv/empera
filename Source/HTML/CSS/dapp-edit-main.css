@@ -267,7 +267,7 @@ input,select
 
 #idStatus
 {
-    position: fixed;
+    position: absolute;
     top:5px;
     left: 300px;
     width: 80%;
@@ -391,15 +391,4 @@ textarea:hover, select:hover
     background-color: #7796af;
     border-color: #576b83;
 }
-
-
-/*::-webkit-scrollbar*/
-/*{*/
-/*    width: 20px;*/
-/*}*/
-/*::-webkit-scrollbar-track-piece*/
-/*{*/
-/*    background-color: transparent;*/
-/*    -webkit-border-radius: 6px;*/
-/*}*/
 

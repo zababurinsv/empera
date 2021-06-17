@@ -9,7 +9,7 @@
 */
 
 
-var MIN_VERSION = 2499;
+var MIN_VERSION = 2542;
 var COUNT_BLOCK_PROOF = 100;
 var MIN_SUM_POWER = 0;
 var MainServer = undefined;
@@ -57,6 +57,7 @@ function StartWebWallet()
         BLOCKNUM_HASH_NEW = 0;
         BLOCKNUM_TICKET_ALGO = 0;
     }
+
     
     if($("idNetwork"))
         $("idNetwork").innerText = NETWORK_ID;

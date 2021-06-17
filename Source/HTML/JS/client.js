@@ -2933,12 +2933,14 @@ function DoConfirm(StrTitle,StrText,F,bDirect)
         StrText = "Are you sure?";
     }
     else
+    {
         if(typeof StrText === "function")
         {
             bDirect = F;
             F = StrText;
             StrText = "";
         }
+    }
     
     if(!bDirect && window.openModal && $("idConfirm"))
     {
@@ -2954,10 +2956,11 @@ function DoConfirm(StrTitle,StrText,F,bDirect)
 }
 function OnConfirmOK()
 {
+    var WasConfirmF=glConfirmF;
     closeModal();
-    if(glConfirmF)
+    if(WasConfirmF)
     {
-        var F = glConfirmF;
+        var F = WasConfirmF;
         glConfirmF = undefined;
         F();
     }

@@ -213,6 +213,9 @@
                 <a class="btn" onclick="OnViewAddAccount()">+ CREATE NEW</a>
             </div>
 
+            <div id="idPagesList" class="grid_pages">
+            </div>
+
             <ul class="accounts-info__accounts prod-list" id="idAccountsList">
 
                 <li class="prod-list__item prod-card prod-card--line prod-card--switch find--switch" id="AccCardTemplate">
@@ -257,7 +260,8 @@
                             <div class="prod-card__dropdown" style="display: none;" id="idBt$Item.Num">
                                 <a class="editdapp" onclick="SetSmart($Item.Num,$SmartObj.Num)">Change dApp</a>
                                 <a class="editdapp" onclick="DelSmart($Item.Num,-1)">Disconnect dApp</a>
-                                <a onclick="DelAccount($Item.Num)">Hide account</a>
+                                <a onclick="RemoveAccount($Item.Num)">Remove account</a>
+                                <a onclick="HideAccount($Item.Num)">Hide account</a>
                                 <a onclick="RestoreAllAccounts()">Show All accounts</a>
                             </div>
                         </div>
@@ -271,7 +275,7 @@
             
 
             <div class="accounts-info__total">
-                <h3>Total</h3>
+                <h3>Total on page</h3>
                 <dl class="total-info" id="idTotalList">
                 </dl>
             </div>
@@ -718,6 +722,16 @@
     </DIV>
 </DIV>
 
+
+<div id="idOverlay" onclick="closeModal()" style="display: none;"></div>
+<section id="idConfirm" class="ModalDlg" style="display: none;">
+    <DIV align='center'>
+        <h2 id="idConfirmTitle">Confirm</h2>
+        <p id="idConfirmText">A you sure?</p>
+        <button class="bt-confirm"  onclick="OnConfirmOK()">OK</button>
+        <button class="bt-confirm btn--white"  onclick="closeModal()">Cancel</button>
+    </DIV>
+</section>
 
 </body>
 </html>

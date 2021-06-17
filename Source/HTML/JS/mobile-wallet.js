@@ -419,6 +419,8 @@ function OnPrivKeyCancel()
 
 
 var FirstAccountsData = 1;
+var CurrentPage = 0;
+var ROWS_ON_PAGE=20;
 var AccountsCount =  - 1;
 var DataUpdateTime = 0;
 
@@ -446,23 +448,30 @@ function UpdatesAccountsData(bGetData)
         {
             bGetData = 1;
         }
+        if(!bGetData)
+            return;
     }
     
-    if(!bGetData)
-        return;
-    
-    GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData, CoinStore:1}, function (Data,responseText)
+
+    GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData, CoinStore:1,CurrentPage:CurrentPage}, function (Data,responseText)
     {
-        if(!Data || !Data.result || !Data.arr)
+        if(!Data)
             return;
-        
-        if(AccountsCount === Data.arr.length)
-        {
-            if(IsVisibleClass(".accounts-info__add2"))
-                return;
-        }
-        
-        AccountsCount = Data.arr.length;
+
+        AccountsCount = Data.Accounts;
+        if(!AccountsCount)
+            AccountsCount = Data.arr.length;//old version API-1
+        ROWS_ON_PAGE = Data.ROWS_ON_PAGE;
+        ViewAccountPages();
+
+        if(!Data.result || !Data.arr)
+            return;
+        // if(AccountsCount === Data.arr.length)
+        // {
+        //     if(IsVisibleClass(".accounts-info__add2"))
+        //         return;
+        // }
+        //
         SetVisibleClass(".accounts-info__acc-list", AccountsCount);
         SetVisibleClass(".accounts-info__empty", !AccountsCount);
         SetVisibleClass(".accounts-info__add2", 0);
@@ -472,9 +481,34 @@ function UpdatesAccountsData(bGetData)
         }
         else
         {
+
         }
         FirstAccountsData = 0;
     });
+}
+
+function ViewAccountPages()
+{
+    if(!ROWS_ON_PAGE)
+        return;
+    var Str="";
+    var Pages=1+Math.floor(AccountsCount/ROWS_ON_PAGE);
+    if(Pages)
+    for(var i=0;i<Pages;i++)
+    {
+        Str+=`<div class="btn page ${CurrentPage===i?"currentpage":""}" onclick="OnViewPageAccount(${i})">Page ${i+1}</div>`;
+    }
+    if(idPagesList.WasinnerHTML!==Str)
+    {
+        idPagesList.WasinnerHTML=Str;
+        idPagesList.innerHTML=Str;
+    }
+}
+
+function OnViewPageAccount(Num)
+{
+    CurrentPage=Num;
+    UpdatesAccountsData(1);
 }
 
 function ViewAddAccount(Visible)
@@ -563,7 +597,7 @@ function SetAccountsCard(Data,AccountsDataStr)
     
     MaxBlockNum = GetCurrentBlockNumByTime();
     
-    $("idListCount").innerText = arr.length;
+    $("idListCount").innerText = AccountsCount;
     
     var StrList = "";
     
@@ -631,8 +665,8 @@ function SetAccountsCard(Data,AccountsDataStr)
         Str = Str.replace("$SmartObj.Name", escapeHtml(SmartObj.Name));
         Str = Str.replace(/\$SmartObj.Num/g, SmartObj.Num);
         Str = Str.replace(/\$SmartObj.HTMLLength/g, SmartObj.HTMLLength);
-        
-        if(SmartObj.Num)
+
+        if(SmartObj)
         {
             Str = Str.replace("prod-card__link--connect", "myhidden");
         }
@@ -735,8 +769,18 @@ function DelSmart(NumAccount,WasSmart)
 {
     SetSmartToAccount(NumAccount, 0);
 }
+function RemoveAccount(NumAccount)
+{
+    DoConfirm("Remove account","Confirm delete account: "+NumAccount);
+    glConfirmF = function OnRemoveAccount()
+    {
+        DoRemoveAccount(NumAccount);
+        HideAccount(NumAccount);
+    }
 
-function DelAccount(NumAccount)
+}
+
+function HideAccount(NumAccount)
 {
     DelList[NumAccount] = 1;
     AccountsCount = 0;
@@ -749,8 +793,9 @@ function DelAccount(NumAccount)
 function RestoreAllAccounts()
 {
     DelList = {};
-    DelAccount(0);
+    HideAccount(0);
     FirstAccountsData = 1;
+    UpdatesAccountsData(1);
 }
 
 function UpdatesExplorerData(bGetData)
@@ -972,18 +1017,14 @@ function openModal(id)
 }
 function closeModal()
 {
-    if(NotModalClose)
-        return;
     glConfirmF = undefined;
     
     glWasModal = 0;
-    var modals = document.querySelectorAll(".modal");
-    var overlay = document.querySelector("#overlay");
+    var modals = document.querySelectorAll(".modal,#overlay,#idConfirm,#idOverlay");
     modals.forEach(function (item)
     {
         item.style.display = "none";
     });
-    overlay.style.display = "none";
 }
 
 function showMenu(Num)
@@ -1480,6 +1521,11 @@ function OnMessage(event)
 }
 
 
+
+
+
+//------------------------------------------------------------------------------ LANG SUPPORT
+
 var LangItems = [];
 
 function InitLangItems(ArrItems)
@@ -1593,7 +1639,7 @@ LangMap["RUS"] = {"TERA WALLET":"TERA КОШЕЛЕК", "Generate key":"Сген�
     "Public name":"Публичное имя", "Currency":"Валюта", "Pay to:":"Получатель:", "Amount:":"Сумма:", "Description:":"Описание:",
     "Welcome to TERA Wallet":"Добро пожаловать в кошелек TERA", "Edit your wallet":"Редактирование вашего кошелька", "Key settings":"Задание ключей",
     "KEY SETTINGS":"КЛЮЧИ", "Create an account":"Создание счета", "Sending coins":"Отправка монет", "Decentralized applications (dApps)":"Децентрализованные приложения (DApps)",
-    "Secure your wallet":"Безопасность вашего кошелька", "Wallet is secured":"Установлен пароль", "Total":"Всего", "Item.Name":"Item.Name",
+    "Secure your wallet":"Безопасность вашего кошелька", "Wallet is secured":"Установлен пароль", "Total on page":"Всего", "Item.Name":"Item.Name",
     "You have no accounts yet":"У вас нет ни одного счета", "Wait 10-15 sec":"Ждите 10-15 сек", "Creating your account":"Идет создание вашего счета",
     "From:":"Отправитель:", "Set a password for protect entry":"Установите пароль для безопасности", "Enter password to unlock wallet":"Введите пароль для разблокировки кошелька",
     "From ID:":"Отправитель:", "Pay to ID:":"Получатель:", "Account":"Счет", "Owner":"Владелец", "Block num":"Ном блока", "Private key (secret)":"Приватный ключ (секретно)",
@@ -1632,7 +1678,7 @@ LangMap["한글"] = {"TERA WALLET":"TERA 지갑", "Generate key":"개인 키 생
     "Public name":"이름", "Currency":"화폐", "Pay to:":"지불:", "Amount:":"수량:", "Description:":"묘사:", "Welcome to TERA Wallet":"TERA 지갑을 환영합니다",
     "Edit your wallet":"지갑 편집", "Key settings":"개인 키 설정", "KEY SETTINGS":"개인 키 설정", "Create an account":"계정 만들기", "Sending coins":"동전 보내기",
     "Decentralized applications (dApps)":"분산식 응용(DApps)", "Secure your wallet":"지갑 비밀번호 설정", "Wallet is secured":"지갑 비밀번호가 설정되었습니다. ",
-    "Total":"총계", "Item.Name":"Item.Name", "You have no accounts yet":"당신 아직 계정이 없다", "Wait 10-15 sec":" 10 -15초 기다리기", "Creating your account":"계정 만들기",
+    "Total on page":"총계", "Item.Name":"Item.Name", "You have no accounts yet":"당신 아직 계정이 없다", "Wait 10-15 sec":" 10 -15초 기다리기", "Creating your account":"계정 만들기",
     "From:":"부터:", "\n Item.Description\n ":"\n Item.Description\n ", "Set a password for protect entry":"접근 비밀번호 설정", "Enter password to unlock wallet":"비밀번호 잠금 풀기",
     "From ID:":" ID부터:", "Pay to ID:":"ID 에게 지불:", "Account":"계정", "Owner":"소유자", "Block num":"블록 번호", "Private key (secret)":"개인 키",
     "Load key":"개인 키 불러오기", "Create your first account and start using TERA":"첫 번째 계정 만들기, TERA 의 여정을 열고", "0 Accounts":"0계정",

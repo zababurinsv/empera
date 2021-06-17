@@ -225,7 +225,34 @@ setInterval(function ()
 }
 , 3600 * 1000);
 
-HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,bRet)
+function UpdateAccountKeyMap()
+{
+    for(var num = LastMaxNum; true; num++)
+    {
+        if(ACCOUNTS.IsHole(num))
+            continue;
+
+        var Data = ACCOUNTS.ReadState(num);
+        if(!Data)
+            break;
+        var StrKey = GetHexFromArr(Data.PubKey);
+        var Item={Num:Data.Num};
+        var FirstItem=AccountKeyMap[StrKey];
+        if(!FirstItem)
+        {
+            FirstItem={Counts:0};
+            FirstItem.LastItem=FirstItem;
+            AccountKeyMap[StrKey] = FirstItem;
+        }
+        FirstItem.Counts++;
+        FirstItem.LastItem.Next=Item;
+        FirstItem.LastItem=Item;
+    }
+    LastMaxNum = num;
+}
+
+
+HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,ccc,bRet)
 {
     if(typeof Params !== "object" || !Params.Key)
         return {result:0, arr:[]};
@@ -233,26 +260,48 @@ HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,bRet)
     if(!global.USE_API_WALLET)
         return {result:0};
     
-    var Accounts = ACCOUNTS;
-    for(var num = LastMaxNum; true; num++)
-    {
-        if(Accounts.IsHole(num))
-            continue;
-        
-        var Data = Accounts.ReadState(num);
-        if(!Data)
-            break;
-        var StrKey = GetHexFromArr(Data.PubKey);
-        Data.Next = AccountKeyMap[StrKey];
-        AccountKeyMap[StrKey] = Data;
-    }
-    LastMaxNum = num;
-    
+    UpdateAccountKeyMap();
+
     var arr = [];
     var Item = AccountKeyMap[Params.Key];
+    var Counts=0;
+    if(Item)
+    {
+        Counts = Item.Counts;
+        Item=Item.Next;
+    }
+
+    var Count=0;
+    if(Params.StartNum || Params.CurrentPage)
+    {
+        var SkipPages=Params.CurrentPage;
+        var Count2=0;
+        while(Item)
+        {
+            //search page
+            Count2++;
+            if(Params.CurrentPage && Count2>global.HTTP_MAX_COUNT_ROWS)
+            {
+                Count2=0;
+                SkipPages--;
+                if(!SkipPages)
+                    break;
+            }
+
+            //search first num
+            if(Item.Num==Params.StartNum)
+                break;
+
+            Item = Item.Next;
+            Count++;
+            if(Count > 1000)
+                break;
+        }
+    }
+
     while(Item)
     {
-        var Data = Accounts.ReadState(Item.Num);
+        var Data = ACCOUNTS.ReadState(Item.Num);
         if(!Data)
             continue;
         
@@ -279,21 +328,25 @@ HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,bRet)
         //ERC
         if(Params.CoinStore && !Data.Currency)//игнорируем другие валюты
         {
-            Data.CoinStore=Accounts.ReadCoinStore(Data.Num);
+            Data.CoinStore=ACCOUNTS.ReadCoinStore(Data.Num);
         }
 
-        arr.unshift(Data);
+        arr.push(Data);
         Item = Item.Next;
         if(arr.length >= global.HTTP_MAX_COUNT_ROWS)
             break;
+
     }
     
-    var Ret = {result:1, arr:arr};
-    if(bRet)
+    var Ret = {result:1, Accounts:Counts, HasNext:Item?1:0, ROWS_ON_PAGE:global.HTTP_MAX_COUNT_ROWS, arr:arr};
+    if(bRet || !Params.Session)
     {
         return Ret;
     }
-    
+
+
+    //for session:
+
     var Context = GetUserContext(Params);
     var StrInfo = JSON.stringify(Ret);
     if(Params.AllData === "0")
@@ -301,13 +354,13 @@ HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,bRet)
     
     if(!Params.AllData && Context.PrevAccountList === StrInfo)
     {
-        return {result:0, cache:1};
+        return {result:0, Accounts:Counts, ROWS_ON_PAGE:global.HTTP_MAX_COUNT_ROWS, cache:1};
     }
     Context.PrevAccountList = StrInfo;
     Context.NumAccountList++;
     
     return StrInfo;
-}
+};
 
 var CategoryMap = {};
 var CategoryArr = [];
@@ -456,7 +509,7 @@ HostingCaller.DappWalletList = function (Params)
     if(typeof Params !== "object")
         return {result:0};
     
-    var Ret = HostingCaller.GetAccountListByKey(Params, undefined, undefined, 1);
+    var Ret = HostingCaller.GetAccountListByKey(Params, undefined, undefined, undefined, 1);
     
     var Smart = ParseNum(Params.Smart);
     
@@ -572,7 +625,7 @@ HostingCaller.GetSupplyCalc = function (Params)
     var Delta = BlockNum - BlockNum0;
     var DeltaReward = Math.floor(Delta * NEW_FORMULA_JINN_KTERA * RestAcc0 / TOTAL_SUPPLY_TERA);
     return TOTAL_SUPPLY_TERA - RestAcc0 + DeltaReward;
-}
+};
 
 HostingCaller.GetSupply = function (Params)
 {
@@ -588,12 +641,12 @@ HostingCaller.GetSupply = function (Params)
     {
         return "" + (global.TOTAL_SUPPLY_TERA - Data.Value.SumCOIN);
     }
-}
+};
 
 HostingCaller.GetTotalSupply = function (Params)
 {
     return "" + global.TOTAL_SUPPLY_TERA;
-}
+};
 
 //Mining RPC
 
@@ -618,7 +671,7 @@ HostingCaller.GetWork = function (Params)
     RetData.CONSENSUS_PERIOD_TIME = CONSENSUS_PERIOD_TIME;
     
     return RetData;
-}
+};
 
 HostingCaller.SubmitWork = function (Params)
 {
@@ -648,12 +701,12 @@ HostingCaller.SubmitWork = function (Params)
     process.send(msg);
     
     return {result:1};
-}
+};
 
 HostingCaller.SubmitHashrate = function (Params)
 {
     return {result:0};
-}
+};
 
 function HexToArr(Params,Name)
 {
@@ -669,3 +722,4 @@ function HexToArr(Params,Name)
     }
     return 0;
 }
+

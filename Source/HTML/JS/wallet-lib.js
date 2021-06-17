@@ -852,6 +852,33 @@ function SetSmartToAccount(NumAccount,Smart)
     SendTrArrayWithSign(Body, TR.Account, TR);
 }
 
+function DoRemoveAccount(ID)
+{
+    //console.log("Remove account: "+ID);
+
+    var Item = MapAccounts[ID];
+    if(!Item)
+        return;
+    var OperationID = Item.Value.OperationID + 1;
+
+    var Name = "DEL:"+Item.Name;
+    //var PubKey = "000000000000000000000000000000000000000000000000000000000000000000";
+    var PubKey = "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3";
+
+    var Body = [];
+    WriteByte(Body, TYPE_TRANSACTION_ACC_CHANGE);
+    WriteUint(Body, OperationID);
+    WriteUint(Body, ID);
+
+    WriteArr(Body, GetArrFromHex(PubKey), 33);
+    WriteStr(Body, Name, 40);
+
+    for(var i = 0; i < 10; i++)
+        Body.push(0);
+
+    SendTrArrayWithSign(Body, ID);
+    SetStatus("Remove account: "+ID)
+}
 function CheckLengthAccDesription(name,Length)
 {
     var Str = $(name).value.substr(0, Length + 1);
