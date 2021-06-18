@@ -493,7 +493,7 @@ function ViewAccountPages()
         return;
     var Str="";
     var Pages=1+Math.floor(AccountsCount/ROWS_ON_PAGE);
-    if(Pages)
+    if(Pages>1)
     for(var i=0;i<Pages;i++)
     {
         Str+=`<div class="btn page ${CurrentPage===i?"currentpage":""}" onclick="OnViewPageAccount(${i})">Page ${i+1}</div>`;
