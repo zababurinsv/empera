@@ -447,7 +447,7 @@ window.onload = function ()
     }
     
     var StyleName;
-    if(!Storage.getItem("BIGWALLET"))
+    if(!IsFullNode())
     {
         if(IsLocalClient())
             InitMainServer();

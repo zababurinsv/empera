@@ -66,12 +66,15 @@ function Init(Engine)
         Tx0._TxID = GetStrTxIDFromHash(Tx.HASH, BlockNum);
         Tx0._BlockNum = BlockNum;
         
+        var Ret;
         var TxArr = [Tx];
         var CountSend = Engine.AddCurrentProcessingTx(BlockNum, TxArr);
         if(CountSend === 1)
-            return 1;
+            Ret = 1;
         else
-            return TX_RESULT_WAS_SEND;
+            Ret = TX_RESULT_WAS_SEND;
+        
+        return Ret;
     };
     
     SERVER.CheckCreateTransactionObject = function (Tr,SetTxID,BlockNum)

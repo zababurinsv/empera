@@ -70,6 +70,7 @@ function CreateFrame(Code,Parent)
     <meta http-equiv="X-Frame-Options" value="sameorigin">\
     <script type="text/javascript" src="' + StrPath + '/JS/sha3.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/client.js"><\/script>\
+    <script type="text/javascript" src="' + StrPath + '/JS/client-tx.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/crypto-client.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/coinlib.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/dapp-inner.js"><\/script>\
@@ -419,7 +420,7 @@ function DoDappInfo(Data)
                     Data[key] = SetData[key];
                 Data.OPEN_PATH = OPEN_PATH;
                 
-                if(!Storage.getItem("BIGWALLET"))
+                if(!IsFullNode())
                 {
                     Data.PubKey = GetPubKey();
                     Data.WalletCanSign = IsPrivateMode(GetPrivKey());

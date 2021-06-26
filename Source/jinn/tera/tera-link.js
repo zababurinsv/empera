@@ -18,10 +18,12 @@ function Init(Engine)
         
         var type = Tx.body[0];
         var App = DAppByType[type];
+        var Ret;
         if(App)
-            return App.GetSenderNum(BlockNum, Tx.body);
+            Ret = App.GetSenderNum(BlockNum, Tx.body);
         else
-            return 0;
+            Ret = 0;
+        return Ret;
     };
     
     Engine.GetTxSenderOperationID = function (Tx,BlockNum)

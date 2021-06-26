@@ -13,6 +13,7 @@
     <script type="text/javascript" src="./JS/crypto-client.js"></script>
     <script type="text/javascript" src="./JS/coinlib.js"></script>
     <script type="text/javascript" src="./JS/client.js"></script>
+    <script type="text/javascript" src="./JS/client-tx.js"></script>
     <script type="text/javascript" src="./JS/terahashlib.js"></script>
     <script type="text/javascript" src="./JS/dapp-outer.js"></script>
 
@@ -223,7 +224,7 @@
         {
             if(!CONFIG_DATA.WalletCanSign)
             {
-                if(Storage.getItem("BIGWALLET") || IsLockedWallet())
+                if(IsFullNode() || IsLockedWallet())
                 {
                     SetError("Pls, open wallet");
                     return;

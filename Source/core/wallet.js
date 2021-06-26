@@ -66,7 +66,7 @@ class CWalletApp
         this.AccountMap = Params.AccountMap
         this.KeyPair = crypto.createECDH('secp256k1')
 
-        if(Params.Protect)
+        if(Params.Protect && Params.KeyXOR)
         {
             ToLog("Wallet protect by password")
             this.KeyXOR = GetArrFromHex(Params.KeyXOR)
