@@ -394,7 +394,7 @@ function DoDappInfo(Data)
     GetData("DappInfo", {Smart:glSmart, Key:Key, Session:glSession, NumDappInfo:NumDappInfo, AllData:AllData, AllAccounts:Data.AllAccounts},
     function (SetData)
     {
-        console.log(SetData)
+        //console.log(SetData)
         if(SetData)
         {
             Data.Err = !SetData.result;
