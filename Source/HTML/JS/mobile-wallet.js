@@ -927,7 +927,7 @@ function SetArrLog(arr)
     CheckSending();
 }
 
-var DiagramArr = [{name:"MAX:ALL_NODES", text:"All nodes count", value:0, red:"#1d506b", MouseText:" nodes", CountNameX:10},
+var DiagramArr = [{name:"MAX:ALL_NODES", text:"Number of public nodes", value:0, red:"#1d506b", MouseText:" nodes", CountNameX:10},
     {name:"MAX:HASH_RATE_B", text:"HashRate, Tera hash/s", value:0, red:"#286b16", MathPow:2, MathDiv:1024 * 1024 * 1024 * 1024,
     KPrecision:10, NoTextMax:1, MouseText:" T h/s", CountNameX:10}, ];
 

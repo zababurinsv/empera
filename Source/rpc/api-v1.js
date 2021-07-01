@@ -252,7 +252,7 @@ function UpdateAccountKeyMap()
 }
 
 
-HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,ccc,bRet)
+HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,ccc,bRet,SmartFilter)
 {
     if(typeof Params !== "object" || !Params.Key)
         return {result:0, arr:[]};
@@ -303,13 +303,20 @@ HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,ccc,bRet)
     {
         var Data = ACCOUNTS.ReadState(Item.Num);
         if(!Data)
-            continue;
+            break;
         
         if(!Data.PubKeyStr)
             Data.PubKeyStr = GetHexFromArr(Data.PubKey);
         
         if(Data.Currency)
             Data.CurrencyObj = SMARTS.ReadSimple(Data.Currency, 1);
+
+        if(SmartFilter && Data.Value.Smart!=SmartFilter)
+        {
+            Item = Item.Next;
+            continue;
+        }
+
         if(Data.Value.Smart)
         {
             Data.SmartObj = SMARTS.ReadSimple(Data.Value.Smart);
@@ -508,11 +515,14 @@ HostingCaller.DappWalletList = function (Params)
 {
     if(typeof Params !== "object")
         return {result:0};
-    
-    var Ret = HostingCaller.GetAccountListByKey(Params, undefined, undefined, undefined, 1);
-    
     var Smart = ParseNum(Params.Smart);
+    var SmartFilter=0;
+    if(!Params.AllAccounts && Smart)
+        SmartFilter=Smart;
+
+    var Ret = HostingCaller.GetAccountListByKey(Params, undefined, undefined, undefined, 1, SmartFilter);
     
+
     var arr = [];
     for(var i = 0; i < Ret.arr.length; i++)
     {

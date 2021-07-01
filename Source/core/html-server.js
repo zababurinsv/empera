@@ -511,6 +511,7 @@ HTTPCaller.DappInfo = function (Params,responce,ObjectOnly)
         ArrEvent:EArr,
         ArrLog:ArrLog,
         COIN_STORE_NUM:global.COIN_STORE_NUM,
+        BlockNumDB:SERVER.BlockNumDB,
     };
 
     if(global.WALLET)
