@@ -22,7 +22,7 @@ var BROADCAST_SHORT_PERIOD = 1000;
 global.glUseBHCache = 1;
 global.glUseMaxCache = 1;
 
-global.MAX_ITERATION_MAX_HASH = 20;
+global.MAX_ITERATION_MAX_HASH = 50;
 
 //Engine context
 
@@ -107,6 +107,8 @@ function InitClass(Engine)
                     Element.LoadH = ZERO_ARR_32;
                     Element.CountItem = 0;
                 }
+            
+            JINN_STAT.MaxSendCountItem = Math.max(JINN_STAT.MaxSendCountItem, Element.CountItem);
             
             if(Element.Mode === 2 && Context.BodyFromID !== Child.Level && DeltaBlockNum >= 8)
             {
@@ -228,6 +230,8 @@ function InitClass(Engine)
                         Store.HeaderLoadOK = 0;
                     Store.HeaderLoadOK++;
                     
+                    JINN_STAT.HeaderLoadOK++;
+                    
                     bWas = 1;
                     CountReceiveNew++;
                     Context.LastHeadNum = Value.BlockNum;
@@ -235,6 +239,8 @@ function InitClass(Engine)
                         LiderID = LID;
                 }
             }
+            
+            JINN_STAT.MaxHeaderLoad = Math.max(JINN_STAT.MaxHeaderLoad, Data.HeaderArr.length);
             
             if(Data.BodyTreeNum)
             {
@@ -477,6 +483,7 @@ function InitClass(Engine)
     
     Engine.SendMaxHashNextTime = function (Context,BlockNum,Child,IterationNum,bNext)
     {
+        
         Context.WaitIteration = 1;
         setTimeout(function ()
         {

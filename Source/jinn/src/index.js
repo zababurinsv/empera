@@ -71,6 +71,7 @@ if(typeof window !== "object" || global.NWMODE)
     require("./jinn-consensus.js");
     require("./jinn-consensus-boost.js");
     require("./jinn-net-cache.js");
+    require("./jinn-startup-loader.js");
     
     require("./jinn-net.js");
     require("./jinn-serialize.js");

@@ -51,7 +51,8 @@ process.on('message', function (msg)
     switch(msg.cmd)
     {
         case "Stat":
-            ADD_TO_STAT(msg.Name, msg.Value);
+            for(var i=0;i<msg.Arr.length;i++)
+                ADD_TO_STAT(msg.Arr[i].Name, msg.Arr[i].Value);
             break;
         case "NodeList":
             global.AllNodeList = msg.ValueAll;
@@ -111,7 +112,7 @@ global.OnExit = function ()
         RedirectServer.close();
     if(HostingServer)
         HostingServer.close();
-}
+};
 
 if(!global.HTTP_HOSTING_PORT)
 {

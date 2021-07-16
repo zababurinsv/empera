@@ -51,7 +51,7 @@ HostingCaller.GetCurrentInfo = function (Params)
     
     if(typeof Params === "object" && Params.Diagram == 1)
     {
-        var arrNames = ["MAX:ALL_NODES", "MAX:HASH_RATE_B"];
+        var arrNames = ["MAX:ALL_NODES", "MAX:Addrs", "MAX:HASH_RATE_B"];
         Ret.arr = GET_STATDIAGRAMS(arrNames);
     }
     if(typeof Params === "object" && Params.BlockChain == 1)

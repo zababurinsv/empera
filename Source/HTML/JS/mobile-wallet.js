@@ -460,18 +460,17 @@ function UpdatesAccountsData(bGetData)
 
         AccountsCount = Data.Accounts;
         if(!AccountsCount)
-            AccountsCount = Data.arr.length;//old version API-1
+        {
+            if(Data.arr)
+                AccountsCount = Data.arr.length;//old version API-1
+            else
+                AccountsCount=0;
+        }
         ROWS_ON_PAGE = Data.ROWS_ON_PAGE;
         ViewAccountPages();
 
         if(!Data.result || !Data.arr)
             return;
-        // if(AccountsCount === Data.arr.length)
-        // {
-        //     if(IsVisibleClass(".accounts-info__add2"))
-        //         return;
-        // }
-        //
         SetVisibleClass(".accounts-info__acc-list", AccountsCount);
         SetVisibleClass(".accounts-info__empty", !AccountsCount);
         SetVisibleClass(".accounts-info__add2", 0);

@@ -9,10 +9,19 @@
 */
 
 'use strict';
-global.PROCESS_NAME = "MAIN";
 
 const fs = require('fs');
 const os = require('os');
+const cluster = require('cluster');
+if (cluster.isWorker)
+{
+    require("./web-process.js");
+    return;
+}
+
+
+global.PROCESS_NAME = "MAIN";
+
 require("../core/constant");
 const crypto = require('crypto');
 
@@ -68,30 +77,39 @@ process.on('uncaughtException', function (err)
     console.log("--------------------uncaughtException--------------------");
     console.log(err.code);
     console.log("---------------------------------------------------------");
-    
-    if(err.code === "ENOTFOUND" || err.code === "ECONNRESET" || err.code === "EPIPE" || err.code === "ETIMEDOUT")
+    switch(err.code)
     {
-    }
-    else
-    {
-        
-        if(global.PROCESS_NAME !== "MAIN")
+        case "ENOTFOUND":
+        case "ECONNRESET":
+        case "EPIPE":
+        case "ETIMEDOUT":
+            break;
+        case "ERR_IPC_CHANNEL_CLOSED":
+            //ToLogTrace("");
+            break;
+
+
+        default:
         {
-            process.send({cmd:"log", message:err});
+
+            if(global.PROCESS_NAME !== "MAIN")
+            {
+                process.send({cmd:"log", message:err});
+            }
+
+            if(err)
+            {
+                var Str = err.stack;
+                if(!Str)
+                    Str = err;
+                ToLog(Str);
+                ToError(Str);
+            }
+
+            TO_ERROR_LOG("APP", 666, err);
+            ToLog("-----------------EXIT------------------");
+            process.exit();
         }
-        
-        if(err)
-        {
-            var Str = err.stack;
-            if(!Str)
-                Str = err;
-            ToLog(Str);
-            ToError(Str);
-        }
-        
-        TO_ERROR_LOG("APP", 666, err);
-        ToLog("-----------------EXIT------------------");
-        process.exit();
     }
 }
 );
@@ -205,10 +223,17 @@ function CheckConstFile()
     }
 }
 var glPortDebug = 49800;
-function RunFork(Path,ArrArgs)
+function RunFork(Path,ArrArgs,bWeb)
 {
-    
-    const child_process = require('child_process');
+
+    var child_process = require('child_process');
+    //if(os.platform()=="win32")        bWeb=0;
+    if(bWeb && global.HTTP_HOSTING_PROCESS)
+    {
+        return cluster.fork().process;
+    }
+
+
     ArrArgs = ArrArgs || [];
     
     ArrArgs.push("MODE:" + global.MODE_RUN);
@@ -242,10 +267,11 @@ function RunFork(Path,ArrArgs)
         ArrArgs.push("NOPSWD");
     glPortDebug++;
     var execArgv = [];
-    
+
+    var Worker;
     try
     {
-        var Worker = child_process.fork(Path, ArrArgs, {execArgv:execArgv});
+        Worker = child_process.fork(Path, ArrArgs, {execArgv:execArgv});
     }
     catch(e)
     {

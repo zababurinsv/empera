@@ -2,7 +2,7 @@
  * @project: TERA
  * @version: Development (beta)
  * @license: MIT (not for evil)
- * @copyright: Yuriy Ivanov (Vtools) 2017-2020 [progr76@gmail.com]
+ * @copyright: Yuriy Ivanov (Vtools) 2017-2021 [progr76@gmail.com]
  * Web: https://terafoundation.org
  * Twitter: https://twitter.com/terafoundation
  * Telegram:  https://t.me/terafoundation
@@ -16,42 +16,30 @@ var ArrChildProcess = [];
 global.GlobalRunID = 0;
 global.GlobalRunMap = {};
 
-var WebProcess = {Name:"WEB PROCESS", idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(), Worker:undefined, Path:"./process/web-process.js",
-    OnMessage:OnMessageWeb, PeriodAlive:10 * 1000*(global.DEV_MODE?100:1), UpdateConst:0};
-global.WEB_PROCESS = WebProcess;
+var WebProcessArr=[];
+var WebProcessTempl = {Name:"WEB PROCESS", idInterval:0, LastAlive:Date.now(), Worker:undefined, Path:"./process/web-process.js",
+    OnMessage:OnMessageWeb, PeriodAlive:10 * 1000*(global.DEV_MODE?100:1), UpdateConst:0, bWeb:1};
+
+WebProcessArr.push(WebProcessTempl);
+for(var i=1;i<global.HTTP_HOSTING_PROCESS;i++)
+    WebProcessArr.push(CopyObjKeys({},WebProcessTempl));
+
+
+global.WEB_PROCESS = {sendAll:SendAllWeb};
+
 
 if(global.HTTP_HOSTING_PORT && !global.NWMODE)
 {
-    ArrChildProcess.push(WebProcess);
-    
-    WebProcess.idInterval1 = setInterval(function ()
+    for(var i=0;i<WebProcessArr.length;i++)
+        ArrChildProcess.push(WebProcessArr[i]);
+
+    global.WEB_PROCESS.RunRPC=function (Name,Params,F)
     {
-        if(WebProcess.Worker && WebProcess.Worker.connected)
-        {
-            try
-            {
-                WebProcess.Worker.send({cmd:"Stat", Name:"MAX:ALL_NODES", Value:global.CountAllNode});
-                if(global.WEB_PROCESS.UpdateConst)
-                {
-                    global.WEB_PROCESS.UpdateConst = 0;
-                    global.WEB_PROCESS.Worker.send({cmd:"UpdateConst"});
-                }
-            }
-            catch(e)
-            {
-                WebProcess.Worker = undefined;
-            }
-        }
-    }, 500);
-    
-    WebProcess.idInterval2 = setInterval(function ()
-    {
-        if(WebProcess.Worker && WebProcess.Worker.connected)
-        {
-            var arrAlive = SERVER.GetNodesArrWithAlive();
-            WebProcess.Worker.send({cmd:"NodeList", ValueAll:arrAlive});
-        }
-    }, 5000);
+        return WebProcessArr[0].RunRPC(Name,Params,F);//only first
+    };
+
+
+    RunWebsIntervals();
 }
 
 function OnMessageWeb(msg)
@@ -73,28 +61,28 @@ function OnMessageWeb(msg)
 
 
 
-function OnMessageStatic(msg)
-{
-    switch(msg.cmd)
-    {
-        case "Send":
-            {
-                var Node = SERVER.NodesMap[msg.addrStr];
-                if(Node)
-                {
-                    msg.Data = msg.Data.data;
-                    SERVER.Send(Node, msg, 1);
-                }
-                
-                break;
-            }
-    }
-}
+// function OnMessageStatic(msg)
+// {
+//     switch(msg.cmd)
+//     {
+//         case "Send":
+//             {
+//                 var Node = SERVER.NodesMap[msg.addrStr];
+//                 if(Node)
+//                 {
+//                     msg.Data = msg.Data.data;
+//                     SERVER.Send(Node, msg, 1);
+//                 }
+//
+//                 break;
+//             }
+//     }
+// }
 
 
 var TxModuleName = "./process/tx-process.js";
 
-global.TX_PROCESS = {Name:"TX PROCESS", NodeOnly:1, idInterval:0, idInterval1:0, idInterval2:0, LastAlive:Date.now(), Worker:undefined,
+global.TX_PROCESS = {Name:"TX PROCESS", NodeOnly:1, idInterval:0, LastAlive:Date.now(), Worker:undefined,
     Path:TxModuleName, OnMessage:OnMessageTX, PeriodAlive:100 * 1000};
 ArrChildProcess.push(TX_PROCESS);
 
@@ -104,11 +92,8 @@ function OnMessageTX(msg)
     {
         case "DappEvent":
             {
-                if(WebProcess && WebProcess.Worker)
-                {
-                    WebProcess.Worker.send(msg);
-                }
-                
+                SendAllWeb(msg);
+
                 AddDappEventToGlobalMap(msg.Data);
                 break;
             }
@@ -138,7 +123,7 @@ function StartChildProcess(Item)
     }
     
     let ITEM = Item;
-    ITEM.idInterval = setInterval(function ()
+    ITEM.idInterval = setInterval(async function ()
     {
         var Delta0 = Date.now() - ITEM.LastAlive;
         if(Delta0 >= 0)
@@ -164,7 +149,7 @@ function StartChildProcess(Item)
             {
                 ITEM.LastAlive = (Date.now()) + ITEM.PeriodAlive * 3;
                 ToLog("STARTING " + ITEM.Name);
-                ITEM.Worker = RunFork(ITEM.Path, ["READONLYDB"]);
+                ITEM.Worker = RunFork(ITEM.Path, ["READONLYDB"],ITEM.bWeb);
                 if(!ITEM.Worker)
                     return;
                 
@@ -218,10 +203,9 @@ function StartChildProcess(Item)
                             ToLog(msg.message, msg.level, msg.nofile);
                             break;
                         case "ToLogClient":
-                            if(!msg.NoWeb && WebProcess && WebProcess.Worker)
+                            if(!msg.NoWeb)
                             {
-                                
-                                WebProcess.Worker.send(msg);
+                                SendAllWeb(msg);
                             }
                             
                             ToLogClient(msg.Str, msg.StrKey, msg.bFinal);
@@ -230,9 +214,9 @@ function StartChildProcess(Item)
                             //console.log("WalletEvent="+JSON.stringify(msg,"",4));
 
 
-                            if(WebProcess && WebProcess.Worker && msg.Web)//перенаправляем в web-process
+                            if(msg.Web)//перенаправляем в web-process
                             {
-                                WebProcess.Worker.send(msg);
+                                SendAllWeb(msg);
                             }
                             else
                             if(msg.Main)
@@ -243,7 +227,9 @@ function StartChildProcess(Item)
                              break;
                         case "online":
                             if(ITEM.Worker)
+                            {
                                 ToLog("RUNNING " + ITEM.Name + " : " + msg.message + " pid: " + ITEM.Worker.pid);
+                            }
                             break;
                             
                         case "POW":
@@ -261,11 +247,14 @@ function StartChildProcess(Item)
                 
                 ITEM.Worker.on('error', function (err)
                 {
+
                 });
                 ITEM.Worker.on('close', function (code)
                 {
                     ToLog("CLOSE " + ITEM.Name, 2);
+                    ITEM.Worker=undefined;
                 });
+
             }
         }
         
@@ -278,6 +267,11 @@ function StartChildProcess(Item)
     {
         if(!ITEM.Worker)
             return;
+        var Worker;
+        if(ITEM.Worker.length)
+            Worker=ITEM.Worker[0];
+        else
+            Worker=ITEM.Worker;
         
         if(F)
         {
@@ -286,7 +280,7 @@ function StartChildProcess(Item)
             try
             {
                 GlobalRunMap[GlobalRunID] = F;
-                ITEM.Worker.send({cmd:"call", id:GlobalRunID, Name:Name, Params:Params});
+                Worker.send({cmd:"call", id:GlobalRunID, Name:Name, Params:Params});
             }
             catch(e)
             {
@@ -295,26 +289,22 @@ function StartChildProcess(Item)
         }
         else
         {
-            ITEM.Worker.send({cmd:"call", id:0, Name:Name, Params:Params});
+            Worker.send({cmd:"call", id:0, Name:Name, Params:Params});
         }
     };
 }
 
 function StopChildProcess()
 {
+    StopWebsIntervals();
+
     for(var i = 0; i < ArrChildProcess.length; i++)
     {
         var Item = ArrChildProcess[i];
         if(Item.idInterval)
             clearInterval(Item.idInterval);
         Item.idInterval = 0;
-        if(Item.idInterval1)
-            clearInterval(Item.idInterval1);
-        Item.idInterval1 = 0;
-        if(Item.idInterval2)
-            clearInterval(Item.idInterval2);
-        Item.idInterval2 = 0;
-        
+
         if(Item.Worker && Item.Worker.connected)
         {
             Item.Worker.send({cmd:"Exit"});
@@ -324,6 +314,46 @@ function StopChildProcess()
     
     RunStopPOWProcess("STOP");
 }
+
+function RunWebsIntervals()
+{
+    global.WEB_PROCESS.idInterval1 = setInterval(function ()
+    {
+        SendAllWeb({cmd:"Stat", Arr:[{Name:"MAX:ALL_NODES", Value:global.CountAllNode},{Name:"MAX:Addrs", Value:JINN_STAT.AddrCount}]});
+        if(global.WEB_PROCESS.UpdateConst)
+        {
+            global.WEB_PROCESS.UpdateConst = 0;
+            SendAllWeb({cmd:"UpdateConst"});
+        }
+
+    }, 500);
+
+    global.WEB_PROCESS.idInterval2 = setInterval(function ()
+    {
+        var arrAlive = SERVER.GetNodesArrWithAlive();
+        SendAllWeb({cmd:"NodeList", ValueAll:arrAlive});
+    }, 5000);
+}
+function StopWebsIntervals()
+{
+    if(global.WEB_PROCESS.idInterval1)
+        clearInterval(global.WEB_PROCESS.idInterval1);
+    global.WEB_PROCESS.idInterval1 = 0;
+    if(global.WEB_PROCESS.idInterval2)
+        clearInterval(global.WEB_PROCESS.idInterval2);
+    global.WEB_PROCESS.idInterval2 = 0;
+}
+
+function SendAllWeb(Params)
+{
+    for(var i=0;i<WebProcessArr.length;i++)
+    {
+        var Worker=WebProcessArr[i].Worker;
+        if(Worker && Worker.connected)
+            Worker.send(Params);
+    }
+}
+
 
 global.StartAllProcess = StartAllProcess;
 global.StopChildProcess = StopChildProcess;
