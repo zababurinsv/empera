@@ -20,6 +20,18 @@ var BWRITE_MODE = (global.PROCESS_NAME === "MAIN");
 
 function InitClass(Engine)
 {
+    Engine.ResizeDBChain = function ()
+    {
+        if(!BWRITE_MODE)
+        {
+            ToLog("Error: DB not in write mode");
+            return 0;
+        }
+        
+        var DB2 = new CDBChain(Engine.ID, Engine.CalcBlockData, "_");
+        
+        return 1;
+    };
     
     Engine.InitDB = function ()
     {
