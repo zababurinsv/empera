@@ -29,8 +29,29 @@ function InitClass(Engine)
         }
         
         var DB2 = new CDBChain(Engine.ID, Engine.CalcBlockData, "_");
+        DB2.Clear();
         
-        return 1;
+        var EndNum = Engine.GetMaxNumBlockDB();
+        for(var BlockNum = 0; BlockNum < EndNum; BlockNum++)
+        {
+            var Block = Engine.GetBlockDB(BlockNum);
+            Block.Position = undefined;
+            Block.TxPosition = undefined;
+            
+            var Res1 = DB2.WriteBlock(Block);
+            var Res2 = DB2.WriteBlockMain(Block);
+            if(!Res1 || !Res2)
+            {
+                console.log("Error write on block: " + BlockNum);
+                return 0;
+            }
+            
+            if(BlockNum % 100000 === 0)
+                console.log("DONE: " + BlockNum);
+        }
+        StopAndExit("ResizeDBChain " + DB2.GetMaxNumBlockDB());
+        
+        return DB2.GetMaxNumBlockDB();
     };
     
     Engine.InitDB = function ()

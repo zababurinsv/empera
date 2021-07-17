@@ -146,8 +146,7 @@ function Init(Engine)
             var Power = Engine.GetAddrPower(Item.AddrHashPOW, Item.BlockNum);
             if(Item.System)
                 Power += global.MIN_POW_ADDRES;
-            
-            if(Power > global.MIN_POW_ADDRES)
+            if(Power > 0)
             {
                 Arr.push({ip:Item.ip, port:Item.ip, portweb:Item.portweb});
             }
