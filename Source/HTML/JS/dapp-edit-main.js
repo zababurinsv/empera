@@ -32,6 +32,7 @@ var ArrTabs = [{Current:"TabProjects", Class:"tab1", CurClass:"current1", Map:{T
             {
                 CheckReplay();
             }}, TabUpload:{F1:1}, }}];
+var glMapCode;
 
 function SelectTab(name)
 {
@@ -313,19 +314,100 @@ function SendJSToBlockchain()
 
     SendText({}, "application/javascript", StrAll);
 }
+function GetCodeSmart(bTrim)
+{
+    var Smart = {};
+    SetDialogToSmart(Smart);
+
+
+    //find js codes
+    var MapCode = {All:{name:"All code",Code:""}};
+
+
+    var Arr = Smart.Code.split("\n");
+    var StrAll = "", CurLib="",StrCommon="";
+    var bAdd = 0;
+    for(var i = 0; i < Arr.length; i++)
+    {
+        var Str1 = Arr[i];
+        var Str2 = Str1.trim();
+        if(Str2.substr(0, 12) === "//lib-start:")
+        {
+            var LibName = Str2.substr(12);
+            if(CurLib)
+            {
+                SetError("Error: found start library: "+LibName+" without closing the previous: "+CurLib);
+                return undefined;
+            }
+            CurLib=LibName;
+            if(!MapCode[CurLib])
+                MapCode[CurLib]={name:CurLib,Code:""};
+        }
+        else
+        if(Str2.substr(0, 10) === "//lib-end:")
+        {
+            var LibName = Str2.substr(10);
+            if(CurLib!=LibName)
+            {
+                SetError("Error: found closing library: "+LibName+". Current library must: "+CurLib);
+                return undefined;
+            }
+            CurLib="";
+        }
+
+        if(CurLib)
+            MapCode[CurLib].Code+=Str1 + "\n";
+        else
+            if(!CurLib)
+                StrCommon += Str1 + "\n";
+
+        StrAll += Str1 + "\n";
+    }
+
+    if(CurLib)
+    {
+        SetError("Error: Current library not was closed: "+CurLib);
+        return undefined;
+    }
+
+    for(var key in MapCode)
+    {
+        if(key=="All")
+            continue;
+        MapCode[key].Code+=StrCommon
+    }
+
+    MapCode.All.Code=StrAll;
+    return MapCode;
+}
+
 function SendToBlockchain()
 {
     SetStatus("");
-    DoConfirm("Send " + $("idName").value + " to blockchain?", function ()
+    glMapCode=GetCodeSmart();
+    if(!glMapCode)
+        return;
+
+    var Str='<select id="idCodeMode"></select>';
+    DoConfirm("Send " + $("idName").value + " to blockchain?", Str,function ()
     {
-        SendToBlockchain2();
+        SendToBlockchain2(idCodeMode.value);
     });
+
+
+    FillSelect("idCodeMode",glMapCode,"NAME");
 }
-function SendToBlockchain2()
+function SendToBlockchain2(CodeType)
 {
     
     var Smart = {};
     SetDialogToSmart(Smart);
+
+
+    var Name=Smart.Name;
+    if(CodeType!=="All")
+        Name=CodeType;
+
     
     if(Smart.AccountLength < 1)
         Smart.AccountLength = 1;
@@ -357,10 +439,12 @@ function SendToBlockchain2()
     WriteUint16(Body, Smart.IconTrNum);
     
     WriteStr(Body, Smart.ShortName, 5);
-    WriteStr(Body, Smart.Name);
+    WriteStr(Body, Name);
     WriteStr(Body, Smart.Description);
-    
-    var Code = Smart.Code;
+
+
+    var Code = glMapCode[CodeType].Code;// Smart.Code;
+
     var HTML = Smart.HTML;
     if($("idNoSendHTML").checked && Smart.HTML)
         HTML = "-";
@@ -370,7 +454,7 @@ function SendToBlockchain2()
         Code = TrimStr(Code);
         HTML = TrimStr(HTML);
     }
-    
+
     WriteStr(Body, Code);
     WriteStr(Body, HTML);
     
@@ -378,6 +462,10 @@ function SendToBlockchain2()
     
     var FromID = $("idUser").value;
     SendTx(FromID, 0, Price, "Create smart: " + Smart.Name, Body);
+
+    console.log("Send smart "+Name+" length:",Body.length);
+    //console.log(Code);
+
 }
 
 function CheckCtrlEnter(e,F)

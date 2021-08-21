@@ -220,7 +220,7 @@
         }
 
         var CountCreateNewAccount=0;
-        function CreateNewAccount(Currency)
+        function CreateNewAccount(Currency,Name,PubKey,F,Context,Confirm)
         {
             if(!CONFIG_DATA.WalletCanSign)
             {
@@ -236,10 +236,14 @@
                 return;
             CountCreateNewAccount++;
 
+            if(!Name)
+                Name=SMART.Name;
+            if(PubKey===undefined)
+                PubKey=CONFIG_DATA.PubKey;
 
-            var TR=GetTrCreateAcc(Currency,CONFIG_DATA.PubKey,SMART.Name,0,SMART.Num);
+            var TR=GetTrCreateAcc(Currency,PubKey,Name,0,SMART.Num);
             var Body=GetBodyCreateAcc(TR);
-            SendTransactionNew(Body,TR);
+            SendTransactionNew(Body,TR,F,Context,Confirm);
         }
 
         function InstallApp()

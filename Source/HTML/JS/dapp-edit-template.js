@@ -10,19 +10,19 @@ function ShowSyntax(idStr)
 var CodeTemplateSmart=
 [
 
-"/*\n\
-global context:\n\
-context.BlockNum - Block num\n\
-context.TrNum - Tx num\n\
-context.Account - current account {Num,Currency,Smart,Value:{SumCOIN,SumCENT}}\n\
-context.Smart - current smart {Num,Name,Account,Owner}\n\
-context.FromNum - sender account num\n\
-context.ToNum - payee account num\n\
-context.Description - text\n\
-context.Value - {SumCOIN,SumCENT};\n\
-context.SmartMode - 1 if run from smartcontract\n\
-context.Tx - tx (not present in events)\n\
-*/",
+"\n\
+// global context:\n\
+// context.BlockNum - Block num\n\
+// context.TrNum - Tx num\n\
+// context.Account - current account {Num,Currency,Smart,Value:{SumCOIN,SumCENT}}\n\
+// context.Smart - current smart {Num,Name,Account,Owner}\n\
+// context.FromNum - sender account num\n\
+// context.ToNum - payee account num\n\
+// context.Description - text\n\
+// context.Value - {SumCOIN,SumCENT};\n\
+// context.SmartMode - 1 if run from smartcontract\n\
+// context.Tx - tx (not present in events)\n\
+",
 
 function OnGet()//getting coins
 {

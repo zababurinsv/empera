@@ -675,7 +675,7 @@ function SetAccountsCard(Data,AccountsDataStr)
             Str = Str.replace("prod-card__dropdown", "prod-card__dropdown nodapp");
         }
 
-        Str = Str.replace("$Item.CoinStore", RetMultiCoins(Item,"NFT: "));
+        Str = Str.replace("$Item.CoinStore", RetMultiCoins(Item,"ERC: ",ListTotal));
 
         StrList += Str;
         Str = "";

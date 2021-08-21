@@ -243,7 +243,12 @@ function DappTemplateFile(request,response,StrNum)
             var Headers = {'Content-Type':'text/html', "X-Frame-Options":"sameorigin"};
             var Str = fs.readFileSync("HTML/dapp-frame.html", {encoding:"utf8"});
             Str = Str.replace(/#template-number#/g, Num);
-            Str = Str.replace(/.\/tera.ico/g, "/file/" + Data.IconBlockNum + "/" + Data.IconTrNum);
+            var StrIcon;
+            if(Data.IconBlockNum)
+                StrIcon="/file/" + Data.IconBlockNum + "/" + Data.IconTrNum;
+            else
+                StrIcon="/../Tera.svg";
+            Str = Str.replace(/.\/tera.ico/g, StrIcon);
 
             SendGZipData(request, response, Headers, Str);
             return;

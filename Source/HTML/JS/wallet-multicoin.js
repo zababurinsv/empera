@@ -240,7 +240,7 @@ function SelectNFTItem(List,element)
 }
 //---------------------------------------------------------------------------
 
-function RetMultiCoins(Item,DopStr)
+function RetMultiCoins(Item,DopStr,ListTotal)
 {
     var CoinStore=Item.CoinStore;
     if(!CoinStore)
@@ -249,17 +249,30 @@ function RetMultiCoins(Item,DopStr)
     for(var t=0;t<CoinStore.Arr.length;t++)
     {
         var Tokens=CoinStore.Arr[t];
+        var TokenName=Tokens.Token;
         for(var i=0;i<Tokens.Arr.length;i++)
         {
             var Coin=Tokens.Arr[i];
-            if(Coin.ID!=0)
-                Count += FLOAT_FROM_COIN(Coin);
+
+            if(ListTotal)
+            {
+                var Total = ListTotal[DopStr+TokenName];
+                if(!Total)
+                {
+                    Total = {SumCOIN: 0, SumCENT: 0, Name: TokenName};
+                    ListTotal[DopStr+TokenName] = Total;
+                }
+                ADD(Total, Coin);
+            }
+
+            //if(Coin.ID!=0)
+            Count += FLOAT_FROM_COIN(Coin);
         }
     }
     if(!Count)
         return "";
     if(DopStr)
-        Count = DopStr+Count+" items";
+        Count = DopStr+Count;//+" items";
     return "<a class='olink' target='_blank' onclick='OpenTokensPage(" + Item.Num + ")'>" + Count + "</a>";
 }
 

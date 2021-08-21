@@ -233,10 +233,11 @@ function InitClass(Engine)
         if(Engine.LastPrevMiningBlock && Engine.LastPrevMiningBlock.BlockNum != PrevBlock.BlockNum)
             Engine.LastPrevMiningBlock = undefined;
         
+        if(!global.USE_MINING && !global.USE_API_MINING)
+            return;
+        
         if(Engine.LastPrevMiningBlock)
         {
-            if(!global.USE_MINING && !global.USE_API_MINING)
-                return;
             
             var WasBlock = Engine.LastPrevMiningBlock;
             if(PrevBlock.SumPow < WasBlock.SumPow || PrevBlock.SumPow === WasBlock.SumPow && CompareArr(WasBlock.PowHash, PrevBlock.PowHash) <= 0)

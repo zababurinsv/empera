@@ -101,6 +101,21 @@ function COIN_FROM_FLOAT2(Sum)
     return Coin;
 }
 
+function COIN_FROM_FLOAT3(Sum)
+{
+    var MAX_SUM_CENT = 1e9;
+    var SumCOIN=Math.floor(Sum);
+    var SumCENT = Math.floor((Sum+0.0000000001) * MAX_SUM_CENT - SumCOIN * MAX_SUM_CENT);
+    if(SumCENT>=1e9)
+    {
+        SumCENT=0;
+        SumCOIN++;
+    }
+    return {SumCOIN:SumCOIN,SumCENT:SumCENT};
+}
+
+
+
 if(typeof window === "object")
     window.COIN_FROM_FLOAT = COIN_FROM_FLOAT2;
 

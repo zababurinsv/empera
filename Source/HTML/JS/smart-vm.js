@@ -27,7 +27,11 @@ var TickCounter = 0;
 global.SetTickCounter = function (Value)
 {
     TickCounter = Value;
-}
+};
+global.GetTickCounter = function ()
+{
+    return TickCounter;
+};
 
 
 function DO(Count)

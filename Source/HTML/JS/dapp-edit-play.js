@@ -25,8 +25,7 @@ VM_VALUE.Smart = {};
 VM_VALUE.ArrWallet = [];
 
 var DefPubKeyArr0 = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-VM_VALUE.PrivKey = GetHexFromArr([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-1, 1]);
+VM_VALUE.PrivKey = GetHexFromArr([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
 var DefPubKeyArr = {data:DefPubKeyArr0};
 
 var _ListF = window.ListF;
@@ -184,7 +183,7 @@ function InitStorageEmulate()
     EmulateSessionStorage = StorageEmulate;
 }
 
-function GetNewAccount(Num,Name,Sum,Smart,Currency,bWalletPubKey)
+function GetNewAccount(Num,Name,Sum,Smart,Currency,PubKey)
 {
     if(!Smart)
         Smart = 0;
@@ -205,14 +204,33 @@ function GetNewAccount(Num,Name,Sum,Smart,Currency,bWalletPubKey)
     Item.Currency = Currency;
     Item.BlockNumCreate=VM_VALUE.CurBlockNum;
     
-    if(Smart)
-        Item.SmartObj = VM_SMARTS[Smart];
-    
-    if(bWalletPubKey)
+
+    if(PubKey==1 || PubKey==true)
         Item.PubKey = VM_VALUE.PubKey;
     else
+    if(PubKey)
+        Item.PubKey = GetArrFromHex(PubKey);
+    else
         Item.PubKey = DefPubKeyArr;
-    
+
+    //console.log("PubKey",Item.PubKey)
+    Item.PubKeyStr=GetHexFromArr(Item.PubKey);
+
+    if(Smart)
+    {
+        Item.SmartObj = VM_SMARTS[Smart];
+        global.SetTickCounter(35000);
+        try
+        {
+            var PayContext = {FromID: 0, ToID: 0, Description: "Smart set", Value: {SumCOIN: 0, SumCENT: 0}};
+            RunPublicMethod("OnSetSmart", VM_VALUE.SmartBlock, Item, PayContext);
+        }
+        catch(e)
+        {
+            ToLog("Error: " + e);
+        }
+    }
+
     return Item;
 }
 
@@ -333,10 +351,14 @@ function CheckInstall()
 {
     ToLog("Run:CheckInstall");
 }
-function CreateNewAccount(Currency)
+function CreateNewAccount(Currency,Name,PubKey)
 {
     ToLogDebug("Run:CreateNewAccount");
-    GetNewAccount(VM_ACCOUNTS.length, SMART.Name, 0, glSmart, Currency, 1);
+    if(!Name)
+        Name=SMART.Name;
+    if(PubKey===undefined)
+        PubKey=1;
+    GetNewAccount(VM_ACCOUNTS.length, Name, 0, glSmart, Currency, PubKey);
 }
 function ReloadDapp()
 {
@@ -351,7 +373,7 @@ function DoTranslate(Data)
 {
 }
 
-function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,bStatic)
+function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F,Context,Confirm,bStatic)
 {
     SetStatus("");
     if(bStatic)
@@ -364,11 +386,12 @@ function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,b
     var PayContext = {FromID:ParseNum(FromNum), ToID:Account.Num, Description:"", Value:{SumCOIN:0, SumCENT:0}};
     
     var Data = {Type:135, Account:Account.Num, MethodName:MethodName, FromNum:FromNum, Params:JSON.stringify(Params)};
+    var Tx=CopyObjKeys({},Data);
     var Block = CreateNewBlock(Data, bStatic);
     var BlockNum = Block.BlockNum;
     ToLogDebug("" + Block.BlockNum + ". CallMethod " + MethodName + " " + ToNum + "<-" + FromNum);
     
-    var Result;
+    var Result,Err=0;
     try
     {
         BEGINTRANSACTION(1);
@@ -382,14 +405,25 @@ function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,b
         Data.Account = 0;
         Data.Params = undefined;
         Data.MethodName = undefined;
-        
-        SendMessageError("" + e);
+
+        Err=String(e);
+        SendMessageError(Err);
         console.error(e);
     }
     finally
     {
         COMMITRANSACTION();
     }
+
+    if($("idDebugTiks").checked)
+    {
+        console.log(" Rest ticks '"+MethodName+"'", TickCounter);
+    }
+
+    if(F)
+        F(Err,Tx,[135,0,0,0,0],"Sent to virtual chain",Context);
+
+
     return Result;
 }
 
@@ -477,7 +511,7 @@ function DoGetData(Name,Params,Func)
             }
             else
             {
-                SetData.RetValue = SendCallMethod(Params.Account, Params.MethodName, Params.Params, Params.ParamsArr, 0, glSmart, 1);
+                SetData.RetValue = SendCallMethod(Params.Account, Params.MethodName, Params.Params, Params.ParamsArr, 0, glSmart, 0,0,0,1);
             }
             SetData.result = 1;
             break;
@@ -1012,5 +1046,8 @@ function InitEvalMap()
     global.EvalMap = {};
 }
 
+
+const $console = console;
+const $TickCounter=function (){return TickCounter};
 
 global.UPDATE_CODE_SHARDING = 0;

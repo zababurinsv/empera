@@ -10,7 +10,7 @@
 
 
 
-window.CLIENT_VERSION = 45;
+window.CLIENT_VERSION = 47;
 window.SERVER_VERSION = 0;
 window.SHARD_NAME = "TERA";
 
@@ -1826,6 +1826,9 @@ function FillSelect(IdName,arr,bNatural)
             var name;
             if(bNatural === "KEY")
                 name = key;
+            else
+            if(bNatural === "NAME")
+                name = arr[key].name;
             else
                 name = arr[key];
             Options[Options.length] = new Option(name, key);

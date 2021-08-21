@@ -81,9 +81,19 @@ function SendCall(Account, MethodName,Params, A,B)
 
 
     var Data={cmd:"DappSendCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account, FromNum:FromNum}
-    //ToLog("SendCall: "+JSON.stringify(Data));
     SendData(Data);
     return 1;
+}
+
+function ASendCall(Account, MethodName,Params, ParamsArr,FromNum)
+{
+    if(!INFO.WalletCanSign)
+    {
+        SetError("PLS, OPEN WALLET");
+        return 0;
+    }
+    var Data={cmd:"DappSendCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account, FromNum:FromNum}
+    return ASendData(Data);
 }
 
 
@@ -138,9 +148,13 @@ function SetLocationPath(Str)
     SendData({cmd:"SetLocationHash",Message:Str});
 }
 
-function CreateNewAccount(Currency)
+function CreateNewAccount(Currency,Name,PubKey)
 {
-    SendData({cmd:"CreateNewAccount",Currency:Currency});
+    return SendData({cmd:"CreateNewAccount",Currency:Currency,Name:Name,PubKey:PubKey});
+}
+function ACreateNewAccount(Currency,Name,PubKey)
+{
+    return ASendData({cmd:"CreateNewAccount",Currency:Currency,Name:Name,PubKey:PubKey});
 }
 
 function OpenLink(Str)
@@ -659,6 +673,29 @@ function SendData(Data,F)
     window.parent.postMessage(Data, "*");
 }
 
+function ASendData(Data)
+{
+    if(!window.parent)
+        return;
+
+    return new Promise(function(resolve, reject)
+    {
+        Data.Confirm=1;
+        SendData(Data,function (RetData)
+        {
+            if(RetData.Err)
+            {
+                SetError(RetData.Err);
+                reject(RetData);
+            }
+            else
+            {
+                resolve(RetData);
+            }
+        });
+    });
+}
+
 
 
 function OnMessage(event)
@@ -710,6 +747,9 @@ function OnMessage(event)
                     F(Data.Result);
                     break;
 
+                case "DATA":
+                    F(Data);
+                    break;
                 //------------------------------------------------------------------------------------------------------
                 case "Result":
                     F(Data.Result,Data.Err);

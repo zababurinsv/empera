@@ -202,9 +202,9 @@ function DappListener(event)
                     Data.Account = BASE_ACCOUNT.Num;
                 if(!Data.FromNum)
                     Data.FromNum = 0;
-                
-                SendCallMethod(Data.Account, Data.MethodName, Data.Params, Data.ParamsArr, Data.FromNum, glSmart);
-                
+
+                SendCallMethod(Data.Account, Data.MethodName, Data.Params, Data.ParamsArr, Data.FromNum, glSmart,RetSendTx,Data,Data.Confirm);
+
                 break;
             }
         case "DappInfo":
@@ -302,7 +302,7 @@ function DappListener(event)
             
         case "CreateNewAccount":
             {
-                CreateNewAccount(Data.Currency);
+                CreateNewAccount(Data.Currency,Data.Name,Data.PubKey,RetSendTx,Data,Data.Confirm);
                 break;
             }
         case "ReloadDapp":
@@ -381,6 +381,16 @@ function DappListener(event)
             break;
 
     }
+}
+
+function RetSendTx(Err,TR, Body, Text, Context)
+{
+    Context.cmd="DATA";
+    Context.result=Err?0:1;
+    Context.Err=Err;
+    Context.TR=TR;
+    Context.Text=Text;
+    SendMessage(Context);
 }
 
 function DoDappInfo(Data)

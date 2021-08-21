@@ -35,8 +35,9 @@ if(global.HTTP_HOSTING_PORT && !global.NWMODE)
 
     global.WEB_PROCESS.RunRPC=function (Name,Params,F)
     {
-        if(WebProcessArr.length)
-            return WebProcessArr[0].RunRPC(Name,Params,F);//only first
+        var Item=WebProcessArr[0];
+        if(Item && Item.RunRPC)
+            return Item.RunRPC(Name, Params, F);//only first
     };
 
 

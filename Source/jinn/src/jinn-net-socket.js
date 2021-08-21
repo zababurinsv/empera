@@ -190,7 +190,7 @@ function InitClass(Engine)
     {
         if(Socket.WasChild)
         {
-            ToLogTrace("Error LinkSocketToChild was Linked - " + ChildName(Child));
+            ToLogTrace("Error LinkSocketToChild was Linked - " + ChildName(Child), 4);
             return 0;
         }
         

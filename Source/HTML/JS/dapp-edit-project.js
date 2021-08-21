@@ -140,6 +140,7 @@ function SetSmartToDialog(Smart,bSaveToArr,bNoSetPos)
 
 function SetDialogEnabled()
 {
+
     var bDisabled = (CurProjectValue != $("idProjectList").value);
     
     var Arr = ["idName", "idShortName", "idCentName", "idFixed", "idISIN", "idCode", "idHTML", "idDescription", "idTokenGenerate",
@@ -606,6 +607,7 @@ function CheckReplay()
 
 function DoPlay(bRecreate)
 {
+
 
     if(ArrTabs[1].Current != "TabPlay")
         return;

@@ -1,7 +1,7 @@
 window.MapSendTransaction = {};
 var MapSendID = {};
 
-function SendTransactionNew(Body,TR,F)
+function SendTransactionNew(Body,TR,F,Context,Confirm)
 {
     var MaxLength = 12000;
     if(IsFullNode())
@@ -14,31 +14,32 @@ function SendTransactionNew(Body,TR,F)
 
     if(MaxLength && Body.length > MaxLength)
     {
-        return RetError(F, TR, Body, "Error length transaction = " + Body.length + ". Can max size=" + MaxLength);
+        return RetError(F,Context, TR, Body, "Error length transaction = " + Body.length + ". Can max size=" + MaxLength);
     }
     let Type=Body[0];
     var StrHex = GetHexFromArr(Body);
-    var Params={Hex:StrHex};
-
+    var Params={Hex:StrHex,Confirm:Confirm};
+    var DlgConfirm=0;
     if((Type===100 || Type===111 || Type===135) && window.idSending && !IsVisibleBlock("idSending"))
     {
-        Params.Confirm=1;
+        DlgConfirm=1;
 
         if(window.CONFIG_DATA && window.CONFIG_DATA.CONSTANTS && !CONFIG_DATA.CONSTANTS.USE_BLOCK_SEND_TX)
-            Params.Confirm=undefined;
+            DlgConfirm=undefined;
 
-        if(Params.Confirm)
+        if(DlgConfirm)
         {
             openModalForce("idSending");
             setTimeout(closeModalForce,60*1000);
         }
     }
-    //console.log(Type,Params.Confirm);
 
+    if(DlgConfirm)
+        Params.Confirm=1;
 
     GetData("SendHexTx", Params, function (Data)
     {
-        if(Params.Confirm)
+        if(DlgConfirm)
             closeModalForce();
 
         if(Data)
@@ -46,7 +47,7 @@ function SendTransactionNew(Body,TR,F)
             var key = GetHexFromArr(sha3(Body));
             if(!Data.result || Data.result < 0)
             {
-                return RetError(F, TR, Body, "Error: " + Data.text);
+                return RetError(F,Context, TR, Body, "Error: " + Data.text);
             }
             if(!TR)
                 return;
@@ -58,11 +59,11 @@ function SendTransactionNew(Body,TR,F)
             if(Type===100 && window.FindMyAccounts)
                 FindMyAccounts();
 
-            return RetResult(F, TR, Body, "Send '" + key.substr(0, 12) + "' result:" + Data.text);
+            return RetResult(F,Context, TR, Body, "Send '" + key.substr(0, 12) + "' result:" + Data.text);
         }
         else
         {
-            return RetError(F, TR, Body, "Error Data");
+            return RetError(F,Context, TR, Body, "Error Data");
         }
     });
 }
@@ -101,7 +102,7 @@ function GetOperationIDFromItem(Item,CheckErr)
     return OperationID;
 }
 
-function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F)
+function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F,Context,Confirm)
 {
 
     var TR = {Type:135};
@@ -118,11 +119,11 @@ function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum
         {
             if(!Data || Data.result !== 1 || !Data.Item)
             {
-                return RetError(F, TR, Body, "Error account number: " + Account);
+                return RetError(F,Context, TR, Body, "Error account number: " + Account);
             }
             if(FromSmartNum!==-1 && Data.Item.Value.Smart !== FromSmartNum)
             {
-                return RetError(F, TR, Body, "Error - The account:" + Account + " does not belong to a smart contract:" + FromSmartNum + " (have: " + Data.Item.Value.Smart + ")");
+                return RetError(F,Context, TR, Body, "Error - The account:" + Account + " does not belong to a smart contract:" + FromSmartNum + " (have: " + Data.Item.Value.Smart + ")");
             }
 
 
@@ -131,11 +132,11 @@ function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum
             {
                 if(!Data || Data.result !== 1 || !Data.Item)
                 {
-                    return RetError(F, TR, Body, "Error account number: " + FromNum);
+                    return RetError(F,Context, TR, Body, "Error account number: " + FromNum);
                 }
                 if(Data.Item.Num != FromNum)
                 {
-                    return RetError(F, TR, Body, "Error read from account number: " + FromNum + " read data=" + Data.Item.Num);
+                    return RetError(F,Context, TR, Body, "Error read from account number: " + FromNum + " read data=" + Data.Item.Num);
                 }
 
                 var OperationID = GetOperationIDFromItem(Data.Item, 1);
@@ -146,7 +147,7 @@ function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum
                 for(var i = 0; i < 7; i++)
                     Body.push(0);
 
-                SendTrArrayWithSign(Body, FromNum, TR, F);
+                SendTrArrayWithSign(Body, FromNum, TR, F,Context,Confirm);
 
 
 
@@ -161,11 +162,11 @@ function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum
         for(var i = 0; i < 7; i++)
             Body.push(0);
         Body.length += 64;
-        SendTransactionNew(Body, TR, F);
+        SendTransactionNew(Body, TR, F,Context,Confirm);
     }
 }
 
-function SendTrArrayWithSign(Body,Account,TR,F)
+function SendTrArrayWithSign(Body,Account,TR,F,Context,Confirm)
 {
     if(window.SignLib && !IsFullNode())
     {
@@ -174,7 +175,7 @@ function SendTrArrayWithSign(Body,Account,TR,F)
             var Sign = GetSignFromArr(Body);
             var Arr = GetArrFromHex(Sign);
             WriteArr(Body, Arr, 64);
-            return SendTransactionNew(Body, TR, F);
+            return SendTransactionNew(Body, TR, F,Context,Confirm);
         }
     }
 
@@ -185,7 +186,7 @@ function SendTrArrayWithSign(Body,Account,TR,F)
         {
             var Arr = GetArrFromHex(Data.Sign);
             WriteArr(Body, Arr, 64);
-            SendTransactionNew(Body, TR, F);
+            SendTransactionNew(Body, TR, F,Context,Confirm);
         }
     });
 }
@@ -310,23 +311,23 @@ function GetSignFromArr(Arr,StrPrivKey)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-function RetError(F,TR,Body,Str)
+function RetError(F,Context, TR,Body,Str)
 {
 
 
     if(window.SetError)
         SetError(Str);
     if(F)
-        F(1, TR, Body, Str);
+        F(1, TR, Body, Str, Context);
 
     return 0;
 }
-function RetResult(F,TR,Body,Str)
+function RetResult(F,Context,TR,Body,Str)
 {
     if(window.SetStatus)
         SetStatus(Str);
     if(F)
-        F(0, TR, Body, Str);
+        F(0, TR, Body, Str,Context);
     return 1;
 }
 
