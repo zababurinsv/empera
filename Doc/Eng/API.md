@@ -336,9 +336,14 @@ GET
 http://127.0.0.1/api/v1/GetHistoryTransactions?AccountID=190480
 ```
 
-## SendHexTx
+## SendTransactionHex
 
-11)**/api/v1/SendHexTx**  - The transaction
+11)**/api/v1/SendTransactionHex**  - The transaction
+
+#### Params:
+* Hex - a hexadecimal string with the contents of the transaction
+* Confirm - the number of transaction confirmation blocks
+
 
 To send a transaction, a number of processes must be performed on the client side:
 1. To obtain the parameters of the user's account (OperationID)
@@ -354,11 +359,22 @@ If this method is difficult for you, it is recommended to use API2, which is ver
 
 Example:
 ```js
-http://127.0.0.1/api/v1/SendHexTx?Hex=6F04FC0000000000BBE20200000001000000000009000000000000000000000001000000040054657374000000000000000012EB8196115106B9931E7D5BA05B6406E302F5A753378182BFF6F6BCE0407FAB56991286300BADDFF191B4A3722F1E9D10E70AE70476748840D6A24571382E1C
+http://127.0.0.1/api/v1/SendTransactionHex
+{
+    "Hex":"0504007465787416006170706C69636174696F6E2F6A6176617363726970740000000000000000000006002F2F74657374",
+    "Confirm":1
+}
 ```
 Result:
 ```
-{"result":1,"text":"OK"}
+{
+    "result": 1,
+    "text": "Add to blockchain on Block 12200324: file/12200324/0",
+    "_BlockNum": 12200324,
+    "_TxID": "933F0E157C75568862778429BA000000",
+    "BlockNum": 12200324,
+    "TrNum": 0
+}
 ```
 Note: The transaction in hex format can be obtained if you use a functions from the js-library
 * The library is located at: https://gitlab.com/terafoundation/tera/raw/master/Bin/Light/Tera-light.zip
