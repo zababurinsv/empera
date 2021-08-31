@@ -88,14 +88,14 @@ class AccountSign extends require("./accounts-adv-mining")
             return "Error OperationID (expected: " + AccountFrom.Value.OperationID + " for ID: " + TR.FromNum + ")";
         var MaxCountOperationID = 100;
         if(BlockNum >= global.BLOCKNUM_TICKET_ALGO)
-            MaxCountOperationID = 1000000
+            MaxCountOperationID = 1000000;
         if(TR.OperationID > AccountFrom.Value.OperationID + MaxCountOperationID)
             return "Error too much OperationID (expected max: " + (AccountFrom.Value.OperationID + MaxCountOperationID) + " for ID: " + TR.FromNum + ")";
         var hash;
         if(TR.Version === 4 && BlockNum >= global.UPDATE_CODE_6)
-            hash = SHA3BUF(Body.slice(0, Body.length - 64), BlockNum)
+            hash = SHA3BUF(Body.slice(0, Body.length - 64), BlockNum);
         else
-            hash = SHA3BUF(Body.slice(0, Body.length - 64 - 12), BlockNum)
+            hash = SHA3BUF(Body.slice(0, Body.length - 64 - 12), BlockNum);
         
         var Result = CheckSign(hash, TR.Sign, AccountFrom.PubKey);
         if(!Result)
@@ -105,7 +105,7 @@ class AccountSign extends require("./accounts-adv-mining")
         
         if(BlockNum >= 13000000)
         {
-            AccountFrom.Value.OperationID = TR.OperationID + 1
+            AccountFrom.Value.OperationID = TR.OperationID + 1;
             this.WriteStateTR(AccountFrom, BlockNum, TrNum)
         }
         else

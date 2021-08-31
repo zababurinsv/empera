@@ -490,7 +490,7 @@ function SendTransactionAndResponce(Params,Body,TR,response)
     SendTransaction(Body, TR, ParseNum(Params.Confirm), function (Err,Data)//(result,text)
     {
 
-        //console.log("Data:",JSON.stringify(Data,"",4))
+        //console.log("=Data=",JSON.stringify(Data,"",4))
         if(Data._TxID)
             TR._TxID = Data._TxID;
         if(Data._BlockNum)
@@ -499,7 +499,7 @@ function SendTransactionAndResponce(Params,Body,TR,response)
         TR._text = Data.text;
         TR._result = Data.result;
 
-        var Result = {result:Data.result, text:Data.text, TxID:TR._TxID, BlockNum:TR._BlockNum, Meta:Params.Meta};
+        var Result = {result:Data.result, text:Data.text, TxID:TR._TxID, BlockNum:Data.BlockNum?Data.BlockNum:TR._BlockNum,TrNum:Data.TrNum, Meta:Params.Meta};
         if(typeof Params.F === "function")
             Params.F(Result);
 

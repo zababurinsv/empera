@@ -76,7 +76,7 @@ process.on('message', function (msg)
             
         case "WalletEvent":
             {
-                AddToArrClient(msg.ResultStr, msg.TX, msg.bFinal, Date.now());
+                AddToArrClient(msg.ResultStr, msg.TX, msg.bFinal, Date.now(),msg.BlockNum,msg.TrNum);
                 break;
             }
             

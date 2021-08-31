@@ -51,14 +51,18 @@ function SendTransactionNew(Body,TR,F,Context,Confirm)
             }
             if(!TR)
                 return;
+            //console.log("=Data=",Data);
+            TR.BlockNum = Data.BlockNum?Data.BlockNum:Data._BlockNum;
+            TR.TrNum = Data.TrNum;
 
-            TR.BlockNum = Data._BlockNum;
             TR.TxID = Data._TxID;
+            TR.result=Data.result;
             MapSendTransaction[key] = TR;
 
             if(Type===100 && window.FindMyAccounts)
                 FindMyAccounts();
 
+            //console.log("Data:",Data);
             return RetResult(F,Context, TR, Body, "Send '" + key.substr(0, 12) + "' result:" + Data.text);
         }
         else
@@ -186,6 +190,7 @@ function SendTrArrayWithSign(Body,Account,TR,F,Context,Confirm)
         {
             var Arr = GetArrFromHex(Data.Sign);
             WriteArr(Body, Arr, 64);
+
             SendTransactionNew(Body, TR, F,Context,Confirm);
         }
     });

@@ -2,7 +2,7 @@
 const fs = require('fs');
 
 
-global.UPDATE_CODE_VERSION_NUM = 2558;
+global.UPDATE_CODE_VERSION_NUM = 2564;
 global.MIN_JINN_VERSION_NUM = 0;
 
 global.DEBUG_TRAFFIC = 0;
@@ -204,13 +204,19 @@ Object.defineProperty(global, "MAX_ARR_32", {writable:false, value:MAX_ARR_32_0}
 global.READ_ONLY_DB = 0;
 
 
+global.GETVERSION = function (BlockNum)
+{
+    return SYSCORE.GetActive(BlockNum);
+};
 
 global.PRICE_DAO = function (BlockNum)
 {
-    if(BlockNum >= UPDATE_CODE_SHARDING)
-        return {NewAccount:10, NewSmart:100, NewTokenSmart:1000, NewShard:10000, Storage:0.01};
-    else
-        return {NewAccount:10, NewSmart:100, NewTokenSmart:10000, NewShard:0, Storage:0};
+    var SysInfo=SYSCORE.GetInfo(BlockNum);
+    return SysInfo.Price;
+    // if(BlockNum >= UPDATE_CODE_SHARDING)
+    //     return {NewAccount:10, NewSmart:100, NewTokenSmart:1000, NewShard:10000, Storage:0.01};
+    // else
+    //     return {NewAccount:10, NewSmart:100, NewTokenSmart:10000, NewShard:0, Storage:0};
 };
 
 

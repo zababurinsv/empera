@@ -26,6 +26,7 @@ HostingCaller.GetCurrentInfo = function (Params)
     
     var Ret = {
         result:1,
+        BLOCKCHAIN_VERSION:GETVERSION(MaxNumBlockDB),
         VersionNum:global.START_CODE_VERSION_NUM,
         VersionUpd:global.UPDATE_CODE_VERSION_NUM,
         NETWORK:global.NETWORK,
@@ -453,7 +454,7 @@ HostingCaller.SendTransactionHex = function (Params,response,ArrPath,request)
     
     process.RunRPC("AddTransactionFromWeb", {HexValue:Params.Hex,Confirm:Params.Confirm,F:1,Web:1}, function (Err,Data)
     {
-        var Result = {result:Data.result, text:Data.text, _BlockNum:Data._BlockNum, _TxID:Data._TxID};
+        var Result = {result:Data.result, text:Data.text, _BlockNum:Data._BlockNum, _TxID:Data._TxID, BlockNum:Data.BlockNum,TrNum:Data.TrNum};
         var Str = JSON.stringify(Result);
         response.end(Str);
     });

@@ -210,7 +210,7 @@ function StartChildProcess(Item)
                                 SendAllWeb(msg);
                             }
                             
-                            ToLogClient(msg.Str, msg.StrKey, msg.bFinal);
+                            ToLogClient(msg.Str, msg.StrKey, msg.bFinal,0,0,msg.BlockNum,msg.TrNum);
                             break;
                         case "WalletEvent":
                             //console.log("WalletEvent="+JSON.stringify(msg,"",4));
@@ -223,7 +223,7 @@ function StartChildProcess(Item)
                             else
                             if(msg.Main)
                             {
-                                ToLogClient(msg.ResultStr, msg.TX, msg.bFinal);
+                                ToLogClient(msg.ResultStr, msg.TX, msg.bFinal,0,0,msg.BlockNum,msg.TrNum);
                             }
 
                              break;

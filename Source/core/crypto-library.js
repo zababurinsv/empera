@@ -92,6 +92,7 @@ global.CheckSign = function (Hash,Sign,PubKey)
         if(!(PubKey instanceof Buffer))
             PubKey = Buffer.from(PubKey);
 
+
         try
         {
             return secp256k1.verify(Hash, Sign, PubKey);

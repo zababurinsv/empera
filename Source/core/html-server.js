@@ -778,6 +778,7 @@ HTTPCaller.GetWalletInfo = function (Params)
     }
 
     var TXBlockNum = COMMON_ACTS.GetLastBlockNumActWithReopen();
+    var SysInfo=SYSCORE.GetInfo(SERVER.BlockNumDB);
 
     var Ret = {
         result:1,
@@ -823,7 +824,10 @@ HTTPCaller.GetWalletInfo = function (Params)
         CountRunCPU:global.ArrMiningWrk.length,
         MiningPaused:global.MiningPaused,
         HashRate:HashRateOneSec,
-        PRICE_DAO:PRICE_DAO(SERVER.BlockNumDB),
+        BLOCKCHAIN_VERSION:SysInfo.Active,
+        PRICE_DAO:SysInfo.Price,//PRICE_DAO(SERVER.BlockNumDB),
+        SYS_CORE:SysInfo,
+        FORMAT_SYS:FORMAT_SYS,
         NWMODE:global.NWMODE,
         PERIOD_ACCOUNT_HASH:PERIOD_ACCOUNT_HASH,
         MAX_ACCOUNT_HASH:ACCOUNTS.DBAccountsHash.GetMaxNum(),
@@ -892,6 +896,7 @@ HTTPCaller.GetSignTransaction = function (TR)
 HTTPCaller.GetSignFromHEX = function (Params)
 {
     var Arr = GetArrFromHex(Params.Hex);
+    //console.log(Params.Account)
 
     var Sign;
     if(Params.Account)

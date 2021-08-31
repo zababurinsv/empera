@@ -41,7 +41,37 @@ function SavePrivateKey()
     });
 }
 
+function SetNewSysCore(TR)
+{
+    if(!TR.FromNum)
+        TR.FromNum=TR.NextNum;
+    var OperationID = 0;
+    var Item = MapAccounts[TR.FromNum];
+    if(Item)
+    {
+        OperationID = Item.Value.OperationID;
+    }
+    OperationID++;
 
+    TR.Type=20;
+    TR.Version=4;
+    TR.Reserve=[];
+    TR.OperationID=OperationID;
+
+    var Body=SerializeLib.GetBufferFromObject(TR, CONFIG_DATA.FORMAT_SYS, {});
+    Body.length-=64;
+
+    //console.log("=BODY=",Body);
+    SendTrArrayWithSign(Body, TR.FromNum, TR);
+}
+
+function SetSysCoreJSON()
+{
+    var Data = JSON.parse(JSON.stringify(CONFIG_DATA.SYS_CORE));
+    var Data2 = CopyObjKeys({Service:"SetNewSysCore"}, Data);
+    var Str = JSON.stringify(Data2, "", 2);
+    $("idDevService").value = Str;
+}
 function SetCodeVersionJSON()
 {
     var Data = JSON.parse(JSON.stringify(CONFIG_DATA.CODE_VERSION));
@@ -105,6 +135,10 @@ function RunDevelopService()
         SetError("Error format setting - not found Service");
         return;
     }
+
+    if(Data.Service=="SetNewSysCore")
+        return SetNewSysCore(Data);
+
     
     if(Data.addrArr)
         Data.addrArr = GetArrFromHex(Data.addrArr);

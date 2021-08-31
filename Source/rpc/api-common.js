@@ -53,7 +53,7 @@ function AddTransactionCommon(body,Params,F)
         final =  - 1;
 
     if(Params.Main)
-        ToLogClient("Send: " + Result.text, StrHash, final);
+        ToLogClient("Send: " + Result.text, StrHash, final,0,0,Result._BlockNum);
 
 
     //Ожидаем подтверждения в блокчейне
@@ -90,6 +90,10 @@ function AddTransactionCommon(body,Params,F)
 
                 Result.result=Data.Result;
                 Result.text=Data.ResultStr;
+                Result.BlockNum=Data.BlockNum;
+                Result.TrNum=Data.TrNum;
+                //Result.text=Data.ResultStr;
+                //console.log("*Data*",Data)
 
                 if(Params.Confirm>=2 && Result.result>0)
                 {

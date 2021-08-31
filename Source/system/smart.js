@@ -13,6 +13,7 @@
 
 //Smart contract engine
 
+const fs = require('fs');
 
 require("../HTML/JS/lexer.js");
 require("../HTML/JS/smart-vm.js");
@@ -80,7 +81,29 @@ class SmartApp extends require("./smart-tr")
     {
         var bReadOnly = (global.PROCESS_NAME !== "TX");
         super(bReadOnly)
+        var FileName;
+
+        if(fs.existsSync("smart2"))
+        {
+            this.FormatRow2();
+            FileName = "smart2";
+            console.log("************************* new version SMART2 *************************")
+        }
+        else
+        {
+            //old!!!
+            this.FormatRow1();
+            FileName = "smart";
+        }
+
+        this.DBSmart = new CDBRow(FileName, this.FORMAT_ROW, bReadOnly, "Num", 0, this.ROW_SIZE)
+        REGISTER_TR_DB(this.DBSmart, 30)
         
+        if(!bReadOnly)
+            this.Start();
+    }
+    FormatRow1()
+    {
         this.FORMAT_ROW = "{\
             Version:byte,\
             TokenGenerate:byte,\
@@ -108,15 +131,44 @@ class SmartApp extends require("./smart-tr")
             HTML:str,\
             SumHash:hash,\
             }"
-        
+
         this.ROW_SIZE = 2 * (1 << 13)
-        this.DBSmart = new CDBRow("smart", this.FORMAT_ROW, bReadOnly, "Num", 0, this.ROW_SIZE)
-        REGISTER_TR_DB(this.DBSmart, 30)
-        
-        if(!bReadOnly)
-            this.Start()
     }
-    
+    FormatRow2()
+    {
+        this.FORMAT_ROW = "{\
+            Version:byte,\
+            ShortName:str12,\
+            Name:str40,\
+            Description:str,\
+            CentName:str12,\
+            Fixed:byte,\
+            Reserve:arr20,\
+            TokenGenerate:byte,\
+            ISIN:str12,\
+            Zip:byte,\
+            BlockNum:uint,\
+            TrNum:uint16,\
+            IconBlockNum:uint,\
+            IconTrNum:uint16,\
+            Account:uint,\
+            AccountLength:byte,\
+            Category1:byte,\
+            Category2:byte,\
+            Category3:byte,\
+            Owner:uint,\
+            CrossMsgConfirms:uint32,\
+            StateFormat:str,\
+            Code:str,\
+            HTML:str,\
+            HTMLBlockNum:uint,\
+            HTMLTrNum:uint16,\
+            SumHash:hash,\
+            }"
+
+        this.ROW_SIZE = 1 << 16;//65536
+    }
+
     Name()
     {
         return "Smart";
@@ -297,7 +349,7 @@ class SmartApp extends require("./smart-tr")
             PrevNum = Item.Num - 1
         
         Item.SumHash = []
-        var Buf = BufLib.GetBufferFromObject(Item, this.FORMAT_ROW, 20000, {});
+        var Buf = BufLib.GetBufferFromObject(Item, this.FORMAT_ROW, 66000, {});
         var Hash = sha3(Buf);
         
         if(PrevNum < 0)

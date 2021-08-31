@@ -49,17 +49,17 @@ class SmartTR extends require("./smart-scroll")
         
         var Price;
         if(TR.TokenGenerate)
-            Price = PRICE_DAO(BlockNum).NewTokenSmart
+            Price = PRICE_DAO(BlockNum).NewTokenSmart;
         else
-            Price = PRICE_DAO(BlockNum).NewSmart
-        Price += AddAccount * PRICE_DAO(BlockNum).NewAccount
+            Price = PRICE_DAO(BlockNum).NewSmart;
+        Price += AddAccount * PRICE_DAO(BlockNum).NewAccount;
         
         if(!(ContextFrom && ContextFrom.To.length === 1 && ContextFrom.To[0].ID === 0 && ContextFrom.To[0].SumCOIN >= Price))
         {
             return "No money in the transaction";
         }
         
-        ContextFrom.ToID = ContextFrom.To[0].ID
+        ContextFrom.ToID = ContextFrom.To[0].ID;
         var Smart = TR;
         Smart.Version = 0
         Smart.Zip = 0

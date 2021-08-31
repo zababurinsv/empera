@@ -70,7 +70,7 @@ function SendUserEvent(Obj,Mode,Smart,BlockNum,TrNum)
 
 
     if(CurTrackItem && typeof Obj === "string")
-        SendTrack(1, Obj, 2, 1);
+        SendTrack(BlockNum,TrNum,1, Obj, 2, 1);
     if(global.DebugEvent)
         DebugEvent(Obj);
 
@@ -103,10 +103,10 @@ function SendTrackResult(Block,TxNum,Body,SetResult,Result)
             ResultStr = Result;
     }
     
-    SendTrack(SetResult, ResultStr, SetResult ? 1 :  - 1);
+    SendTrack(Block.BlockNum,TxNum,SetResult, ResultStr, SetResult ? 1 :  - 1);
 }
 
-function SendTrack(Result,Str,bFinal,bEvent)
+function SendTrack(BlockNum,TrNum,Result,Str,bFinal,bEvent)
 {
     //console.log("CurTrackItem:"+CurTrackItem,"Str="+Str)
     //console.log(Result,Str);
@@ -118,6 +118,9 @@ function SendTrack(Result,Str,bFinal,bEvent)
     CurTrackItem.bFinal = bFinal;
     CurTrackItem.Result = Result;
     CurTrackItem.bEvent = bEvent;
+    CurTrackItem.BlockNum = BlockNum;
+    CurTrackItem.TrNum = TrNum;
+
 
     var msg=CopyObjKeys({},CurTrackItem);
     delete msg.F;

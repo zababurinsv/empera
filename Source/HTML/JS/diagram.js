@@ -21,8 +21,10 @@ function DrawDiagram(Item)
 {
     if(Item.Delete)
         return;
-
     DiagramMapId[Item.id] = Item;
+
+    if(Item.F1)//additional presetup
+        Item.F1(Item);
 
     var arr = Item.arr;
     if(!arr)
@@ -386,9 +388,12 @@ function DrawDiagram(Item)
         ctx.stroke();
         ctx.lineWidth = 0.5;
         FillTextAvg(ctx, x, y, Str);
-
     }
+
+    if(Item.F2)//additional draw process
+        Item.F2(Item,ctx);
 }
+
 function FillTextAvg(context,x,y,Str)
 {
     Str=String(Str).trim();

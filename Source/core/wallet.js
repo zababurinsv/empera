@@ -309,6 +309,7 @@ class CWalletApp
         var PrivKey = this.GetPrivateKey(Num);
         if(!PrivKey)
             return ZeroStr64;
+
         var sigObj = secp256k1.sign(Buffer.from(Hash), Buffer.from(PrivKey));
         return GetHexFromArr(sigObj.signature);
     }

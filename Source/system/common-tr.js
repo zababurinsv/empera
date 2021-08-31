@@ -28,9 +28,10 @@ global.REGISTER_TR_DB = function (DB,Num)
     
     if(ListTRDB[Num])
         throw "Not unique Num=" + Num;
+    //console.log("Num="+Num)
     
     ListTRDB[Num] = DB;
-}
+};
 
 function BeginTransactionDB(Name)
 {

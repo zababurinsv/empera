@@ -187,4 +187,4 @@ global.REGISTER_SYS_DAPP = function (App,Type)
     }
     
     DAppByType[Type] = App;
-}
+};

@@ -351,7 +351,7 @@ function CheckInstall()
 {
     ToLog("Run:CheckInstall");
 }
-function CreateNewAccount(Currency,Name,PubKey)
+function CreateNewAccount(Currency,Name,PubKey,F,Context,Confirm)
 {
     ToLogDebug("Run:CreateNewAccount");
     if(!Name)
@@ -359,6 +359,14 @@ function CreateNewAccount(Currency,Name,PubKey)
     if(PubKey===undefined)
         PubKey=1;
     GetNewAccount(VM_ACCOUNTS.length, Name, 0, glSmart, Currency, PubKey);
+    if(F)
+    {
+        var Tx={result:VM_ACCOUNTS.length-1};
+        setTimeout(function ()
+        {
+            F(0, Tx, [100, 0, 0, 0, 0], "Create ok", Context);
+        },1000);
+    }
 }
 function ReloadDapp()
 {
@@ -391,12 +399,14 @@ function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F
     var BlockNum = Block.BlockNum;
     ToLogDebug("" + Block.BlockNum + ". CallMethod " + MethodName + " " + ToNum + "<-" + FromNum);
     
-    var Result,Err=0;
+    var Result,Err=0,Text;
     try
     {
         BEGINTRANSACTION(1);
         Result = RunSmartMethod(Block, Data, VM_VALUE.Smart, Account, BlockNum, Block.TrNum, PayContext, MethodName, Params, ParamsArr,
         1, StrCode);
+        Text="Sent to virtual chain";
+        Tx.Result=1;
     }
     catch(e)
     {
@@ -407,6 +417,7 @@ function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F
         Data.MethodName = undefined;
 
         Err=String(e);
+        Text=Err;
         SendMessageError(Err);
         console.error(e);
     }
@@ -421,7 +432,12 @@ function SendCallMethod(ToNum,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F
     }
 
     if(F)
-        F(Err,Tx,[135,0,0,0,0],"Sent to virtual chain",Context);
+    {
+        setTimeout(function ()
+        {
+            F(Err, Tx, [135, 0, 0, 0, 0], Text, Context);
+        },1000);
+    }
 
 
     return Result;

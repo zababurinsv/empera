@@ -72,6 +72,12 @@ function RunOnUpdate()
                 }
             }
         }
+
+        if(CurNum < 2566)
+        {
+            //UpdateSmartDB();
+        }
+
         ToLog("UPDATER Finish");
     }
 }
@@ -162,4 +168,18 @@ function CheckActDB(Name)
         Num++;
         Num % 100000 === 0 && ToLog(Name + ": Check " + Num);
     }
+}
+
+function UpdateSmartDB()
+{
+    for(var Num=0;Num <= SMARTS.GetMaxNum();Num++)
+    {
+        var Data = SMARTS.ReadSmart(Num);
+        if(Data)
+        {
+           console.log(Data.Name);
+        }
+    }
+
+    process.exit(0);
 }
