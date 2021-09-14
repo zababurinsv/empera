@@ -40,7 +40,7 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 * GetBufferFromObject(Value,Format) - getting byte buffer from object by format string (format spec string and example see below)
 * fromCodePoint(Num) - returns a string character by code, it is standard JS String method: String.fromCodePoint with only one parameter   
 
-#### format spec string
+#### Format spec string
 
 The format  should contain a string of JSON type like key:"type”. The following designations are allowed as a type:
 ```text
