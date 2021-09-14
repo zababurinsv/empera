@@ -352,6 +352,8 @@ function DoCommandNew(request,response,Type,Path,Params)
     var F = Caller[Method];
     if(F)
     {
+        //console.log(Method,ArrPath);
+
         response.writeHead(200, {'Content-Type':'text/plain', 'Access-Control-Allow-Origin':"*"});
         
         if(!global.USE_API_V1 && !APIv2)
@@ -597,7 +599,7 @@ setInterval(function ()
     if(MaxNumBlockDB > Count)
     {
         var StartNum = MaxNumBlockDB - Count + 1;
-        NodeBlockChain = SERVER.BlockChainToBuf(StartNum, StartNum, MaxNumBlockDB);
+        global.NodeBlockChain = SERVER.BlockChainToBuf(StartNum, StartNum, MaxNumBlockDB);
     }
 }
 , 700);
@@ -646,4 +648,5 @@ global.WebApi1.GetWork = global.HostingCaller.GetWork;
 global.WebApi1.SubmitWork = global.HostingCaller.SubmitWork;
 global.WebApi1.SubmitHashrate = global.HostingCaller.SubmitHashrate;
 
-
+global.WebApi1.SendHexTx = global.HostingCaller.SendHexTx;
+global.WebApi1.GetFormatTx = global.HostingCaller.GetFormatTx;

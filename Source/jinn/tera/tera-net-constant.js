@@ -144,6 +144,12 @@ function Init(Engine)
         if(JINN_NET_CONSTANT.RUN_RESET && (JINN_NET_CONSTANT.NetConstStartNum + 1) >= Engine.CurrentBlockNum)
         {
             
+            if(JINN_NET_CONSTANT.RUN_RESET === 5)
+            {
+                ToLog("****REWRITE_DAPP_TRANSACTIONS*****", 2);
+                if(!global.DEV_MODE)
+                    REWRITE_DAPP_TRANSACTIONS(5000);
+            }
             if(JINN_NET_CONSTANT.RUN_RESET === 10)
             {
                 ToLog("****ClearCommonStat*****", 2);

@@ -336,9 +336,9 @@ GET
 http://127.0.0.1/api/v1/GetHistoryTransactions?AccountID=190480
 ```
 
-## SendTransactionHex
+## SendHexTx
 
-11)**/api/v1/SendTransactionHex**  - The transaction
+11)**/api/v1/SendHexTx**  - The transaction
 
 #### Params:
 * Hex - a hexadecimal string with the contents of the transaction
@@ -359,9 +359,9 @@ If this method is difficult for you, it is recommended to use API2, which is ver
 
 Example:
 ```js
-http://127.0.0.1/api/v1/SendTransactionHex
+http://127.0.0.1/api/v1/SendHexTx
 {
-    "Hex":"0504007465787416006170706C69636174696F6E2F6A6176617363726970740000000000000000000006002F2F74657374",
+    "Hex":"0504007465787416006170706C69636174696F6E2F6A617661736372697074000000000000000000000600303132333435",
     "Confirm":1
 }
 ```

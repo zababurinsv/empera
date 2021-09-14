@@ -12,6 +12,8 @@
 
     <script type="text/javascript" src="./JS/coinlib.js"></script>
     <script type="text/javascript" src="./JS/client.js"></script>
+    <script type="text/javascript" src="./JS/client-promise.js"></script>
+    <script type="text/javascript" src="./JS/client-tokens.js"></script>
 
     <script>
         var AccountID;
@@ -101,23 +103,29 @@
             }
 
             document.title="Account: "+AccountID;
-            GetData("GetHistoryTransactions", Params, function (Data)
+            GetData("GetHistoryTransactions", Params, async function (Data)
             {
                 if(!Data || !Data.History)
                     return;
+
+                await CheckNetworkID(Data);
+
                 $("idName").innerText=Data.Name;
-                $("idBalanceSum").innerText="Balance: "+STRING_FROM_COIN(Data.Value)+" "+CurrencyName(Data.Currency);
+                $("idBalanceSum").innerText="Balance: "+STRING_FROM_COIN(Data.Value)+" "+await ACurrencyName(Data.Currency);
                 MaxBlockNum=Data.MaxBlockNum;
                 window.FIRST_TIME_BLOCK=Data.FIRST_TIME_BLOCK;
                 window.UPDATE_CODE_JINN=Data.UPDATE_CODE_JINN;
                 window.CONSENSUS_PERIOD_TIME=Data.CONSENSUS_PERIOD_TIME;
+
+
                 var Item;
                 var arr=Data.History;
                 for(var i=0;i<arr.length;i++)
                 {
                     Item=arr[i];
                     Item.Num=Item.Pos;
-                    Item.Currency=Data.Currency;
+                    if(!Item.Currency)
+                        Item.Currency=Data.Currency;
                     Item.Value={SumCOIN:Item.SumCOIN,SumCENT:Item.SumCENT};
 
                 }
@@ -125,7 +133,7 @@
                 {
                     ArrPos[CurPage]={First:arr[0].Pos,NextPos:Item.NextPos};
                 }
-                SetGridData(Data.History,"grid_history","idTotalSumH",1);
+                ASetGridData(Data.History,"grid_history","idTotalSumH",1,Data.Currency);
             });
 
         }
@@ -298,7 +306,7 @@
                             <th id="(GetCorrID(Item,'-'))" class="num">To</th>
                             <th id="(escapeHtml(DateFromBlock(Item.BlockNum,1)))" class="date">Date</th>
                             <th id="SUM_TO_STRING(Item)" class="smallbold sum">Amount</th>
-                            <th id="CurrencyNameFromItem(Item)" class="cur">Cur</th>
+                            <th id="ARetHistoryCurrency(Item)" class="cur">Cur</th>
                             <th id="GetStr(Item.Description)" class="desc">Description</th>
                             <th id="ConfirmationFromBlock(Item.BlockNum)" class="num">Confirm</th>
                             <th id="(RetOpenBlock(Item.BlockNum,1))" class="num">Block</th>

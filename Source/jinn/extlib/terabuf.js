@@ -6,34 +6,6 @@
  * Telegram:  https://t.me/progr76
 */
 
-/*
- usage:
- require("./terabuf.js");
- var Data={some:123,data:345};
- var format={some:"uint",data:"uint32"};
- var wrk={};
- var Buf=SerializeLib.GetBufferFromObject(Data,format,wrk);
- var Data2=SerializeLib.GetObjectFromBuffer(Buf,format,wrk);
-
-
- The format  should contain a string of JSON type like key:"type”. The following designations are allowed as a type:
-
- {} - object
- [] - array
- uint - 6-byte unsigned integer
- uint32 - unsigned integer 4 bytes long
- uint16 - unsigned integer 2 bytes long
- byte - unsigned integer 1 bytes long
- str - the variable-length string
- strxx - string with fixed length of xx long
- arrxx - byte array with fixed-length of xx long
- data - byte array
-
- Example:
- {Name:"str10", Value:"uint", PubKey:"arr33"}
- {Type:"byte",Account:"uint",SumCOIN:"uint",SumCENT:"uint32", arr:["uint"]}
-
-*/
 'use strict';
 var root = typeof global === "object" ? global : window;
 var lib = {};
@@ -253,7 +225,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
         }
     }
 }
-function Read(buf,StringFormat,ParamValue,WorkStruct)
+function Read(buf,StringFormat,ParamValue,WorkStruct,bNewVer)
 {
     var ret;
     if(typeof StringFormat === "number")
@@ -329,6 +301,8 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                     {
                         ret = 0;
                     }
+                    if(!ret && bNewVer)
+                        ret = 0;
                     buf.len += 8;
                     break;
                 }
@@ -440,11 +414,11 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                                 if(bIndexArr)
                                 {
                                     var index = Read(buf, "uint32");
-                                    ret[index] = Read(buf, formatNext, undefined, WorkStruct);
+                                    ret[index] = Read(buf, formatNext, undefined, WorkStruct, bNewVer);
                                 }
                                 else
                                 {
-                                    ret[i] = Read(buf, formatNext, undefined, WorkStruct);
+                                    ret[i] = Read(buf, formatNext, undefined, WorkStruct, bNewVer);
                                 }
                             }
                             else
@@ -464,7 +438,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                             for(var i = 0; i < attrs.length; i++)
                             {
                                 var type = attrs[i];
-                                ret[type.Key] = Read(buf, type.Value, undefined, WorkStruct);
+                                ret[type.Key] = Read(buf, type.Value, undefined, WorkStruct, bNewVer);
                             }
                         }
                         else
@@ -476,7 +450,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
     }
     return ret;
 }
-function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
+function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl,bOldVer)
 {
     var Arr = buffer;
     Arr.len = 0;
@@ -486,7 +460,7 @@ function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
             WorkStruct.FromObject = GetFormatFromObject(format);
         format = WorkStruct.FromObject;
     }
-    var Data = Read(Arr, format, undefined, WorkStruct);
+    var Data = Read(Arr, format, undefined, WorkStruct, !bOldVer);
     if(root.DEV_MODE)
         if(!bNoSizeControl && glError && Arr.len > Arr.length)
         {

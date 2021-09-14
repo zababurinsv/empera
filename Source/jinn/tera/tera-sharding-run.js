@@ -20,6 +20,7 @@ function Init(Engine)
     
     Engine.CanCreateNewBlock = function (BlockNumNew)
     {
+        
         if(!global.USE_MINING_SHARDS)
             return 1;
         if(Engine.LastNumCreateNewBlock !== Engine.CurrentBlockNum)

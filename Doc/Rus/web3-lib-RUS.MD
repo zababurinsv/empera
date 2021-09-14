@@ -318,5 +318,5 @@ web3.tera.ComputeSecret({PubKey:"0310DC3B2CD4F88BC0A420E22250A0370E676B48E25B043
 
 Общий пример внешней html-страницы с доступом к кошельку terawallet.org:
 
-https://gitlab.com/terafoundation/dapps/-/blob/master/JSWallet/WWWPage.html
+https://gitlab.com/terafoundation/dapps/-/blob/master/Source/JSWallet/WWWPage.html
 

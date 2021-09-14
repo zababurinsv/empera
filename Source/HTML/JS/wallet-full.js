@@ -28,7 +28,7 @@ var SERVER_PORT;
 var CurTabName;
 
 var TabArr = [{name:"TabAccounts", log:1}, {name:"TabSend", log:1}, {name:"TabDapps"}, {name:"TabSharding"}, {name:"TabExplorer"}];
-var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idERCMode","idSelStyle", "idViewAccountNum", "idViewBlockNum", "idViewJournNum",
+var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idSelStyle", "idViewAccountNum", "idViewBlockNum", "idViewJournNum",
 "idViewCrossOutNum", "idViewCrossInNum", "idViewHashNum", "idViewDappNum", "idViewShardNum", "idRunText", "idViewAccountFilter",
 "idBlockCount", "idBlockCount2", "idWN", "idCurTabName"];
 
@@ -184,7 +184,7 @@ function CreateAccount(bAddToPay)
         }
     }
     var Smart = ParseNum($("idSmart").value);
-    var Currency = GetCurrencyByName($("idCurrency").value);
+    var Currency = FindCurrencyNum($("idCurrency").value);
     
     var WN = ParseNum($("idWN").value);
     
@@ -488,8 +488,9 @@ function SetConfigData(Data)
     SetBlockChainConstant(Data);
     MaxBlockNum = GetCurrentBlockNumByTime();
     
-    window.NETWORK_NAME = CONFIG_DATA.NETWORK;
-    window.SHARD_NAME = CONFIG_DATA.SHARD_NAME;
+    // window.NETWORK_NAME = CONFIG_DATA.NETWORK;
+    // window.SHARD_NAME = CONFIG_DATA.SHARD_NAME;
+    CheckNetworkID(CONFIG_DATA);
     if(!WasInitCurrency)
     {
         
@@ -1086,14 +1087,6 @@ function OnEnterPas2(e)
     }
 }
 
-function SetAllSum()
-{
-    var Item = MapAccounts[$("idAccount").value];
-    if(Item)
-    {
-        $("idSumSend").value = FLOAT_FROM_COIN(Item.Value);
-    }
-}
 
 function OpenOwnWebWallet()
 {

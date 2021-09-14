@@ -30,6 +30,7 @@ body
     margin: 2px;
 }
 
+
 .tabheader2 th
 {
     margin: 0px;
@@ -60,6 +61,12 @@ body
     background2: linear-gradient(270deg, #3D4C61 0%, #445368 100%);
 
 }
+
+.tabheader2
+{
+    margin: 0 2px 0 0;
+}
+
 .layer
 {
     margin: 3px;
@@ -271,8 +278,9 @@ input,select
     top:5px;
     left: 300px;
     width: 80%;
+    max-width: 650px;
     height: 20px;
-    border: 1px solid var(--color2);
+    border2: 1px solid red;
     text-align: left;
     color:var(--color3);
 }
@@ -307,8 +315,14 @@ body.univers .bt:hover[disabled]
     -webkit-box-align: end;
     -webkit-align-items: flex-end;
     -ms-flex-align: end;
-    align-items: flex-end; }
+    align-items: flex-end;
 
+}
+
+.row-send {
+    margin: 4px 2px;
+    line-height:24px;
+}
 
 .resizable {
     resize: horizontal;
@@ -316,9 +330,15 @@ body.univers .bt:hover[disabled]
     border: 1px solid black;
 }
 
+.page_property {
+    float: left;
+    width: 85%;
+    height:100%;
+}
+
 .t-holder2
 {
-    height: 220px;
+    height: 260px;
 }
 
 .dsmall
@@ -331,6 +351,10 @@ body.univers .bt:hover[disabled]
 .dsmall2
 {
     width: 40px;
+}
+#idTokenID
+{
+    width: 90px;
 }
 #idSendDesc
 {
@@ -392,3 +416,12 @@ textarea:hover, select:hover
     border-color: #576b83;
 }
 
+
+#idCheckShortName,#idCheckCentName
+{
+    display: none;
+    color: #a60f0e;
+    font-family: sans-serif;
+    font-size: 14px;
+    line-height: 22px;
+}

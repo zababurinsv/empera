@@ -91,6 +91,8 @@ result - returns the id (number) of the created account
 * FromID - the account number of the sender
 * FromPrivKey - sender private key in hex format
 * ToID - the account number of the recipient
+* Currency - currency number (only for currencies created by smart contracts starting from version 2)
+* TokenID - token ID (string, for support NFT, only for currencies created by smart contracts starting from version 2)
 * Amount - sum, floating-point number, or object format {SumCOIN,SumCENT}
 * Description - description of payment order (optional)
 * Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
@@ -119,131 +121,6 @@ return:
 }
 ```
 
-example2 (create new account):
-```js
-http://127.0.0.1/api/v2/Send
-{
-    "FromID": 190059,
-    "FromPrivKey": "A2D45610FE8AC931F32480BFE3E78D26E45B0A4F88045D6518263DA12FA9C033",
-    "ToID":"0240EDF5ECB25D886FD58DB92A53914FAC975078C1C2EDD1AC292B70C7BC13461F",
-    "Amount":10,
-    "Description":"New account",
-    "Confirm":5
-   
-}
-```
-
-return:
-```js
-{
-    "result": 190551,
-    "text": "Add to blockchain",
-    "TxID": "9DD4869C4515B2A3340E887A2F010000",
-    "BlockNum": 19888776
-}
-```
-
-result - returns the id (number) of the created account
-
-
-## SendToken
-
-3.2)**/api/v2/SendToken**  - sending coins from one account to another (you need to specify the private key of the sender's account)
-#### Parameters:
-* FromID - the account number of the sender
-* FromPrivKey - sender private key in hex format
-* ToID - the account number of the recipient
-* Token - tokens name (string)
-* TokenID - tokens ID (string)
-* Amount - count of tokens
-* Description - description of payment order (optional)
-* Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
-
-
-example:
-```js
-http://127.0.0.1/api/v2/SendToken
-{
-    "FromID": 1082,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "ToID":1102,
-    "Amount":1,
-    "Token":"TERA-NFT",
-    "TokenID":"9041840001",
-    "Description":"test1",
-    "Confirm":1
-}
-```
-
-## TokenMint
-
-3.3)**/api/v2/SendTokenMint**  - issue of tokens on the sender's account
-#### Параметры:
-* FromID - account number of the sender (owner token/gallery)
-* FromPrivKey - sender private key in hex format
-* ToID - the account number of the recipient
-* Token - tokens name (string)
-* TokenID - string ID of an existing token or struct of description new ID
-* Amount - count of tokens
-* Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
-
-
-#### Note:
-- The token parameters are stored in the blockchain in an immutable form, so you can use the following API call to read them:
-/nft/{id} Example: https://terawallet.org/nft/72496009000
-- In order to become the owner of the gallery you need to use Dapp 143.Token Factory (https://terawallet.org/dapp/143)
-
-example 1 (creating a new token ID)
-```js
-http://127.0.0.1/api/v2/SendTokenMint
-{
-    "FromID": 314,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "ToID":1082,
-    "Amount":5,
-    "Token":"TEST-2",
-    "TokenID":{"image":"https://terafoundation.org/files/TeraCoin.jpg","name":"Tera1","description":"First tera NFT"},
-    "Confirm":1
-}
-```
-
-example 2 (additional issue of previously created ID tokens)
-```js
-http://127.0.0.1/api/v2/SendTokenMint
-{
-    "FromID": 314,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "ToID":1082,
-    "Amount":5,
-    "Token":"TEST-2",
-    "TokenID":"9641183000",
-    "Confirm":1
-}
-```
-
-## TokenBurn
-
-3.4)**/api/v2/SendTokenBurn**  - burning tokens on the sender's account
-#### Parameters:
-* FromID - the account number of the sender
-* FromPrivKey - sender private key in hex format
-* Token - tokens name (string)
-* TokenID - tokens ID (string)
-* Amount - count of tokens
-* Confirm - wait XXX confirmation of blocks in blockchain, the default value is 8
-
-example:
-```js
-http://127.0.0.1/api/v2/SendTokenBurn
-{
-    "FromID": 1082,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "Amount":1,
-    "Token":"TERA-NFT",
-    "TokenID":"9041840001",
-    "Confirm":1
-}
-```
 ## Call DApp method
 
 3.5)**/api/v2/SendCall**  - sending a transaction with a smart contract method call
@@ -275,29 +152,26 @@ http://127.0.0.1/api/v2/SendCall
 4)**/api/v2/GetBalance**  - get account balance
 #### Parameters:
 * AccountID - account number
+* GetArr - if 1, the Arr response field returns an array of all coins and tokens stored on the account
 
-#### additional parameters for working with ERC / NFT tokens
-* GetTokens - if 1, then the Tokens response field returns an array of all tokens stored on the account
-* GetTokenAmount - if 1, the TokenAmount response field returns the number of tokens specified by the Token and TokenID parameters
-* Token - token name (string)
-* TokenID - token ID (string)
  
- 
-example1:
+example:
 ```js
 http://127.0.0.1/api/v2/GetBalance
 {
-    "AccountID": 9
-}
+    "AccountID": 10
+ }
 ```
+
 return:
+
 ```js
 {
     "result": 1,
-    "SumCOIN": 5589146,
-    "SumCENT": 555765670,
+    "SumCOIN": 428,
+    "SumCENT": 0,
     "Currency": 0,
-    "PubKey": "02769165A6F9950D023A415EE668B80BB96B5C9AE2035D97BDFB44F356175A44FF"
+    "PubKey": "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3"
 }
 ```
 
@@ -305,46 +179,52 @@ example2:
 ```js
 http://127.0.0.1/api/v2/GetBalance
 {
-    "AccountID": 1082,
-    "GetTokens": 1,
-    "GetTokenAmount": 1,
-    "Token": "TERA-NFT",
-    "TokenID": "8922109000"
-}
+    "AccountID": 10,
+    "GetArr": 1
+ }
 ```
 return:
 ```js
 {
     "result": 1,
-    "SumCOIN": 101878,
-    "SumCENT": 0,
-    "Currency": 0,
-    "PubKey": "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3",
-    "Tokens": {
-        "MaxCount": 10,
-        "Arr": [
-            {
-                "Token": "TERA-NFT",
-                "Arr": [
-                    {
-                        "ID": "9041840001",
-                        "SumCOIN": 7,
-                        "SumCENT": 0,
-                        "Flag": 0
-                    },
-                    {
-                        "ID": "8922109000",
-                        "SumCOIN": 1,
-                        "SumCENT": 0,
-                        "Flag": 0
-                    }
-                ],
-                "Flag": 0
-            }
-        ],
-        "Flag": 0
-    },
-    "TokenAmount": 1
+    "Arr": [
+        {
+            "Currency": 0,
+            "Token": "TERA",
+            "Arr": [
+                {
+                    "ID": "",
+                    "SumCOIN": 428,
+                    "SumCENT": 0,
+                    "IMG": "/PIC/Tera.svg"
+                }
+            ]
+        },
+        {
+            "Currency": 10,
+            "Token": "TOKEN",
+            "Arr": [
+                {
+                    "SumCOIN": 290,
+                    "SumCENT": 0,
+                    "ID": "",
+                    "IMG": "/file/8198/0"
+                }
+            ]
+        },
+        {
+            "Currency": 15,
+            "Token": "TOKEN",
+            "Arr": [
+                {
+                    "SumCOIN": 145,
+                    "SumCENT": 0,
+                    "ID": "",
+                    "IMG": "/file/8198/0"
+                }
+            ]
+        }
+    ]
 }
 ```
 

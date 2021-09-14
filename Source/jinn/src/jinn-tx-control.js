@@ -88,9 +88,9 @@ function InitClass(Engine)
     };
     Engine.IsValidateTx = function (Tx,StrCheckName,BlockNum,IsBlockTx)
     {
+        
         if(!Tx || !Tx.IsTx || !Tx.body || Tx.body.length < 8 || Tx.body.length > JINN_CONST.MAX_TX_SIZE)
             return 0;
-        
         var Result = CheckTx(StrCheckName, Tx, BlockNum, 1);
         if(!Result)
             JINN_STAT.NoValidateTx++;

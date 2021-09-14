@@ -9,6 +9,8 @@
 
     <script type="text/javascript" src="/HTML/JS/coinlib.js"></script>
     <script type="text/javascript" src="../HTML/JS/client.js"></script>
+    <script type="text/javascript" src="../HTML/JS/client-promise.js"></script>
+    <script type="text/javascript" src="../HTML/JS/client-tokens.js"></script>
     <script type="text/javascript" src="../HTML/JS/diagram.js"></script>
 
     <script>
@@ -24,10 +26,12 @@
         {
             window.MainServer=undefined;
 
-            GetData("GetCurrentInfo",{Diagram:IsVisibleBlock("idStatBlock")?1:0}, function (Data)
+            GetData("GetCurrentInfo",{Diagram:IsVisibleBlock("idStatBlock")?1:0}, async function (Data)
             {
                 if(!Data)
                     return;
+
+                await CheckNetworkID(Data);
 
                 SetConfigData(Data,bFirst);
 
@@ -177,7 +181,7 @@
                             <tr>
                                 <th id="(RetHistoryAccount(Item))" class="num">ID</th>
                                 <th id="SUM_TO_STRING(Item.Value)" class="sum">Amount</th>
-                                <th id="CurrencyNameItem(Item)" class="cur">Cur</th>
+                                <th id="ACurrencyNameItem(Item)" class="cur">Cur</th>
                                 <th id="Item.Name" class="accname">Name</th>
                                 <th id="Item.PubKeyStr" class="hash">PubKey</th>
                                 <th id="Item.Value.OperationID" class="minwidth">Operation</th>

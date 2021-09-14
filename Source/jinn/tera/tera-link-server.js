@@ -39,6 +39,8 @@ function Init(Engine)
     
     SERVER.AddTransactionInner = function (Tx0)
     {
+        Engine.OnAddTransactionInner(Tx0);
+        
         if(!global.USE_MINING && !SERVER.GetHotNodesCount())
             return TX_RESULT_NOCONNECT;
         var Body = Tx0.body;

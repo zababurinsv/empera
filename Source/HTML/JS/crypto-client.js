@@ -133,7 +133,9 @@ window.SetBlockChainConstant = function (Data)
 {
     window.SERVER_VERSION = Data.VersionNum;
     
-    window.NETWORK_NAME = Data.NETWORK;
+    // window.NETWORK_NAME = Data.NETWORK;
+    CheckNetworkID(Data);
+
     if(window.NETWORK_NAME === "LOCAL")
         window.LOCAL_RUN = 1;
     else

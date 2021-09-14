@@ -10,7 +10,7 @@
 
 
 
-window.CLIENT_VERSION = 48;
+window.CLIENT_VERSION = 51;
 window.SERVER_VERSION = 0;
 window.SHARD_NAME = "TERA";
 
@@ -18,6 +18,8 @@ window.SUM_PRECISION = 9;
 
 window.RUN_CLIENT = 1;
 window.RUN_SERVER = 0;
+
+var MapCategory = {};
 
 var root = typeof global==="object"?global:window;
 
@@ -40,7 +42,7 @@ function SetStatus(Str)
 }
 function SetError(Str)
 {
-    console.log(Str);
+    console.log("%c" + Str, "color:red;font-weight:bold;");
 }
 
 
@@ -206,7 +208,10 @@ else
             else
             {
                 if(IsLocalClient())
+                {
+                    //console.log("Local client for "+Method);
                     return;
+                }
             }
         }
         
@@ -579,16 +584,15 @@ function UnVisibleChilds(parent)
     }
 }
 
-function ViewGrid(APIName,Params,nameid,bClear,TotalSum,F)
+async function ViewGrid(APIName,Params,nameid,bClear,TotalSum,F)
 {
-    GetData(APIName, Params, function (Data)
-    {
-        if(!Data || !Data.result)
-            return;
-        SetGridData(Data.arr, nameid, TotalSum, bClear);
-        if(F)
-            F(APIName, Params, Data);
-    });
+    var Data=await AGetData(APIName, Params);
+    if(!Data || !Data.result)
+        return;
+
+    await ASetGridData(Data.arr, nameid, TotalSum, bClear,0);
+    if(F)
+        F(APIName, Params, Data);
 }
 
 function CheckNewSearch(Def)
@@ -1127,7 +1131,7 @@ function RetIconPath(Item,bCurrency)
 {
     if(bCurrency)
     {
-        var ItemCurrency = MapCodeCurrency[MapCurrency[Item.Num]];
+        var ItemCurrency = GetItemCurrencyByNum(Item.Num);
         if(ItemCurrency)
         {
             if(ItemCurrency.PathIcon)
@@ -1302,8 +1306,8 @@ function OpenHistoryPage(Num)
 function RetBaseAccount(Item)
 {
     var Str = RetHistoryAccount(Item, "Account");
-    if(Item.AccountLength > 1)
-        Str += "-" + (Item.Account + Item.AccountLength - 1);
+    // if(Item.AccountLength > 1)
+    //     Str += "-" + (Item.Account + Item.AccountLength - 1);
     return Str;
 }
 
@@ -1502,305 +1506,61 @@ function SaveValuesByArr(Arr,DopStr)
 }
 
 
-var bWasCodeSys = 0;
-var MapCurrency = {};
-var MapCodeCurrency = {};
-
-function InitMapCurrency()
+function InitMapCategory()
 {
-    window.NETWORK_ID = window.NETWORK_NAME + "." + window.SHARD_NAME;
-    
-    var AccCoinList = 0;
-    
-    MapCurrency = {};
-    AddCurrency(0, window.SHARD_NAME, "./PIC/T.svg", 1);
-    
-    if(window.NETWORK_ID === "MAIN-JINN.TERA")
-    {
-        AddCurrency(16, "BTC", "./PIC/B.svg", 1);
-        AddCurrency(110, "USD", undefined, 1);
-        AddCurrency(111, "DAO", undefined, 1);
-        
-        AccCoinList = 226857;
-    }
-    else
-    if(window.NETWORK_ID === "TEST-JINN.TEST")
-    {
-        AddCurrency(9, "BTC", "./PIC/B.svg", 1);
-        AddCurrency(10, "USD", undefined, 1);
+    MapCategory[0] = "-";
+    MapCategory[1] = "Art & Music";
+    MapCategory[2] = "Big Data & AI";
+    MapCategory[3] = "Business";
+    MapCategory[4] = "Commerce & Advertising";
+    MapCategory[5] = "Communications";
+    MapCategory[6] = "Content Management";
+    MapCategory[7] = "Crowdfunding";
+    MapCategory[8] = "Data Storage";
+    MapCategory[9] = "Drugs & Healthcare";
+    MapCategory[10] = "Education";
+    MapCategory[11] = "Energy & Utilities";
+    MapCategory[12] = "Events & Entertainment";
+    MapCategory[13] = "eСommerce";
+    MapCategory[14] = "Finance";
+    MapCategory[15] = "Gambling & Betting";
+    MapCategory[16] = "Gaming & VR";
+    MapCategory[17] = "Healthcare";
+    MapCategory[18] = "Identity & Reputation";
+    MapCategory[19] = "Industry";
+    MapCategory[20] = "Infrastructure";
+    MapCategory[21] = "Investment";
+    MapCategory[22] = "Live Streaming";
+    MapCategory[23] = "Machine Learning & AI";
+    MapCategory[24] = "Marketing";
+    MapCategory[25] = "Media";
+    MapCategory[26] = "Mining";
+    MapCategory[27] = "Payments";
+    MapCategory[28] = "Platform";
+    MapCategory[29] = "Provenance & Notary";
+    MapCategory[30] = "Real Estate";
+    MapCategory[31] = "Recruitment";
+    MapCategory[32] = "Service";
+    MapCategory[33] = "Social Network";
+    MapCategory[34] = "Social project";
+    MapCategory[35] = "Supply & Logistics";
+    MapCategory[36] = "Trading & Investing";
+    MapCategory[37] = "Transport";
+    MapCategory[38] = "Travel & Tourisim";
 
-        AccCoinList = 571;
-    }
-    else
-    if(window.NETWORK_NAME === "LOCAL-JINN")
-    {
-        AddCurrency(9, "BTC", "./PIC/B.svg", 1);
-        AddCurrency(10, "USD", undefined, 1);
+    MapCategory[39] = "Bounty";
+    MapCategory[40] = "Code-library";
+    MapCategory[41] = "Development";
+    MapCategory[42] = "Exchanges";
 
-        AccCoinList = 234;
-    }
-    else
-    {
-        return;
-    }
-
-    WasAccountsDataStr = "";
-    if(!bWasCodeSys)
-    {
-        
-        if(AccCoinList)
-        {
-            StaticCall(AccCoinList, "GetList", {}, [], function (Err,Arr)
-            {
-                if(!Arr)
-                    return;
-                for(var i = 0; i < Arr.length; i++)
-                {
-                    var Item = Arr[i];
-                    var Key = NormalizeCurrencyName(Item.Name);
-                    
-                    var Item2 = AddCurrency(Item.Num, Item.Name, undefined, Item.Flag & 1);
-                    if(Item.Flag > 10)
-                    {
-                        var PathIcon = Math.floor(Item.Flag / 10);
-                        Item2.IconTrNum = PathIcon % 100;
-                        Item2.IconBlockNum = Math.floor(PathIcon / 100);
-                    }
-                }
-                WasAccountsDataStr = "";
-                FillDataList("idCurrencyList", MapCurrency);
-            });
-        }
-        
-        bWasCodeSys = 1;
-    }
-}
-function AddCurrency(Num,Name,PathIcon,System)
-{
-    var Item = {Num:Num, Name:Name, PathIcon:PathIcon, system:System};
-    MapCurrency[Num] = Name;
-    MapCodeCurrency[Name] = Item;
-    return Item;
-}
-
-function NormalizeCurrencyName(Name)
-{
-    if(!Name)
-    {
-        return;
-    }
-    const LETTER = "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
-    var Str = "";
-    for(var i = 0; i < Name.length; i++)
-    {
-        var C = Name.substr(i, 1);
-        var Index = LETTER.indexOf(C);
-        if(Index < 0)
-            continue;
-        if(i === 0 && Index < 1)
-            continue;
-        Str = Str + C;
-    }
-    
-    return Str;
-}
-
-InitMapCurrency();
-
-var MapCategory = {};
-MapCategory[0] = "-";
-MapCategory[1] = "Art & Music";
-MapCategory[2] = "Big Data & AI";
-MapCategory[3] = "Business";
-MapCategory[4] = "Commerce & Advertising";
-MapCategory[5] = "Communications";
-MapCategory[6] = "Content Management";
-MapCategory[7] = "Crowdfunding";
-MapCategory[8] = "Data Storage";
-MapCategory[9] = "Drugs & Healthcare";
-MapCategory[10] = "Education";
-MapCategory[11] = "Energy & Utilities";
-MapCategory[12] = "Events & Entertainment";
-MapCategory[13] = "eСommerce";
-MapCategory[14] = "Finance";
-MapCategory[15] = "Gambling & Betting";
-MapCategory[16] = "Gaming & VR";
-MapCategory[17] = "Healthcare";
-MapCategory[18] = "Identity & Reputation";
-MapCategory[19] = "Industry";
-MapCategory[20] = "Infrastructure";
-MapCategory[21] = "Investment";
-MapCategory[22] = "Live Streaming";
-MapCategory[23] = "Machine Learning & AI";
-MapCategory[24] = "Marketing";
-MapCategory[25] = "Media";
-MapCategory[26] = "Mining";
-MapCategory[27] = "Payments";
-MapCategory[28] = "Platform";
-MapCategory[29] = "Provenance & Notary";
-MapCategory[30] = "Real Estate";
-MapCategory[31] = "Recruitment";
-MapCategory[32] = "Service";
-MapCategory[33] = "Social Network";
-MapCategory[34] = "Social project";
-MapCategory[35] = "Supply & Logistics";
-MapCategory[36] = "Trading & Investing";
-MapCategory[37] = "Transport";
-MapCategory[38] = "Travel & Tourisim";
-
-MapCategory[39] = "Bounty";
-MapCategory[40] = "Code-library";
-MapCategory[41] = "Development";
-MapCategory[42] = "Exchanges";
-
-MapCategory[43] = "Security";
-MapCategory[44] = "Governance";
-MapCategory[45] = "Property";
-MapCategory[46] = "Insurance";
-
-function GetTokenName(Num,Name)
-{
-    if(!Name)
-        Name = "Token";
-    if(Num === undefined)
-        return "---";
-    else
-        return "" + Num + "." + escapeHtml(Name).toLowerCase();
-}
-
-function CurrencyNameItem(Item)
-{
-    var Name = MapCurrency[Item.Currency];
-    if(!Name)
-    {
-        if(Item.CurrencyObj)
-        {
-            Name = GetTokenName(Item.Currency, Item.CurrencyObj.ShortName);
-        }
-        else
-            Name = GetTokenName(Item.Currency, "");
-        
-        MapCurrency[Item.Currency] = Name;
-    }
-    if(Item.CurrencyObj && Item.CurrencyObj.TokenDescription)
-        Name += " : " + escapeHtml(Item.CurrencyObj.TokenDescription);
-    
-    return Name;
-}
-
-function CurrencyName(Num)
-{
-    var Name = MapCurrency[Num];
-    if(!Name)
-    {
-        GetData("GetDappList", {StartNum:Num, CountNum:1}, function (Data)
-        {
-            if(Data && Data.result)
-            {
-                var Smart = Data.arr[0];
-                
-                Name = GetTokenName(Smart.Num, Smart.ShortName);
-                MapCurrency[Smart.Num] = Name;
-            }
-        });
-        
-        Name = GetTokenName(Num, "");
-    }
-    return Name;
-}
-
-function CurrencyNameFromItem(Item)
-{
-    if(Item.Token)
-    {
-        return Item.Token;//+Item.ID
-    }
-    else
-    {
-        //native Tera token
-        return CurrencyName(Item.Currency);
-    }
+    MapCategory[43] = "Security";
+    MapCategory[44] = "Governance";
+    MapCategory[45] = "Property";
+    MapCategory[46] = "Insurance";
 }
 
 
-function FillCurrencyAsync(IdName,StartNum)
-{
-    
-    InitMapCurrency();
-    
-    if(!StartNum)
-        StartNum = 8;
-    
-    FillDataList(IdName, MapCurrency);
-}
 
-function FillCurrencyNext(IdName,StartNum)
-{
-    var MaxCountViewRows = 6;
-    GetData("DappSmartList", {StartNum:StartNum, CountNum:MaxCountViewRows, TokenGenerate:1}, function (Data)
-    {
-        if(Data && Data.result && Data.arr)
-        {
-            var MaxNum = 0;
-            for(var i = 0; i < Data.arr.length; i++)
-            {
-                var Smart = Data.arr[i];
-                if(!MapCurrency[Smart.Num])
-                {
-                    Name = GetTokenName(Smart.Num, Smart.ShortName);
-                    MapCurrency[Smart.Num] = Name;
-                }
-                if(Smart.Num > MaxNum)
-                    MaxNum = Smart.Num;
-            }
-            if(IdName)
-            {
-                FillDataList(IdName, MapCurrency);
-            }
-            if(Data.arr.length === MaxCountViewRows && MaxNum)
-            {
-                FillCurrencyNext(IdName, MaxNum + 1);
-            }
-        }
-    });
-}
-function FillDataList(IdName,Map)
-{
-    var dataList = $(IdName);
-    if(!dataList)
-        return;
-    
-    dataList.innerHTML = "";
-    
-    for(var key in Map)
-    {
-        var name = Map[key];
-        var Options = document.createElement('option');
-        Options.value = name;
-        var ExtItem = MapCodeCurrency[name];
-        if(ExtItem && ExtItem.system)
-            Options.label = "system";
-        dataList.appendChild(Options);
-    }
-}
-function ValidateCurrency(Element)
-{
-    var Num = GetCurrencyByName(Element.value);
-    var Name = MapCurrency[Num];
-    if(Name)
-        Element.value = Name;
-}
-function GetCurrencyByName(Value)
-{
-    Value = NormalizeCurrencyName(String(Value).toUpperCase());
-    var Item = MapCodeCurrency[Value];
-    if(Item)
-    {
-        return Item.Num;
-    }
-    
-    return parseInt(Value);
-}
 
 function FillSelect(IdName,arr,bNatural)
 {
@@ -1894,18 +1654,19 @@ function FillCategoryAndSort(IdName,arr)
 
 function AddToInvoiceList(Item)
 {
-    var arr;
-    var Str = Storage.getItem("InvoiceList");
-    if(Str)
-    {
-        arr = JSON.parse(Str);
-    }
-    else
-    {
-        arr = [];
-    }
-    
-    arr.unshift(Item);
+    // var arr;
+    // var Str = Storage.getItem("InvoiceList");
+    // if(Str)
+    // {
+    //     arr = JSON.parse(Str);
+    // }
+    // else
+    // {
+    //     arr = [];
+    // }
+    //
+    // arr.unshift(Item);
+    var arr=[Item];
     Storage.setItem("InvoiceList", JSON.stringify(arr));
 }
 
@@ -2616,3 +2377,168 @@ function IsLocalAllowed()
 }
 
 
+
+async function ASetGridData(arr,id_name,TotalSum,bClear,TotalCurency)
+{
+    var htmlTable = $(id_name);
+    if(!htmlTable)
+    {
+        console.log("Error id_name: " + id_name);
+        return;
+    }
+
+    if(bClear)
+    {
+        ClearTable(htmlTable);
+    }
+
+    if(!htmlTable.ItemsMap)
+    {
+        htmlTable.ItemsMap = {};
+        htmlTable.RowCount = 0;
+    }
+
+    var map = htmlTable.ItemsMap;
+
+    if(!glWorkNum)
+        glWorkNum=0;
+    glWorkNum++;
+    var ValueTotal = {SumCOIN:0, SumCENT:0};
+
+    var row0 = htmlTable.rows[0];
+    var row0cells = row0.cells;
+    var colcount = row0cells.length;
+
+    if(!htmlTable.ColumnArr)
+        htmlTable.ColumnArr = CompileColumnArr(row0.cells);
+    var ColumnArr = htmlTable.ColumnArr;
+
+    //create new rows
+
+    var PrevItem;
+    for(var i = 0; arr && i < arr.length; i++)
+    {
+        var Item = arr[i];
+        var ID = Item.Num;
+        htmlTable.MaxNum = Item.Num;
+
+        var row = map[ID];
+        if(!row)
+        {
+            htmlTable.RowCount++;
+
+            var NewRowIndex;
+
+            var CurRowIndex = 1;
+            if(CUR_ROW)
+                CurRowIndex = CUR_ROW.rowIndex;
+
+            if(!PrevItem && htmlTable.Arr && htmlTable.Arr.length > 0)
+            {
+                CurRowIndex = 1;
+                PrevItem = htmlTable.Arr[0];
+            }
+
+            if(CUR_ROW && PrevItem)
+            {
+                if(PrevItem.ID < Item.ID)
+                    NewRowIndex = CurRowIndex;
+                else
+                    NewRowIndex = CurRowIndex + 1;
+            }
+            else
+            {
+                NewRowIndex = -1;
+            }
+            row = htmlTable.insertRow(NewRowIndex);
+
+            map[ID] = row;
+            for(var n = 0; n < colcount; n++)
+            {
+                var ColItem = ColumnArr[n];
+                if(!ColItem)
+                    continue;
+                var cell = row.insertCell();
+                cell.className = ColItem.C;
+            }
+        }
+
+
+        CUR_ROW = row;
+        PrevItem = Item;
+        //console.log("row",row.rowIndex);
+
+    }
+
+    //print data on rows
+
+    for(var i = 0; arr && i < arr.length; i++)
+    {
+        var Item = arr[i];
+        var ID = Item.Num;
+
+        var row = map[ID];
+        row.Work = glWorkNum;
+
+        var n2 =  - 1;
+        for(var n = 0; n < colcount; n++)
+        {
+            var ColItem = ColumnArr[n];
+            if(!ColItem)
+                continue;
+            n2++;
+            var cell = row.cells[n2];
+
+            if(ColItem.H)
+            {
+                var text = "" + await ColItem.F(Item);
+                text = toStaticHTML(text.trim());
+                if(cell.innerHTML !== text)
+                    cell.innerHTML = text;
+            }
+            else
+            if(ColItem.F)
+            {
+                var text = "" + await ColItem.F(Item);
+                text.trim();
+                if(cell.innerText !== text)
+                    cell.innerText = text;
+            }
+        }
+
+         if(TotalSum && Item.Currency==TotalCurency)
+            ADD(ValueTotal, Item.Value);
+
+    }
+
+
+
+    htmlTable.Arr = arr;
+
+    for(var key in map)
+    {
+        var row = map[key];
+        if(row.Work != glWorkNum)
+        {
+            htmlTable.deleteRow(row.rowIndex);
+            delete map[key];
+        }
+    }
+
+
+    if(TotalSum)
+    {
+        var id = $(TotalSum);
+        if(id)
+        {
+            if(!ISZERO(ValueTotal))
+                id.innerText = "Total on page: " + SUM_TO_STRING(ValueTotal, TotalCurency, 0, 1);
+            else
+                id.innerText = "";
+        }
+    }
+
+}
+
+
+InitMapCategory();

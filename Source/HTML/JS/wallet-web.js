@@ -66,7 +66,7 @@ function StartWebWallet()
 }
 function OnInitWebWallet()
 {
-    if(isMobile() || !IsLocalClient())
+    if(isMobile() || !IsLocalClient() || idMainServer.value)
     {
         SystemOnly=1;
         return;//only seed nodes
@@ -124,7 +124,7 @@ function SetStatus(Str,bNoEscape)
 function SetError(Str,bNoSound)
 {
     if(Str)
-        console.log(Str);
+        console.log("%c" + Str, "color:red;font-weight:bold;");
     SetStatus("<DIV  align='left' style='color:red'><B>" + escapeHtml(Str) + "</B></DIV>", 1);
 }
 
@@ -132,6 +132,33 @@ var CountConnect = 0;
 var CountWallet = 0;
 function ConnectWebWallet()
 {
+
+    if(idMainServer.value)
+    {
+        var Str=idMainServer.value;
+        if(Str.substr(Str.length-1)==="/")
+            Str=Str.substr(0,Str.length-1);
+        var Index1=Str.indexOf("://");
+        var Port=Str.indexOf("https:")>=0?443:80;
+        var Server=Str;
+        if(Index1>=0 && Str.substr(0,4)==="http")
+            Server=Str.substr(Index1+3);
+
+        var Index2=Server.indexOf(":");
+        if(Index2>=0)
+        {
+            Port = +Server.substr(Index2+1);
+            Server = Server.substr(0, Index2);
+        }
+        //console.log("Server:",Str,"--->",Server,Port);
+
+
+        MainServer={ip:Server,port:Port,Name:"User defined"};
+        OnFindServer();
+        return;
+    }
+
+
     StartTimeConnecting = Date.now();
     ConnectedCount = 0;
     for(var key in ServerMap)
@@ -415,9 +442,4 @@ function CalcPowFromBlockChain(BufRead,name)
     return Sum;
 }
 
-function SetAllSum()
-{
-    var Item = MapAccounts[$("idAccount").value];
-    if(Item)
-        $("idSumSend").value = FLOAT_FROM_COIN(Item.Value).toStringF();
-}
+

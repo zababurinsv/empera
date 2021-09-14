@@ -221,6 +221,8 @@ function InitClass(Engine)
     Engine.DoCreateNewBlock = function ()
     {
         var BlockNumNew = Engine.CurrentBlockNum - JINN_CONST.STEP_NEW_BLOCK;
+        if(BlockNumNew < JINN_CONST.BLOCK_GENESIS_COUNT)
+            return 0;
         if(!Engine.CanCreateNewBlock(BlockNumNew))
             return;
         

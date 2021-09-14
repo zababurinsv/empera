@@ -262,7 +262,12 @@ function StartChildProcess(Item)
         
         if(ITEM.Worker)
         {
-            ITEM.Worker.send({cmd:"Alive", DELTA_CURRENT_TIME:DELTA_CURRENT_TIME});
+            ITEM.Worker.send(
+                {
+                    cmd:"Alive",
+                    DELTA_CURRENT_TIME:DELTA_CURRENT_TIME,
+                    FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
+                });
         }
     }, 500);
     ITEM.RunRPC = function (Name,Params,F)

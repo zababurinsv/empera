@@ -292,7 +292,7 @@ function Write(buf,data,StringFormat,ParamValue,WorkStruct)
     }
 }
 
-function Read(buf,StringFormat,ParamValue,WorkStruct)
+function Read(buf,StringFormat,ParamValue,WorkStruct,bNewVer)
 {
     
     var ret;
@@ -371,6 +371,9 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                     {
                         ret = 0;
                     }
+                    if(!ret && bNewVer)
+                        ret=0;
+
                     buf.len += 8;
                     break;
                 }
@@ -493,11 +496,11 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                                 if(bIndexArr)
                                 {
                                     var index = Read(buf, "uint32");
-                                    ret[index] = Read(buf, formatNext, undefined, WorkStruct);
+                                    ret[index] = Read(buf, formatNext, undefined, WorkStruct,bNewVer);
                                 }
                                 else
                                 {
-                                    ret[i] = Read(buf, formatNext, undefined, WorkStruct);
+                                    ret[i] = Read(buf, formatNext, undefined, WorkStruct,bNewVer);
                                 }
                             }
                             else
@@ -520,7 +523,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
                             {
                                 var type = attrs[i];
                                 
-                                ret[type.Key] = Read(buf, type.Value, undefined, WorkStruct);
+                                ret[type.Key] = Read(buf, type.Value, undefined, WorkStruct,bNewVer);
                             }
                         }
                         else
@@ -534,7 +537,7 @@ function Read(buf,StringFormat,ParamValue,WorkStruct)
 }
 
 
-function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
+function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl,bOldVer)
 {
     
     var Arr = buffer;
@@ -547,11 +550,12 @@ function GetObjectFromBuffer(buffer,format,WorkStruct,bNoSizeControl)
         format = WorkStruct.FromObject;
     }
     
-    var Data = Read(Arr, format, undefined, WorkStruct);
+    var Data = Read(Arr, format, undefined, WorkStruct,!bOldVer);
     
     if(root.DEV_MODE)
         if(!bNoSizeControl && glError && Arr.len > Arr.length)
         {
+            //console.log("Data",Data);
             ToLogOne("**********Find error size on format: " + format, " " + Arr.len + "/" + Arr.length);
         }
     

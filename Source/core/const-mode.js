@@ -17,6 +17,7 @@ switch(global.MODE_RUN)
         //global.START_NETWORK_DATE = 0; - auto search last block number from the database
 
         //small mining for creating blocks:
+        global.CREATE_BLOCK_ON_RECEIVE=1;
         global.USE_MINING = 1;
         global.POW_MAX_PERCENT=5;
         global.COUNT_MINING_CPU = 1;
@@ -66,7 +67,7 @@ switch(global.MODE_RUN)
         global.UPDATE_CODE_5 = 0;
         global.UPDATE_CODE_6 = 0;
         global.UPDATE_CODE_7 = 0;
-        global.UPDATE_CODE_8 = 1000000000;
+
         global.UPDATE_CODE_NEW_ACCHASH = 1;
         
         global.STAT_MODE = 1;
@@ -119,7 +120,7 @@ switch(global.MODE_RUN)
         global.UPDATE_CODE_5 = 60000000;
         global.UPDATE_CODE_6 = global.UPDATE_CODE_JINN;
         global.UPDATE_CODE_7 = 64000000;
-        global.UPDATE_CODE_8 = 1000000000;
+
         
         global.UPDATE_CODE_NEW_ACCHASH = 0;
         

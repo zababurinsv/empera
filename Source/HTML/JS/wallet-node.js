@@ -41,7 +41,7 @@ function SavePrivateKey()
     });
 }
 
-function SetNewSysCore(TR)
+async function SetNewSysCore(TR)
 {
     if(!TR.FromNum)
         TR.FromNum=TR.NextNum;
@@ -58,7 +58,8 @@ function SetNewSysCore(TR)
     TR.Reserve=[];
     TR.OperationID=OperationID;
 
-    var Body=SerializeLib.GetBufferFromObject(TR, CONFIG_DATA.FORMAT_SYS, {});
+    var Format=await AGetFormat("FORMAT_SYS");
+    var Body=SerializeLib.GetBufferFromObject(TR, Format, {});
     Body.length-=64;
 
     //console.log("=BODY=",Body);
@@ -67,7 +68,7 @@ function SetNewSysCore(TR)
 
 function SetSysCoreJSON()
 {
-    var Data = JSON.parse(JSON.stringify(CONFIG_DATA.SYS_CORE));
+    var Data = JSON.parse(JSON.stringify(CONFIG_DATA.PRICE_DAO));
     var Data2 = CopyObjKeys({Service:"SetNewSysCore"}, Data);
     var Str = JSON.stringify(Data2, "", 2);
     $("idDevService").value = Str;

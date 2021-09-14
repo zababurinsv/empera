@@ -428,3 +428,14 @@ function RunTestAccHash(BlockNum)
 }
 
 
+//***************************************************************************
+//Debug log
+/*
+global.DebugEvent=function (Obj,BlockNum,TrNum)
+{
+    console.log(BlockNum,":",TrNum,"Event:",Obj);
+};
+//global.glStopTxProcessNum=45582;
+
+//***************************************************************************
+//*/

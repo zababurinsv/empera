@@ -1,13 +1,18 @@
 window.MapSendTransaction = {};
 var MapSendID = {};
-
+var TxFormatMap;
+var ZERO_ARR_32=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 function SendTransactionNew(Body,TR,F,Context,Confirm)
 {
     var MaxLength = 12000;
     if(IsFullNode())
     {
         if(Body[0] === 111)
+        {
             MaxLength = 16000;
+            if(window.CONFIG_DATA && window.CONFIG_DATA.BLOCKCHAIN_VERSION>=2)
+                MaxLength = 65100;
+        }
         else
             MaxLength = 0;
     }
@@ -20,7 +25,7 @@ function SendTransactionNew(Body,TR,F,Context,Confirm)
     var StrHex = GetHexFromArr(Body);
     var Params={Hex:StrHex,Confirm:Confirm};
     var DlgConfirm=0;
-    if((Type===100 || Type===111 || Type===135) && window.idSending && !IsVisibleBlock("idSending"))
+    if(!Confirm && (Type===100 || Type===111 || Type===112 ||Type===135 || Type===136) && window.idSending && !IsVisibleBlock("idSending"))
     {
         DlgConfirm=1;
 
@@ -86,7 +91,7 @@ function GetOperationIDFromItem(Item,CheckErr)
     var MapItem = MapSendID[FromNum];
     if(!MapItem)
     {
-        MapItem = {Date:0};
+        MapItem = {Date:0,OperationID:0};
         MapSendID[FromNum] = MapItem;
     }
 
@@ -106,7 +111,7 @@ function GetOperationIDFromItem(Item,CheckErr)
     return OperationID;
 }
 
-function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F,Context,Confirm)
+function SendCallMethod1(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F,Context,Confirm)
 {
 
     var TR = {Type:135};
@@ -588,5 +593,80 @@ function ReadStr(arr)
 
 
 //----------------------------------------------------------------------------------------------------------------------
+async function AGetData(Method,Params)
+{
+    return new Promise(function(resolve, reject)
+    {
+        GetData(Method, Params,function (Value,Text)
+        {
+            resolve(Value);
+        });
+    });
+}
+
+async function AGetFormat(Name)
+{
+    if(!TxFormatMap)
+    {
+        TxFormatMap=await AGetData("GetFormatTx", {});
+    }
+    return TxFormatMap[Name];
+}
+
+async function SendCallMethod(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNum,F,Context,Confirm,TxTicks)
+{
+    var TR={};
+    TR.Version=4;
+    var BVersion=await AGetFormat("BLOCKCHAIN_VERSION");
+    var Format=await AGetFormat("FORMAT_SMART_RUN"+(BVersion>=2?"2":"1"));
+    TR.Type=await AGetFormat("TYPE_SMART_RUN"+(BVersion>=2?"2":"1"));
+
+
+    TR.Account=Account;
+    TR.OperationID=0;
+    TR.MethodName=MethodName;
+    TR.Params=JSON.stringify(Params);
+    TR.FromNum=FromNum;
+    TR.ParamsArr=ParamsArr;
+    TR.Reserve=[];
+    TR.TxTicks=TxTicks?TxTicks:35000;
+    TR.TxMaxBlock=GetCurrentBlockNumByTime()+120;
+
+    if(FromNum)
+    {
+
+        var Data=await AGetData("GetAccount", Account);
+        if(!Data || Data.result !== 1 || !Data.Item)
+            return RetError(F,Context, TR, Body, "Error account number: " + Account);
+        if(FromSmartNum!==-1 && Data.Item.Value.Smart !== FromSmartNum)
+            return RetError(F,Context, TR, Body, "Error - The account:" + Account + " does not belong to a smart contract:" + FromSmartNum + " (have: " + Data.Item.Value.Smart + ")");
+
+
+
+        Data=await AGetData("GetAccount", FromNum);
+        if(!Data || Data.result !== 1 || !Data.Item)
+            return RetError(F, Context, TR, Body, "Error account number: " + FromNum);
+        if(Data.Item.Num != FromNum)
+            return RetError(F,Context, TR, Body, "Error read from account number: " + FromNum + " read data=" + Data.Item.Num);
+
+        TR.OperationID = GetOperationIDFromItem(Data.Item, 1);
+
+        var Body=SerializeLib.GetBufferFromObject(TR, Format, {});
+        Body.length-=64;
+
+        SendTrArrayWithSign(Body, FromNum, TR, F,Context,Confirm);
+    }
+    else
+    {
+        TR.OperationID=random(1000000000);
+        TR.Sign = ZERO_ARR_32;
+
+        var Body=SerializeLib.GetBufferFromObject(TR, Format, {});
+        // if(BVersion>=2)//TODO
+        //     Body.length-=64;
+
+        SendTransactionNew(Body, TR, F,Context,Confirm);
+    }
+}
 
 window.SendCallMethod=SendCallMethod;

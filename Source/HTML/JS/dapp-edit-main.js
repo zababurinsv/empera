@@ -9,7 +9,7 @@
 */
 
 var SaveIdArr = ["idUser", "idSmartStart", "idText", "idType", "idSelStyle", "idAutoPlay", "idDebugLog", "idScreenStyle", "idSendFrom",
-"idSendTo", "idSendSum", "idSendDesc", "idNoSendHTML", "idTrimCode", "idLoadDapp", "idChildIP", "idChildPort", "idChildScore"];
+"idSendTo", "idSendSum", "idSendDesc", "idNoSendHTML", "idTrimCode", "idLoadDapp", "idChildIP", "idChildPort", "idChildScore","idCurrency","idTokenID"];
 
 var WasOKLoaded = 0;
 var bWasPlay = 0;
@@ -109,7 +109,7 @@ function SetStatus(Str,bNoEscape)
 }
 function SetError(Str,bNoSound)
 {
-    console.log(Str);
+    console.log("%c" + Str, "color:red;font-weight:bold;");
     SetStatus("<DIV  align='left' style='color:#b50000'><B>" + escapeHtml(Str) + "</B></DIV>", 1);
 }
 
@@ -151,17 +151,10 @@ function UpdateData()
 var MapAccounts = {};
 function UpdateFillUser(ArrWallet)
 {
-    var Arr = [];
-    for(var i = 0; i < ArrWallet.length; i++)
-    {
-        var Item = ArrWallet[i];
-        var Value = {value:Item.Num, text:Item.Num + "." + Item.Name + "  " + SUM_TO_STRING(Item.Value, Item.Currency, 1)};
-        Arr.push(Value);
-        
-        if(!MapAccounts[Item.Num])
-            MapAccounts[Item.Num] = {};
-        CopyObjKeys(MapAccounts[Item.Num], Item);
-    }
+    for(var i=0;i<ArrWallet.length;i++)
+        MapAccounts[ArrWallet[i].Num]=ArrWallet[i];
+
+    var Arr=AccToListArr(ArrWallet,0);
     FillSelect("idUser", Arr);
 }
 
@@ -177,11 +170,11 @@ function GetPrice(Smart)
         return 0;
     
     var Price;
-    if(Smart.TokenGenerate)
-        Price = CONFIG_DATA.PRICE_DAO.NewTokenSmart;
-    else
-        Price = CONFIG_DATA.PRICE_DAO.NewSmart;
-    Price += (Smart.AccountLength - 1) * CONFIG_DATA.PRICE_DAO.NewAccount;
+    // if(Smart.TokenGenerate)
+    //     Price = CONFIG_DATA.PRICE_DAO.NewTokenSmart;
+    // else
+    Price = CONFIG_DATA.PRICE_DAO.NewSmart;
+    //Price += (Smart.AccountLength - 1) * CONFIG_DATA.PRICE_DAO.NewAccount;
     return Price;
 }
 
@@ -204,52 +197,45 @@ function SendStateHTML(Name)
     var SendObj = {"HTMLBlock":Ret.BlockNum, "HTMLTr":Ret.TrNum};
     var SendStr = JSON.stringify(SendObj);
     
-    var FromID = $("idSmartOwner").value;
-    if(!MapAccounts[FromID])
+    var FromID = +$("idSmartOwner").value;
+    var Item = MapAccounts[FromID];
+    if(!Item)
     {
         SetError("You must be the owner of the smart contact");
         return;
     }
-    var ToID = ParseNum($("idSmartAccount").value);
-    
+
     SetStatus("");
-    DoConfirm("Send new state?", SendStr, function ()
+    DoConfirm("Send new state?", SendStr, async function ()
     {
-        SendTx(FromID, ToID, 0, SendStr, []);
+        // var BVersion=await AGetFormat("BLOCKCHAIN_VERSION");
+        // if(BVersion>=2)
+        // {
+
+            var Format=await AGetFormat("FORMAT_SMART_SET");
+            var TR={};
+            TR.Type=await AGetFormat("TYPE_SMART_SET");
+            TR.Version=4;
+            TR.OperationID = GetOperationIDFromItem(Item, 1);
+            TR.FromNum=FromID;
+            TR.Smart = +$("idSmartNum").value;
+            TR.HTMLBlock=Ret.BlockNum;
+            TR.HTMLTr=Ret.TrNum;
+            //console.log(TR);
+            var Body=SerializeLib.GetBufferFromObject(TR, Format, {});
+            Body.length-=64;
+
+            SendTrArrayWithSign(Body, FromID, TR);
+
+        // }
+        // else
+        // {
+        //     var ToID = ParseNum($("idSmartAccount").value);
+        //     SendTx(FromID, ToID, 0, SendStr, []);
+        // }
     });
 }
 
-function SendTx(FromID,ToID,Price,Description,Body)
-{
-    var AccItem = MapAccounts[FromID];
-    if(!AccItem)
-    {
-        SetError("Choose account,pls!");
-        return;
-    }
-    
-    var OperationID = AccItem.Value.OperationID;
-    var TR = {Type:111, Version:4, OperationID:OperationID, FromID:FromID, Old:0, To:[{PubKey:[], ID:ToID, SumCOIN:Price, SumCENT:0}],
-        Description:Description, Body:Body, Sign:"", };
-    
-    GetSignTransaction(TR, "", function (TR)
-    {
-        if(IsZeroArr(TR.Sign))
-        {
-            SetError("Open wallet, pls");
-            return;
-        }
-        
-        var Body = GetArrFromTR(TR);
-        WriteArr(Body, TR.Sign, 64);
-        
-        SendTransactionNew(Body, TR, function (Err,TR,Body)
-        {
-            if(Err)
-                return;
-        });
-    });
-}
 
 function SendHTMLToBlockchain()
 {
@@ -261,6 +247,7 @@ function SendHTMLToBlockchain()
     
     SendText({}, "text/html", HTML);
 }
+
 function SendJSToBlockchain()
 {
     var Str = GetHTMLCode();
@@ -383,6 +370,10 @@ function GetCodeSmart(bTrim)
 
 function SendToBlockchain()
 {
+    var StrErr=IsErrTokenNames();
+    if(StrErr)
+        return SetError("Error "+StrErr);
+
     SetStatus("");
     glMapCode=GetCodeSmart();
     if(!glMapCode)
@@ -397,9 +388,9 @@ function SendToBlockchain()
 
     FillSelect("idCodeMode",glMapCode,"NAME");
 }
-function SendToBlockchain2(CodeType)
+async function SendToBlockchain2(CodeType)
 {
-    
+
     var Smart = {};
     SetDialogToSmart(Smart);
 
@@ -409,38 +400,8 @@ function SendToBlockchain2(CodeType)
         Name=CodeType;
 
     
-    if(Smart.AccountLength < 1)
-        Smart.AccountLength = 1;
-    if(Smart.AccountLength > 50)
-        Smart.AccountLength = 50;
-    
-    var Body = [];
-    WriteByte(Body, 130);
-    WriteByte(Body, Smart.TokenGenerate);
-    WriteUint(Body, Smart.StartValue);
-    WriteByte(Body, Smart.OwnerPubKey);
-    WriteStr(Body, Smart.ISIN);
-    WriteByte(Body, 0);
-    WriteByte(Body, Smart.AccountLength);
-    WriteStr(Body, Smart.StateFormat);
-    WriteByte(Body, Smart.Category1);
-    WriteByte(Body, Smart.Category2);
-    WriteByte(Body, Smart.Category3);
-    
-    WriteByte(Body, Smart.Fixed);
-    WriteStr(Body, Smart.CentName, 5);
-    
-    WriteUint32(Body, Smart.CrossMsgConfirms);
-    for(var i = 0; i < 10; i++)
-        Body[Body.length] = 0;
-    
-    var IconParam = ParseFileName($("idIcon").value);
-    WriteUint(Body, Smart.IconBlockNum);
-    WriteUint16(Body, Smart.IconTrNum);
-    
-    WriteStr(Body, Smart.ShortName, 5);
-    WriteStr(Body, Name);
-    WriteStr(Body, Smart.Description);
+     Smart.AccountLength = 1;
+
 
 
     var Code = glMapCode[CodeType].Code;// Smart.Code;
@@ -455,17 +416,105 @@ function SendToBlockchain2(CodeType)
         HTML = TrimStr(HTML);
     }
 
-    WriteStr(Body, Code);
-    WriteStr(Body, HTML);
-    
+    var TR=CopyObjKeys({},Smart);
+    TR.Name=Name;
+    TR.Code=Code;
+    TR.HTML=HTML;
+
+    TR.StartValue = 0;
+
+
+    // TR.TokenGenerate=1;
+    // TR.StartValue=1000000;
+
+    //TR.ShortName=NormalizeCurrencyName(TR.ShortName);
+
     var Price = GetPrice(Smart);
-    
-    var FromID = $("idUser").value;
-    SendTx(FromID, 0, Price, "Create smart: " + Smart.Name, Body);
+
+    var Version=await AGetFormat("BLOCKCHAIN_VERSION");
+    var Format=await AGetFormat("FORMAT_SMART_CREATE"+(Version>=2?"2":"1"));
+    TR.Type=await AGetFormat("TYPE_SMART_CREATE"+(Version>=2?"2":"1"));
+    var Body=SerializeLib.GetBufferFromObject(TR, Format, {});
+
+
+    var FromID = +$("idUser").value;
+    if(Version<2)
+        SendTx(FromID, 0, Price, "Create smart: " + Smart.Name, Body);
+    else
+        SendTx5(FromID, 0, Price, "Create smart: " + Smart.Name, Body);
 
     console.log("Send smart "+Name+" length:",Body.length);
     //console.log(Code);
 
+}
+async function SendTx5(FromID,ToID,Price,Description,Body)
+{
+    var AccItem = MapAccounts[FromID];
+    if(!AccItem)
+    {
+        SetError("Choose account,pls!");
+        return;
+    }
+
+
+    var OperationID = AccItem.Value.OperationID;
+    var TR = {
+        Version: 4,
+        OperationID: OperationID,
+        FromID: FromID,
+        TxTicks:35000,
+        TxMaxBlock:GetCurrentBlockNumByTime()+120,
+        Currency:0,
+        ToID:ToID,
+        Amount:{SumCOIN: Price, SumCENT: 0},
+        TokenID:"",
+        Description: Description,
+        Body: Body,
+        Sign: [],
+    };
+
+    var Format=await AGetFormat("FORMAT_MONEY_TRANSFER5");
+    TR.Type=await AGetFormat("TYPE_MONEY_TRANSFER5");
+
+    // console.log(TR)
+    // return;;
+    var Body=SerializeLib.GetBufferFromObject(TR, Format, {});
+    Body.length-=64;
+
+    SendTrArrayWithSign(Body, FromID, TR);
+}
+
+function SendTx(FromID,ToID,Price,Description,Body)
+{
+    var AccItem = MapAccounts[FromID];
+    if(!AccItem)
+    {
+        SetError("Choose account,pls!");
+        return;
+    }
+
+    var OperationID = AccItem.Value.OperationID;
+    var TR = {Type:111, Version:4, OperationID:OperationID, FromID:FromID, Old:0, To:[{PubKey:[], ID:ToID, SumCOIN:Price, SumCENT:0}],
+        Description:Description, Body:Body, Sign:"", };
+
+
+    GetSignTransaction(TR, "", function (TR)
+    {
+        if(IsZeroArr(TR.Sign))
+        {
+            SetError("Open wallet, pls");
+            return;
+        }
+
+        var Body = GetArrFromTR(TR);
+        WriteArr(Body, TR.Sign, 64);
+
+        SendTransactionNew(Body, TR, function (Err,TR,Body)
+        {
+            if(Err)
+                return;
+        });
+    });
 }
 
 function CheckCtrlEnter(e,F)
@@ -685,21 +734,10 @@ function SendFile(TR)
             SetError("File very long");
         else
         {
-            var view = new Uint8Array(reader.result);
-            var Body = [5];
             var file = $("idFile").files[0];
-            WriteStr(Body, file.name);
-            WriteStr(Body, file.type);
-            for(var i = 0; i < 10; i++)
-                Body[Body.length] = 0;
-            WriteTr(Body, view);
-            
-            if(!TR)
-                TR = {};
-            TR.Name = file.name;
-            TR.Type = file.type;
-            
-            SendTransactionNew(Body, TR);
+
+            var view = new Uint8Array(reader.result);
+            SendFileData(TR,file.name,file.type,view);
         }
     };
     reader.readAsArrayBuffer(file);
@@ -711,7 +749,7 @@ function CalclTextLength()
     var view = GetArrFromStr(Str);
     SetStatus("Length:" + view.length);
 }
-function SendText(TR,type,Str)
+async function SendText(TR,type,Str)
 {
     if(!type)
         type = $("idType").value;
@@ -719,27 +757,32 @@ function SendText(TR,type,Str)
         Str = $("idText").value;
     if(Str.length === 0)
         return;
-    
+
     var view = GetArrFromStr(Str);
-    if(view.length > 16000 && !IsFullNode())
+    if(view.length > 32000 && !IsFullNode())
     {
-        SetStatus("Error length file = " + view.length + " (max size=16000)");
+        SetStatus("Error length file = " + view.length + " (max size=32000)");
         return;
     }
-    
-    var Body = [5];
-    var name = "text";
-    WriteStr(Body, name);
-    WriteStr(Body, type);
-    for(var i = 0; i < 10; i++)
-        Body[Body.length] = 0;
-    WriteTr(Body, view);
-    
+    SendFileData(TR,"text",type,view);
+}
+
+async function SendFileData(TR,name,type,view)
+{
+
     if(!TR)
         TR = {};
+
+    TR.Type = await AGetFormat("TYPE_TRANSACTION_FILE");
     TR.Name = name;
-    TR.Type = type;
-    
+    TR.ContentType = type;
+    TR.Reserve = [];
+    TR.Data = view;
+
+    var Format=await AGetFormat("FORMAT_FILE_CREATE");
+    var Body=SerializeLib.GetBufferFromObject(TR, Format, {});
+    //Body.length-=64;
+    //console.log(TR);
     SendTransactionNew(Body, TR);
 }
 
@@ -848,27 +891,34 @@ function ClearListFile()
 
 function DoLoadingConfig(Str,Meta)
 {
+    // PrevSmartValue=undefined;
+    // idProjectList.value=undefined;
+    // SetSmartToDialog(GetBlankSmart(),0,1);
     localStorage["SMART-ProjectArray"] = Str;
     LoadValues();
+
+    SetCurrentProject();
 }
 
 function UpdatePlayInfo()
 {
     if(!VM_ACCOUNTS)
         return;
-    var Arr = [];
+
+    var UserArr = [];
     for(var i = 100; i < VM_ACCOUNTS.length; i++)
     {
-        var Item = VM_ACCOUNTS[i];
-        if(Item && Item.Value)
-        {
-            var Value = {value:Item.Num, text:Item.Num + "." + Item.Name + "  " + SUM_TO_STRING(Item.Value, Item.Currency, 1)};
-            Arr.push(Value);
-        }
+        var Item = ACCOUNTS.ReadStateTR(i);
+        UserArr.push(Item);
         if(i > 150)
             break;
     }
+
+    var Arr=AccToListArr(UserArr);
     FillSelect("idPlayAccount", Arr);
 }
+
+
+
 
 setInterval(UpdatePlayInfo, 1000);

@@ -10,6 +10,8 @@
 
 "use strict";
 
+const fs = require('fs');
+
 global.RunOnUpdate = RunOnUpdate;
 function RunOnUpdate()
 {
@@ -73,13 +75,17 @@ function RunOnUpdate()
             }
         }
 
-        if(CurNum < 2566)
-        {
-            //UpdateSmartDB();
-        }
-
+        // if(CurNum < 2568)
+        // {
+        //     UpdateSmartDB();
+        // }
         ToLog("UPDATER Finish");
     }
+
+    var FName2=GetDataPath("DB/smart2");
+    if(!fs.existsSync(FName2) && SMARTS.GetMaxNum()>0)
+        UpdateSmartDB();
+
 }
 function DeleteOldDBFiles()
 {
@@ -172,12 +178,26 @@ function CheckActDB(Name)
 
 function UpdateSmartDB()
 {
+    console.log("********************* Converting Smart DB *********************");
+
+    // var FName2=GetDataPath("DB/smart2");
+    // if(fs.existsSync(FName2))
+    //     return;
+    // {
+    //     console.log("---------delete old: "+FName2)
+    //     fs.unlinkSync(FName2);
+    // }
+
+    var Smart2 = new SmartApp("Update");
+    //Smart2.ClearDataBase();
+
     for(var Num=0;Num <= SMARTS.GetMaxNum();Num++)
     {
         var Data = SMARTS.ReadSmart(Num);
         if(Data)
         {
-           console.log(Data.Name);
+            console.log("Write",Num,Data.Name);
+            Smart2.DBSmartWrite(Data);
         }
     }
 

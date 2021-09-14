@@ -57,9 +57,21 @@ function Call(Account, MethodName,Params, A,B)
     var Data={cmd:"DappStaticCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account}
     SendData(Data,F)
 }
-const StaticCall=Call;
 
-function SendCall(Account, MethodName,Params, A,B)
+async function ACall(Account, MethodName,Params,ParamsArr)
+{
+    var Data={cmd:"DappStaticCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account}
+    return await ASendData(Data,2);
+}
+
+window.StaticCall=Call;
+window.AStaticCall=ACall;
+// window.AReadSmart=AReadSmart;
+// window.GetSmartList=GetSmartList;
+
+
+
+function SendCall(Account, MethodName,Params, A,B, TxTicks)
 {
     if(!INFO.WalletCanSign)
     {
@@ -80,19 +92,19 @@ function SendCall(Account, MethodName,Params, A,B)
     }
 
 
-    var Data={cmd:"DappSendCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account, FromNum:FromNum}
+    var Data={cmd:"DappSendCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account, FromNum:FromNum,TxTicks:TxTicks}
     SendData(Data);
     return 1;
 }
 
-function ASendCall(Account, MethodName,Params, ParamsArr,FromNum)
+function ASendCall(Account, MethodName,Params, ParamsArr,FromNum,TxTicks)
 {
     if(!INFO.WalletCanSign)
     {
         SetError("PLS, OPEN WALLET");
         return 0;
     }
-    var Data={cmd:"DappSendCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account, FromNum:FromNum}
+    var Data={cmd:"DappSendCall",MethodName:MethodName,Params:Params,ParamsArr:ParamsArr, Account:Account, FromNum:FromNum,TxTicks:TxTicks}
     return ASendData(Data);
 }
 
@@ -107,11 +119,26 @@ function GetAccountList(Params,F)
     var Data={cmd:"DappAccountList",Params:Params}
     SendData(Data,F)
 }
+
+
 function GetSmartList(Params,F)
 {
     var Data={cmd:"DappSmartList",Params:Params}
     SendData(Data,F)
 }
+
+async function AReadSmart(Num,Fields)
+{
+    var Data={cmd:"DappSmartList",Params:{StartNum:Num,CountNum:1,Fields:Fields}}
+    var Ret=await ASendData(Data,2);
+    if(Ret && Ret.length)
+        return Ret[0];
+    else
+        return undefined;
+}
+
+
+
 function GetBlockList(Params,F)
 {
     var Data={cmd:"DappBlockList",Params:Params}
@@ -222,66 +249,15 @@ function ReloadDapp()
     SendData({cmd:"ReloadDapp"});
 }
 
-function CurrencyName(Num)
-{
-    var Name=MapCurrency[Num];
-    if(!Name)
-    {
-        GetSmartList({StartNum:Num,CountNum:1,TokenGenerate:1},function (Err,Arr)
-        {
-            if(Err || Arr.length===0)
-                return;
-
-            var Smart=Arr[0];
-            Name=GetTokenName(Smart.Num,Smart.ShortName);
-            MapCurrency[Smart.Num]=Name;
-        });
-
-        Name=GetTokenName(Num,"");
-    }
-    return Name;
-}
 
 var SendCountUpdate=0;
 
 var WasInitCurrency=0;
-function FindAllCurrency()
+async function FindAllCurrency()
 {
     WasInitCurrency=1;
     InitMapCurrency();
-    FindAllCurrencyNext(8);
 }
-function FindAllCurrencyNext(StartNum)
-{
-
-    SendCountUpdate++;
-    var MaxCountViewRows=10;
-    GetSmartList({StartNum:StartNum,CountNum:MaxCountViewRows,TokenGenerate:1},function (Err,Arr)
-    {
-        SendCountUpdate--;
-        if(Err)
-            return;
-        var MaxNum=0;
-        for(var i=0;i<Arr.length;i++)
-        {
-            var Smart=Arr[i];
-            if(!MapCurrency[Smart.Num])
-            {
-                var Name=GetTokenName(Smart.Num,Smart.ShortName);
-                MapCurrency[Smart.Num]=Name;
-            }
-            if(Smart.Num>MaxNum)
-                MaxNum=Smart.Num;
-        }
-
-        if(Arr.length===MaxCountViewRows && MaxNum)
-        {
-            FindAllCurrencyNext(MaxNum+1);
-        }
-
-    });
-}
-
 
 
 
@@ -673,7 +649,7 @@ function SendData(Data,F)
     window.parent.postMessage(Data, "*");
 }
 
-function ASendData(Data)
+function ASendData(Data,Count)
 {
     if(!window.parent)
         return;
@@ -681,16 +657,31 @@ function ASendData(Data)
     return new Promise(function(resolve, reject)
     {
         Data.Confirm=1;
-        SendData(Data,function (RetData)
+        SendData(Data,function (RetData,RetData2)
         {
-            if(RetData.Err)
+            if(Count==2)
             {
-                SetError(RetData.Err);
-                reject(RetData);
+                if(RetData)
+                {
+                    SetError(RetData2);
+                    reject(RetData2);
+                }
+                else
+                {
+                    resolve(RetData2);
+                }
             }
             else
             {
-                resolve(RetData);
+                if(RetData.Err)
+                {
+                    SetError(RetData.Err);
+                    reject(RetData);
+                }
+                else
+                {
+                    resolve(RetData);
+                }
             }
         });
     });
@@ -851,6 +842,17 @@ function LoadFromStorageByArr(Arr,F,bAll)
             F(0);
     });
 }
+async function ALoadFromStorageByArr(Arr)
+{
+    return new Promise(function(resolve, reject)
+    {
+        LoadFromStorageByArr(Arr,function (Key)
+        {
+            resolve();
+        },1);
+    });
+}
+
 
 function LoadFromStorageById(Name,F)
 {
@@ -935,7 +937,7 @@ var eventInfo = new Event("UpdateInfo");
 
 function UpdateDappInfo()//run every 3 sec
 {
-    GetInfo(function (Err,Data)
+    GetInfo(async function (Err,Data)
     {
         if(Err)
         {
@@ -951,13 +953,20 @@ function UpdateDappInfo()//run every 3 sec
 
         SetBlockChainConstant(Data);
 
-        window.NETWORK_NAME=INFO.NETWORK;
-        window.SHARD_NAME=INFO.SHARD_NAME;
-        window.NETWORK_ID=window.NETWORK_NAME+"."+window.SHARD_NAME;
+        await CheckNetworkID(INFO);
+        // window.NETWORK_NAME=INFO.NETWORK;
+        // window.SHARD_NAME=INFO.SHARD_NAME;
+        // window.NETWORK_ID=window.NETWORK_NAME+"."+window.SHARD_NAME;
+        //console.log("INFO.NETWORK",INFO.NETWORK)
+        if(SMART.Num==7)//test mode
+        {
+            RegCurrency(1,"USDT",undefined,1,1);
+            RegCurrency(3,"SOFT",undefined,1,1);
+        }
 
 
         if(!WasInitCurrency)
-            FindAllCurrency();
+            await FindAllCurrency();
 
 
         USER_ACCOUNT=Data.ArrWallet;
@@ -1229,6 +1238,20 @@ else
         return 0;
     }
     window.ethereum={isMetaMaskInstalled:RetZero,on:RetZero};
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//Start transfer
+//----------------------------------------------------------------------------------------------------------------------
+async function StartTransfer(ParamsPay,ParamsCall,TxTicks)
+{
+    //ParamsPay: FromID,ToID,Value,Description,Currency,ID
+    //ParamsCall: Method,Params,ParamsArr
+
+
+    var Data={cmd:"StartTransfer",ParamsPay:ParamsPay,ParamsCall:ParamsCall,TxTicks:TxTicks};
+    return ASendData(Data);
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------

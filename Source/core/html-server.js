@@ -80,7 +80,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
         Path2 = Path2.substring(1);
     var ArrPath = Path2.split('/', 5);
 
-    //console.log(Path);
+    //console.log(ArrPath,Path);
 
     var APIv2 = 0;
     if(ArrPath[0] === "api")
@@ -91,6 +91,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
             Caller = WebApi2;
         }
         Method = ArrPath[2];
+        //console.log(Method,"PATH:", Path);
     }
 
     var F = Caller[Method];
@@ -101,6 +102,7 @@ function DoCommand(request,response,Type,Path,params,remoteAddress)
             response.end();
             return;
         }
+
 
         var Headers = {'Content-Type':'text/plain'};
 
@@ -321,7 +323,11 @@ function SendNFTFile(request,response,StrNum)
         Num = +StrNum.substr(StrNum.length-15);
     else
         Num = +StrNum;
-    return SendBlockFile(request, response, Math.floor(Num/1000), Num%1000);
+
+    var BlockNum=Math.floor(Num/1000);
+    var TrNum=Num%1000;
+    //console.log(Num,"->",BlockNum,TrNum);
+    return SendBlockFile(request, response, BlockNum, TrNum);
 }
 
 function SendBlockFile(request,response,BlockNum,TrNum)
@@ -350,7 +356,8 @@ function SendToResponceFile(request,response,Block,TrNum)
         var Type=Body[0];
 
         if(Type === global.TYPE_TRANSACTION_FILE
-            || Type === global.TYPE_TRANSACTION_SMART_RUN)
+            || Type === global.TYPE_TRANSACTION_SMART_RUN1
+            || Type === global.TYPE_TRANSACTION_SMART_RUN2)
         {
             var Headers = {"X-Content-Type-Options":"nosniff"};
             Headers["Access-Control-Allow-Origin"]="*";
@@ -488,6 +495,7 @@ HTTPCaller.DappInfo = function (Params,responce,ObjectOnly)
     var Context = GetUserContext(Params);
     var EArr = GetEventArray(SmartNum, Context);
     var WLData = HTTPCaller.DappWalletList(Params);
+    //console.log("WLData.arr=",WLData.arr)
 
     var ArrLog = [];
     for(var i = 0; i < ArrLogClient.length; i++)
@@ -548,20 +556,23 @@ HTTPCaller.DappWalletList = function (Params)
             arr.push(arr0[i]);
         }
     }
+    arr=UseRetFieldsArr(arr,Params.Fields);
+    //console.log("arr",arr)
     var Ret = {result:1, arr:arr, };
     return Ret;
 }
 
 HTTPCaller.DappAccountList = function (Params)
 {
-    var arr = ACCOUNTS.GetRowsAccounts(Params.StartNum,  + Params.CountNum, undefined, 1);
+    var arr = ACCOUNTS.GetRowsAccounts(Params.StartNum,  + Params.CountNum, undefined, 1,1);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
-function DappAccount(response,StrNum)
+global.DappAccount=function(response,StrNum)
 {
     var Num = parseInt(StrNum);
-    var arr = ACCOUNTS.GetRowsAccounts(Num, 1, undefined, 1);
+    var arr = ACCOUNTS.GetRowsAccounts(Num, 1, undefined, 1,1);
     var Data = {Item:arr[0], result:1};
     response.writeHead(200, {'Content-Type':"text/plain", "X-Content-Type-Options":"nosniff"});
     response.end(JSON.stringify(Data));
@@ -571,6 +582,7 @@ HTTPCaller.DappSmartList = function (Params)
 {
     var arr = SMARTS.GetRows(Params.StartNum,  + Params.CountNum, undefined, undefined, Params.GetAllData, Params.TokenGenerate,
         Params.AllRow);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 HTTPCaller.DappBlockList = function (Params,response)
@@ -603,7 +615,7 @@ HTTPCaller.FindMyAccounts = function (Params)
 HTTPCaller.GetAccount = function (id)
 {
     id = parseInt(id);
-    var arr = ACCOUNTS.GetRowsAccounts(id, 1);
+    var arr = ACCOUNTS.GetRowsAccounts(id, 1,0,1,1);
     return {Item:arr[0], result:1};
 }
 
@@ -613,6 +625,7 @@ HTTPCaller.GetAccountList = function (Params)
         Params.CountNum = 1;
 
     var arr = ACCOUNTS.GetRowsAccounts(Params.StartNum,  + Params.CountNum, Params.Filter, Params.GetState, Params.GetCoin);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 HTTPCaller.GetDappList = function (Params)
@@ -620,6 +633,7 @@ HTTPCaller.GetDappList = function (Params)
     if(!( + Params.CountNum))
         Params.CountNum = 1;
     var arr = SMARTS.GetRows(Params.StartNum,  + Params.CountNum, Params.Filter, Params.Filter2, 1);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 HTTPCaller.GetBlockList = function (Params,response,bOnlyNum)
@@ -628,6 +642,7 @@ HTTPCaller.GetBlockList = function (Params,response,bOnlyNum)
         Params.CountNum = 1;
 
     var arr = SERVER.GetRows(Params.StartNum,  + Params.CountNum, Params.Filter, !bOnlyNum, Params.ChainMode);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 HTTPCaller.GetTransactionAll = function (Params,response)
@@ -640,6 +655,7 @@ HTTPCaller.GetTransactionAll = function (Params,response)
         BlockNum = 0;
 
     var arr = SERVER.GetTrRows(BlockNum, Params.StartNum,  + Params.CountNum, Params.ChainMode, Params.Filter);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
@@ -650,6 +666,7 @@ HTTPCaller.GetActList = function (Params)
 HTTPCaller.GetJournalList = function (Params)
 {
     var arr = JOURNAL_DB.GetScrollList(Params.StartNum,  + Params.CountNum);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
@@ -669,17 +686,20 @@ HTTPCaller.FindJournalByBlockNum = function (Params)
 HTTPCaller.GetCrossOutList = function (Params)
 {
     var arr = SHARDS.GetCrossOutList(Params.StartNum,  + Params.CountNum);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 HTTPCaller.GetCrossInList = function (Params)
 {
     var arr = SHARDS.GetCrossInList(Params.StartNum,  + Params.CountNum);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
 HTTPCaller.GetShardList = function (Params)
 {
     var arr = SHARDS.GetShardList(Params.StartNum,  + Params.CountNum);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
@@ -741,12 +761,14 @@ HTTPCaller.GetHashList = function (Params)
             }
         }
     }
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
 HTTPCaller.GetHistoryAct = function (Params)
 {
     var arr = WALLET.GetHistory(Params.StartNum,  + Params.CountNum, Params.Filter);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
@@ -825,9 +847,9 @@ HTTPCaller.GetWalletInfo = function (Params)
         MiningPaused:global.MiningPaused,
         HashRate:HashRateOneSec,
         BLOCKCHAIN_VERSION:SysInfo.Active,
-        PRICE_DAO:SysInfo.Price,//PRICE_DAO(SERVER.BlockNumDB),
-        SYS_CORE:SysInfo,
-        FORMAT_SYS:FORMAT_SYS,
+        PRICE_DAO:SysInfo,//PRICE_DAO(SERVER.BlockNumDB),
+        //SYS_CORE:SysInfo,
+        //FORMAT_SYS:FORMAT_SYS,
         NWMODE:global.NWMODE,
         PERIOD_ACCOUNT_HASH:PERIOD_ACCOUNT_HASH,
         MAX_ACCOUNT_HASH:ACCOUNTS.DBAccountsHash.GetMaxNum(),
@@ -1659,8 +1681,14 @@ HTTPCaller.GetHistoryTransactions = function (Params)
                 }
             }
         }
-        var Result = {Value:{SumCOIN:Account.Value.SumCOIN, SumCENT:Account.Value.SumCENT}, Name:Account.Name, Currency:Account.Currency,
-            MaxBlockNum:GetCurrentBlockNumByTime(), FIRST_TIME_BLOCK:FIRST_TIME_BLOCK, UPDATE_CODE_JINN:UPDATE_CODE_JINN, CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME,
+        var Result = {
+            Value:{SumCOIN:Account.Value.SumCOIN, SumCENT:Account.Value.SumCENT}, Name:Account.Name, Currency:Account.Currency,
+            MaxBlockNum:GetCurrentBlockNumByTime(),
+            FIRST_TIME_BLOCK:FIRST_TIME_BLOCK,
+            UPDATE_CODE_JINN:UPDATE_CODE_JINN,
+            CONSENSUS_PERIOD_TIME:CONSENSUS_PERIOD_TIME,
+            NETWORK:global.NETWORK,
+            SHARD_NAME:global.SHARD_NAME,
             result:arr.length > 0 ? 1 : 0, History:arr};
         return Result;
     }
@@ -2804,5 +2832,64 @@ function GetCookieHash(cookies_hash,Password)
     return hash;
 }
 
+global.GetFormatTx=function (Params)
+{
+    var BlockNum=GetCurrentBlockNumByTime();
+    var RetData=
+        {
+            BLOCKCHAIN_VERSION:GETVERSION(BlockNum),
+            PRICE:PRICE_DAO(BlockNum),
+
+            FORMAT_SYS:FORMAT_SYS,
+            FORMAT_SMART_CREATE1:FORMAT_SMART_CREATE1,
+            FORMAT_SMART_CREATE2:FORMAT_SMART_CREATE2,
+            FORMAT_SMART_RUN1:FORMAT_SMART_RUN1,
+            FORMAT_SMART_RUN2:FORMAT_SMART_RUN2,
+            FORMAT_SMART_CHANGE:FORMAT_SMART_CHANGE,
+            FORMAT_ACC_CREATE:FORMAT_ACC_CREATE,
+            FORMAT_ACC_CHANGE:FORMAT_ACC_CHANGE,
+            FORMAT_MONEY_TRANSFER3:FORMAT_MONEY_TRANSFER3,
+            FORMAT_MONEY_TRANSFER5:FORMAT_MONEY_TRANSFER5,
+            FORMAT_FILE_CREATE:FORMAT_FILE_CREATE,
+            FORMAT_SMART_SET:FORMAT_SMART_SET,
+
+            TYPE_SYS:TYPE_TRANSACTION_SYS,
+            TYPE_SMART_CREATE1:TYPE_TRANSACTION_SMART_CREATE1,
+            TYPE_SMART_CREATE2:TYPE_TRANSACTION_SMART_CREATE2,
+            TYPE_SMART_RUN1:TYPE_TRANSACTION_SMART_RUN1,
+            TYPE_SMART_RUN2:TYPE_TRANSACTION_SMART_RUN2,
+            TYPE_SMART_CHANGE:TYPE_TRANSACTION_SMART_CHANGE,
+            TYPE_ACC_CREATE:TYPE_TRANSACTION_CREATE,
+            TYPE_ACC_CHANGE:TYPE_TRANSACTION_ACC_CHANGE,
+            TYPE_MONEY_TRANSFER3:TYPE_TRANSACTION_TRANSFER3,
+            TYPE_MONEY_TRANSFER5:TYPE_TRANSACTION_TRANSFER5,
+            TYPE_TRANSACTION_FILE:TYPE_TRANSACTION_FILE,
+            TYPE_SMART_SET:TYPE_TRANSACTION_SMART_SET,
+        };
+
+    return RetData;
+};
+HTTPCaller.GetFormatTx = GetFormatTx;
+
+global.UseRetFieldsArr=UseRetFieldsArr;
+function UseRetFieldsArr(Arr,Fields)
+{
+    if(!Fields)
+        return Arr;
+    var Arr2=[];
+    for(var i=0;i<Arr.length;i++)
+    {
+        var Item=Arr[i];
+        var Item2={};
+        for(var n=0;n<Fields.length;n++)
+            Item2[Fields[n]]=Item[Fields[n]];
+        Arr[i]=Item2;
+    }
+
+    return Arr;
+}
+
 
 require("../rpc/api-v2-exchange.js");
+
+

@@ -214,11 +214,11 @@ function SetVisibleItemByTypeKey()
     }
 }
 
-function EditJSONTransaction()
-{
-    CreateTransaction();
-    openModal('idBlockEditJson', 'idBtnSendJSON');
-}
+// function EditJSONTransaction()
+// {
+//     CreateTransferTransaction();
+//     openModal('idBlockEditJson', 'idBtnSendJSON');
+// }
 
 function TruncateBlockChain()
 {
@@ -287,8 +287,6 @@ function ViewStatus()
 
 function ChooseToken(name)
 {
-    //todo
-
     if(name==="idListNFT")
     {
         SendMoneyBefore();
@@ -308,50 +306,33 @@ async function SendMoneyBefore()
     var StrToID = GetSendAccTo();
     var StrWhite = GetSendAccTo(1);
     var Item = MapAccounts[StrToID];
-    if(!IsERCMode() && (Storage.getItem("White:" + NETWORK_ID + ":" + StrWhite) || !$("idSumSend").value || Item && Item.MyAccount))
-    {
-        SendMoney();
-    }
-    else
-    {
-        var CurName=$("idCoinName").innerText;
 
-        if(IsERCMode())
-        {
-            if(!(+idSumSend.value))
-                idSumSend.value=1;
-            if(!idListNFT.CurSelect)
-                return SetError("Need select NFT");
-            var Element=$(idListNFT.CurSelect);
-            if(!Element)
-                return SetError("Need select NFT");
-            CurName = Element.dataset.token;
-            $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,CurName,Element.dataset.id,idSumSend.value);
-            SetVisibleBlock("idTokenHolder",1);
-        }
-        else
-        {
-            SetVisibleBlock("idTokenHolder",0);
-        }
+    var CurToken=GetSelectedToken();
+    if(!CurToken)
+        return;
+
+    //console.log("CurToken:",CurToken);
 
 
-        var CoinAmount = COIN_FROM_FLOAT($("idSumSend").value);
-        var StrTo = " to " + GetAccountText(Item, StrWhite);
-        $("idWhiteOnSend").checked = 0;
-        
-        $("idOnSendSum").innerText = STRING_FROM_COIN(CoinAmount);
+    $("idTokenHolder").innerHTML = GetCopyNFTCard(CurToken.element_id,CurToken.Token,CurToken.ID,idSumSend.value);
+
+    var CoinAmount = COIN_FROM_FLOAT($("idSumSend").value);
+    var StrTo = " to " + GetAccountText(Item, StrWhite);
 
 
-        $("idOnSendCoinName").innerText = CurName;
-        $("idOnSendToName").innerText = StrTo;
-        
-        SetVisibleBlock("idOnSendWarning", +idSumSend.value >= 100000);
-        SetVisibleBlock("idBtOnSend", Item ? "inline-block" : "none");
-        
-        SetVisibleBlock("idBlockOnSend", 1);
-        
-        openModal('idBlockOnSend', 'idBtOnSend');
-    }
+    $("idOnSendSum").innerText = STRING_FROM_COIN(CoinAmount);
+
+
+    $("idOnSendCoinName").innerText = CurToken.Token;
+    $("idOnSendToName").innerText = StrTo;
+
+    SetVisibleBlock("idOnSendWarning", +idSumSend.value >= 100000);
+    SetVisibleBlock("idBtOnSend", Item ? "inline-block" : "none");
+
+    SetVisibleBlock("idBlockOnSend", 1);
+
+    openModal('idBlockOnSend', 'idBtOnSend');
+
 }
 
 function RetDescription(Item)

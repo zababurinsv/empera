@@ -88,9 +88,12 @@ function SetNftAttrMap(Addr)
     {
         response.text().then(function (text)
         {
-            var Attr=JSON.parse(text);
-            MAP_NFT_ATTR[Addr]=Attr;
-            DoImgWork(Addr);
+            if(text.substr(0,1)==="{")
+            {
+                var Attr=JSON.parse(text);
+                MAP_NFT_ATTR[Addr]=Attr;
+                DoImgWork(Addr);
+            }
         });
     }).catch(function (err)
     {
@@ -100,11 +103,11 @@ function SetNftAttrMap(Addr)
 
 
 //--------------------------------------------------------------------------- NFT cards
-async function FillListNFT(IDList,Account,PrefixNum,TokenName,bView)
+async function FillListNFT(IDList,Account,PrefixNum,TokenName,bView,TokenOnly)
 {
     if(!FirstPromise("FillListNFT"))
         return;
-    FillListNFTNext(IDList,Account,PrefixNum,TokenName,bView);
+    FillListNFTNext(IDList,Account,PrefixNum,TokenName,bView,TokenOnly);
     LeavePromise("FillListNFT");
 }
 
@@ -116,51 +119,82 @@ function GetCoinStoreNum()
     return  CONFIG_DATA.COIN_STORE_NUM;
 }
 
-async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
+
+async function FillListNFTNext(IDList, TokensArr,PrefixNum,TokenName,bView,TokenOnly)
 {
     if(!PrefixNum)
         PrefixNum=0;
     var bNFT=0;
     var Str="";
 
-    var CallNum=GetCoinStoreNum();
-    if(CallNum)
-    if(bView)
+    //console.log("FillListNFTNext Tokens=",Tokens);
+
+    if(bView && TokensArr)
     {
-        var Tokens;
-        if(typeof Account==="number")
-            Tokens=await CallTeraProxy(CallNum,"GetTokens",{Account:Account,GetURI:1});
-        else
-            Tokens=Account;
+        var Num=PrefixNum+1;
+        IDList.FirstSelect="idNFT"+Num;
 
-        if(Tokens)
+        var Arr=TokensArr;
+        for(var t=0;t<Arr.length;t++)
         {
-            var Num=PrefixNum+1;
-            var Arr=Tokens.Arr;
-            for(var t=0;t<Arr.length;t++)
-            {
-                bNFT=1;
+            bNFT=1;
 
-                var Item=Arr[t];
-                if(TokenName && Item.Token!=TokenName)
+            var Item=Arr[t];
+            if(TokenName && Item.Token!=TokenName)
+                continue;
+            if(TokenOnly && Item.Inner)
+                continue;
+
+            for(var i=0;i<Item.Arr.length;i++)
+            {
+                var Value=Item.Arr[i];
+                var Sum=FLOAT_FROM_COIN(Value);
+                if(!Sum && !Item.Inner)
                     continue;
 
-                for(var i=0;i<Item.Arr.length;i++)
+                Item.TokenName = Item.Token;
+                if(Item.Currency)
                 {
-                    var Value=Item.Arr[i];
+                    Item.TokenName = await ACurrencyName(Item.Currency,Item.Token);
+                }
 
+
+                // if(!Value.URI && Value.ID && +Value.ID>1000000)
+                // {
+                //     Value.URI="/nft/"+Value.ID;
+                // }
+
+                if(Item.IconBlockNum && !Value.URI && !Value.IMG)
+                {
+                    Value.IMG = "/file/" + Item.IconBlockNum + "/" + Item.IconTrNum;
+                }
+
+                if(Value.IMG)
+                {
+                    // if(Item.Currency)
+                    // {
+                    //     Item.TokenName = "" + Item.Currency + "." + Item.Token;
+                    // }
+                    Str+=GetNFTCard(IDList.id,Item,Value,Sum,Num);
+                    Num++;
+                }
+                else
+                {
                     var Addr=Value.URI;
+                    if(!Addr && Value.ID && +Value.ID>1000000)
+                    {
+                        Addr="/nft/"+Value.ID;
+                    }
 
                     if(Addr)
                     {
                         AddWorkNftImg(Addr,Num);
-
-                        Str+=GetNFTCard(IDList.id,Item,Value,Num);
-                        Num++;
                     }
+                    Str+=GetNFTCard(IDList.id,Item,Value,Sum,Num);
+                    Num++;
                 }
-            }
 
+            }
         }
     }
 
@@ -183,25 +217,37 @@ async function FillListNFTNext(IDList, Account,PrefixNum,TokenName,bView)
 
 }
 
-function GetNFTCard(ListId,Token,Value,Num)
+function GetNFTCard(ListId,Token,Value,Sum,Num)
 {
     var ID=GetShortTokenID(Value.ID);
-    return `
-    <item_nft id="idNFT${Num}" data-token="${Token.Token}" data-id="${Value.ID}" ondblclick="ChooseToken('${ListId}')" onclick="SelectNFTItem('${ListId}',this)">
-    ${Token.Token}<BR>${ID}
-    <img class="img_nft" id="idImg${Num}">
-    Items:<b>${FLOAT_FROM_COIN(Value)}</b>
-    </item_nft>`;
+    if(ID=="0")
+        ID="";
+
+    var Str= `
+    <item_nft id="idNFT${Num}" data-token="${Token.Token}" data-currency="${Token.Currency}" data-amount="${Sum}" data-id="${Value.ID}" ondblclick="ChooseToken('${ListId}')" onclick="SelectNFTItem('${ListId}',this)">
+    <DIV class="tokenname">${Token.TokenName}<BR>${ID}</DIV>
+    <img class="img_nft" id="idImg${Num}" ${Value.IMG?'src="'+Value.IMG+'"':''}>`;
+
+    if(ID)
+        Str+=`Amount:<b>${Sum}</b></item_nft>`;
+    else
+        Str+=`<DIV>Amount:</DIV><b>${Sum}</b></item_nft>`;
+
+    return Str;
+
 }
 
 function GetCopyNFTCard(IdSrc,Token,ID,Count)
 {
     var Img=$(IdSrc.replace("idNFT","idImg"));
     ID=GetShortTokenID(ID);
+    if(!Count)
+        Count="0";
+
     return `
     <div>${Token}<BR>${ID}
     <img class="img_nft" src="${Img.src}">
-    Items:<b>${Count}</b>
+    Amount:<b>${Count}</b>
     </div>`;
 }
 
@@ -237,50 +283,44 @@ function SelectNFTItem(List,element)
         else
             Item.className="";
     }
+
+    SetCurCurrencyName();
 }
 //---------------------------------------------------------------------------
-
-function RetMultiCoins(Item,DopStr,ListTotal)
+function RetCountERC(Item,DopStr)
 {
-    var CoinStore=Item.CoinStore;
-    if(!CoinStore)
+    var BalanceArr=Item.BalanceArr;
+    if(!BalanceArr)
         return "";
     var Count=0;
-    for(var t=0;t<CoinStore.Arr.length;t++)
+    for(var t=0;t<BalanceArr.length;t++)
     {
-        var Tokens=CoinStore.Arr[t];
-        var TokenName=Tokens.Token;
+        var Tokens=BalanceArr[t];
+        if(Tokens.Inner)
+            continue;
         for(var i=0;i<Tokens.Arr.length;i++)
         {
-            var Coin=Tokens.Arr[i];
-
-            if(ListTotal)
-            {
-                var Total = ListTotal[DopStr+TokenName];
-                if(!Total)
-                {
-                    Total = {SumCOIN: 0, SumCENT: 0, Name: TokenName};
-                    ListTotal[DopStr+TokenName] = Total;
-                }
-                ADD(Total, Coin);
-            }
-
-            //if(Coin.ID!=0)
-            Count += FLOAT_FROM_COIN(Coin);
+            var Coin = Tokens.Arr[i];
+            if(!FLOAT_FROM_COIN(Coin))
+                continue;
+            Count ++;
         }
     }
-    if(!Count)
+
+    if(Count<=0)
         return "";
     if(DopStr)
-        Count = DopStr+Count;//+" items";
+        Count = DopStr+Count;
     return "<a class='olink' target='_blank' onclick='OpenTokensPage(" + Item.Num + ")'>" + Count + "</a>";
 }
 
-function OpenTokensPage(Account)
+
+
+async function OpenTokensPage(Account)
 {
     var Str=`
     <div>
-        <div class="row-head">List of tokens:</div>
+        <div class="row-head">Token list:</div>
         <BR>
         <grid_nft id="idListShow">
             <item_nft>Loading...</item_nft>
@@ -291,50 +331,9 @@ function OpenTokensPage(Account)
     openModal('idShowPage', 'idCloseShow');
     $("idShowContent").innerHTML = Str;
 
-    FillListNFT(idListShow,Account,Account*10000+5000, "",1);
+    var Item=MapAccounts[Account];
+    FillListNFT(idListShow,Item.BalanceArr,Account*10000+5000, "",1,1);
 }
 
 
 
-//--------------------------------------------------------------------------- Proxy support
-async function CallTeraProxy(AccNum,Name,Params,ParamsArr)
-{
-    return new Promise(function(resolve, reject)
-    {
-        MStaticCall(AccNum,Name,Params,ParamsArr,function (Err,Value)
-        {
-            if(Err)
-            {
-                SetError(Value);
-                reject(Value);
-            }
-            else
-            {
-                resolve(Value);
-            }
-        });
-    });
-}
-function MStaticCall(To,Name,Params,ParamsArr,F)
-{
-    if(typeof Params!=="object")
-        return SetError("Error call "+Name);
-
-    Params.cmd=Name;
-    if(window.TESTMODE && To<200 || Name==="GetProxy")
-        return StaticCall(To,Name,Params,ParamsArr,F);
-    else
-        return StaticCall(To,"Call",Params,ParamsArr,F);
-
-}
-function MSendCall(To,Name,Params,ParamsArr,From)
-{
-    if(typeof Params!=="object")
-        return SetError("Error call "+Name);
-
-    Params.cmd=Name;
-    if(window.TESTMODE || Name==="SetProxy")
-        return SendCallMethod(To,Name,Params,ParamsArr,From,-1);
-    else
-        return SendCallMethod(To,"Call",Params,ParamsArr,From,-1);
-}

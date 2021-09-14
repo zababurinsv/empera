@@ -13,9 +13,23 @@
 //system info
 
 
-const TYPE_TRANSACTION_SYS = 20;
-global.FORMAT_SYS = {Type:"byte", Version:"byte",OperationID:"uint",FromNum:"uint",NextNum:"uint",Active:"uint", Price:{NewAccount:"double", NewSmart:"double", NewTokenSmart:"double", NewShard:"double", Storage:"double"},
-                     Reserve:"str200",Sign:"arr64"};
+global.TYPE_TRANSACTION_SYS = 20;
+global.FORMAT_SYS = {
+    Type:"byte", Version:"byte",OperationID:"uint",FromNum:"uint",NextNum:"uint",Active:"uint",
+
+    NewAccount:"double", NewSmart:"double", NewTokenSmart:"double", NewShard:"double",
+    Storage:"double",
+    FreeStorage:"uint32",
+
+    MaxTicks:"uint32",
+
+    WalletStorage:"double",
+    WalletFreeStorage:"uint16",
+    WalletMaxCount:"uint16",
+
+    Reserve:"str180",
+    Sign:"arr64"
+};
 global.WorkStructSys = {};
 
 
@@ -145,14 +159,30 @@ class SysCoreApp extends require("./dapp")
             Item = this.ActiveInfo;
         }
 
-        if(!Item)
+        if(!Item || !Item.Active)
         {
-            var FromNum=(global.NETWORK_ID == "MAIN-JINN.TERA")?20:8;
+            Item=
+            {
+                FromNum:0,
+                NextNum:(global.NETWORK_ID == "MAIN-JINN.TERA")?20:8,
+                Active:0,
+
+                NewAccount: 10,
+                NewSmart: 100,
+                NewTokenSmart: 10000,
+                NewShard: 10000,
+                Storage: 0.01,
+                FreeStorage:0,
+                MaxTicks:35000,
+                WalletStorage:0.1,
+                WalletFreeStorage:1,
+                WalletMaxCount:10,
+            };
 
             if(BlockNum >= UPDATE_CODE_SHARDING)
-                Item={FromNum:0,NextNum:FromNum,Active:0,Price:{NewAccount: 10, NewSmart: 100, NewTokenSmart: 1000, NewShard: 10000, Storage: 0.01}};
-            else
-                Item={FromNum:0,NextNum:FromNum,Active:0,Price:{NewAccount: 10, NewSmart: 100, NewTokenSmart: 10000, NewShard: 0, Storage: 0}};
+            {
+                Item.NewTokenSmart = 1000;
+            }
         }
         return Item;
     }

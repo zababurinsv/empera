@@ -72,7 +72,7 @@ function SendUserEvent(Obj,Mode,Smart,BlockNum,TrNum)
     if(CurTrackItem && typeof Obj === "string")
         SendTrack(BlockNum,TrNum,1, Obj, 2, 1);
     if(global.DebugEvent)
-        DebugEvent(Obj);
+        DebugEvent(Obj,BlockNum,TrNum);
 
 
 }

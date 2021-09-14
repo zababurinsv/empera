@@ -9,12 +9,15 @@
     <link rel="shortcut icon" href="./tera.ico" type="image/vnd.microsoft.icon">
 
     <link rel="stylesheet" href="./CSS/mobile-wallet.css">
+    <link rel="stylesheet" href="./CSS/mobile-wallet2.css">
     <link rel="stylesheet" href="./CSS/wallet-multicoin.css">
+    <link rel="stylesheet" href="./CSS/wallet-common.css">
 
     <script type="text/javascript" src="./JS/coinlib.js"></script>
     <script type="text/javascript" src="./JS/client.js"></script>
-    <script type="text/javascript" src="./JS/client-tx.js"></script>
     <script type="text/javascript" src="./JS/client-promise.js"></script>
+    <script type="text/javascript" src="./JS/client-tokens.js"></script>
+    <script type="text/javascript" src="./JS/client-tx.js"></script>
     <script type="text/javascript" src="./JS/sha3.js"></script>
     <script type="text/javascript" src="./JS/terabuf.js"></script>
     <script type="text/javascript" src="./JS/crypto-client.js"></script>
@@ -45,7 +48,7 @@
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M21.333 21.0024C22.8059 21.0024 24 19.8084 24 18.3354V5.66724C24 4.1943 22.8059 3.00024 21.333 3.00024H19.9995C19.9995 1.89554 19.104 1 17.9993 1H3.99756C2.52462 1 1.33057 2.19405 1.33057 3.66699V11H2.66406V3.66699C2.66406 2.93052 3.26109 2.3335 3.99756 2.3335H17.9993C18.3675 2.3335 18.666 2.63201 18.666 3.00024H5.33105C4.96282 3.00024 4.66431 3.29876 4.66431 3.66699C4.66431 4.03523 4.96282 4.33374 5.33105 4.33374H21.333C22.0695 4.33374 22.6665 4.93077 22.6665 5.66724V8.33423H17.3325C15.4913 8.33423 13.9988 9.8268 13.9988 11.668C13.9988 13.5091 15.4913 15.0017 17.3325 15.0017H22.6665V18.3354C22.6665 19.0719 22.0695 19.6689 21.333 19.6689H13V21.0024H21.333ZM15.3323 11.668C15.3323 10.5633 16.2278 9.66772 17.3325 9.66772H22.6665V13.6682H17.3325C16.2278 13.6682 15.3323 12.7727 15.3323 11.668Z"/>
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M12.5414 16.4582C12.7257 16.4582 12.9388 16.5955 12.9593 16.7783C13.0144 17.2706 13.0137 17.7677 12.9564 18.2565C12.9338 18.4467 12.7624 18.5903 12.576 18.5751L12.4956 18.573C11.921 18.573 11.3868 18.927 11.1658 19.4542C10.9308 20.0142 11.0776 20.666 11.53 21.0757C11.6719 21.2041 11.6888 21.4208 11.5689 21.5697C11.2597 21.9547 10.9061 22.3045 10.5173 22.6094C10.3676 22.725 10.1552 22.7081 10.0267 22.5684C9.63998 22.1435 8.95181 21.9836 8.41688 22.2021C7.86352 22.4287 7.50573 22.9858 7.52754 23.5882C7.53388 23.7774 7.39423 23.9397 7.20573 23.9605C6.96789 23.9869 6.73001 24 6.49217 24C6.24161 24 5.99173 23.9855 5.74334 23.9566C5.55349 23.9347 5.41307 23.7682 5.42434 23.5769C5.45888 22.9678 5.10596 22.4008 4.54491 22.1661C4.00926 21.9413 3.31335 22.1004 2.92445 22.5306C2.79535 22.6728 2.57865 22.6898 2.42971 22.5698C2.05001 22.2642 1.70343 21.9141 1.4014 21.5294C1.2842 21.3809 1.30186 21.1674 1.44092 21.0396C1.88555 20.6321 2.03162 19.9864 1.80438 19.4323C1.57641 18.8776 1.03296 18.5271 0.466932 18.5416C0.280656 18.5416 0.0611022 18.4055 0.0406898 18.222C-0.0143559 17.7297 -0.0136788 17.2321 0.0434953 16.7438C0.066036 16.5564 0.212841 16.418 0.418948 16.4247C1.0541 16.4247 1.60891 16.0803 1.8333 15.546C2.06834 14.9856 1.92226 14.3339 1.46985 13.9242C1.3287 13.7958 1.31105 13.5794 1.43105 13.4302C1.73874 13.0462 2.09305 12.6962 2.48263 12.3906C2.63152 12.2745 2.84536 12.2917 2.97316 12.4318C3.35983 12.8571 4.0509 13.0152 4.58226 12.7982C5.13634 12.5712 5.49351 12.0141 5.47232 11.4113C5.46599 11.2225 5.60573 11.0602 5.79418 11.0394C6.28118 10.9854 6.77098 10.9871 7.25652 11.0433C7.44715 11.0655 7.58689 11.2317 7.57553 11.4229C7.54099 12.0317 7.8939 12.5987 8.45355 12.8342C8.99133 13.0585 9.68729 12.8991 10.0747 12.47C10.2032 12.3277 10.4206 12.3112 10.5687 12.4301C10.9471 12.7332 11.2936 13.0829 11.5985 13.47C11.7157 13.6186 11.6987 13.8324 11.559 13.9602C11.115 14.3674 10.969 15.0135 11.1955 15.5675C11.4172 16.1084 11.9458 16.4582 12.5414 16.4582ZM6.50013 21.4011C8.6546 21.4011 10.4011 19.6546 10.4011 17.5001C10.4011 15.3457 8.6546 13.5991 6.50013 13.5991C4.34566 13.5991 2.59912 15.3457 2.59912 17.5001C2.59912 19.6546 4.34566 21.4011 6.50013 21.4011Z"/>
                     </svg>
-                    <span>KEY SETTINGS</span>
+                    <span>SETTINGS</span>
                 </a>
             </div>
         </div>
@@ -129,9 +132,10 @@
                     logout
                 </button>
             </div>
-            <BR>
-            <h2 class="wallet-settings__title title">Key settings</h2>
         </div>
+
+        <h2 class="wallet-settings__title title">Key settings</h2>
+
         <div class="wallet-settings__field key-field">
             <p class="key-field__title">Private key (secret)</p>
             <button class="key-field__btn btn-no-bg wallet-settings__hiding" onclick="OnVisiblePrivKey()">Show</button>
@@ -160,6 +164,11 @@
             </div>
         </div>
         <!--<button class="btn wallet-settings__go-btn" onclick="SelectTab('TabAccounts')">Go to accounts</button>-->
+        <BR>
+        <h2 class="wallet-settings__title title">Network settings</h2>
+        <div class="wallet-wrapper" style="padding-top: 0px;">
+        URL RPC: <input type="search" id="idMainServer" placeholder="https://terawallet.org" class="key-field__input" onchange="SaveValues()">
+        </div>
 
     </section>
 
@@ -222,9 +231,7 @@
                 <li class="prod-list__item prod-card prod-card--line prod-card--switch find--switch" id="AccCardTemplate">
                     <div class="prod-card__first-line">
                         <span class="hidden id-sign">ID:&nbsp;</span>
-                        <a target='_blank' class="prod-card__id prod-card__id--mobile">$Item.Num</a>
-                        <a onclick="OpenHistoryPage($Item.Num)" class="prod-card__id prod-card__id--mobile-active pointer">$Item.Num</a>
-                        <a onclick="OpenHistoryPage($Item.Num)" target='_blank' class="prod-card__id prod-card__id--desktop pointer">$Item.Num</a>
+                        <a onclick="OpenHistoryPage($Item.Num)" target='_blank' class="prod-card__id ">$Item.Num</a>
                         <div class="prod-card__heading">
                             <span class="prod-card__coins-count">$Value.SumCOIN<sup>$Value.SumCENT</sup><br>
                                 <span class="light-grey-text small-text mob-hidden">$Value.CurrencyName</span>
@@ -235,12 +242,22 @@
 
                         </div>
                         <span class="prod-card__descr light-grey-text">$Item.Name</span>
-                        <span class="prod-card__descr light-grey-text">$Item.CoinStore</span>
+                        <span class="prod-card__descr light-grey-text">$Item.COUNT_TOKENS</span>
+                        <div class="hidden id-sign">
+                            <dl class="total-info">
+                                $Item.LIST_TOKENS
+                            </dl>
+                        </div>
+                        <div class="hidden id-sign">
+                            $Item.OPEN_NFT_PAGE
+                        </div>
+
+
                     </div>
 
                     <div class="prod-card__footer">
                         <div class="prod-card__footer-wrap" >
-                            <a onclick="OpenDapps($SmartObj.Num,$Item.Num,$SmartObj.HTMLLength)" class="prod-card__link prod-card__link--dapp">
+                            <a onclick="OpenDapps($SmartObj.Num,$Item.Num,$SmartObj.HTMLLength)" class="prod-card__link prod-card__link--dapp dapp-num$SmartObj.Num">
                                 <img $smartobj.iconpath alt="." width="32" height="32">
                                 <span  class="prod-card__dapp-name mob-hidden">$SmartObj.Name</span>
                             </a>
@@ -292,7 +309,7 @@
 
             <div class="send-page__field key-field">
                 <p class="key-field__title">From:</p>
-                <button onclick="SetAllSum()" title="Paste total amount" class="key-field__btn btn-no-bg no-mr" style="padding: 0; margin-left: 10px;">
+                <button onclick="SetAllSum()" title="Paste total amount" class="key-field__btn btn-no-bg no-mr set_all_sum" style="padding: 0; margin-left: 10px;">
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M15 1H3C1.89543 1 1 1.89543 1 3V15C1 16.1046 1.89543 17 3 17H15C16.1046 17 17 16.1046 17 15V3C17 1.89543 16.1046 1 15 1ZM3 0C1.34315 0 0 1.34315 0 3V15C0 16.6569 1.34315 18 3 18H15C16.6569 18 18 16.6569 18 15V3C18 1.34315 16.6569 0 15 0H3ZM6.64645 10.6464C6.84171 10.4512 7.15829 10.4512 7.35355 10.6464L9.5 12.7929V6C9.5 5.17157 8.82843 4.5 8 4.5H6C5.72386 4.5 5.5 4.27614 5.5 4C5.5 3.72386 5.72386 3.5 6 3.5H8C9.38071 3.5 10.5 4.61929 10.5 6V12.7929L12.6464 10.6464C12.8417 10.4512 13.1583 10.4512 13.3536 10.6464C13.5488 10.8417 13.5488 11.1583 13.3536 11.3536L10.3536 14.3536L10 14.7071L9.64645 14.3536L6.64645 11.3536C6.45118 11.1583 6.45118 10.8417 6.64645 10.6464Z"/>
                     </svg>
@@ -303,17 +320,17 @@
                     <select size="1" id="idAccount" class="key-field__select" oninput="OnSelectAccountFrom(); CheckSending();">
                     </select>
 
-                    <select  size="1" id="idERCMode" class="key-field__select"  oninput="OnSelectAccountFrom()" style="width:80px;">
-                        <option value="0">Coin</option>
-                        <option value="1">NFT</option>
-                    </select>
+<!--                    <select  size="1" id="idERCMode" class="key-field__select"  oninput="OnSelectAccountFrom()" style="width:80px;">-->
+<!--                        <option value="0">Coin</option>-->
+<!--                        <option value="1">NFT</option>-->
+<!--                    </select>-->
                 </div>
 
             </div>
 
             <div class="send-page__field key-field" id="idTokenNFT" style="display:none">
                 <div>
-                    <div style="padding-left: 10px">Tokens:</div>
+                    <div style="padding-left: 10px" class="t_choos_coin">Choose a coin:</div>
                     <grid_nft id="idListNFT">
                         <item_nft>Loading...</item_nft>
                     </grid_nft>
@@ -485,9 +502,9 @@
                         <tr>
                             <th id="(RetHistoryAccount(Item))" class="num">ID</th>
                             <th id="SUM_TO_STRING(Item.Value)" class="sum">Amount</th>
-                            <th id="CurrencyNameItem(Item)" class="cur">Cur</th>
+                            <th id="ACurrencyNameItem(Item)" class="cur">Cur</th>
                             <th id="Item.Name" class="accname">Name</th>
-                            <th id="Item.PubKeyStr" class="hash">PubKey</th>
+                            <th id="Item.PubKeyStr" class="hash pubkey">PubKey</th>
                             <th id="Item.Value.OperationID" class="minwidth">Operation</th>
                             <th id="Item.Value.Smart" class="minwidth">Smart</th>
                             <th id="(RetOpenBlock(Item.BlockNumCreate,1))" class="minwidth">Block Num</th>

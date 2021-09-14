@@ -70,6 +70,8 @@ function CreateFrame(Code,Parent)
     <meta http-equiv="X-Frame-Options" value="sameorigin">\
     <script type="text/javascript" src="' + StrPath + '/JS/sha3.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/client.js"><\/script>\
+    \<script type="text/javascript" src="' + StrPath + '/JS/client-promise.js"><\/script>\
+    <script type="text/javascript" src="' + StrPath + '/JS/client-tokens.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/client-tx.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/crypto-client.js"><\/script>\
     <script type="text/javascript" src="' + StrPath + '/JS/coinlib.js"><\/script>\
@@ -203,10 +205,19 @@ function DappListener(event)
                 if(!Data.FromNum)
                     Data.FromNum = 0;
 
-                SendCallMethod(Data.Account, Data.MethodName, Data.Params, Data.ParamsArr, Data.FromNum, glSmart,RetSendTx,Data,Data.Confirm);
+                SendCallMethod(Data.Account, Data.MethodName, Data.Params, Data.ParamsArr, Data.FromNum, glSmart,RetSendTx,Data,Data.Confirm,Data.TxTicks);
 
                 break;
             }
+        case "StartTransfer":
+        {
+            Data.Smart=glSmart;
+            //Data.Account=BASE_ACCOUNT.Num;
+
+            AddToTransfer(Data);
+
+            break;
+        }
         case "DappInfo":
             {
                 DoDappInfo(Data);

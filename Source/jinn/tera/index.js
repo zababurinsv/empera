@@ -114,6 +114,8 @@ function GetEngine(MapName)
     
     require("./tera-virtual-tx").Init(Engine);
     
+    require("./tera-block-create").Init(Engine);
+    
     return Engine;
 }
 

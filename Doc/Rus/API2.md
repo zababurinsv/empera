@@ -92,6 +92,8 @@ result - возвращает номер созданного аккаунта
 * FromID - номер счета отправителя
 * FromPrivKey - приватный ключ отправителя в hex-формате
 * ToID - номер счета получателя (число)
+* Currency - номер валюты (число, только для валют созданных смарт-контрактами начиная с версии 2)
+* TokenID - ИД токена (строка, поддержка NFT, только для валют созданных смарт-контрактами начиная с версии 2)
 * Amount - сумма, число с плавающей точкой или объект в формате {SumCOIN,SumCENT}
 * Description - описание платежа (необязательный параметр)
 * Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
@@ -120,134 +122,6 @@ return:
 }
 ```
 
-example2 (создание нового счета):
-```js
-http://127.0.0.1/api/v2/Send
-
-{
-    "FromID": 190059,
-    "FromPrivKey": "A2D45610FE8AC931F32480BFE3E78D26E45B0A4F88045D6518263DA12FA9C033",
-    "ToID":"0240EDF5ECB25D886FD58DB92A53914FAC975078C1C2EDD1AC292B70C7BC13461F",
-    "Amount":10,
-    "Description":"New account",
-    "Confirm":5
-   
-}
-```
-
-return:
-```js
-{
-    "result": 190551,
-    "text": "Add to blockchain",
-    "TxID": "9DD4869C4515B2A3340E887A2F010000",
-    "BlockNum": 19888776
-}
-```
-result - возвращает номер созданного аккаунта
-
-
-## SendToken
-
-3.2)**/api/v2/SendToken**  - отправка монет с одного счета на другой (требуется указать приватный ключ счета отправителя)
-#### Параметры:
-* FromID - номер счета отправителя
-* FromPrivKey - приватный ключ отправителя в hex-формате
-* ToID - номер счета получателя (число)
-* Token - имя токена (строка)
-* TokenID - ID токена (строка)
-* Amount - количество токенов (число)
-* Description - описание платежа (необязательный параметр)
-* Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
-
-
-example:
-```js
-http://127.0.0.1/api/v2/SendToken
-{
-    "FromID": 1082,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "ToID":1102,
-    "Amount":1,
-    "Token":"TERA-NFT",
-    "TokenID":"9041840001",
-    "Description":"test1",
-    "Confirm":1
-}
-```
-
-## TokenMint
-
-3.3)**/api/v2/SendTokenMint**  - выпуск токенов на счете отправителя
-#### Параметры:
-* FromID - номер счета отправителя (владельца галереи/токена)
-* FromPrivKey - приватный ключ отправителя в hex-формате
-* ToID - номер счета получателя токенов (число)
-* Token - имя токена (строка)
-* TokenID - строка ID существующего токена или структура с параметрами нового
-* Amount - количество токенов (число)
-* Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
-
-
-#### Примечание:
-- Параметры токенов хранятся в блокчейне в неизменяемом виде, чтобы их прочитать  воспользоваться вызовом следующего API:
-/nft/{id} Например: https://terawallet.org/nft/72496009000
-- Для того чтобы стать владельцем галереи нужно использовать Дапп 143.Token Factory (https://terawallet.org/dapp/143)
-
-
-example 1 (создания нового ID токена)
-
-```js
-http://127.0.0.1/api/v2/SendTokenMint
-{
-    "FromID": 314,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "ToID":1082,
-    "Amount":5,
-    "Token":"TEST-2",
-    "TokenID":{"image":"https://terafoundation.org/files/TeraCoin.jpg","name":"Tera1","description":"First tera NFT"},
-    "Confirm":1
-}
-```
-
-example 2 (довыпуск ранее созданных ID токенов)
-```js
-http://127.0.0.1/api/v2/SendTokenMint
-{
-    "FromID": 314,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "ToID":1082,
-    "Amount":5,
-    "Token":"TEST-2",
-    "TokenID":"9641183000",
-    "Confirm":1
-}
-```
-
-## TokenBurn
-
-3.4)**/api/v2/SendTokenBurn**  - сжигание токенов на счете отправителя
-#### Параметры:
-* FromID - номер счета отправителя
-* FromPrivKey - приватный ключ отправителя в hex-формате
-* Token - имя токена (строка)
-* TokenID - ID токена (строка)
-* Amount - количество токенов (число)
-* Confirm - ожидание XXX подтверждений блоков в блокчейне, по умолчанию равно 8
-
-
-example:
-```js
-http://127.0.0.1/api/v2/SendTokenBurn
-{
-    "FromID": 1082,
-    "FromPrivKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "Amount":1,
-    "Token":"TERA-NFT",
-    "TokenID":"9041840001",
-    "Confirm":1
-}
-```
 
 ## Call DApp method
 
@@ -283,79 +157,80 @@ http://127.0.0.1/api/v2/SendCall
 4)**/api/v2/GetBalance**  - получить баланс счета
 #### Параметры:
 * AccountID - номер счета
-
-#### дополнительные параметры для работы с ERC/NFT токенами
-* GetTokens - если 1, то в поле ответа Tokens возвращается массив всех токенов хранящихся на счете
-* GetTokenAmount - если 1, то в поле ответа TokenAmount возвращается число токенов заданными параметрами Token и TokenID
-* Token - имя токена (строка)
-* TokenID - ид токена (строка)
+* GetArr - если 1, то в поле ответа Arr возвращается массив всех монет и токенов хранящихся на счете
  
 
 
-
-
 example:
-   ```js
-   http://127.0.0.1/api/v2/GetBalance
-   {
-       "AccountID": 0
-   }
-   ```
-   return:
-   ```js
-   {
-       "result": 1,
-       "SumCOIN": 5589146,
-       "SumCENT": 555765670,
-       "Currency": 0,
-       "PubKey": "02769165A6F9950D023A415EE668B80BB96B5C9AE2035D97BDFB44F356175A44FF"
-   }
-   ```
+```js
+http://127.0.0.1/api/v2/GetBalance
+{
+    "AccountID": 10
+ }
+```
+
+return:
+
+```js
+{
+    "result": 1,
+    "SumCOIN": 428,
+    "SumCENT": 0,
+    "Currency": 0,
+    "PubKey": "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3"
+}
+```
 
 example2:
 ```js
 http://127.0.0.1/api/v2/GetBalance
 {
-    "AccountID": 1082,
-    "GetTokens": 1,
-    "GetTokenAmount": 1,
-    "Token": "TERA-NFT",
-    "TokenID": "8922109000"
-}
+    "AccountID": 10,
+    "GetArr": 1
+ }
 ```
 return:
 ```js
 {
     "result": 1,
-    "SumCOIN": 101878,
-    "SumCENT": 0,
-    "Currency": 0,
-    "PubKey": "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3",
-    "Tokens": {
-        "MaxCount": 10,
-        "Arr": [
-            {
-                "Token": "TERA-NFT",
-                "Arr": [
-                    {
-                        "ID": "9041840001",
-                        "SumCOIN": 7,
-                        "SumCENT": 0,
-                        "Flag": 0
-                    },
-                    {
-                        "ID": "8922109000",
-                        "SumCOIN": 1,
-                        "SumCENT": 0,
-                        "Flag": 0
-                    }
-                ],
-                "Flag": 0
-            }
-        ],
-        "Flag": 0
-    },
-    "TokenAmount": 1
+    "Arr": [
+        {
+            "Currency": 0,
+            "Token": "TERA",
+            "Arr": [
+                {
+                    "ID": "",
+                    "SumCOIN": 428,
+                    "SumCENT": 0,
+                    "IMG": "/PIC/Tera.svg"
+                }
+            ]
+        },
+        {
+            "Currency": 10,
+            "Token": "TOKEN",
+            "Arr": [
+                {
+                    "SumCOIN": 290,
+                    "SumCENT": 0,
+                    "ID": "",
+                    "IMG": "/file/8198/0"
+                }
+            ]
+        },
+        {
+            "Currency": 15,
+            "Token": "TOKEN",
+            "Arr": [
+                {
+                    "SumCOIN": 145,
+                    "SumCENT": 0,
+                    "ID": "",
+                    "IMG": "/file/8198/0"
+                }
+            ]
+        }
+    ]
 }
 ```
 

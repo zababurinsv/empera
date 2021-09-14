@@ -2,7 +2,7 @@
 const fs = require('fs');
 
 
-global.UPDATE_CODE_VERSION_NUM = 2566;
+global.UPDATE_CODE_VERSION_NUM = 2600;
 global.MIN_JINN_VERSION_NUM = 0;
 
 global.DEBUG_TRAFFIC = 0;
@@ -86,7 +86,7 @@ global.UPDATE_CODE_4 = 0;
 global.UPDATE_CODE_5 = 0;
 global.UPDATE_CODE_6 = 0;
 global.UPDATE_CODE_7 = 0;
-global.UPDATE_CODE_8 = 0;
+
 global.UPDATE_CODE_NEW_ACCHASH = 1;
 global.UPDATE_CODE_JINN = 0;
 global.UPDATE_CODE_JINN_KTERA = 0;
@@ -211,8 +211,7 @@ global.GETVERSION = function (BlockNum)
 
 global.PRICE_DAO = function (BlockNum)
 {
-    var SysInfo=SYSCORE.GetInfo(BlockNum);
-    return SysInfo.Price;
+    return SYSCORE.GetInfo(BlockNum);
     // if(BlockNum >= UPDATE_CODE_SHARDING)
     //     return {NewAccount:10, NewSmart:100, NewTokenSmart:1000, NewShard:10000, Storage:0.01};
     // else

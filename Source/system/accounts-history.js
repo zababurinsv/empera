@@ -30,8 +30,9 @@ class AccountHistory extends require("./accounts-rest-no")
                 {Type:"byte", BlockNum:"uint32",TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32"},
                 {Type:"byte", BlockNum:"uint32",TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32", Description:"str"},
                 {Type:"byte", BlockNum:"uint32",TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32", Description:"str", Token:"str", ID:"str"},
+                {Type:"byte", BlockNum:"uint32",TrNum:"uint16", NextPos:"uint", Direct:"str1", CorrID:"uint", SumCOIN:"uint", SumCENT:"uint32", Description:"str", Token:"str", ID:"str",Currency:"uint32"},
             ];
-        this.WorkStructArr = [{}, {}, {}, {}];
+        this.WorkStructArr = [{}, {}, {}, {}, {}, {}, {}, {}, {}];
         REGISTER_TR_DB(this.DBStateHistory, 14);
         REGISTER_TR_DB(this.DBBodyHistory, 16);
     }
@@ -51,11 +52,8 @@ class AccountHistory extends require("./accounts-rest-no")
     
     WriteHistory(Num, Body)
     {
-        if(Body.SmartMode===3)
-            Body.Type = 3;
-        else
-        if(Body.SmartMode)
-            Body.Type = 2;
+        if(Body.SmartMode>=2 && Body.SmartMode<=4)
+            Body.Type = Body.SmartMode;
         else
             Body.Type = 1;
         
@@ -120,6 +118,7 @@ class AccountHistory extends require("./accounts-rest-no")
             }
             arr.push(Item)
         }
+        //console.log(arr);
         return arr;
     }
     

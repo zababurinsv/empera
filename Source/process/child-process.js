@@ -59,6 +59,8 @@ process.on('message', function (msg)
     switch(msg.cmd)
     {
         case "Alive":
+            //ToLog("Got alive: "+FIRST_TIME_BLOCK);
+            global.FIRST_TIME_BLOCK=msg.FIRST_TIME_BLOCK;
             global.DELTA_CURRENT_TIME = msg.DELTA_CURRENT_TIME;
             break;
         case "Exit":

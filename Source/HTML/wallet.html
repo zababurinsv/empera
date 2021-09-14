@@ -7,16 +7,18 @@
     <link rel="shortcut icon" href="/HTML/PIC/wallet.png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="./CSS/wallet-grid.css">
-    <link rel="stylesheet" href="./CSS/wallet-new.css"> <!-- Подключаем CSS -->
+    <link rel="stylesheet" href="./CSS/wallet-new.css">
     <link rel="stylesheet" href="./CSS/wallet-normalize.css"> <!-- Подключаем normalize -->
     <link rel="stylesheet" href="./CSS/wallet-multicoin.css">
+    <link rel="stylesheet" href="./CSS/wallet-common.css">
 
 
 
     <script type="text/javascript" src="/HTML/JS/coinlib.js"></script>
     <script type="text/javascript" src="/HTML/JS/client.js"></script>
-    <script type="text/javascript" src="/HTML/JS/client-tx.js"></script>
     <script type="text/javascript" src="/HTML/JS/client-promise.js"></script>
+    <script type="text/javascript" src="/HTML/JS/client-tokens.js"></script>
+    <script type="text/javascript" src="/HTML/JS/client-tx.js"></script>
     <script type="text/javascript" src="/HTML/JS/sha3.js"></script>
     <script type="text/javascript" src="/HTML/JS/sign-lib-min.js"></script>
     <script type="text/javascript" src="/HTML/JS/crypto-client.js"></script>
@@ -212,8 +214,8 @@
                             <th id="(RetHistoryAccount(Item))" class="id">ID</th>
                             <th id="(RetEditAccount(Item))" data-name="Account name" class="name ">Name</th>
                             <th id="SUM_TO_STRING(Item.Value)" class="sum bold">Amount</th>
-                            <th id="CurrencyNameItem(Item)" data-name="Currency" class="cur">Cur</th>
-                            <th id="(RetMultiCoins(Item))" class="">ERC</th>
+                            <th id="ACurrencyNameItem(Item)" data-name="Currency" class="cur">Cur</th>
+                            <th id="(RetCountERC(Item))" class="">ERC</th>
                             <th id="Item.Adviser" data-name="Adviser" class="">Adv</th>
 
                             <th id="(RetChangeSmart(Item))" data-name="Smart contract (DApp)" class="">Smart</th>
@@ -788,17 +790,17 @@
             <div class="select row">
                 <select class="select__item input_send" size="1" id="idAccount" oninput="OnSelectAccountFrom()">
                 </select>
-                <select class="select__item" size="1" id="idERCMode" oninput="OnSelectAccountFrom()">
-                    <option value="0">Coin</option>
-                    <option value="1">ERC</option>
-                </select>
+<!--                <select class="select__item" size="1" id="idERCMode" oninput="OnSelectAccountFrom()">-->
+<!--                    <option value="0">Coin</option>-->
+<!--                    <option value="1">ERC</option>-->
+<!--                </select>-->
             </div>
         </div>
 
         <div class="row" id="idTokenNFT" style="display:none">
             <div>
                 <div class="input-group__row">
-                    <p class="input-group__text">Tokens:</p>
+                    <p class="input-group__text t_choos_coin">Choose a coin:</p>
                 </div>
                 <grid_nft id="idListNFT">
                     <item_nft>Loading...</item_nft>
@@ -824,7 +826,7 @@
             <div class="input-group__row">
                 <p class="input-group__text">Amount <span id="idCoinName"></span></p>
                 <div class="input-group__right">
-                        <a onclick="SetAllSum()" class="input-group__link">
+                        <a onclick="SetAllSum()" class="input-group__link set_all_sum">
                         <img src="./img/load.svg">
                     </a>
                 </div>
@@ -841,10 +843,10 @@
 
 
         <div class="wallet__buttons">
-            <a onclick="EditJSONTransaction()" class="btn btn__transparent btn_wide" id="json">
-                <img src="./img/edit.svg" class="btn__img">
-                <p>Edit json</p>
-            </a>
+<!--            <a onclick="EditJSONTransaction()" class="btn btn__transparent btn_wide" id="json">-->
+<!--                <img src="./img/edit.svg" class="btn__img">-->
+<!--                <p>Edit json</p>-->
+<!--            </a>-->
             <div class="wallet__btn-group">
                 <button class="btn btn__transparent btn_wide btn_margin" onclick="ClearTransaction()">Clear</button>
                 <button class="btn btn_wide" id="idSendButton" onclick="SendMoneyBefore();PasueBt(this)">SEND</button>
@@ -927,8 +929,11 @@
                     <th id="Item.KeyValueSize" class="snum">Storage</th>
 
 
-                    <th id="RetBool(Item.TokenGenerate)" class="bool">Token</th>
+<!--                    <th id="RetBool(Item.TokenGenerate)" class="bool">Token</th>-->
+                    <th id="Item.Version" class="">Version</th>
+
                     <th id="(RetOpenBlock(Item.BlockNum,1))" class="block">Block</th>
+
 
                 </tr>
 
@@ -1189,11 +1194,11 @@
                         <tr>
                             <th id="(RetHistoryAccount(Item))" class="id">ID</th>
                             <th id="SUM_TO_STRING(Item.Value)" class="sum smallbold">Amount</th>
-                            <th id="CurrencyNameItem(Item)" class="cur">Cur</th>
+                            <th id="ACurrencyNameItem(Item)" class="cur">Cur</th>
                             <th id="Item.Name" class="name">Name</th>
                             <th id="Item.PubKeyStr" class="pubkey">PubKey</th>
                             <th id="Item.Value.OperationID" class="num">Operation</th>
-                            <th id="(RetMultiCoins(Item))" class="">ERC</th>
+                            <th id="(RetCountERC(Item))" class="">ERC</th>
                             <th id="Item.Adviser" class="num">Adv</th>
                             <th id="Item.Value.Smart" class="num">Smart</th>
                             <th id="(RetOpenBlock(Item.BlockNumCreate,1))" class="block">Block</th>
@@ -1282,6 +1287,7 @@
                             <th id="Item.Num" class="num">Num</th>
                             <th id="(RetOpenBlock(Item.BlockNum,1))" class="block">Block</th>
                             <th id="GetHexFromArr(Item.AccHash)" class="hash">Acc Hash</th>
+<!--                            <th id="GetHexFromArr(Item.SmartHash)" class="hash">Smart Hash</th>-->
 <!--                            <th id="(RetVerify(Item.VerifyAccHash))" class="verify">A</th>-->
                             <th id="GetHexFromArr(Item.SumHash)" class="hash">Sum Hash</th>
                             <th id="(RetVerify(Item.VerifySumHash))" class="verify">S</th>
@@ -1459,17 +1465,17 @@
 
                 <DIV id="idOnSendWarning" style='color: yellow;'>WARNING: You are about to send a very large amount!</DIV>
 
-                <div class="switch" ID="idCheckOnSend" style="margin-top: 30px">
-                    <p class="switch-text">Add to white list</p>
-                    <label for="idWhiteOnSend">
-                        <input type="checkbox" class="checkbox" id="idWhiteOnSend">
-                        <label for="idWhiteOnSend"></label>
-                    </label>
-                </div>
+<!--                <div class="switch" ID="idCheckOnSend" style="margin-top: 30px">-->
+<!--                    <p class="switch-text">Add to white list</p>-->
+<!--                    <label for="idWhiteOnSend">-->
+<!--                        <input type="checkbox" class="checkbox" id="idWhiteOnSend">-->
+<!--                        <label for="idWhiteOnSend"></label>-->
+<!--                    </label>-->
+<!--                </div>-->
 
                 <div class="form__buttons" style="margin-top: 30px">
                     <button class="btn btn__transparent cancel btn_margin btn_middle doclose">Cancel</button>
-                    <button onclick="SendMoney2()" id="idBtOnSend" class="btn btn_middle doclose">Confirm</button>
+                    <button onclick="SendMoney()" id="idBtOnSend" class="btn btn_middle doclose">Confirm</button>
                 </div>
 
             </DIV>

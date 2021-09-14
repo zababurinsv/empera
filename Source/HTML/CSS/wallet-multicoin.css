@@ -3,7 +3,7 @@ grid_nft
 {
     display: grid;
     min-width: 360px;
-    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     grid-gap: 5px;
 
     overflow:auto;
@@ -19,7 +19,7 @@ item_nft
     text-align: center;
     padding: 2px;
     margin: 5px auto;
-    width: 80px;
+    width: 120px;
     height: 120px;
 
     font-size: 10px;
@@ -63,6 +63,10 @@ item_nft b
 {
     font-size: 12px;
 }
+item_nft .tokenname
+{
+    font-size: 12px;
+}
 
 
 .grid_nft_send
@@ -71,6 +75,4 @@ item_nft b
     width: 100%;
 
 }
-
-
 

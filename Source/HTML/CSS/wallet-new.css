@@ -1163,8 +1163,10 @@ a
 
 .btinvoice
 {
-    background-color: var(--colorContainer);
-    border: 1px solid var(--colorButton);
+    /*background-color: var(--colorContainer);*/
+    background-color:var(--colorButton);
+    border: 1px solid #000;
+    border-radius: 5px;
     color: rgba(var(--colorT), var(--colorT), var(--colorT), 0.9);
     display: -webkit-box;
     display: -webkit-flex;
@@ -1174,11 +1176,12 @@ a
     width: 133px;
     min-width: 133px;
     max-width: 133px;
-    height:40px;
+    height:60px;
     white-space: pre-line;
     background-image: url('/HTML/PIC/invoice.png');
     background-repeat: no-repeat;
     background-size: 16px;
+    margin: 10px;
 }
 .btinvoice_use
 {

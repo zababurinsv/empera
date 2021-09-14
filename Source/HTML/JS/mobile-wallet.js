@@ -11,7 +11,7 @@
 
 var WEB_WALLET_VERSION = "" + window.CLIENT_VERSION;
 
-var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idCurTabName", "idViewBlockNum", "idViewAccountNum", "idViewDappNum", "idLang","idERCMode"];
+var SaveIdArr = ["idAccount", "idTo", "idSumSend", "idDescription", "idCurTabName", "idViewBlockNum", "idViewAccountNum", "idViewDappNum", "idLang","idMainServer"];
 
 var CONFIG_DATA = {PRICE_DAO:{NewAccount:10}, MaxNumBlockDB:0, MaxAccID:0, MaxDappsID:0};
 var CountViewRows = 20;
@@ -20,6 +20,7 @@ var DefBlock = {BlockName:"idPaginationBlock", NumName:"idViewBlockNum", TabName
 var DefDapps = {BlockName:"idPaginationDapps", NumName:"idViewDappNum", TabName:"dapps_list", APIName:"GetDappList", CountViewRows:10,
     FilterName:"idCategory"};
 
+var AccToggleMap={};
 function SetImg()
 {
 }
@@ -84,9 +85,10 @@ window.addEventListener('load', function ()
         {
             if(Data && Data.result)
             {
-                window.SHARD_NAME = Data.SHARD_NAME;
-                window.NETWORK_NAME = Data.NETWORK;
-                window.NETWORK_ID = Data.NETWORK + "." + Data.SHARD_NAME;
+                // window.SHARD_NAME = Data.SHARD_NAME;
+                // window.NETWORK_NAME = Data.NETWORK;
+                // window.NETWORK_ID = Data.NETWORK + "." + Data.SHARD_NAME;
+                CheckNetworkID(Data);
                 
                 Storage.setItem("NETWORK_ID", window.NETWORK_ID);
                 console.log("Default network: " + NETWORK_ID);
@@ -453,10 +455,12 @@ function UpdatesAccountsData(bGetData)
     }
     
 
-    GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData, CoinStore:1,CurrentPage:CurrentPage}, function (Data,responseText)
+    GetData("/GetAccountListByKey", {Key:Str, Session:glSession, AllData:FirstAccountsData, BalanceArr:1,CurrentPage:CurrentPage}, async function (Data,responseText)
     {
         if(!Data)
             return;
+
+        await CheckNetworkID(Data);
 
         AccountsCount = Data.Accounts;
         if(!AccountsCount)
@@ -477,10 +481,6 @@ function UpdatesAccountsData(bGetData)
         if(AccountsCount)
         {
             SetAccountsCard(Data, responseText);
-        }
-        else
-        {
-
         }
         FirstAccountsData = 0;
     });
@@ -545,7 +545,7 @@ function OnAddAccount()
         return;
     }
     var Smart = 0;
-    var Currency = GetCurrencyByName($("idCurrency").value);
+    var Currency = FindCurrencyNum($("idCurrency").value);
     
     SendTrCreateAccWait(Currency, GetPubKey(), Name, Smart);
     SetVisibleClass(".accounts-info__add", 0);
@@ -564,7 +564,7 @@ function InitAccountsCard()
     }
 }
 
-function SetAccountsCard(Data,AccountsDataStr)
+async function SetAccountsCard(Data,AccountsDataStr)
 {
     
     if(!Data || !Data.result)
@@ -600,17 +600,17 @@ function SetAccountsCard(Data,AccountsDataStr)
     
     var StrList = "";
     
-    var ListTotal = {};
-    
+
     var dataList = $("idToList");
     if(dataList)
         dataList.innerHTML = "";
 
+    var ListTotal = {};
     for(var i = 0; arr && i < arr.length; i++)
     {
         var Item = arr[i];
         Item.MyAccount = true;
-        
+        //console.log(Item)
         var Num = ParseNum(Item.Num);
         if(!MapAccounts[Num])
             MapAccounts[Num] = {};
@@ -641,7 +641,7 @@ function SetAccountsCard(Data,AccountsDataStr)
         {
             Str1 = "";
         }
-        var StrCurrencyName = CurrencyNameItem(Item);
+        var StrCurrencyName = await ACurrencyNameItem(Item);
         Str = Str.replace("$Value.SumCOIN", Str1);
         Str = Str.replace("$Value.SumCENT", Str2);
         Str = Str.replace("$Value.CurrencyName", StrCurrencyName);
@@ -675,20 +675,73 @@ function SetAccountsCard(Data,AccountsDataStr)
             Str = Str.replace("prod-card__dropdown", "prod-card__dropdown nodapp");
         }
 
-        Str = Str.replace("$Item.CoinStore", RetMultiCoins(Item,"ERC: ",ListTotal));
+
+        var StrListTokens = "";
+        var CountTokens = 0;
+        var CountNFT = 0;
+        for(var n=0;Item.BalanceArr && n<Item.BalanceArr.length;n++)
+        {
+            var Token=Item.BalanceArr[n];
+            //if(Token.Old)                continue;
+            var TokenName=await ACurrencyName(Token.Currency,Token.Token);
+            //console.log(Item.Num, "TokenName=",TokenName,"Arr=",Token.Arr.length);
+            for(var j=0;j<Token.Arr.length;j++)
+            {
+                var Value2=Token.Arr[j];
+                //console.log("Value2=",Value2)
+                if(Value2 && FLOAT_FROM_COIN(Value2))
+                {
+                    if(!Token.Inner)
+                    {
+                        if(!Value2.ID || Value2.ID == "" || Value2.ID == "0")
+                        {
+                            CountTokens++;
+                            StrListTokens += '<div class="total-info__item"><dt>' + TokenName + '</dt><dd>' + STRING_FROM_COIN(Value2) + '</dd></div>';
+                        }
+                        else
+                        {
+                            CountNFT++;
+                        }
+                    }
+
+
+                    var Total = ListTotal[TokenName];
+                    if(!Total)
+                    {
+                        Total = {SumCOIN: 0, SumCENT: 0, Name: TokenName};
+                        ListTotal[TokenName] = Total;
+                    }
+
+                    ADD(Total, Value2);
+                    //console.log("ADD ",TokenName,Value2)
+
+                }
+            }
+        }
+
+        //console.log("ListTotal",ListTotal);
+
+        var StrCountTokens="";
+        var StrOpenNFTPage="";
+        if(CountTokens)
+            StrCountTokens="Token count: "+CountTokens;
+        if(CountNFT)
+        {
+            StrCountTokens+=" NFT: "+CountNFT;
+            StrOpenNFTPage="<button class='btn btn--white btn-nft-open' onclick='OpenTokensPage(" + Item.Num + ")'>Show NFT</button>";
+        }
+
+        Str = Str.replace("$Item.COUNT_TOKENS", StrCountTokens);
+        Str = Str.replace("$Item.LIST_TOKENS", StrListTokens);
+        Str = Str.replace("$Item.OPEN_NFT_PAGE", StrOpenNFTPage);
+
+
+
 
         StrList += Str;
         Str = "";
         
-        if(Item.Value.SumCOIN >= 1e12)
-            continue;
-        var Total = ListTotal[Item.Currency];
-        if(!Total)
-        {
-            Total = {SumCOIN:0, SumCENT:0, Name:CurrencyName(Item.Currency)};
-            ListTotal[Item.Currency] = Total;
-        }
-        ADD(Total, Item.Value);
+
         
         if(!dataList)
             continue;
@@ -697,9 +750,19 @@ function SetAccountsCard(Data,AccountsDataStr)
         Options.label = StrText;
         dataList.appendChild(Options);
     }
-    $("idAccountsList").innerHTML = StrList;
+
+
+
+    idAccountsList.innerHTML = StrList;
     StrList = "";
-    
+
+    for(var key in AccToggleMap)
+        SetToggleClass($(key),1);
+
+
+
+
+
     var StrTotal = "";
     for(var key in ListTotal)
     {
@@ -987,7 +1050,9 @@ function ClearSend()
     $("idSumSend").value = "";
     $("idDescription").value = "";
     $("idNameTo2").innerText = "";
-    $("idERCMode").value=0;
+
+
+    UpdateTokenList();
 }
 
 
@@ -1079,11 +1144,15 @@ function InitPrivKey()
         $("idSave2").disabled = !IsPrivateMode();
 }
 
-function SendMobileBefore()
+async function SendMobileBefore()
 {
     if($("idSendButton").disabled)
         return;
-    
+
+    var CurToken=GetSelectedToken();
+    if(!CurToken)
+        return;
+
     var FromID = ParseNum($("idAccount").value);
     var Item = MapAccounts[FromID];
     if(!Item)
@@ -1092,7 +1161,7 @@ function SendMobileBefore()
         return;
     }
     $("idConfirmFromID").innerText = Item.Num;
-    $("idConfirmFromName").innerText = Item.Name + " (" + STRING_FROM_COIN(Item.Value) + " " + CurrencyNameItem(Item) + ")";
+    $("idConfirmFromName").innerText = Item.Name + " (" + STRING_FROM_COIN(Item.Value) + " " + await ACurrencyNameItem(Item) + ")";
     
     var ToID = ($("idTo").value);
     $("idConfirmToID").innerText = ToID;
@@ -1100,37 +1169,19 @@ function SendMobileBefore()
     var Item2 = MapAccounts[ToID];
     if(Item2)
     {
-        $("idConfirmToName").innerText = Item2.Name + " (" + STRING_FROM_COIN(Item2.Value) + " " + CurrencyNameItem(Item2) + ")";
+        $("idConfirmToName").innerText = Item2.Name + " (" + STRING_FROM_COIN(Item2.Value) + " " + await ACurrencyNameItem(Item2) + ")";
     }
     else
     {
         $("idConfirmToName").innerText = "";
     }
 
-    var CurName=CurrencyNameItem(Item);
-    if(IsERCMode())
-    {
-        if(!(+idSumSend.value))
-            idSumSend.value=1;
-        if(!idListNFT.CurSelect)
-            return SetError("Need select NFT");
-
-        var Element=$(idListNFT.CurSelect);
-        if(!Element)
-            return SetError("Need select NFT");
-        CurName=Element.dataset.token;
-        //$("idTokenHolder").innerHTML = Element.innerHTML;
-        $("idTokenHolder").innerHTML = GetCopyNFTCard(Element.id,CurName,Element.dataset.id,idSumSend.value);
-        SetVisibleBlock("idTokenHolder",1);
-    }
-    else
-    {
-        SetVisibleBlock("idTokenHolder",0);
-    }
+    $("idTokenHolder").innerHTML = GetCopyNFTCard(CurToken.element_id,CurToken.Token,CurToken.ID,idSumSend.value);
+    //SetVisibleBlock("idTokenHolder",1);
 
     var CoinAmount = COIN_FROM_FLOAT($("idSumSend").value);
     $("idConfirmAmount").innerText = STRING_FROM_COIN(CoinAmount);
-    $("idConfirmCurrency").innerText = CurName;
+    $("idConfirmCurrency").innerText = CurToken.Token;
 
     $("idConfirmDescription").innerText = $("idDescription").value;
     
@@ -1144,12 +1195,12 @@ function SendMobileBefore()
 
 function OKSend()
 {
-    if(IsERCMode())
-    {
-        SendToken();
-        closeModal();
-    }
-    else
+    // if(IsERCMode())
+    // {
+    //     SendToken();
+    //     closeModal();
+    // }
+    // else
     SendMoney(function ()
     {
         if(glWasModal)
@@ -1317,8 +1368,8 @@ function DoExitWallet()
     Storage.setItem(WALLET_KEY_EXIT, Date.now());
 }
 
-var StrDappCardTemplate;
-var StrDappRowCardTemplate;
+var StrDappCardTemplate="";
+var StrDappRowCardTemplate="";
 var CardMapList = {};
 function InitDappsCard()
 {
@@ -1361,8 +1412,8 @@ function FillDappCard(Str,Item)
     Str = Str.replace("$Item.Description", escapeHtml(Item.Description));
     Str = Str.replace("$Item.Owner", Item.Owner);
     
-    if(!Item.TokenGenerate)
-        Str = Str.replace("dapp-modal__ok-token", "myhidden");
+    //if(!Item.TokenGenerate)
+    Str = Str.replace("dapp-modal__ok-token", "myhidden");
     
     Str = Str.replace(/\$Item.HTMLLength/g, Item.HTMLLength);
     Str = Str.replace("$item.iconpath", "src='" + RetIconPath(Item, 0) + "'");
@@ -1433,21 +1484,39 @@ function MyToggleList(e)
         {
             if(item.classList.contains("prod-card--switch"))
             {
-                item.classList.add("prod-card--active");
-                item.classList.add("prod-card--toggle");
-                item.classList.remove("prod-card--switch");
+                AccToggleMap[item.id]=1;
+                SetToggleClass(item,1);
             }
             else
             {
-                item.classList.remove("prod-card--active");
-                item.classList.remove("prod-card--toggle");
-                item.classList.add("prod-card--switch");
+                delete AccToggleMap[item.id];
+
+                SetToggleClass(item,0);
             }
             
             break;
         }
         
         item = item.parentNode;
+    }
+}
+
+function SetToggleClass(item,bValue)
+{
+    if(!item)
+        return;
+
+    if(bValue)
+    {
+        item.classList.add("prod-card--active");
+        item.classList.add("prod-card--toggle");
+        item.classList.remove("prod-card--switch");
+    }
+    else
+    {
+        item.classList.remove("prod-card--active");
+        item.classList.remove("prod-card--toggle");
+        item.classList.add("prod-card--switch");
     }
 }
 

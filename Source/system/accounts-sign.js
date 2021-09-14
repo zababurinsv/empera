@@ -35,11 +35,12 @@ class AccountSign extends require("./accounts-adv-mining")
                         var Num = this.GetMaxAccount() + 1;
                         return Num;
                     }
-                case TYPE_TRANSACTION_TRANSFER:
-                    
+                case TYPE_TRANSACTION_TRANSFER3:
+                case TYPE_TRANSACTION_TRANSFER5:
+
                     var Num = ReadUintFromArr(Body, 1 + 1 + 6);
                     return Num;
-                    
+
                 case TYPE_TRANSACTION_ACC_CHANGE:
                     
                     var Num = ReadUintFromArr(Body, 1 + 6);
@@ -59,8 +60,9 @@ class AccountSign extends require("./accounts-adv-mining")
         {
             switch(Type)
             {
-                case TYPE_TRANSACTION_TRANSFER:
-                    
+                case TYPE_TRANSACTION_TRANSFER3:
+                case TYPE_TRANSACTION_TRANSFER5:
+
                     var Num = ReadUintFromArr(Body, 1 + 1);
                     return Num;
                     
@@ -123,16 +125,21 @@ class AccountSign extends require("./accounts-adv-mining")
         var Arr;
         if(TR.Version === 4)
         {
-            Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY3, GetTxSize(TR), {})
+            var Format;
+            if(TR.Type===TYPE_TRANSACTION_TRANSFER5)
+                Format=FORMAT_MONEY_TRANSFER_BODY5;
+            else
+                Format=FORMAT_MONEY_TRANSFER_BODY3;
+            Arr = BufLib.GetBufferFromObject(TR, Format, GetTxSize(TR), {})
         }
         else
             if(TR.Version === 2 || TR.Version === 3)
             {
                 var format;
                 if(TR.Version === 2)
-                    format = FORMAT_MONEY_TRANSFER_BODY2
+                    format = FORMAT_MONEY_TRANSFER_BODY2;
                 else
-                    format = FORMAT_MONEY_TRANSFER_BODY3
+                    format = FORMAT_MONEY_TRANSFER_BODY3;
                 
                 Arr = []
                 for(var i = 0; i < TR.To.length; i++)
@@ -155,7 +162,7 @@ class AccountSign extends require("./accounts-adv-mining")
             }
             else
             {
-                Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY, GetTxSize(TR), {})
+                Arr = BufLib.GetBufferFromObject(TR, FORMAT_MONEY_TRANSFER_BODY1, GetTxSize(TR), {})
             }
         
         var sigObj = secp256k1.sign(SHA3BUF(Arr), Buffer.from(PrivKey));
@@ -177,11 +184,11 @@ class AccountSign extends require("./accounts-adv-mining")
                 return 0;
         }
         else
-            if(Type !== TYPE_TRANSACTION_TRANSFER && Type !== TYPE_TRANSACTION_ACC_CHANGE)
+            if(Type !== TYPE_TRANSACTION_TRANSFER3 && Type !== TYPE_TRANSACTION_TRANSFER5 && Type !== TYPE_TRANSACTION_ACC_CHANGE)
                 return 0;
         
         return this.CheckSignAccountTx(BlockNum, Body).result;
     }
-};
+}
 
 module.exports = AccountSign;

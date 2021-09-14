@@ -90,7 +90,7 @@ HostingCaller.GetAccountList = function (Params)
         Params.CountNum = MaxCountViewRows;
     if(!Params.CountNum)
         Params.CountNum = 1;
-    var arr = ACCOUNTS.GetRowsAccounts(ParseNum(Params.StartNum), Params.CountNum);
+    var arr = ACCOUNTS.GetRowsAccounts(ParseNum(Params.StartNum), Params.CountNum,0,Params.GetState, Params.GetCoin);
     return {result:1, arr:arr};
 }
 
@@ -98,7 +98,7 @@ HostingCaller.GetAccount = function (id)
 {
     
     id = ParseNum(id);
-    var arr = ACCOUNTS.GetRowsAccounts(id, 1);
+    var arr = ACCOUNTS.GetRowsAccounts(id, 1,0,0,1);
     return {Item:arr[0], result:1};
 }
 
@@ -152,6 +152,7 @@ HostingCaller.GetDappList = function (Params)
         Params.CountNum = 1;
     
     var arr = SMARTS.GetRows(ParseNum(Params.StartNum), Params.CountNum, undefined, Params.Filter, 1);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {result:1, arr:arr};
 }
 
@@ -210,9 +211,9 @@ HostingCaller.GetNodeList = function (Params)
         
         arr.push(Value);
     }
-    
-    var Result = {result:1, arr:arr, VersionNum:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK, SHARD_NAME:global.SHARD_NAME,
-    };
+
+    arr=UseRetFieldsArr(arr,Params.Fields);
+    var Result = {result:1, arr:arr, VersionNum:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK, SHARD_NAME:global.SHARD_NAME};
     return Result;
 }
 
@@ -334,9 +335,9 @@ HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,ccc,bRet,SmartFilte
         }
 
         //ERC
-        if(Params.CoinStore && !Data.Currency)//игнорируем другие валюты
+        if(Params.BalanceArr)
         {
-            Data.CoinStore=ACCOUNTS.ReadCoinStore(Data.Num);
+            Data.BalanceArr=ACCOUNTS.ReadBalanceArr(Data);
         }
 
         arr.push(Data);
@@ -347,6 +348,10 @@ HostingCaller.GetAccountListByKey = function (Params,aaa,bbb,ccc,bRet,SmartFilte
     }
     
     var Ret = {result:1, Accounts:Counts, HasNext:Item?1:0, ROWS_ON_PAGE:global.HTTP_MAX_COUNT_ROWS, arr:arr};
+
+    Ret.NETWORK=global.NETWORK;
+    Ret.SHARD_NAME=global.SHARD_NAME;
+
     if(bRet || !Params.Session)
     {
         return Ret;
@@ -521,8 +526,9 @@ HostingCaller.DappWalletList = function (Params)
     if(!Params.AllAccounts && Smart)
         SmartFilter=Smart;
 
+    Params.BalanceArr=1;
     var Ret = HostingCaller.GetAccountListByKey(Params, undefined, undefined, undefined, 1, SmartFilter);
-    
+    //console.log("Ret.arr=",Ret.arr)
 
     var arr = [];
     for(var i = 0; i < Ret.arr.length; i++)
@@ -550,18 +556,12 @@ HostingCaller.DappAccountList = function (Params)
     if(!Params.CountNum)
         Params.CountNum = 1;
     
-    var arr = ACCOUNTS.GetRowsAccounts(ParseNum(Params.StartNum), Params.CountNum, undefined, 1);
+    var arr = ACCOUNTS.GetRowsAccounts(ParseNum(Params.StartNum), Params.CountNum, undefined, 1, 1);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 };
 
-function DappAccount(response,StrNum)
-{
-    var Num = parseInt(StrNum);
-    var arr = ACCOUNTS.GetRowsAccounts(Num, 1, undefined, 1);
-    var Data = {Item:arr[0], result:1};
-    response.writeHead(200, {'Content-Type':"text/plain", "X-Content-Type-Options":"nosniff"});
-    response.end(JSON.stringify(Data));
-}
+
 
 HostingCaller.DappSmartList = function (Params)
 {
@@ -576,6 +576,7 @@ HostingCaller.DappSmartList = function (Params)
     
     var arr = SMARTS.GetRows(ParseNum(Params.StartNum), Params.CountNum, undefined, undefined, Params.GetAllData, Params.TokenGenerate,
     Params.AllRow);
+    arr=UseRetFieldsArr(arr,Params.Fields);
     return {arr:arr, result:1};
 }
 
@@ -719,6 +720,8 @@ HostingCaller.SubmitHashrate = function (Params)
     return {result:0};
 };
 
+HostingCaller.GetFormatTx=GetFormatTx;
+
 function HexToArr(Params,Name)
 {
     var Str = Params[Name];
@@ -733,4 +736,5 @@ function HexToArr(Params,Name)
     }
     return 0;
 }
+
 
