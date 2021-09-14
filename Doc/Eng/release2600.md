@@ -21,6 +21,13 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 * Added a new format for creating smart contract version 2 (each smart can be a software token)
 * Added a new format for sending coin transfer transactions with token support (including NFT)
 
+### New Events
+* OnProxy (Method,Params,ParamsArr,PublicMode) — a predefined event called if a method is not found (called externally)
+* OnTransfer (Params) — event for physically sending an ERC / NFT token (it is called inside a smart contract that supports software tokens)
+* OnGetBalance (Account,ID) — event for getting the balance of the ERC / NFT token (it is called inside a smart contract that supports software tokens)
+* context.Currency — token currency
+* context.ID — token ID
+
 ### New and changed Methods
 * GetBalance(Account,Currency,ID) — getting the balance of the ERC / NFT token
 * RegInWallet(Account) — registering a new currency in the wallet
@@ -29,11 +36,39 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 * CreateSmart(FromSmartNum,Params) — creating a new smart contract based on another one
 * Move (FromID,ToID,CoinSum,Description, Currency,TokenID) — added new parameters (Currency,TokenID) for sending coins with support ERC / NFT tokens
 * Send (ToID,CoinSum,Description, Currency,TokenID) — added new parameters (Currency,TokenID) for sending coins with support ERC / NFT tokens
+* GetObjectFromBuffer(ValueBuf,Format) - getting object from byte  array buffer by format string (example and format spec string see below)
+* GetBufferFromObject(Value,Format) - getting byte buffer from object by format string (format spec string and example see below)
+* fromCodePoint(Num) - returns a string character by code, it is standard JS String method: String.fromCodePoint with only one parameter   
 
-### New Events
-* OnProxy (Method,Params,ParamsArr,PublicMode) — a predefined event called if a method is not found (called externally)
-* OnTransfer (Params) — event for physically sending an ERC / NFT token (it is called inside a smart contract that supports software tokens)
-* OnGetBalance (Account,ID) — event for getting the balance of the ERC / NFT token (it is called inside a smart contract that supports software tokens)
-* context.Currency — token currency
-* context.ID — token ID
+#### format spec string
 
+The format  should contain a string of JSON type like key:"type”. The following designations are allowed as a type:
+```text
+ {} - object
+ [] - array
+ double - double number type (8-byte)
+ uint - 6-byte unsigned integer
+ uint32 - unsigned integer 4 bytes long
+ uint16 - unsigned integer 2 bytes long
+ byte - unsigned integer 1 bytes long
+ str - the variable-length string
+ strxx - string with fixed length of xx long
+ arrxx - byte array with fixed-length of xx long
+ data - byte array
+```
+
+Example format:
+```js
+ {Name:"str10", Value:"uint", PubKey:"arr33"}
+ {Type:"byte",Account:"uint",SumCOIN:"uint",SumCENT:"uint32", arr:["uint"]}
+```
+
+Example code
+```js
+ var Data={some:123,data:345};
+ var format={some:"uint",data:"uint32"};
+ var Buf=GetBufferFromObject(Data,format);
+ var Data2=GetObjectFromBuffer(Buf,format);
+```
+
+ 
