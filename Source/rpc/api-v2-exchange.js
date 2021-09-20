@@ -113,7 +113,7 @@ WebApi2.Send = function (Params,response,A,request,nJsonRet)
     {
         Format=FORMAT_MONEY_TRANSFER3;
         TR = {
-            Type: TYPE_TRANSACTION_TRANSFER3, Version: 4, OperationID: OperationID, FromID: FromNum, Old: 0, To: [{
+            Type: TYPE_TRANSACTION_TRANSFER3, Version: 4, OperationID: OperationID, FromID: FromNum, DeprecatedOperationID: global.START_CODE_VERSION_NUM, To: [{
                 PubKey: ToPubKeyArr, ID: ToID, SumCOIN: Coin.SumCOIN,
                 SumCENT: Coin.SumCENT
             }], Description: Params.Description, Body: [],
@@ -134,6 +134,7 @@ WebApi2.Send = function (Params,response,A,request,nJsonRet)
             Currency:Params.Currency,
             TokenID:Params.TokenID,
             Description: Params.Description,
+            CodeVer:global.START_CODE_VERSION_NUM,
             Body: [],
             Sign: [],
         };

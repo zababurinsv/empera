@@ -589,7 +589,7 @@ ListF.$Send = function (ToID,CoinSum,Description,Currency,TokenID)
         }
     }
     
-    ACCOUNTS.SendMoneyTR(RunContext.Block, RunContext.Account.Num, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum, Description, Description, 1, 1,0,Currency,TokenID);
+    return ACCOUNTS.SendMoneyTR(RunContext.Block, RunContext.Account.Num, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum, Description, Description, 1, 1,0,Currency,TokenID);
 };
 
 ListF.$Move = function (FromID,ToID,CoinSum,Description,Currency,TokenID)
@@ -647,7 +647,7 @@ function DoTransfer(FromID,ToID,CoinSum,Description,Currency,TokenID)
     CoinSum.SumCOIN = Math.trunc(CoinSum.SumCOIN);
     CoinSum.SumCENT = Math.trunc(CoinSum.SumCENT);
     
-    ACCOUNTS.SendMoneyTR(RunContext.Block, FromID, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum, Description, Description,   1, 1, 0, Currency,TokenID);
+    return ACCOUNTS.SendMoneyTR(RunContext.Block, FromID, ToID, CoinSum, RunContext.BlockNum, RunContext.TrNum, Description, Description,   1, 1, 0, Currency,TokenID);
 }
 
 ListF.$Event = function (Description,Mode)
@@ -1015,12 +1015,6 @@ ListF2.$Call = function (Smart,Method,Params,ParamsArr)//, FromID,ToID,Amount,De
 
     DO(1000);
 
-    // if(FromID)
-    // {
-    //     DO(2000);
-    //     DoTransfer(FromID, ToID, Amount, Description, Currency, TokenID);
-    // }
-
     return RunMethod(Smart,Method,Params,ParamsArr,1);
 };
 
@@ -1030,11 +1024,13 @@ ListF2.$MoveCall = function (FromID,ToID,CoinSum,Description,Currency,TokenID,Me
         CoinSum = COIN_FROM_FLOAT(CoinSum);
 
     DO(3000);
-    DoTransfer(FromID,ToID,CoinSum,Description,Currency,TokenID);
+    var CoinSumTo=DoTransfer(FromID,ToID,CoinSum,Description,Currency,TokenID);
+    if(!CoinSumTo || CoinSumTo.SumCOIN===undefined || CoinSumTo.SumCENT===undefined)
+        CoinSumTo=CoinSum;
 
     var Account = ACCOUNTS.ReadStateTR(ToID);
     var Smart=Account.Value.Smart;
-    var PayContext = {FromID:FromID, ToID:ToID, Description:Description, Value:CoinSum, Currency:Currency,TokenID:TokenID, SmartMode:1};
+    var PayContext = {FromID:FromID, ToID:ToID, Description:Description, Value:CoinSumTo, Currency:Currency,TokenID:TokenID, SmartMode:1};
 
     return RunMethod(Smart,Method,Params,ParamsArr,1, PayContext,Account);
 };

@@ -808,6 +808,7 @@ HTTPCaller.GetWalletInfo = function (Params)
         WalletIsOpen:(WALLET.WalletOpen !== false),
         WalletCanSign:(WALLET.WalletOpen !== false && WALLET.KeyPair.WasInit),
         CODE_VERSION:CODE_VERSION,
+        CodeVer:global.START_CODE_VERSION_NUM,
         VersionNum:global.UPDATE_CODE_VERSION_NUM,
         RelayMode:SERVER.RelayMode,
         NodeSyncStatus:SERVER.NodeSyncStatus,
@@ -1690,6 +1691,13 @@ HTTPCaller.GetHistoryTransactions = function (Params)
             NETWORK:global.NETWORK,
             SHARD_NAME:global.SHARD_NAME,
             result:arr.length > 0 ? 1 : 0, History:arr};
+        if(Params.GetBalanceArr)
+        {
+            if(Account.Currency)
+                Account.CurrencyObj = SMARTS.ReadSimple(Account.Currency, 1);
+            Result.BalanceArr = ACCOUNTS.ReadBalanceArr(Account);
+        }
+
         return Result;
     }
     return {result:0};
@@ -2837,6 +2845,7 @@ global.GetFormatTx=function (Params)
     var BlockNum=GetCurrentBlockNumByTime();
     var RetData=
         {
+            CodeVer:global.START_CODE_VERSION_NUM,
             BLOCKCHAIN_VERSION:GETVERSION(BlockNum),
             PRICE:PRICE_DAO(BlockNum),
 

@@ -27,6 +27,7 @@ HostingCaller.GetCurrentInfo = function (Params)
     var Ret = {
         result:1,
         BLOCKCHAIN_VERSION:GETVERSION(MaxNumBlockDB),
+        CodeVer:global.START_CODE_VERSION_NUM,
         VersionNum:global.START_CODE_VERSION_NUM,
         VersionUpd:global.UPDATE_CODE_VERSION_NUM,
         NETWORK:global.NETWORK,
@@ -213,7 +214,7 @@ HostingCaller.GetNodeList = function (Params)
     }
 
     arr=UseRetFieldsArr(arr,Params.Fields);
-    var Result = {result:1, arr:arr, VersionNum:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK, SHARD_NAME:global.SHARD_NAME};
+    var Result = {result:1, arr:arr, CodeVer:global.START_CODE_VERSION_NUM, VersionNum:global.UPDATE_CODE_VERSION_NUM, NETWORK:global.NETWORK, SHARD_NAME:global.SHARD_NAME};
     return Result;
 }
 

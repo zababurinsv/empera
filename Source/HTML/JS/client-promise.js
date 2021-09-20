@@ -53,7 +53,7 @@ async function AStaticCall(AccNum,Name,Params,ParamsArr)
 
 async function AReadAccount(Account)
 {
-    var Data=await AGetData("GetAccountList",{StartNum:Account});
+    var Data=await AGetData("GetAccountList",{StartNum:Account,CountNum:1,GetCoin:1});
     if(Data && Data.result === 1 && Data.arr.length)
     {
         var Item = Data.arr[0];
@@ -61,13 +61,30 @@ async function AReadAccount(Account)
     }
 }
 
-async function AGetBalance(Account)//TODO - add soft tokens
+async function AGetBalance(Account,Currency,ID)
 {
-    var Item=await AReadAccount(Account);
-    if(Item)
-        return FLOAT_FROM_COIN(Item.Value);
+    var AccObj=await AReadAccount(Account);
+    if(AccObj.BalanceArr)
+    {
+        if(Currency===undefined)
+            return AccObj.BalanceArr;
 
-    return 0;
+        for(var i=0;i<AccObj.BalanceArr.length;i++)
+        {
+            var Token=AccObj.BalanceArr[i];
+            if(Token.Currency===Currency)
+            {
+                if(ID===undefined)
+                    return Token.Arr;
+                for(var n=0;n<Token.Arr.length;n++)
+                {
+                    if(Token.Arr[n].ID===ID)
+                        return Token.Arr[n];
+                }
+            }
+        }
+    }
+    return {SumCOIN:0,SumCENT:0};
 }
 
 async function AReadBlockFile(BlockNum,TrNum)

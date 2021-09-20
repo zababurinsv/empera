@@ -151,5 +151,32 @@ a
 .prod-card__link.dapp-num0
 {
     cursor: auto;
-    border2: 1px solid #727473;
+ }
+
+.prod-card__button
+{
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    box-shadow: 0px 5px 10px rgba(68, 83, 104, 0.3);
+    border: 1px solid rgba(68, 83, 104, 0.1);
+    border-radius: 5px;
+}
+.prod-card__button:hover
+{
+    cursor: pointer;
+    color: orange;
+}
+
+.prod-card__button:active
+{
+    box-shadow: inset 4px 4px 4px rgba(68, 83, 104, 0.5);
+}
+
+
+.prod-card__nobutton
+{
+    cursor: auto;
+    padding: 2px;
+    border: none;
 }

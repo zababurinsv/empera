@@ -204,7 +204,8 @@ function LoadLib(Path)
     
     if(window.PROTOCOL_SERVER_PATH)
     {
-        var StrPath = GetProtocolServerPath(window.PROTOCOL_SERVER_PATH);
+        //var StrPath = GetProtocolServerPath(window.PROTOCOL_SERVER_PATH);//
+        var StrPath = window.PROTOCOL_SERVER_PATH;
         Path = StrPath + Path;
     }
     

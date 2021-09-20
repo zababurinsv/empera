@@ -113,21 +113,17 @@ function OnGetBalance(Account,ID)//Software tokens support
 
 function CodeTemplateDapp()
 {
+    "public"
+    function Run(Params,ParamsArr)
+    {
+        var PayAmount=FLOAT_FROM_COIN(context.Value);
+        var PayCurrency=context.Currency;
+        var PayID=context.ID;
 
-function CheckPermission()
-{
-    if(context.Account.Num!==context.FromNum)
-        throw "Access is allowed only from your own account.";
-}
+        Event(context.Smart.Name+" Got: "+PayAmount+" Currency:"+PayCurrency);
 
-"public"
-function Method1(Params,ParamsArr)
-{
-    CheckPermission();
-    Event(context.Smart.Name+" Run Method1 - OK");
-
-    Send(context.Smart.Account,Params.Sum,"Sample");
-}
+        Send(context.FromNum,context.Value,"Refund",PayCurrency,PayID);
+    }
 
 }
 
@@ -136,18 +132,19 @@ function Method1(Params,ParamsArr)
 function DappTemplate()
 {
 
+
     //-------------
     //Events
     //-------------
-    //ALL_ACCOUNTS=1;
+    ALL_ACCOUNTS=1;
     window.addEventListener('Init',function ()
     {
-    //        ToLog("Init:");
-    //        ToLog("OPEN_PATH: "+OPEN_PATH);
-    //        ToLog("NETWORK:"+INFO.NETWORK);
-    //        ToLog("INFO:\n"+JSON.stringify(INFO));
-    //        ToLog("BASE_ACCOUNT:\n"+JSON.stringify(BASE_ACCOUNT));
-    //        ToLog("SMART:\n"+JSON.stringify(SMART));
+        //        ToLog("Init:");
+        //        ToLog("OPEN_PATH: "+OPEN_PATH);
+        //        ToLog("NETWORK:"+INFO.NETWORK);
+        //        ToLog("INFO:\n"+JSON.stringify(INFO));
+        //        ToLog("BASE_ACCOUNT:\n"+JSON.stringify(BASE_ACCOUNT));
+        //        ToLog("SMART:\n"+JSON.stringify(SMART));
     });
     window.addEventListener('History',function (e)
     {
@@ -172,38 +169,112 @@ function DappTemplate()
 
     window.addEventListener('UpdateInfo',function ()
     {
-         UpdateFillUser();
+        UpdateFillUser();
     });
     function UpdateFillUser()
     {
         var Arr=AccToListArr(USER_ACCOUNT);
-        FillSelect("idTestAccount",Arr);
+        FillSelect("idAddrTera",Arr);
+        //console.log(window.NETWORK_ID)
     }
 
     //-------------
     //Users methods
     //-------------
 
-    async function SendMethod(Name)
+    async function SendTest()
     {
-        if(!USER_ACCOUNT.length)
+        try
         {
-            SetError("Not have user accounts");
-            return;
+            var Ret=await StartTransfer(
+                {FromID:+idAddrTera.value,ToID:SMART.Account,Value:500,Description:"Test transfer",Currency:0,ID:""},
+                {Method:"Run",Params:{}},
+                50000);
+
+
         }
-        var UserAcc=+$("idTestAccount").value;
-        var Params={Sum:10};
+        catch(e)
+        {
+             return SetError(e.Text)
+        }
+        finally
+        {
+        }
 
-        SetStatus("Sending Tx, wait...");
-        var Ret=await ASendCall(UserAcc,Name,Params,[],UserAcc);
         SetStatus("Sent, Result: "+Ret.Text);
+    }
 
+    //------------------------ insert
 
+    var LocalNum={"LOCAL-JINN":536,"TEST-JINN":11688933,"MAIN-JINN":75152874}[NETWORK_NAME];
+    var Str="";
+    if(LocalNum)
+        Str+=`<script src="/file/${LocalNum}/0">TAB4</script`+">";
+
+    Str+=` 
+<style>
+
+    body
+    {
+      background-color:#F5F5F5;
+      padding: 0;
+      margin: 0;
     }
 
 
-}
+    .row
+    {
+        display: block;
+        margin: 0;
+        padding:0;
+        line-height: 24px;
+    }
+    
+    .row_acc
+    {
+        display: flex;
+        width:310px;
+        height: 32px;
+        margin: 10px 0px 10px 0px;
+        padding:0;
+    }
+     .row_acc p
+    {
+        margin-top: 4px;
+    }
+    .row_acc select
+    {
+        max-width:200px;
+        height: 26px;
+    }
+    
+    .btn_acc
+    {
+        cursor:pointer;
+        width:26px;
+        height:26px; 
+        margin:0px 5px; 
+        padding:0px;
+        border: 0;
+        border-radius:5px;
+        fill:#000;
+    }
+    .btn_acc:hover
+    {
+        cursor: pointer;
+        fill: #cb763a;
+    }
 
+</style>
+    
+    
+    `
+
+
+    document.write(Str);
+
+
+}
 //---------------------------------------------------------------
 
 function SmartTemplate1()
@@ -367,16 +438,21 @@ function OnTransfer(Params)
 }
 
 
+"public"
 function OnGetBalance(Account,ID)
 {
-
     var Item=ReadItem(Account);
     if(!Item)
         Item={Arr:[]};
-    if(ID)
+    if(ID!==undefined)
         return FindRow(Item.Arr,ID);
-    else
-        return Item.Arr;
+
+    var Arr=Item.Arr;
+    for(var i=0;i<Arr.length;i++)
+        if(Arr[i].ID)
+            Arr[i].URI="/nft/"+Arr[i].ID;
+
+    return Arr;
 }
 
 
@@ -403,6 +479,8 @@ function WriteItem(Item)
 
 function FindRow(Arr,ID)
 {
+    if(!ID)
+        ID="";
     for(var i=0;i<Arr.length;i++)
         if(Arr[i].ID==ID)
         {
@@ -416,6 +494,8 @@ function FindRow(Arr,ID)
 
 function DeleteRow(Arr,ID)
 {
+    if(!ID)
+        ID="";
     for(var i=0;i<Arr.length;i++)
         if(Arr[i].ID==ID)
         {

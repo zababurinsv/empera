@@ -64,10 +64,9 @@ async function ACall(Account, MethodName,Params,ParamsArr)
     return await ASendData(Data,2);
 }
 
+
 window.StaticCall=Call;
 window.AStaticCall=ACall;
-// window.AReadSmart=AReadSmart;
-// window.GetSmartList=GetSmartList;
 
 
 
@@ -136,6 +135,20 @@ async function AReadSmart(Num,Fields)
     else
         return undefined;
 }
+
+async function AReadAccount(Num,Fields)
+{
+    var Data={cmd:"DappAccountList",Params:{StartNum:Num,CountNum:1,Fields:Fields}}
+    var Ret=await ASendData(Data,2);
+    if(Ret && Ret.length)
+        return Ret[0];
+    else
+        return undefined;
+}
+
+
+
+
 
 
 
@@ -954,10 +967,7 @@ function UpdateDappInfo()//run every 3 sec
         SetBlockChainConstant(Data);
 
         await CheckNetworkID(INFO);
-        // window.NETWORK_NAME=INFO.NETWORK;
-        // window.SHARD_NAME=INFO.SHARD_NAME;
-        // window.NETWORK_ID=window.NETWORK_NAME+"."+window.SHARD_NAME;
-        //console.log("INFO.NETWORK",INFO.NETWORK)
+
         if(SMART.Num==7)//test mode
         {
             RegCurrency(1,"USDT",undefined,1,1);

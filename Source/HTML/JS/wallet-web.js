@@ -12,7 +12,7 @@
 var MIN_VERSION = 2542;
 var COUNT_BLOCK_PROOF = 100;
 var MIN_SUM_POWER = 0;
-var MainServer = undefined;
+
 var MaxConnectedCount = 50;
 var TIME_LENGTH_CONNECT_ALL = 2 * 1000;
 var StartTimeConnecting = 0;
@@ -153,7 +153,7 @@ function ConnectWebWallet()
         //console.log("Server:",Str,"--->",Server,Port);
 
 
-        MainServer={ip:Server,port:Port,Name:"User defined"};
+        SetMainServer({ip:Server,port:Port,Name:"User defined"});
         OnFindServer();
         return;
     }
@@ -169,7 +169,7 @@ function ConnectWebWallet()
     
     if(window.BrowserIE && !IsLocalClient())
     {
-        MainServer = undefined;
+        SetMainServer( undefined);
         return;
     }
     
@@ -353,7 +353,7 @@ function DoWalletInfo(Item)
 
 function FindLider()
 {
-    MainServer = undefined;
+    SetMainServer( undefined);
     
     var Arr = [];
     var MapSumPower = {};
@@ -366,7 +366,7 @@ function FindLider()
             if(arr.data)
                 arr = arr.data;
             Item.SumPower = CalcPowFromBlockChain(arr, Item.ip);
-            if(Item.SumPower < MIN_SUM_POWER)
+            if(MIN_SUM_POWER && Item.SumPower < MIN_SUM_POWER)
             {
                 ToLog("Skip: " + Item.ip + ":" + Item.port + " SumPower(" + Item.SumPower + ") < MIN_SUM_POWER(" + MIN_SUM_POWER + ")");
                 continue;
@@ -398,7 +398,7 @@ function FindLider()
             Item.Stat++;
             
             SetStatus("Found node " + Item.ip + ":" + Item.port + " pow=" + Item.SumPower / COUNT_BLOCK_PROOF + "  ping=" + Item.DeltaTime2 + " ms");
-            MainServer = Item;
+            SetMainServer(Item);
             SaveServerMap();
             break;
         }

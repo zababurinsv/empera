@@ -454,8 +454,8 @@ function SetConfigData(Data)
     
     window.SUM_PRECISION =  + CONFIG_DATA.CONSTANTS.SUM_PRECISION;
     window.DEBUG_WALLET = 0;
-    if(CONFIG_DATA.CONSTANTS.DEBUG_WALLET)
-        window.DEBUG_WALLET = 1;
+    // if(CONFIG_DATA.CONSTANTS.DEBUG_WALLET)
+    //     window.DEBUG_WALLET = 1;
     if(!window.DEBUG_WALLET)
     {
         var State1 = "GetStateItem(Item)";

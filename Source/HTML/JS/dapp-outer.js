@@ -49,21 +49,28 @@ function CreateFrame(Code,Parent)
     
     var ScriptLW = "";
     var StrPath = ".";
-    if(MainServer)
+    if(GetMainServer())
     {
-        StrPath = GetProtocolServerPath(MainServer);
-        Code = Code.replace(/.\/CSS\/[0-9a-z_-]+.css\">/g, StrPath + "$&");
-        Code = Code.replace(/.\/JS\/[0-9a-z_-]+.js\">/g, StrPath + "$&");
+        StrPath = GetProtocolServerPath();
+        Code = Code.replace(/\/CSS\/[0-9a-z_-]+.css\">/g, StrPath + "$&");
+        Code = Code.replace(/\/JS\/[0-9a-z_-]+.js\">/g, StrPath + "$&");
         Code = Code.replace(/\/file\/[0-9]+\/[0-9]+\"/g, StrPath + "$&");
+
+        //console.log("Code:",Code);
         ScriptLW = '<script>window.PROTOCOL_SERVER_PATH="' + StrPath + '";<\/script>';
-        
+
+        //console.log("Code:",Code);
+
         if(isMobile())
             StrPath = ".";
     }
     if(isMobile())
     {
-        StrPath = GetProtocolServerPath(MainServer);
+        StrPath = GetProtocolServerPath();
     }
+
+    ScriptLW+=`<script>window.NETWORK_ID="${window.NETWORK_ID}";window.NETWORK_NAME="${window.NETWORK_NAME}";window.SHARD_NAME="${window.SHARD_NAME}";window.SMART_NUM=${SMART.Num};<\/script>`;
+    //console.log("CreateFrame NETWORK_ID",NETWORK_ID);
     
     Code = ScriptLW + '\
     <meta charset="UTF-8">\
@@ -91,10 +98,7 @@ function CreateFrame(Code,Parent)
     iframe.srcdoc = Code;
     Parent.appendChild(iframe);
     
-    // setTimeout(function ()
-    // {
-    //     SetVisibleBlock("idFrame", 1);
-    // }, 2000);
+
 }
 
 

@@ -77,12 +77,7 @@ function DoImgWork(Addr)
 
 function SetNftAttrMap(Addr)
 {
-    var Addr2=Addr;
-    if(MainServer && isMobile())
-    {
-        if(Addr2.substr(0,6)==="/file/" || Addr2.substr(0,5)==="/nft/")
-            Addr2 = GetProtocolServerPath(MainServer) + Addr2;
-    }
+    var Addr2=GetURLPath(Addr);
 
     fetch(Addr2, {method:'get', cache:'default', mode:'cors', credentials2:'include', headers:this.Headers}).then(function (response)
     {
@@ -170,6 +165,10 @@ async function FillListNFTNext(IDList, TokensArr,PrefixNum,TokenName,bView,Token
                 }
 
                 if(Value.IMG)
+                    Value.IMG = GetURLPath(Value.IMG);
+
+
+                if(Value.IMG)
                 {
                     // if(Item.Currency)
                     // {
@@ -210,7 +209,7 @@ async function FillListNFTNext(IDList, TokensArr,PrefixNum,TokenName,bView,Token
 
     RestartWorkNftImg();
 
-    if(idListNFT===IDList)
+    if(window.idListNFT===IDList)
         SetVisibleBlock("idTokenNFT",bNFT);
     if(!bNFT)
          IDList.CurSelect="";
@@ -284,7 +283,8 @@ function SelectNFTItem(List,element)
             Item.className="";
     }
 
-    SetCurCurrencyName();
+    if(window.SetCurCurrencyName)
+        SetCurCurrencyName();
 }
 //---------------------------------------------------------------------------
 function RetCountERC(Item,DopStr)
@@ -314,11 +314,68 @@ function RetCountERC(Item,DopStr)
     return "<a class='olink' target='_blank' onclick='OpenTokensPage(" + Item.Num + ")'>" + Count + "</a>";
 }
 
+async function CalcTotalAmountERC(Item,ListTotal,bInner)
+{
+    var StrListTokens = "";
+    var CountTokens = 0;
+    var CountNFT = 0;
+    for(var n=0;Item.BalanceArr && n<Item.BalanceArr.length;n++)
+    {
+        var Token=Item.BalanceArr[n];
+        //if(Token.Old)                continue;
+        var TokenName=await ACurrencyName(Token.Currency,Token.Token);
+        //console.log("TokenName=",TokenName,"Arr=",Token.Arr.length);
+        for(var j=0;j<Token.Arr.length;j++)
+        {
+            var Value2=Token.Arr[j];
+            //console.log("Value2=",Value2)
+            if(Value2 && FLOAT_FROM_COIN(Value2))
+            {
+                if(bInner || !Token.Inner)
+                {
+                    if(!Value2.ID || Value2.ID == "" || Value2.ID == "0")
+                    {
+                        CountTokens++;
+                        StrListTokens += '<div class="total-info__item"><dt>' + TokenName + '</dt><dd>' + STRING_FROM_COIN(Value2) + '</dd></div>';
+                    }
+                    else
+                    {
+                        CountNFT++;
+                    }
+                }
+
+
+                var Total = ListTotal[TokenName];
+                if(!Total)
+                {
+                    Total = {SumCOIN: 0, SumCENT: 0, Name: TokenName};
+                    ListTotal[TokenName] = Total;
+                }
+
+                ADD(Total, Value2);
+                //console.log("ADD ",TokenName,Value2)
+
+            }
+        }
+    }
+
+    return {
+                ListTokens:StrListTokens,
+                CountTokens:CountTokens,
+                CountNFT:CountNFT,
+            }
+}
 
 
 async function OpenTokensPage(Account)
 {
-    var Str=`
+    var Item=await AReadAccount(Account);
+    //console.log("OpenTokensPage: Account=",Account,Item);
+
+    if(Item && Item.BalanceArr)
+    {
+
+        var Str = `
     <div>
         <div class="row-head">Token list:</div>
         <BR>
@@ -328,11 +385,12 @@ async function OpenTokensPage(Account)
     </div>
         `;
 
-    openModal('idShowPage', 'idCloseShow');
-    $("idShowContent").innerHTML = Str;
+        openModal('idShowPage', 'idCloseShow');
+        $("idShowContent").innerHTML = Str;
 
-    var Item=MapAccounts[Account];
-    FillListNFT(idListShow,Item.BalanceArr,Account*10000+5000, "",1,1);
+
+        FillListNFT(idListShow, Item.BalanceArr, Account * 10000 + 5000, "", 1, 1);
+    }
 }
 
 

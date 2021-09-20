@@ -8,12 +8,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" href="./CSS/mobile-wallet.css">
+    <link rel="stylesheet" href="./CSS/wallet-multicoin.css">
 
 
     <script type="text/javascript" src="./JS/coinlib.js"></script>
     <script type="text/javascript" src="./JS/client.js"></script>
     <script type="text/javascript" src="./JS/client-promise.js"></script>
     <script type="text/javascript" src="./JS/client-tokens.js"></script>
+    <script type="text/javascript" src="./JS/wallet-multicoin.js"></script>
 
     <script>
         var AccountID;
@@ -22,7 +24,7 @@
         function SetStatus(Str)
         {
             console.log(Str);
-//            var id = $("idStatus");
+//            var id = idStatus;
 //            id.innerHTML=Str;
         }
 
@@ -76,7 +78,7 @@
             }
 
             if(isMobile())
-                $("MTabWelcome").className+=" back-link";
+                MTabWelcome.className+=" back-link";
         }
         function OnChangeAccount()
         {
@@ -101,6 +103,7 @@
             {
                 Params.NextPos=NextPos;
             }
+            Params.GetBalanceArr=1;
 
             document.title="Account: "+AccountID;
             GetData("GetHistoryTransactions", Params, async function (Data)
@@ -110,12 +113,24 @@
 
                 await CheckNetworkID(Data);
 
-                $("idName").innerText=Data.Name;
-                $("idBalanceSum").innerText="Balance: "+STRING_FROM_COIN(Data.Value)+" "+await ACurrencyName(Data.Currency);
+                //console.log("Data:",Data);
+
+                idName.innerText=Data.Name;
                 MaxBlockNum=Data.MaxBlockNum;
                 window.FIRST_TIME_BLOCK=Data.FIRST_TIME_BLOCK;
                 window.UPDATE_CODE_JINN=Data.UPDATE_CODE_JINN;
                 window.CONSENSUS_PERIOD_TIME=Data.CONSENSUS_PERIOD_TIME;
+
+
+                var StrOpenNFTPage="";
+                var RetTotal=await CalcTotalAmountERC(Data,{},1);
+                idBalanceSum.innerHTML=RetTotal.ListTokens;
+                if(RetTotal.CountNFT)
+                {
+                    StrOpenNFTPage="<button class='btn btn--white btn-nft-open' onclick='OpenTokensPage(" + AccountID + ")'>Show NFT</button>";
+                }
+                idNFTOpen.innerHTML=StrOpenNFTPage;
+
 
 
                 var Item;
@@ -186,7 +201,7 @@
 
         function CopyRow(Num)
         {
-            var Arr=$("grid_history").Arr;
+            var Arr=grid_history.Arr;
             for(var i=0;i<Arr.length;i++)
             {
                 var Item=Arr[i];
@@ -233,7 +248,7 @@
                 document.getElementById("idViewAccountID").value=AccountID;
                 ViewHistory(1);
 
-                $("MTabWelcome").className+=" back-link";
+                MTabWelcome.className+=" back-link";
             }
         }
         function DoBackPage()
@@ -288,7 +303,19 @@
                     History of <input class="history-page__id-count" type="number" id="idViewAccountID" style="text-align: center" value="0" min=0 max=1000000000 onchange="OnChangeAccount()">
                 </div>
                 <div id="idName" class="history-page__description"></div>
-                <div class="history-page__balance" id="idBalanceSum">Balance: 000<img class="history-page__tera-icon" src="./PIC/T.svg" width="10" height="14" alt=""></div>
+                <DIV align='center'>
+                    <div class="id-sign">
+                        Balance
+                        <dl class="total-info" id="idBalanceSum">
+                            ---
+                        </dl>
+                    </div>
+                    <div class="id-sign"  id="idNFTOpen">
+
+                    </div>
+                </DIV>
+
+
             </div>
             <div class="history-page__table">
                 <div class="page-pagination">
@@ -318,6 +345,17 @@
             </div>
         </section>
     </main>
+
+    <div id="idOverlay" onclick="closeModal()" style="display: none;"></div>
+    <div class="modal" id="idShowPage" style="display: none; padding: 5px">
+        <div class="modal__container confirm__container"  style="display: block;">
+            <div id="idShowContent"></div>
+            <BR>
+            <DIV align='center'>
+                <button id="idCloseShow" onclick="closeModal()" class="btn btn--white">Close</button>
+            </DIV>
+        </div>
+    </div>
 
 </body>
 </html>

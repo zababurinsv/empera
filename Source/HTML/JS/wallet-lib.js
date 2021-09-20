@@ -315,7 +315,6 @@ async function CreateTransferTransaction(F,CheckErr,Run)
 
 
     var TR={Version:4,OperationID:OperationID, FromID:FromID,Description:Description, Body:AttachBody};
-
     var BVersion=await AGetFormat("BLOCKCHAIN_VERSION");
     var Format=await AGetFormat("FORMAT_MONEY_TRANSFER"+(BVersion>=2?"5":"3"));
     TR.Type=await AGetFormat("TYPE_MONEY_TRANSFER"+(BVersion>=2?"5":"3"));
@@ -329,6 +328,7 @@ async function CreateTransferTransaction(F,CheckErr,Run)
         TR.TxMaxBlock=GetCurrentBlockNumByTime()+120;
         TR.ToID = ToID;
         TR.Amount=Coin;
+        TR.CodeVer=await AGetFormat("CodeVer");
         if(Item.Currency!=CurToken.Currency)//if not tokengenerate mode
         {
             TR.Currency = CurToken.Currency;

@@ -21,22 +21,7 @@
     <script type="text/javascript" src="./JS/terabuf.js"></script>
     <script type="text/javascript" src="./JS/dapp-frame.js"></script>
 
-<!--    <script id="idTestScript">-->
-<!--        function OnMessage(event)-->
-<!--        {-->
-<!--            var Data=event.data;-->
-<!--            console.log("Data:",Data);-->
-<!--        }-->
-<!--        function InitDappInner()-->
-<!--        {-->
-<!--            window.ToLog=function (Str)-->
-<!--            {-->
-<!--                console.log(Str);-->
-<!--            };-->
-<!--            window.addEventListener("message", OnMessage);-->
-<!--            ToLog("Init OK");-->
-<!--        }-->
-<!--    </script>-->
+
 
     <script>
         InitWalletKeyName();
@@ -75,11 +60,13 @@
         }
         #idStatus
         {
-            left: 0;
-            width: 90%;
-            min-width: 90%;
+            left: 5px;
+            width: 80%;
+            min-width: 80%;
             height:25px;
             padding: 5px 0 0 0;
+            border2: 1px solid #5a6c74;
+            overflow: hidden;
         }
 
         #idRestart
@@ -390,7 +377,7 @@
 <section id="idTransfer" class="ModalTr" style="display: none;">
     <div style="height: 100%; width: 100%;">
         <div class="header">
-            <img class="main-logo" src="/HTML/PIC/TeraLogo.svg" alt="TERA Foundation">
+            <img class="main-logo" src="./PIC/TeraLogo.svg" alt="TERA Foundation">
             <div class="curwallet"><span>Wallet </span><b id="idAccess1" class=""></b></div>
         </div>
         <DIV align='center' class="page">

@@ -73,7 +73,7 @@ function ReadBalanceArr(Data)
         Token = Smart.ShortName.trim();
         if(Smart.IconBlockNum)
         {
-            Value.IMG = "/file/" + Smart.IconBlockNum + "/" + Smart.IconTrNum;
+            Value.IMG = GetURLPath("/file/" + Smart.IconBlockNum + "/" + Smart.IconTrNum);
             IconBlockNum = Smart.IconBlockNum;
             IconTrNum = Smart.IconTrNum;
         }
@@ -81,7 +81,7 @@ function ReadBalanceArr(Data)
     else
     {
         Token="TERA";
-        Value.IMG="/PIC/Tera.svg";
+        Value.IMG=GetURLPath("/PIC/Tera.svg");
         IconBlockNum=undefined;
         IconTrNum=undefined;
     }

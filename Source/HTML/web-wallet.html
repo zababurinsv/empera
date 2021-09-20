@@ -257,10 +257,12 @@
 
                     <div class="prod-card__footer">
                         <div class="prod-card__footer-wrap" >
-                            <a onclick="OpenDapps($SmartObj.Num,$Item.Num,$SmartObj.HTMLLength)" class="prod-card__link prod-card__link--dapp dapp-num$SmartObj.Num">
+                            <div class="prod-card__link prod-card__link--dapp">
+                            <a onclick="OpenDapps($SmartObj.Num,$Item.Num,$SmartObj.HTMLLength)" class="prod-card__button dapp_border">
                                 <img $smartobj.iconpath alt="." width="32" height="32">
                                 <span  class="prod-card__dapp-name mob-hidden">$SmartObj.Name</span>
                             </a>
+                            </div>
 
                             <a class="prod-card__link prod-card__link--connect" onclick="ConnectSmart($Item.Num)">
                                 <svg class="prod-card__dapp-icon" width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">

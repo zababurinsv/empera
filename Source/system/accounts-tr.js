@@ -147,8 +147,10 @@ class AccountTR extends require("./accounts-sign")
 
 
 
-        this.SendMoneyTR(Block, TR.FromID, TR.ToID, TR.Amount, BlockNum, TrNum, TR.Description,
+        var CoinSumTo=this.SendMoneyTR(Block, TR.FromID, TR.ToID, TR.Amount, BlockNum, TrNum, TR.Description,
             TR.Description, 0,0,0,TR.Currency,TR.TokenID);
+        if(!CoinSumTo || CoinSumTo.SumCOIN===undefined || CoinSumTo.SumCENT===undefined)
+            CoinSumTo=TR.Amount;
 
 
 
@@ -164,8 +166,8 @@ class AccountTR extends require("./accounts-sign")
             if(Data.Currency)
                 TR.Currency=Data.Currency;
 
-            TR.To=[{ID:TR.ToID,SumCOIN:TR.Amount.SumCOIN,SumCENT:TR.Amount.SumCENT}];
-            TR.Value=TR.Amount;
+            TR.Value=CoinSumTo;
+            TR.To=[{ID:TR.ToID,SumCOIN:TR.Value.SumCOIN,SumCENT:TR.Value.SumCENT}];
 
             var App = DAppByType[TR.Body[0]];
             if(App)
@@ -184,6 +186,9 @@ class AccountTR extends require("./accounts-sign")
 
     TRTransferMoney(Block, Body, BlockNum, TrNum, format_money_transfer, workstructtransfer)
     {
+        if(GETVERSION(BlockNum)>=3)
+            return "Error blockchain version";
+
         if(IS_ROLLBACK_TRANSACTION())
             return "Was rollback tx";
         
@@ -509,7 +514,7 @@ class AccountTR extends require("./accounts-sign")
             Currency=0;
 
 
-
+        var CoinSumTo;
         if(Currency)
         {
             //перевод soft токенов
@@ -524,7 +529,7 @@ class AccountTR extends require("./accounts-sign")
 
             var PayContext = {FromID:FromID, ToID:ToID, Description:DescriptionFrom, Value:CoinSum,Currency:Currency,TokenID:TokenID,SmartMode:bSmartMode};
 
-            RunSmartMethod(Block, undefined, Smart, undefined, BlockNum, TrNum, PayContext, "OnTransfer",{From:FromID,To:ToID,Amount:CoinSum,ID:TokenID},[],0,1);
+            CoinSumTo=RunSmartMethod(Block, undefined, Smart, undefined, BlockNum, TrNum, PayContext, "OnTransfer",{From:FromID,To:ToID,Amount:CoinSum,ID:TokenID},[],0,1);
 
             FromData = this.ReadStateTR(FromID);//reload
         }
@@ -561,13 +566,16 @@ class AccountTR extends require("./accounts-sign")
 
 
         //console.log("2:",FLOAT_FROM_COIN(FromData.Value));
-        this.DoSmartEvents(Block, FromID, ToID, CoinSum, BlockNum, TrNum, DescriptionFrom, DescriptionTo, FromData,ToData, bSmartMode, Smart,Currency,TokenID);
+        this.DoSmartEvents(Block, FromID, ToID, CoinSum,CoinSumTo, BlockNum, TrNum, DescriptionFrom, DescriptionTo, FromData,ToData, bSmartMode, Smart,Currency,TokenID);
         //console.log("3:",FLOAT_FROM_COIN(FromData.Value));
+
+        return CoinSumTo;//возврат реально переведенной суммы - для варианта монет с fee
     }
 
-    DoSmartEvents(Block, FromID, ToID, CoinSum, BlockNum, TrNum, DescriptionFrom, DescriptionTo, FromData,ToData, bSmartMode, Smart,Currency,TokenID)
+    DoSmartEvents(Block, FromID, ToID, CoinSum, CoinSumTo, BlockNum, TrNum, DescriptionFrom, DescriptionTo, FromData,ToData, bSmartMode, Smart,Currency,TokenID)
     {
-
+        if(!CoinSumTo || CoinSumTo.SumCOIN===undefined || CoinSumTo.SumCENT===undefined)
+            CoinSumTo=CoinSum;
 
         if(FromID >= global.START_HISTORY)
         {
@@ -594,7 +602,7 @@ class AccountTR extends require("./accounts-sign")
             if(DescriptionTo2.length > 100)
                 DescriptionTo2 = DescriptionTo2.substr(0, 100)
             var HistoryObj = {Direct:"+", Receive:1, CurID:ToID, CorrID:FromID, BlockNum:BlockNum, TrNum:TrNum, FromID:FromID, ToID:ToID,
-                SumCOIN:CoinSum.SumCOIN, SumCENT:CoinSum.SumCENT, Description:DescriptionTo2,
+                SumCOIN:CoinSumTo.SumCOIN, SumCENT:CoinSumTo.SumCENT, Description:DescriptionTo2,
                 SmartMode:bSmartMode};
             if(Smart)
             {
@@ -616,7 +624,7 @@ class AccountTR extends require("./accounts-sign")
         }
         if(ToData.Value.Smart)
         {
-            var Context = {FromID:FromID, ToID:ToID, Description:DescriptionTo, Value:CoinSum,Currency:Currency,TokenID:TokenID};
+            var Context = {FromID:FromID, ToID:ToID, Description:DescriptionTo, Value:CoinSumTo,Currency:Currency,TokenID:TokenID};
             if(BlockNum >= global.UPDATE_CODE_SHARDING)
                 Context.SmartMode = (bSmartMode ? 1 : 0);
             RunSmartMethod(Block, undefined, ToData.Value.Smart, ToData, BlockNum, TrNum, Context, "OnGet");

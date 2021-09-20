@@ -14,8 +14,10 @@ function SendTransactionNew(Body,TR,F,Context,Confirm)
                 MaxLength = 65100;
         }
         else
-            MaxLength = 0;
+            MaxLength = 65100;
     }
+
+    //console.log("Body.length=",Body.length)
 
     if(MaxLength && Body.length > MaxLength)
     {
@@ -72,7 +74,7 @@ function SendTransactionNew(Body,TR,F,Context,Confirm)
         }
         else
         {
-            return RetError(F,Context, TR, Body, "Error Data");
+            return RetError(F,Context, TR, Body, "SendTransactionNew: Error Data");
         }
     });
 }
@@ -177,9 +179,15 @@ function SendCallMethod1(Account,MethodName,Params,ParamsArr,FromNum,FromSmartNu
 
 function SendTrArrayWithSign(Body,Account,TR,F,Context,Confirm)
 {
+    var MaxLength=65100;
+    if(Body.length > MaxLength)
+    {
+        return RetError(F,Context, TR, Body, "Error length transaction = " + Body.length + ". Can max size=" + MaxLength);
+    }
+
     if(window.SignLib && !IsFullNode())
     {
-        if(MainServer || CanClientSign())
+        if(GetMainServer() || CanClientSign())
         {
             var Sign = GetSignFromArr(Body);
             var Arr = GetArrFromHex(Sign);

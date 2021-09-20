@@ -1,6 +1,8 @@
 
 
 var glDlgTransfer;
+var glListTransfer=[];
+var idTimerTransfer=0;
 
 //DAPP TRANSFER
 window.onload=function()
@@ -17,7 +19,7 @@ window.onload=function()
         DapNumber=window.location.search.substr(6);
         if(Storage.getItem("MainServer"))
         {
-            MainServer=JSON.parse(Storage.getItem("MainServer"));
+            SetMainServer(JSON.parse(Storage.getItem("MainServer")));
         }
     }
     glSmart=parseInt(DapNumber);
@@ -32,6 +34,8 @@ window.onload=function()
         CONFIG_DATA=SetData;
         SMART=SetData.Smart;
         BASE_ACCOUNT=SetData.Account;
+        if(!SMART)
+            return SetError("Error load data-info from server");
 
         SetBlockChainConstant(SetData);
         document.title=SMART.Name;
@@ -226,6 +230,8 @@ function ResetDapp()
         clearInterval(idInstallApp);
         idInstallApp=0;
     }
+    glListTransfer=[];
+    CloseTransferDlg();
 }
 function RunDappFromFile()
 {
@@ -459,9 +465,29 @@ function InitTranslate()
 
 
 //-------------------------------------------- Transfer
-
+function SetTransferCounter()
+{
+    idAccess1.innerText="1/"+(1+glListTransfer.length);
+}
 async function AddToTransfer(Data)
 {
+    //console.log(Data);
+
+    if(glDlgTransfer)
+    {
+        glListTransfer.push(Data);
+        StartTransferTimer();
+
+        SetTransferCounter();
+        return;
+    }
+
+    glDlgTransfer=Data;
+
+    //console.log("Show");
+
+    SetTransferCounter();
+
     var PayContext=Data.ParamsPay;
     if(!PayContext.Value)
         PayContext.Value=0;
@@ -510,7 +536,6 @@ async function AddToTransfer(Data)
 
     SetVisibleBlock("idTransfer",1);
     Document.activeElement=idTransfer;
-    glDlgTransfer=Data;
 }
 
 
@@ -541,10 +566,9 @@ async function SendTransfer()
         TR.FromNum=PayContext.FromID;
         TR.ParamsArr=ParamsCall.ParamsArr;
         TR.Reserve=[];
-        // TR.TxTicks=Data.TxTicks?Data.TxTicks:35000;
-        // TR.TxMaxBlock=GetCurrentBlockNumByTime()+120;
         Body=SerializeLib.GetBufferFromObject(TR, Format, {});
-        Body.length-=64;
+        Body.length=Math.max(50,Body.length-64);
+
     }
 
     //Подготовка Transfer транзакции
@@ -562,6 +586,7 @@ async function SendTransfer()
             Description:PayContext.Description,
             Currency: PayContext.Currency,
             TokenID: PayContext.ID,
+            CodeVer:await AGetFormat("CodeVer"),
             Body:Body,
         };
 
@@ -589,11 +614,33 @@ function OnHideTr()
 }
 function OnCancelTr()
 {
-    glDlgTransfer=undefined;
+    if(glDlgTransfer)
+        RetSendTx(1,{}, [], "Rejected by the user", glDlgTransfer);
     CloseTransferDlg();
 }
 
 function CloseTransferDlg()
 {
+    glDlgTransfer=undefined;
     SetVisibleBlock("idTransfer",0);
+}
+
+function StartTransferTimer()
+{
+    if(!idTimerTransfer)
+        idTimerTransfer=setInterval(CheckTransferList,100);
+}
+function CheckTransferList()
+{
+    if(glDlgTransfer)
+        return;
+    if(!glListTransfer.length)
+    {
+        if(idTimerTransfer)
+            clearInterval(idTimerTransfer);
+        idTimerTransfer=0;
+        return;
+    }
+
+    AddToTransfer(glListTransfer.shift());
 }

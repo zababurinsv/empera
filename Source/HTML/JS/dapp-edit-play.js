@@ -573,7 +573,11 @@ function DoGetData(Name,Params,Func)
             break;
         case "DappAccountList":
             SetData.result = 1;
-            SetData.arr = VM_ACCOUNTS.slice(Params.StartNum, Params.StartNum + Params.CountNum);
+            //SetData.arr = VM_ACCOUNTS.slice(Params.StartNum, Params.StartNum + Params.CountNum);
+            SetData.arr=[];
+            for(var num=Params.StartNum;num<Params.StartNum + Params.CountNum;num++)
+                SetData.arr.push(ACCOUNTS.ReadStateTR(num));
+
             break;
         case "DappSmartList":
             SetData.result = 1;
@@ -741,7 +745,8 @@ async function AddToTransfer(Data)
 
     PayContext.SmartMode=0;
     MoveCoin(PayContext.FromID,PayContext.ToID,PayContext.Value,PayContext.Description,PayContext.Currency,PayContext.ID,PayContext.SmartMode);
-    SendCallMethod(PayContext.ToID, ParamsCall.Method, ParamsCall.Params, ParamsCall.ParamsArr, PayContext.FromID, Data.Smart,RetSendTx,Data,1,Data.TxTicks,0,PayContext);
+    if(ParamsCall)
+        SendCallMethod(PayContext.ToID, ParamsCall.Method, ParamsCall.Params, ParamsCall.ParamsArr, PayContext.FromID, Data.Smart,RetSendTx,Data,1,Data.TxTicks,0,PayContext);
 
 }
 

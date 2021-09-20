@@ -51,8 +51,8 @@ async function InitMapCurrency()
     else
     if(window.NETWORK_ID === "TEST-JINN.TEST")
     {
-        RegCurrency(9, "BTC", "./PIC/B.svg", 1);
-        RegCurrency(10, "USD", undefined, 1);
+        //RegCurrency(9, "BTC", "./PIC/B.svg", 1);
+        //RegCurrency(10, "USD", undefined, 1);
 
         AccCoinList = 1635;
     }

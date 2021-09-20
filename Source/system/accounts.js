@@ -93,7 +93,8 @@ global.FORMAT_MONEY_TRANSFER5 = "{\
     Currency:uint32,\
     TokenID:str,\
     Description:str,\
-    Reserve:uint,\
+    CodeVer:uint16,\
+    Reserve:uint32,\
     Body:tr,\
     Sign:arr64,\
     }";

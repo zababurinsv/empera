@@ -165,7 +165,7 @@ class SmartTR extends require("./smart-scroll")
         //     return "Error context";
 
         if(Body.length < 50)
-            return "Error length transaction (min size)";
+            return "Error length transaction (min size) Body.length="+Body.length;
         var TR;
 
         if(ContextFrom)

@@ -10,7 +10,7 @@
 
 
 
-window.CLIENT_VERSION = 51;
+window.CLIENT_VERSION = 53;
 window.SERVER_VERSION = 0;
 window.SHARD_NAME = "TERA";
 
@@ -19,6 +19,9 @@ window.SUM_PRECISION = 9;
 window.RUN_CLIENT = 1;
 window.RUN_SERVER = 0;
 
+var glSession;
+var ServerHTTP;
+var glMainServer;
 var MapCategory = {};
 
 var root = typeof global==="object"?global:window;
@@ -134,9 +137,6 @@ if(!String.prototype.padStart)
 }
 
 
-var glSession;
-var ServerHTTP;
-var MainServer;
 
 if(window.nw)
 {
@@ -201,9 +201,9 @@ else
             if(Method.substr(0, 1) !== "/")
                 Method = "/" + Method;
             
-            if(MainServer)
+            if(GetMainServer())
             {
-                Method = GetProtocolServerPath(MainServer) + Method;
+                Method =GetURLPath(Method);
             }
             else
             {
@@ -298,18 +298,7 @@ function IsIPAddres(Str)
     return 1;
 }
 
-function GetProtocolServerPath(Item)
-{
-    if(!Item)
-        return ".";
-    if(Item.port === 443)
-        return "https://" + Item.ip;
-    else
-        if(Item.port === 80)
-            return "http://" + Item.ip;
-        else
-            return "http://" + Item.ip + ":" + Item.port;
-}
+
 
 function ToFixed(Sum,Currency,bNoZero)
 {
@@ -666,7 +655,7 @@ function ViewCurrentInner(Def,flag,This)
     Params.Filter=Filter;
     Params.Filter2=Filter2;
     Params.ChainMode=Def.ChainMode;
-    Params.GetState=window.DEBUG_WALLET;
+    Params.GetState=0;//window.DEBUG_WALLET;
 
     
     ViewGrid(Def.APIName, Params, Def.TabName, 1, Def.TotalSum, Def.F);
@@ -1145,16 +1134,10 @@ function RetIconPath(Item,bCurrency)
         }
     }
     
-    var StrPath = "";
-    if(MainServer)
-    {
-        StrPath = GetProtocolServerPath(MainServer);
-    }
-    
     if(Item.IconBlockNum)
-        return StrPath + '/file/' + Item.IconBlockNum + '/' + Item.IconTrNum;
+        return GetURLPath('/file/' + Item.IconBlockNum + '/' + Item.IconTrNum);
     else
-        return StrPath + "/PIC/blank.svg";
+        return GetURLPath("/PIC/blank.svg");
 }
 
 function RetIconDapp(Item)
@@ -1769,14 +1752,6 @@ function ToLog(Str)
     console.log(Str);
 }
 
-function InitMainServer()
-{
-    var Str = Storage.getItem("MainServer");
-    if(Str && !IsFullNode() && Str.substr(0, 1) === "{" && IsLocalClient())
-    {
-        MainServer = JSON.parse(Str);
-    }
-}
 
 function IsZeroArr(arr)
 {
@@ -2035,7 +2010,7 @@ function GetStrFromDiagrArr(Arr)
 
 function GetWalletLink()
 {
-    if(MainServer)
+    if(GetMainServer())
         return "./web-wallet.html#TabAccounts";
     else
         if(IsFullNode())
@@ -2083,6 +2058,10 @@ function openModal(id,idOK)
     glWasModal = 1;
     var modal = document.querySelector("#" + id);
     var overlay = document.querySelector("#idOverlay");
+    if(!modal)
+        return SetError("Error id: "+id);
+    if(!overlay)
+        return SetError("Error idOverlay");
     modal.style.display = "flex";
     overlay.style.display = "block";
     
@@ -2102,19 +2081,26 @@ function closeModal()
         return;
 
     glWasModal = 0;
-    var modals = document.querySelectorAll(".ModalDlg");
-    var overlay = document.querySelector("#idOverlay");
+    // var modals = document.querySelectorAll(".ModalDlg");
+    // var overlay = document.querySelector("#idOverlay");
+    // modals.forEach(function (item)
+    // {
+    //     item.style.display = "none";
+    // });
+    // overlay.style.display = "none";
+    var modals = document.querySelectorAll(".ModalDlg,.modal,#overlay,#idConfirm,#idOverlay");
     modals.forEach(function (item)
     {
         item.style.display = "none";
     });
-    overlay.style.display = "none";
-    
+
     setTimeout(function ()
     {
         glConfirmF = undefined;
     }, 100);
 }
+
+
 
 function DoConfirm(StrTitle,StrText,F,bDirect)
 {
@@ -2538,6 +2524,53 @@ async function ASetGridData(arr,id_name,TotalSum,bClear,TotalCurency)
         }
     }
 
+}
+
+//Main server
+function InitMainServer()
+{
+    var Str = Storage.getItem("MainServer");
+    if(Str && !IsFullNode() && Str.substr(0, 1) === "{" && IsLocalClient())
+    {
+        SetMainServer(JSON.parse(Str));
+    }
+}
+function GetMainServer()
+{
+    return glMainServer;
+}
+function SetMainServer(Value)
+{
+    window.glMainServer=Value;
+    if(Value)
+    {
+        window.PROTOCOL_SERVER_PATH = GetProtocolServerPath();
+    }
+}
+
+function GetProtocolServerPath(Item)
+{
+    if(!Item)
+        Item=GetMainServer();
+    if(!Item)
+        return "";//.
+
+
+    if(Item.port === 443)
+        return "https://" + Item.ip;
+    else
+    if(Item.port === 80)
+        return "http://" + Item.ip;
+    else
+        return "http://" + Item.ip + ":" + Item.port;
+}
+
+function GetURLPath(Path)
+{
+    if(GetMainServer() && Path.substr(0,1)==="/")
+          Path = GetProtocolServerPath() + Path;
+
+    return Path;
 }
 
 

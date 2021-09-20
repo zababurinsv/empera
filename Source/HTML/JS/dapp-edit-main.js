@@ -475,6 +475,7 @@ async function SendTx5(FromID,ToID,Price,Description,Body)
 
     var Format=await AGetFormat("FORMAT_MONEY_TRANSFER5");
     TR.Type=await AGetFormat("TYPE_MONEY_TRANSFER5");
+    TR.CodeVer=await AGetFormat("CodeVer");
 
     // console.log(TR)
     // return;;
@@ -577,9 +578,7 @@ window.onload = function ()
     {
         if(Storage.getItem("MainServer"))
         {
-            MainServer = JSON.parse(Storage.getItem("MainServer"));
-            if(MainServer)
-                window.PROTOCOL_SERVER_PATH = GetProtocolServerPath(MainServer);
+            SetMainServer(JSON.parse(Storage.getItem("MainServer")));
         }
     }
     

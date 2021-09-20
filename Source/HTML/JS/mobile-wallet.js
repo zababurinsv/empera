@@ -225,7 +225,8 @@ function UpdateTabs()
 
 function OnFindServer()
 {
-    if(!MainServer)
+    var Item=GetMainServer();
+    if(!Item)
     {
         CONNECT_STATUS =  - 1;
         SetStatus("Server not found");
@@ -236,7 +237,8 @@ function OnFindServer()
     CONNECT_STATUS = 2;
     if(IsLocalClient())
     {
-        Storage.setItem("MainServer", JSON.stringify({ip: MainServer.ip, port: MainServer.port}));
+
+        Storage.setItem("MainServer", JSON.stringify({ip: Item.ip, port: Item.port}));
     }
 
     FillCurrencyAsync("idCurrencyList");
@@ -665,74 +667,28 @@ async function SetAccountsCard(Data,AccountsDataStr)
         Str = Str.replace(/\$SmartObj.Num/g, SmartObj.Num);
         Str = Str.replace(/\$SmartObj.HTMLLength/g, SmartObj.HTMLLength);
 
-        if(SmartObj)
+        if(!Item.SmartObj)
         {
-            Str = Str.replace("prod-card__link--connect", "myhidden");
+            Str = Str.replace("prod-card__button", "prod-card__nobutton");
         }
-        else
-        {
-            Str = Str.replace("prod-card__link--dapp", "myhidden");
-            Str = Str.replace("prod-card__dropdown", "prod-card__dropdown nodapp");
-        }
+        Str = Str.replace("prod-card__link--connect", "myhidden");
+        //Str = Str.replace("prod-card__link--dapp", "myhidden");
+        //Str = Str.replace("prod-card__dropdown", "prod-card__dropdown nodapp");
 
 
-        var StrListTokens = "";
-        var CountTokens = 0;
-        var CountNFT = 0;
-        for(var n=0;Item.BalanceArr && n<Item.BalanceArr.length;n++)
-        {
-            var Token=Item.BalanceArr[n];
-            //if(Token.Old)                continue;
-            var TokenName=await ACurrencyName(Token.Currency,Token.Token);
-            //console.log(Item.Num, "TokenName=",TokenName,"Arr=",Token.Arr.length);
-            for(var j=0;j<Token.Arr.length;j++)
-            {
-                var Value2=Token.Arr[j];
-                //console.log("Value2=",Value2)
-                if(Value2 && FLOAT_FROM_COIN(Value2))
-                {
-                    if(!Token.Inner)
-                    {
-                        if(!Value2.ID || Value2.ID == "" || Value2.ID == "0")
-                        {
-                            CountTokens++;
-                            StrListTokens += '<div class="total-info__item"><dt>' + TokenName + '</dt><dd>' + STRING_FROM_COIN(Value2) + '</dd></div>';
-                        }
-                        else
-                        {
-                            CountNFT++;
-                        }
-                    }
-
-
-                    var Total = ListTotal[TokenName];
-                    if(!Total)
-                    {
-                        Total = {SumCOIN: 0, SumCENT: 0, Name: TokenName};
-                        ListTotal[TokenName] = Total;
-                    }
-
-                    ADD(Total, Value2);
-                    //console.log("ADD ",TokenName,Value2)
-
-                }
-            }
-        }
-
-        //console.log("ListTotal",ListTotal);
-
+        var RetTotal=await CalcTotalAmountERC(Item,ListTotal);
         var StrCountTokens="";
         var StrOpenNFTPage="";
-        if(CountTokens)
-            StrCountTokens="Token count: "+CountTokens;
-        if(CountNFT)
+        if(RetTotal.CountTokens)
+            StrCountTokens="Token count: "+RetTotal.CountTokens;
+        if(RetTotal.CountNFT)
         {
-            StrCountTokens+=" NFT: "+CountNFT;
+            StrCountTokens+=" NFT: "+RetTotal.CountNFT;
             StrOpenNFTPage="<button class='btn btn--white btn-nft-open' onclick='OpenTokensPage(" + Item.Num + ")'>Show NFT</button>";
         }
 
         Str = Str.replace("$Item.COUNT_TOKENS", StrCountTokens);
-        Str = Str.replace("$Item.LIST_TOKENS", StrListTokens);
+        Str = Str.replace("$Item.LIST_TOKENS", RetTotal.ListTokens);
         Str = Str.replace("$Item.OPEN_NFT_PAGE", StrOpenNFTPage);
 
 
