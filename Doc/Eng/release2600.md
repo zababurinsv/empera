@@ -23,7 +23,7 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 
 ### New Events
 * OnProxy (Method,Params,ParamsArr,PublicMode) — a predefined event called if a method is not found (called externally)
-* OnTransfer (Params) — event for physically sending an ERC / NFT token (it is called inside a smart contract that supports software tokens)
+* OnTransfer (Params) — event for physically sending an ERC / NFT token (it is called inside a smart contract that supports software tokens). If a fee is used that reduces the amount on the receiving account, the function should return a new amount value (the returned value is an object with fields: {SumCOIN, SumCENT})
 * OnGetBalance (Account,ID) — event for getting the balance of the ERC / NFT token (it is called inside a smart contract that supports software tokens)
 * context.Currency — token currency
 * context.ID — token ID
