@@ -15,12 +15,12 @@
 https://terawallet.org
 * Примечание: легкий кошелек имеет децентрализованное ядро - т.е. работает со всеми доступными нодами в сети
 
-## Установка легкого кошелька на Windows:
-* https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/tera_light_setup.exe
-* [Light client (zip)](https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/Tera-light.zip)
+[//]: # (## Установка легкого кошелька на Windows:)
+[//]: # (* https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/tera_light_setup.exe)
+[//]: # (* Light client: https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/Tera-light.zip )
 
-~~## Установка полной ноды из установщика для Windows~~
-~~https://gitlab.com/terafoundation/terarun/raw/master/Bin/Full/tera_full_setup.exe~~
+[//]: # (## Установка полной ноды из установщика для Windows)
+[//]: # (https://gitlab.com/terafoundation/terarun/raw/master/Bin/Full/tera_full_setup.exe)
 
 ## Установка полной ноды из исходников по шагам:
 
