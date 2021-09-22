@@ -28,7 +28,7 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 * context.Currency — token currency
 * context.ID — token ID
 
-### New and changed Methods
+### New and changed smart contract Methods
 * GetBalance(Account,Currency,ID) — getting the balance of the ERC / NFT token
 * RegInWallet(Account) — registering a new currency in the wallet
 * Call(Smart,Method,Params,ParamsArr) — calling the smart contract method
@@ -39,6 +39,34 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 * GetObjectFromBuffer(ValueBuf,Format) - getting object from byte  array buffer by format string (example and format spec string see below)
 * GetBufferFromObject(Value,Format) - getting byte buffer from object by format string (format spec string and example see below)
 * fromCodePoint(Num) - returns a string character by code, it is standard JS String method: String.fromCodePoint with only one parameter   
+
+## New dapp (client side) Methods
+* StartTransfer(ParamsPay:{FromID,ToID,Value,Description,Currency,ID},ParamsCall:{Method, Params, ParamsArr},TxTicks) - Initiating sending coins from any user account (FromID) and calling the smart contract method on the recipient account (ToID). The method calls an interactive dialog with the user to confirm the actions. ParamsCall - this parameter can be skipped (equal to undefined). Returns a promise.
+#### Example
+```js
+var Ret=await StartTransfer(
+    {FromID:100,ToID:SMART.Account,Value:500,Description:"Test transfer",Currency:0,ID:""},
+    {Method:"Run",Params:{}},
+    35000);
+
+```    
+
+* ASendCall(Account, MethodName,Params, ParamsArr,FromNum,TxTicks) - Send tx with calling the smart contract method and returns a promise. 
+#### Example
+```js
+    async function DoMint()
+    {
+        var Ret=await ASendCall(SMART.Account,"DoMint",{Account:100,Amount:10000,ID:""},[],SMART.Owner);
+        console.log("Ret:",Ret);
+    }
+```    
+
+* ACall(Account, MethodName,Params,ParamsArr) - Static calling the smart contract method with returns a promise. 
+#### Example
+```js
+   var Value=await ACall(SMART.Account,"MyCalc",{Account:100});
+```    
+
 
 #### Format spec string
 
