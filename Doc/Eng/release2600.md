@@ -38,7 +38,8 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 * Send (ToID,CoinSum,Description, Currency,TokenID) — added new parameters (Currency,TokenID) for sending coins with support ERC / NFT tokens
 * GetObjectFromBuffer(ValueBuf,Format) - getting object from byte  array buffer by format string (example and format spec string see below)
 * GetBufferFromObject(Value,Format) - getting byte buffer from object by format string (format spec string and example see below)
-* fromCodePoint(Num) - returns a string character by code, it is standard JS String method: String.fromCodePoint with only one parameter   
+* fromCodePoint(Num) - returns a string character by code, it is standard JS String method: String.fromCodePoint with only one parameter
+* ReadValue(Key,Format,IDFrom) - read value from DB by Key name string   (default: IDFrom is base smart account)
 
 ## New dapp (client side) Methods
 * StartTransfer(ParamsPay:{FromID,ToID,Value,Description,Currency,ID},ParamsCall:{Method, Params, ParamsArr},TxTicks) - Initiating sending coins from any user account (FromID) and calling the smart contract method on the recipient account (ToID). The method calls an interactive dialog with the user to confirm the actions. ParamsCall - this parameter can be skipped (equal to undefined). Returns a promise.
