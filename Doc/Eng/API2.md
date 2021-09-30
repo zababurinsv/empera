@@ -152,30 +152,58 @@ http://127.0.0.1/api/v2/SendCall
 4)**/api/v2/GetBalance**  - get account balance
 #### Parameters:
 * AccountID - account number
-* GetArr - if 1, the Arr response field returns an array of all coins and tokens stored on the account
+* Currency - currency number
+* ID - tokens id string value (must be value = "" for not NFT, if its undefined returns Arr)
+* GetArr - if 1, the Arr response field returns an array of registered coins and tokens on the account
 
- 
-example:
+Example 1:
 ```js
 http://127.0.0.1/api/v2/GetBalance
 {
-    "AccountID": 10
- }
+"AccountID":0,
+"Currency":132,
+"ID":"3085000"
+}
 ```
 
-return:
+result:
 
 ```js
 {
     "result": 1,
-    "SumCOIN": 428,
+    "ID": "3085000",
+    "SumCOIN": 1000,
     "SumCENT": 0,
-    "Currency": 0,
-    "PubKey": "026A04AB98D9E4774AD806E302DDDEB63BEA16B5CB5F223EE77478E861BB583EB3"
+    "Currency": 132,
+    "AccountID": 0
 }
 ```
 
-example2:
+Example 2:
+```js
+http://127.0.0.1/api/v2/GetBalance
+{
+"AccountID":11,
+"Currency":108
+}
+```
+result:
+```js
+{
+    "result": 1,
+    "Arr": [
+        {
+            "ID": "",
+            "SumCOIN": 1914,
+            "SumCENT": 149999999
+        }
+    ],
+    "Currency": 108,
+    "AccountID": 11
+}
+```
+
+Example 3:
 ```js
 http://127.0.0.1/api/v2/GetBalance
 {
@@ -183,7 +211,7 @@ http://127.0.0.1/api/v2/GetBalance
     "GetArr": 1
  }
 ```
-return:
+result:
 ```js
 {
     "result": 1,

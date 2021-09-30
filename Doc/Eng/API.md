@@ -24,6 +24,64 @@ After setting the constants, you may need to restart the node.
 
 Although the API is designed for use in POST requests, it can be used for GET requests in a limited mode.
 
+
+
+## GetBalance 
+
+0)**/api/v1/GetBalance** - get account balance
+#### Parameters:
+* AccountID - account number
+* Currency - currency number
+* ID - tokens id string value (must be value = "" for not NFT, if its undefined returns Arr)
+* GetArr - if 1, the Arr response field returns an array of registered coins and tokens on the account
+
+Example:
+```js
+http://127.0.0.1/api/v1/GetBalance
+{
+"AccountID":0,
+"Currency":132,
+"ID":"3085000"
+}
+```
+
+result:
+
+```js
+{
+    "result": 1,
+    "ID": "3085000",
+    "SumCOIN": 1000,
+    "SumCENT": 0,
+    "Currency": 132,
+    "AccountID": 0
+}
+```
+
+Example 2:
+```js
+http://127.0.0.1/api/v1/GetBalance
+{
+"AccountID":11,
+"Currency":108
+}
+```
+result:
+```js
+{
+    "result": 1,
+    "Arr": [
+        {
+            "ID": "",
+            "SumCOIN": 1914,
+            "SumCENT": 149999999
+        }
+    ],
+    "Currency": 108,
+    "AccountID": 11
+}
+```
+
 ## DappStaticCall
 
 1)**/api/v1/DappStaticCall**  - call a static method of a smart contract
@@ -148,7 +206,7 @@ Result:
 
 ## GetDappList 
 
-7)**/api/v1/GetDappList* - getting a list of DApps
+7)**/api/v1/GetDappList** - getting a list of DApps
 
 Example:
 http://127.0.0.1/api/v1/GetDappList?StartNum=8&CountNum=1
