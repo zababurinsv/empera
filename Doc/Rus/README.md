@@ -22,6 +22,12 @@ https://terawallet.org
 [//]: # (## Установка полной ноды из установщика для Windows)
 [//]: # (https://gitlab.com/terafoundation/terarun/raw/master/Bin/Full/tera_full_setup.exe)
 
+
+## Мобильный кошелек (Android):
+* [Google Play](https://play.google.com/store/apps/details?id=com.terafoundation.wallet)
+* [APK-file](https://gitlab.com/terafoundation/terarun/raw/master/Bin/Mobile/app-release.apk)
+
+
 ## Установка полной ноды из исходников по шагам:
 
 
