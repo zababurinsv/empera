@@ -383,7 +383,7 @@ http://127.0.0.1/api/v1/SendHexTx
 }
 ```
 Комментарий: транзакцию в формате hex можно получить если использовать функции из библиотек на языке javascript
-* Библиотеки находятся по адресу: https://gitlab.com/terafoundation/tera/raw/master/Bin/Light/Tera-light.zip
+* Библиотеки находятся по адресу: https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/Tera-light.zip
 * Пример: http://dappsgate.com/_test-api.html
 
 Внимание: для корректной работы примеры убедитесь что OperationSortID не ниже текущего значения в счете пользователя

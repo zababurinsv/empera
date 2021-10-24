@@ -435,7 +435,7 @@ Result:
 }
 ```
 Note: The transaction in hex format can be obtained if you use a functions from the js-library
-* The library is located at: https://gitlab.com/terafoundation/tera/raw/master/Bin/Light/Tera-light.zip
+* The library is located at: https://gitlab.com/terafoundation/terarun/raw/master/Bin/Light/Tera-light.zip
 * Example: http://dappsgate.com/_test-api.html
 
 
