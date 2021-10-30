@@ -264,8 +264,6 @@ pm2 start run-jinn.js
 * [API-2](https://gitlab.com/terafoundation/tera2/blob/master/Doc/Rus/API2.md)
 * [CONSTANTS](https://gitlab.com/terafoundation/tera2/blob/master/Doc/Rus/CONSTANTS.MD)
 * [Презентация - Проблематика блокчейна и пути решения](https://docs.google.com/presentation/d/1NvaGQTUpeP3y7CmHpaqFmaqWlCEMMoPdvCyylFVJ3lk/edit?usp=sharing)
-* [Руководство по созданию ордеров на Tera DEX](https://docs.google.com/document/d/1rWGOrx9gabsu866zqJ2so6Mp0WUGh9t0BIWjz4kAIBw/edit?usp=sharing)
-* [Токен BTC для торговли на Tera DEX](https://docs.google.com/document/d/1ERPdSizarqYzwb5AA4R8mfUVFnSc-Amm7xCg3q4zUhA/edit?usp=sharing)
 * [Техническое WP - черновик](https://docs.google.com/document/d/1B6_qlAp2xs4aHkqOwyvRMCDJTjgeNiOJiGpIeT0VAzY/edit?usp=sharing)
 
 ## Блокчейн:
