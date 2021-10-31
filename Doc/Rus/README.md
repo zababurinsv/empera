@@ -259,7 +259,8 @@ pm2 start run-jinn.js
 * Discord [RUS]: https://discord.gg/dzSGKyR
 * [Ютуб-канал](https://www.youtube.com/channel/UCGQeUCUKZgH0DfbakD7gjqQ)
 * [Документация по смарт-контрактам на русском](https://docs.google.com/document/d/1SkD4yc_POaGRMJRC6yGkDfdJUuKbcyq3JpG0cBXeYGM/edit?usp=sharing)
-* [Новые функции](https://gitlab.com/terafoundation/tera2/-/blob/master/Doc/Rus/release2468.md)
+* [New futures1](https://gitlab.com/terafoundation/tera2/-/blob/master/Doc/Eng/release2468.md)
+* [New futures2](https://gitlab.com/terafoundation/tera2/-/blob/master/Doc/Eng/release2600.md)
 * [API](https://gitlab.com/terafoundation/tera2/blob/master/Doc/Rus/API.md)
 * [API-2](https://gitlab.com/terafoundation/tera2/blob/master/Doc/Rus/API2.md)
 * [CONSTANTS](https://gitlab.com/terafoundation/tera2/blob/master/Doc/Rus/CONSTANTS.MD)
