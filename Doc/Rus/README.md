@@ -265,7 +265,10 @@ pm2 start run-jinn.js
 * [API-2](https://gitlab.com/terafoundation/tera2/blob/master/Doc/Rus/API2.md)
 * [CONSTANTS](https://gitlab.com/terafoundation/tera2/blob/master/Doc/Rus/CONSTANTS.MD)
 * [Презентация - Проблематика блокчейна и пути решения](https://docs.google.com/presentation/d/1NvaGQTUpeP3y7CmHpaqFmaqWlCEMMoPdvCyylFVJ3lk/edit?usp=sharing)
-* [Техническое WP - черновик](https://docs.google.com/document/d/1B6_qlAp2xs4aHkqOwyvRMCDJTjgeNiOJiGpIeT0VAzY/edit?usp=sharing)
+* [Обновлённый протокол консенсуса TERA - JINN](https://docs.google.com/document/d/1wV9bFUHeLA-u7y1eM9wQkLkzQ9OJf82rEbCFITXPTg8/edit#heading=h.6wabh3sbxwv5)
+* [Техническое WP - устарело](https://docs.google.com/document/d/1B6_qlAp2xs4aHkqOwyvRMCDJTjgeNiOJiGpIeT0VAzY/edit?usp=sharing)
+
+
 
 ## Блокчейн:
 * [Веб-Кошелек](https://terawallet.org)
