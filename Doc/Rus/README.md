@@ -269,6 +269,7 @@ pm2 start run-jinn.js
 * [Обновлённый протокол консенсуса TERA - JINN](https://docs.google.com/document/d/1wV9bFUHeLA-u7y1eM9wQkLkzQ9OJf82rEbCFITXPTg8/edit#heading=h.6wabh3sbxwv5)
 * [Техническое WP - устарело](https://docs.google.com/document/d/1B6_qlAp2xs4aHkqOwyvRMCDJTjgeNiOJiGpIeT0VAzY/edit?usp=sharing)
 * [Sharding-spec](https://gitlab.com/terafoundation/tera2/-/blob/master/Doc/Rus/sharding-spec.md)
+* [Моделирование сети](https://terafoundation.org/JINN/model/model.html)
 
 
 
