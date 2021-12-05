@@ -41,6 +41,8 @@ Note: below, the term **ERC** refers to the new format of software tokens  that 
 * fromCodePoint(Num) - returns a string character by code, it is standard JS String method: String.fromCodePoint with only one parameter
 * ReadValue(Key,Format,IDFrom) - read value from DB by Key name string   (default: IDFrom is base smart account)
 
+
+
 ## New dapp (client side) Methods
 * StartTransfer(ParamsPay:{FromID,ToID,Value,Description,Currency,ID},ParamsCall:{Method, Params, ParamsArr},TxTicks) - Initiating sending coins from any user account (FromID) and calling the smart contract method on the recipient account (ToID). The method calls an interactive dialog with the user to confirm the actions. ParamsCall - this parameter can be skipped (equal to undefined). Returns a promise.
 #### Example

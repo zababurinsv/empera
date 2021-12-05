@@ -33,6 +33,7 @@
 что уменьшает размер транзакции.
 Пример:
 ```js
+"public"
 function Method1(Params,ParamsArr)
 {
 }
