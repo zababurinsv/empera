@@ -1,4 +1,4 @@
-﻿# TERA PLATFORM
+# TERA PLATFORM
 
 
 This is a public blockchain, the main feature of which is full decentralization through the use of pow consensus and serverless dapps, as well as very fast operation speed (peak performance of 1000 tps without sharding and more than 1 million with its use).
@@ -8,7 +8,7 @@ This is a public blockchain, the main feature of which is full decentralization 
 * The current Tera 2.0 Protocol is based on the new JINN library
 * The following describes how to install it on your device
 * Starting from version 2450 you can use sharding, see more details in the discord on the #sharding channel https://discord.gg/Jm9TgkXHTU
-
+* !NEW! [Installation & Execution via Docker](#installation-execution-via-docker)
 
 ## Light-wallet (web-version)
 https://terawallet.org
@@ -200,8 +200,43 @@ node set-jinn httpport:8800 password:password_no_spaces
 pm2 start run-jinn.js
 ```
 
+## Installation & Execution via Docker
 
+#### Getting Started
 
+To run Empera node inside Docker container you need to have installed [Docker](https://docs.docker.com/engine/installation/#supported-platforms). Also for Mac or Windows you can install instead [Kitematic](https://kitematic.com/).
+
+#### Open ports:
+
+Use previous instructions for your OS to open `30000/tcp`, `8080/tcp`, `80/tcp` ports
+
+#### Clone the tepo:
+```
+git clone https://gitlab.com/terafoundation/tera2.git wallet
+cd wallet/Source
+```
+#### Change node password(optional):
+
+Open file `node.Dockerfile` and modify password at following lines:
+
+```
+RUN cd /user/src/empera/source \
+ && npm install \
+ && node set httpport:8080 password:default_password
+```
+By default password is `default_password`
+
+#### Build docker image:
+
+May work slowly for the first time. By default, a backup copy of the blockchain is downloaded and installed (about 10 GB), the cache is used during the following launches
+```
+docker build -f node.Dockerfile . --tag empera/node:latest
+```
+#### Run docker image(start node):
+```
+docker run -d  --network host empera/node
+```
+To validate if node started correctly visit `localhost:8080`
 
 ## Specification
 
