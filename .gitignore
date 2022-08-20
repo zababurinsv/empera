@@ -1,2 +1,5 @@
 .idea
 .gitignore
+DATA
+Source/node_modules/
+Source/yarn.lock
