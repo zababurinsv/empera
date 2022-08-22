@@ -774,12 +774,35 @@ function InitClass(Engine)
     };
 }
 
+function save(filename, data) {
+    const blob = new Blob([data], {type: 'text/csv'});
+    if(window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+    }
+    else{
+        const elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = filename;
+        document.body.appendChild(elem);
+        elem.click();
+        document.body.removeChild(elem);
+    }
+}
+
 function FMaxTreeCompare(Val1,Val2,NoNum) {
-    console.log('CONSENSUS BOOST [(FMaxTreeCompare)]', {
-        Val1: Val1,
-        Val2: Val2,
-        NoNum: NoNum
-    })
+    if(Val1.BlockNum >= 21 && Val2.BlockNum >= 21) {
+        console.log('-----------------', {
+            Val1: Val1,
+            Val2: Val2,
+            NoNum: NoNum,
+            v1: JSON.stringify(Val1),
+            v2: JSON.stringify(Val2)
+        })
+        save('Val1', JSON.stringify(Val1, null, 4))
+        save('Val2', JSON.stringify(Val2, null, 4))
+        debugger
+    }
+
     if(!NoNum && Val1.BlockNum !== Val2.BlockNum)
         return Val1.BlockNum - Val2.BlockNum;
 
